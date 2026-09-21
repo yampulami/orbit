@@ -1,6 +1,33 @@
 import { expect, test } from "vitest";
 import { createLocalStore, draftKey, type Draft } from "./localStore";
 import { seed } from "./model";
+import { emptyProfile, validProfile, toggleInterest, profileSuggestions } from "./studentProfile";
+
+test("accounts cannot load another account's or the preview's local records", async () => {
+  const disk = memory();
+  const preview = createLocalStore(disk);
+  const base = (await preview.load()).state;
+  await preview.save({...base,name:"Preview"});
+  const first = createLocalStore(disk,"user-a");
+  expect((await first.load()).state.name).toBe(base.name);
+  await first.save({...base,name:"Account A"});
+  await first.saveDrafts({pending:draft});
+  expect((await createLocalStore(disk,"user-b").load()).drafts).toEqual({});
+  expect((await createLocalStore(disk,"user-b").load()).state.name).toBe(base.name);
+  expect((await createLocalStore(disk,"user-a").load()).state.name).toBe("Account A");
+  expect((await createLocalStore(disk).load()).state.name).toBe("Preview");
+});
+
+test("onboarding supports multiple interests and useful commuter personalization",()=>{
+  const p={...emptyProfile(),lifestyle:"Commuter",major:"Biology",hobbies:["Coding"],clubs:[]};
+  expect(validProfile(p)).toBe(true);
+  expect(validProfile({...p,hobbies:"Coding"})).toBe(false);
+  expect(toggleInterest(["Music"],"Coding")).toEqual(["Music","Coding"]);
+  expect(toggleInterest(["Music","Coding"],"Music")).toEqual(["Coding"]);
+  expect(profileSuggestions(p)[0].title).toContain("between classes");
+  expect(profileSuggestions(p)[0].detail).toContain("Biology");
+  expect(profileSuggestions(p)[1].title).toBe("Explore tech clubs");
+});
 const draft: Draft = {
   title: "Unfinished groceries",
   amount: "10.01",

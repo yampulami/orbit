@@ -84,3 +84,14 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Renamed Expo display name, slug, URL scheme, package names, visible branding, documentation, and main screen module to Orbit.
 - New saves use orbit-native-v2 / orbit-v1. Readers retain previous storage-key compatibility and do not delete old records. Recovery requires access to the same device storage; physical Expo Go migration remains unverified.
 - Twenty-three tests pass, including old native state/draft recovery, new-key precedence, and corrupt new-record rejection. Vite build, native TypeScript, and Android/iOS/web exports pass.
+
+
+## Login and onboarding — September 21, 2026
+
+- Read both user-supplied onboarding transcripts before implementation; decisions and backend setup are in AUTH-SETUP.md.
+- Twenty-five automated tests pass, including account/preview storage isolation, valid profile shape, multi-interest selection, and commuter/major-based suggestions.
+- Vite production build, native TypeScript, and Android/iOS/web exports pass with authentication and development-client dependencies installed.
+- Browser verified name validation, four stages, commuter selection, year/major, multi-select interests, personalized summary, entry to commuter Home, persisted setup after reload, and profile editing. Test residence/year/major/interests were cleared afterward; the preview name remains Jamie.
+- Phone-size override did not apply to the browser screenshots in this session; observed screenshots were desktop width. Native small-screen, software keyboard, Face ID, biometric cancellation, and background locking remain device verification tasks.
+- The local Expo environment is connected to the ORBIT Supabase project with its publishable client key. Email/password sign-up, confirmation guidance, sign-in, session storage, and sign-out are implemented. The provider, new-user signup, and confirmation settings are enabled. No test email was sent and no real user account was created, so delivery, confirmed login, session refresh, and remote sign-out still need an authorized test account. Production delivery needs custom SMTP.
+- Face ID requires a signed Orbit development build. Expo Go provides the local onboarding preview; it does not support Face ID on iOS.

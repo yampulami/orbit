@@ -36,7 +36,8 @@ function validState(data: State) {
     Array.isArray(data.hangouts)
   );
 }
-export function createLocalStore(disk: Disk) {
+export function createLocalStore(disk: Disk, accountId?: string) {
+  const key = accountId ? `orbit-account-${accountId}-v2` : KEY;
   let current: { version: 2; state: State; drafts: Drafts } | undefined;
   let writes: Promise<void> = Promise.resolve();
   function write() {
@@ -44,14 +45,14 @@ export function createLocalStore(disk: Disk) {
     const snapshot = JSON.stringify(current);
     const result = writes
       .catch(() => {})
-      .then(() => disk.setItem(KEY, snapshot));
+      .then(() => disk.setItem(key, snapshot));
     writes = result;
     return result;
   }
   return {
     async load() {
       // Keep previous branding keys readable; never delete the original records.
-      const raw = (await disk.getItem(KEY)) ?? (await disk.getItem("campo-native-v2"));
+      const raw = (await disk.getItem(key)) ?? (accountId ? null : await disk.getItem("campo-native-v2"));
       if (raw) {
         const data = JSON.parse(raw);
         if (
@@ -68,7 +69,7 @@ export function createLocalStore(disk: Disk) {
           throw new Error("Saved data cannot be read.");
         current = data;
       } else {
-        const legacy = await disk.getItem("campo-native-v1");
+        const legacy = accountId ? null : await disk.getItem("campo-native-v1");
         const state = legacy ? JSON.parse(legacy) : seed();
         if (!validState(state)) throw new Error("Saved data cannot be read.");
         current = { version: 2, state, drafts: {} };

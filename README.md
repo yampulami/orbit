@@ -53,7 +53,7 @@ Open the local URL printed by Vite. `npm.cmd run build` produces a production bu
 
 ## Prototype boundaries
 
-This is a local, single-device prototype. Sample people, events, menus, and campus details are fictional. No account authentication, email verification, invitations, multi-user sync, payments, university access, emergency reporting, or real bookings are implemented. An email suffix does not verify student identity. The interface labels these boundaries explicitly.
+This is a local-first prototype. Sample people, events, menus, and campus details are fictional. The Expo app has Supabase email/password authentication and confirmation, but invitations, multi-user sync, payments, university access, emergency reporting, and real bookings are not implemented. An email suffix does not verify student identity. The interface labels these boundaries explicitly.
 
 Safety, booking, and jobs are integration placeholders. Later work includes a backend with verified university email authentication, space membership and authorization, real-time updates, receipt uploads, recurring bills, negotiated task trades, grocery trip claiming, availability polls across multiple times, and university-approved integrations. User preference changes on campus preview pages only affect this browser.
 
@@ -81,3 +81,8 @@ git push
 ```
 
 Dependencies, build output, Expo session files, generated LAN QR codes, and environment secrets are excluded from Git. After cloning, start Expo to generate a fresh QR code for your network.
+
+
+## Login and personalization
+
+The Expo app includes email/password login, explicit preview mode, and four-step campus personalization. Authentication uses Supabase; see [authentication setup](mobile/AUTH-SETUP.md). Student profiles and app data remain local to each account on the device. Face ID is optional after sign-in and requires an iOS development build rather than Expo Go.

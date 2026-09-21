@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SpaceDrawing } from "./LineArt";
 import { theme } from "./theme";
+import { profileSuggestions, type StudentProfile } from "../../src/studentProfile";
 import { planTimeline, priorityTasks } from "../../src/ux";
 import { useCurrentTime } from "./useCurrentTime";
 import { balances, money, type State, type Space } from "../../src/model";
@@ -11,6 +12,7 @@ import { balances, money, type State, type Space } from "../../src/model";
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type Props = {
   state: State;
+  profile: StudentProfile;
   space: Space;
   open: (kind: string) => void;
   roommates: (section: string, mine?: boolean) => void;
@@ -21,6 +23,7 @@ type Props = {
 
 export default function HomeDashboard({
   state,
+  profile,
   space,
   open,
   roommates,
@@ -83,7 +86,7 @@ export default function HomeDashboard({
   }
   return (
     <View style={h.dashboard}>
-      <View style={h.summary}>
+      {profile.lifestyle !== "Commuter" && <View style={h.summary}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Open ${space.name}`}
@@ -149,7 +152,7 @@ export default function HomeDashboard({
           </Text>
         </Pressable>
       </View>
-      </View>
+      </View>}
       <View style={h.actions}>
         {actions.map((a) => (
           <Pressable
@@ -165,6 +168,10 @@ export default function HomeDashboard({
             <Text style={h.actionLabel}>{a.label}</Text>
           </Pressable>
         ))}
+      </View>
+      <View>
+        <Text style={h.sectionHeading}>{profile.lifestyle === "Commuter" ? "Between classes" : "For your Orbit"}</Text>
+        {profileSuggestions(profile).slice(0,profile.lifestyle === "Commuter" ? 2 : 1).map(item=><Pressable key={item.title} accessibilityRole="button" accessibilityLabel={item.title} onPress={item.destination === "hangouts" ? hangouts : campus} style={h.link}><View style={{flex:1}}><Text style={h.taskTitle}>{item.title}</Text><Text style={h.detail}>{item.detail}</Text></View><Ionicons name="arrow-forward" size={18} color={theme.active}/></Pressable>)}
       </View>
       <Text style={h.sectionHeading}>Your activity</Text>
       <View style={h.sections}>

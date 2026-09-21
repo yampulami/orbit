@@ -2,7 +2,7 @@ import TextInput from "./FocusInput";
 import { validateForm } from "../../src/formValidation";
 import ExpenseDetails from "./ExpenseDetails";
 import PlanDetails from "./PlanDetails";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   AccessibilityInfo,
@@ -33,7 +33,9 @@ import {
   type Space,
 } from "../../src/model";
 import { draftKey, type Drafts } from "../../src/localStore";
-import { persistDrafts, persist, restore } from "./storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createLocalStore } from "../../src/localStore";
+import AuthGate, { type AccountControls } from "./AuthGate";
 import Pressable from "./Touch";
 import DateField from "./DateField";
 import {
@@ -189,11 +191,13 @@ function Field({
 export default function Orbit() {
   return (
     <SafeAreaProvider>
-      <OrbitApp />
+      <AuthGate>{controls => <OrbitApp key={controls.accountId ?? "preview"} {...controls} />}</AuthGate>
     </SafeAreaProvider>
   );
 }
-function OrbitApp() {
+function OrbitApp({accountId, profile, editPreferences, signOut, security}: AccountControls) {
+  const store = useMemo(() => createLocalStore(AsyncStorage, accountId), [accountId]);
+  const { save: persist, load: restore, saveDrafts: persistDrafts } = store;
   const [state, setState] = useState<State>(seed),
     [ready, setReady] = useState(false),
     [loadError, setLoadError] = useState(false),
@@ -724,7 +728,7 @@ function OrbitApp() {
             onPress={() => open("profile")}
             style={[s.avatar, { width: 44, height: 44 }]}
           >
-            <Text style={s.avatarText}>{state.name[0]?.toUpperCase()}</Text>
+            <Text style={s.avatarText}>{profile.name[0]?.toUpperCase() || state.name[0]?.toUpperCase()}</Text>
           </Pressable>
           <Text
             style={{
@@ -736,7 +740,7 @@ function OrbitApp() {
             {page}
           </Text>
         </View>
-        <Text style={s.demo}>● LOCAL DEMO</Text>
+        <Text style={s.demo}>{accountId ? "● LOCAL DATA" : "● PREVIEW"}</Text>
       </View>
       <ScrollView
         ref={scroll}
@@ -762,6 +766,7 @@ function OrbitApp() {
           <HomeDashboard
             state={state}
             space={space}
+            profile={profile}
             open={open}
             roommates={(next, mine) => {
               setSection(next);
@@ -1215,7 +1220,7 @@ function OrbitApp() {
                   keyboardShouldPersistTaps="handled"
                   contentContainerStyle={{ paddingBottom: 20 }}
                 >
-                  {modal !== "quiet" && modal !== "assign" && (
+                  {modal !== "quiet" && modal !== "assign" && modal !== "profile" && (
                     <Field
                       label={
                         modal === "profile"
@@ -1431,22 +1436,13 @@ function OrbitApp() {
                   )}
                   {modal === "profile" && (
                     <>
-                      <Field
-                        label="University email (optional)"
-                        value={email}
-                        error={
-                          currentIssue?.field === "email"
-                            ? currentIssue.message
-                            : undefined
-                        }
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        placeholder="you@university.edu"
-                      />
-                      <Text style={s.body}>
-                        Local demo profile. The .edu format is checked, but your
-                        email is not verified and no email is sent.
-                      </Text>
+                      <Text style={s.cardTitle}>{profile.name}</Text>
+                      <Text style={s.body}>{[profile.campus,profile.lifestyle,profile.year,profile.major].filter(Boolean).join(" · ")}</Text>
+                      <Text style={s.body}>{[...profile.hobbies,...profile.clubs].join(" · ") || "Choose interests to personalize Orbit."}</Text>
+                      <Button title="Edit campus preferences" onPress={()=>{closeForm();editPreferences();}} />
+                      <Button title="Account & biometric unlock" secondary onPress={()=>{closeForm();security();}} />
+                      <Button title={accountId?"Sign out":"Leave preview"} secondary onPress={()=>{closeForm();signOut();}} />
+
                     </>
                   )}
                   {modal === "space" && (
@@ -1461,7 +1457,7 @@ function OrbitApp() {
                     </Text>
                   )}
                 </ScrollView>
-                <View style={s.formFooter}>
+                {modal !== "profile" && <View style={s.formFooter}>
                   {modal !== "assign" && (
                     <View style={s.between}>
                       <Text style={s.small}>
@@ -1508,7 +1504,7 @@ function OrbitApp() {
                     }
                     onPress={submit}
                   />
-                </View>
+                </View>}
               </View>
             </SafeAreaView>
           </KeyboardAvoidingView>

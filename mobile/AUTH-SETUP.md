@@ -1,0 +1,35 @@
+# Orbit login and onboarding
+
+## Email login
+
+1. Create or select your Supabase project. Enable email authentication and email/password sign-in.
+2. Keep email confirmation enabled. New users create a password, follow Supabase's confirmation link, return to Orbit, and sign in.
+3. Configure a custom SMTP provider before inviting real users. Supabase's default email service is intended for limited testing and has delivery restrictions.
+4. Copy `mobile/.env.example` to `mobile/.env.local`. Set the project URL and **publishable** key. Never put a service-role/secret key into the mobile application.
+5. Restart Expo: `npm.cmd run mobile` from the repository root.
+6. Test new-user confirmation, existing-user login, invalid credentials, sign-out, and session recovery using your own test account.
+
+The local project is connected to Supabase through an ignored `.env.local` file. Without those variables the email action is disabled and Explore the preview remains usable. Preview is not a fake authenticated account. Email verification alone does not establish university enrollment.
+
+## Face ID / biometrics
+
+- Optional after sign-in, from Profile → Account & biometric unlock. First-time native onboarding also offers it after setup.
+- Requires supported hardware and enrolled biometrics. Enabling requires a successful system check. Cancellation does not unlock.
+- The app locks on background/inactive and cold start when enabled. Email sign-out/re-entry is the fallback and resets this device's lock preference.
+- **Face ID cannot run in Expo Go on iOS.** Create a signed development build with the `expo-local-authentication` config plugin included. An iPhone development build requires Apple signing/provisioning. Native permission changes require rebuilding, not just an OTA update. `expo-dev-client` and `eas.json` are included. After connecting Expo/Apple signing, run `npx eas-cli build --profile development --platform ios`, install the build, then `npx expo start --dev-client`. These build/signing steps have not been executed.
+- Session tokens use Expo SecureStore on native; browser sessions use tab-scoped sessionStorage. Biometrics gate the app UI; ordinary offline app data is not an encrypted biometric vault.
+
+## Data boundaries
+
+Profile setup saves on each Continue, scoped to the signed-in user or explicit preview. Drafts resume from the first step with saved answers. Preferences can be edited from Profile. Only the first name is required; university, residence, year, major, hobbies, and clubs are optional.
+
+Signed-in users have separate local app storage. Existing pre-login data remains in preview and is never silently assigned to a new account. Preferences, chores, expenses, and plans are currently **device-local**. Supabase handles authentication only; multi-device sync and shared campus services still need database tables and row-level security policies.
+
+## Transcript decisions
+
+- Transcript 1: explain value as questions are answered, gather only useful preferences, and make it possible to evaluate completion. Its revenue claims are not evidence for Orbit; no paywall, invented social proof, marketing tracking, or deliberately prolonged survey was added.
+- Transcript 2: outcome-first entry, multi-select interests, visible personalized result, progress, reversible choices, contextual copy, and gentle motion. Orbit's preview is usable before an account is connected.
+- Four stages: campus life → studies → hobbies/clubs → personalized preview. Commuter mode prioritizes between-class plans instead of the roommate summary. Major and interest choices change suggestions.
+- Stage transitions fade and slide; selections use the existing press feedback and native haptics. Reduce Motion disables transition movement. No animation wraps an Expo icon imperative ref.
+
+Sources: [Expo LocalAuthentication](https://docs.expo.dev/versions/v57.0.0/sdk/local-authentication/), [Supabase password authentication](https://supabase.com/docs/guides/auth/passwords), [Supabase React Native](https://supabase.com/docs/guides/auth/quickstarts/react-native).
