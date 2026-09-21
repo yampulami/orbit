@@ -1,7 +1,7 @@
 import "react-native-url-polyfill/auto";
 import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const key = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -17,4 +17,5 @@ const storage = {
     else await SecureStore.deleteItemAsync(name);
   },
 };
-export const auth = url && key ? createClient(url,key,{auth:{storage,autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}}) : null;
+const runtime = globalThis as typeof globalThis & { __orbitAuth?: SupabaseClient };
+export const auth = url && key ? runtime.__orbitAuth ??= createClient(url,key,{auth:{storage,autoRefreshToken:true,persistSession:true,detectSessionInUrl:false}}) : null;
