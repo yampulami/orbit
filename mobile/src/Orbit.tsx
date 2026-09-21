@@ -186,14 +186,14 @@ function Field({
   );
 }
 
-export default function Campo() {
+export default function Orbit() {
   return (
     <SafeAreaProvider>
-      <CampoApp />
+      <OrbitApp />
     </SafeAreaProvider>
   );
 }
-function CampoApp() {
+function OrbitApp() {
   const [state, setState] = useState<State>(seed),
     [ready, setReady] = useState(false),
     [loadError, setLoadError] = useState(false),
@@ -379,7 +379,7 @@ function CampoApp() {
         if (version === saveVersion.current) {
           setNotice(null);
           setError(
-            "Changes are visible but not saved. Keep Campo open and retry.",
+            "Changes are visible but not saved. Keep Orbit open and retry.",
           );
         }
       });
@@ -666,7 +666,7 @@ function CampoApp() {
         <Text style={s.small}>
           {space.tasks.length
             ? "Try another filter or clear your search."
-            : "Add the first task. Campo can suggest who takes it."}
+            : "Add the first task. Orbit can suggest who takes it."}
         </Text>
         <Button
           title={space.tasks.length ? "Show all tasks" : "Add first task"}
@@ -685,7 +685,7 @@ function CampoApp() {
     return (
       <SafeAreaView style={[s.safe, s.loading]}>
         <Icon name="leaf-outline" size={45} />
-        <Text style={s.heading}>campo.</Text>
+        <Text style={s.heading}>orbit.</Text>
         {loadError ? (
           <>
             <Text style={s.body}>{error}</Text>
@@ -1208,7 +1208,7 @@ function CampoApp() {
                     <Icon name="close" />
                   </Pressable>
                 </View>
-                <Text style={s.composerContext}>{["task", "grocery", "expense"].includes(modal) ? space.name : modal === "hangout" ? "Your circle" : "Campo"}</Text>
+                <Text style={s.composerContext}>{["task", "grocery", "expense"].includes(modal) ? space.name : modal === "hangout" ? "Your circle" : "Orbit"}</Text>
                 <ScrollView
                   style={{ flex: 1 }}
                   keyboardDismissMode="on-drag"

@@ -14,7 +14,7 @@ type Disk = {
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<void>;
 };
-const KEY = "campo-native-v2";
+const KEY = "orbit-native-v2";
 export const draftKey = (space: string, form: string) =>
   JSON.stringify([space, form]);
 const fields = [
@@ -50,7 +50,8 @@ export function createLocalStore(disk: Disk) {
   }
   return {
     async load() {
-      const raw = await disk.getItem(KEY);
+      // Keep previous branding keys readable; never delete the original records.
+      const raw = (await disk.getItem(KEY)) ?? (await disk.getItem("campo-native-v2"));
       if (raw) {
         const data = JSON.parse(raw);
         if (

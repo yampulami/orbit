@@ -77,3 +77,10 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Browser: invalid February 30 date was rejected; Cancel restored September 18. Saving September 15 moved Friday movie night into Past with all three responses; Undo returned it to Upcoming on September 18.
 - After the local save indicator, reloaded and confirmed the restored September 18 date and three responses persisted. Test data restored; preview left on Home.
 - Native date picker interaction, keyboard avoidance, and screen-reader behavior need physical-phone testing. Undo is session-only; unsaved plan edits are discarded by Cancel and are not durable drafts.
+
+
+## Orbit rename — September 20, 2026
+
+- Renamed Expo display name, slug, URL scheme, package names, visible branding, documentation, and main screen module to Orbit.
+- New saves use orbit-native-v2 / orbit-v1. Readers retain previous storage-key compatibility and do not delete old records. Recovery requires access to the same device storage; physical Expo Go migration remains unverified.
+- Twenty-three tests pass, including old native state/draft recovery, new-key precedence, and corrupt new-record rejection. Vite build, native TypeScript, and Android/iOS/web exports pass.

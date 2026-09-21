@@ -1,4 +1,4 @@
-# Campo on your phone
+# Orbit on your phone
 
 Native React Native + Expo SDK 57 app for Android and iPhone. It uses Expo Go-compatible libraries, safe-area insets, keyboard-aware forms, and device storage.
 
@@ -46,6 +46,6 @@ npm.cmd run export
 npm.cmd run web
 ```
 
-`src/Campo.tsx` contains native screens. `src/storage.ts` owns on-device persistence. `../src/model.ts` is the shared business logic; Metro watches that folder. UUIDs are supplied by Expo Crypto on native rather than relying on the browser crypto global.
+`src/Orbit.tsx` contains native screens. `src/storage.ts` owns on-device persistence. `../src/model.ts` is the shared business logic; Metro watches that folder. UUIDs are supplied by Expo Crypto on native rather than relying on the browser crypto global.
 
 Expo Go does not require a local iOS build on Windows. Standalone signed app builds are a separate deployment step. See https://docs.expo.dev/tutorial/create-your-first-app/ for the official device setup instructions.

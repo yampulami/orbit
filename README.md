@@ -1,4 +1,4 @@
-# Campo
+# Orbit
 
 A campus-life prototype with an Expo / React Native phone app and a React / Vite web prototype. The visual theme uses the supplied reference's deep teal, muted blue, sage, and warm cream.
 
@@ -49,7 +49,7 @@ Open the local URL printed by Vite. `npm.cmd run build` produces a production bu
 - Hangout proposals with suggested times, availability votes, overlap detection, and free status
 - Sample event RSVPs, club memberships, and vegetarian dining filters
 - Editable demo profile with optional `.edu` email format checking
-- Local browser persistence under `campo-v1`
+- Local browser persistence under `orbit-v1`
 
 ## Prototype boundaries
 

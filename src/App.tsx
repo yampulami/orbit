@@ -89,7 +89,7 @@ const events = [
 ];
 function readState(): State {
   try {
-    const s = JSON.parse(localStorage.getItem("campo-v1") || "null");
+    const s = JSON.parse((localStorage.getItem("orbit-v1") ?? localStorage.getItem("campo-v1")) || "null");
     if (
       s?.version === 1 &&
       Array.isArray(s.spaces) &&
@@ -152,7 +152,7 @@ export default function App() {
   function save(next: State) {
     setState(next);
     try {
-      localStorage.setItem("campo-v1", JSON.stringify(next));
+      localStorage.setItem("orbit-v1", JSON.stringify(next));
     } catch {
       setNotice(
         "Storage is unavailable. Changes will last only for this session.",
@@ -398,7 +398,7 @@ export default function App() {
           <span className="brand-icon">
             <Leaf size={24} />
           </span>
-          campo<span className="brand-period">.</span>
+          orbit<span className="brand-period">.</span>
         </a>
         <p className="brand-tagline">YOUR CAMPUS, TOGETHER</p>
         <div className="campus-switch">
@@ -1258,7 +1258,7 @@ export default function App() {
           )}
           <footer>
             <span className="footer-logo">
-              <Leaf size={14} /> campo.
+              <Leaf size={14} /> orbit.
             </span>
             <span>A little less juggling. A lot more living.</span>
             <span>Made for campus life ↗</span>

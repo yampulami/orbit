@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Campo",
-    "slug": "campo",
+    "name": "Orbit",
+    "slug": "orbit",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "scheme": "campo",
+    "scheme": "orbit",
     "ios": {
       "supportsTablet": true
     },
@@ -13,7 +13,7 @@
       "predictiveBackGestureEnabled": true
     },
     "web": {
-      "name": "Campo Mobile",
+      "name": "Orbit Mobile",
       "bundler": "metro"
     },
     "plugins": [

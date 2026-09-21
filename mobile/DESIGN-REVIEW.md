@@ -1,10 +1,10 @@
-# Campo: transcript analysis and implemented improvements
+# Orbit: transcript analysis and implemented improvements
 
 ## Design direction
 
 The four transcripts describe different layers of the same experience: helping people decide, making interactions feel dependable, arranging information by priority, and choosing the right presentation for each kind of data. Their strongest shared lesson is that visual polish must support a real task.
 
-For Campo, that task is checking what needs attention, making a small update, and getting back to campus life. The home screen should remain a short overview. Roommate work belongs in focused lists; plans belong in chronological cards; campus discovery needs search and categories. Forms should explain the effect of a change before it happens.
+For Orbit, that task is checking what needs attention, making a small update, and getting back to campus life. The home screen should remain a short overview. Roommate work belongs in focused lists; plans belong in chronological cards; campus discovery needs search and categories. Forms should explain the effect of a change before it happens.
 
 This implementation targets the Expo app in `mobile/`, including its web preview. It preserves the requested near-black background, muted teal and cream palette, outline icons, compact home, top-left profile, and animated teal tab indicator. The separate original Vite desktop app has not been redesigned in this pass.
 
@@ -14,7 +14,7 @@ This implementation targets the Expo app in `mobile/`, including its web preview
 
 **Goal gradient.** Progress can clarify what remains. It becomes misleading when invented to manufacture motivation. The task view now shows the real completed count, proportional progress, and the number of your open tasks. Existing demo tasks are still visibly part of a local demo; no artificial onboarding credit is awarded.
 
-**Ownership and value before signup.** Campo already allows useful exploration and profile/space customization without an account. That is preserved. Closing a form now retains its draft for that space during the current app session, which protects work already invested. The sheet explicitly states the draft's lifetime; it does not promise recovery after the app closes.
+**Ownership and value before signup.** Orbit already allows useful exploration and profile/space customization without an account. That is preserved. Closing a form now retains its draft for that space during the current app session, which protects work already invested. The sheet explicitly states the draft's lifetime; it does not promise recovery after the app closes.
 
 **Context for numbers.** A total alone leaves the user to calculate consequences. The expense sheet now previews exact per-person shares before submission, including one-cent remainders. A $10.01 total displays $2.51 for You and $2.50 for each other roommate, matching the shared calculation. It is explanatory context, not a price anchor.
 
@@ -46,7 +46,7 @@ No artificial loading delay was added. There are no camera or notification workf
 
 ## 4. Orchestration transcript: let data determine its presentation
 
-**Numbers.** Expense amounts and split previews use tabular numerals and right alignment. Progress remains tied to actual counts and effort. No decorative trend chart was added: Campo has no reliable time-series dataset to support one.
+**Numbers.** Expense amounts and split previews use tabular numerals and right alignment. Progress remains tied to actual counts and effort. No decorative trend chart was added: Orbit has no reliable time-series dataset to support one.
 
 **Time.** Hangouts sort by date; past plans are labelled. Home chooses the next future plan rather than the first inserted record. Activity history uses a restrained vertical timeline without inventing timestamps or authors for legacy strings.
 

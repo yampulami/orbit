@@ -21,6 +21,22 @@ function memory() {
     },
   };
 }
+
+test("Orbit recovers old state and drafts, then prefers its new record", async () => {
+  const disk = memory();
+  const original = { version: 2, state: seed(), drafts: { pending: draft } };
+  disk.data.set("campo-native-v2", JSON.stringify(original));
+  const store = createLocalStore(disk);
+  expect(await store.load()).toEqual({ state: original.state, drafts: original.drafts });
+  await store.save({ ...original.state, name: "Orbit user" });
+  expect(disk.data.has("orbit-native-v2")).toBe(true);
+  expect(disk.data.get("campo-native-v2")).toBe(JSON.stringify(original));
+  const recovered = await createLocalStore(disk).load();
+  expect(recovered.state.name).toBe("Orbit user");
+  expect(recovered.drafts.pending).toEqual(draft);
+  disk.data.set("orbit-native-v2", "corrupt");
+  await expect(createLocalStore(disk).load()).rejects.toThrow();
+});
 test("legacy state migrates without deleting the original; drafts recover by space and form", async () => {
   const disk = memory();
   const original = seed();
