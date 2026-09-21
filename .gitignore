@@ -1,0 +1,21 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.env*
+!.env.example
+
+# Local tooling, credentials, and generated Expo files
+.expo/
+.claude/
+.git-local-backup/
+expo-go-qr*.png
+*.log
+*.pem
+*.key
+*.p12
+*.p8
+*.jks
+*.mobileprovision
+.DS_Store
+Thumbs.db
+coverage/
