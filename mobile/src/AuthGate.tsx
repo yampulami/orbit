@@ -21,11 +21,16 @@ const lockKey = (id: string) => `orbit-lock-${id}`;
 export default function AuthGate({ children }: { children: (controls: AccountControls) => React.ReactNode }) {
   const [session,setSession] = useState<Session|null>(null), [guest,setGuest] = useState(false), [loading,setLoading] = useState(true);
   const [profile,setProfile] = useState<StudentProfile|null>(null), [editing,setEditing] = useState(false), [locked,setLocked] = useState(true), [lockEnabled,setLockEnabled] = useState(false);
-  const [security,setSecurity] = useState(false), [biometric,setBiometric] = useState(""), [email,setEmail] = useState(""), [password,setPassword] = useState(""), [authMode,setAuthMode] = useState<"signin"|"signup">("signin"), [confirmation,setConfirmation] = useState(false), [error,setError] = useState(""), [busy,setBusy] = useState(false), [retry,setRetry] = useState(0);
+  const [security,setSecurity] = useState(false), [biometric,setBiometric] = useState(""), [email,setEmail] = useState(""), [password,setPassword] = useState(""), [authMode,setAuthMode] = useState<"signin"|"signup">("signin"), [confirmation,setConfirmation] = useState(false), [notice,setNotice] = useState(""), [error,setError] = useState(""), [busy,setBusy] = useState(false), [cooldown,setCooldown] = useState(0), [retry,setRetry] = useState(0);
   const prompting = useRef(false), operation = useRef(false), generation = useRef(0);
   const currentId = useRef<string|null>(null);
   const credentialEntry = useRef(false);
   const id = session?.user.id ?? "preview";
+  useEffect(()=>{
+    if(!cooldown)return;
+    const timer=setTimeout(()=>setCooldown(value=>Math.max(0,value-1)),1000);
+    return ()=>clearTimeout(timer);
+  },[cooldown]);
   useEffect(() => {
     if (Platform.OS === "web" || (Platform.OS === "ios" && Constants.appOwnership === "expo")) return;
     Promise.all([LocalAuthentication.hasHardwareAsync(),LocalAuthentication.isEnrolledAsync(),LocalAuthentication.supportedAuthenticationTypesAsync()])
@@ -64,7 +69,7 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
     });
     return ()=>sub.remove();
   },[lockEnabled]);
-  async function run(fn:()=>Promise<void>){if(operation.current)return;operation.current=true;setBusy(true);setError("");try{await fn();}catch(e){setError(e instanceof Error?e.message:"Something went wrong. Try again.");}finally{operation.current=false;setBusy(false);}}
+  async function run(fn:()=>Promise<void>){if(operation.current)return;operation.current=true;setBusy(true);setError("");setNotice("");try{await fn();}catch(e){setError(e instanceof Error?e.message:"Something went wrong. Try again.");}finally{operation.current=false;setBusy(false);}}
   async function preview(){await run(async()=>{const raw=await AsyncStorage.getItem(profileKey("preview"));const p=raw?JSON.parse(raw):emptyProfile();if(!validProfile(p))throw Error("Preview preferences could not be read.");setProfile(p);setGuest(true);setLocked(false);});}
   async function submitAuth(){await run(async()=>{
     if(!auth)throw Error("Email sign-in is not connected yet. You can explore the preview below.");
@@ -76,7 +81,7 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
         const {data,error}=await auth.auth.signUp({email:email.trim().toLowerCase(),password});
         if(error)throw error;
         setPassword("");
-        if(!data.session)setConfirmation(true);
+        if(!data.session){setConfirmation(true);setCooldown(60);setNotice("Confirmation email sent. Check your inbox and spam folder.");}
       }else{
         const {error}=await auth.auth.signInWithPassword({email:email.trim().toLowerCase(),password});
         if(error)throw error;
@@ -84,9 +89,15 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
       }
     } finally { credentialEntry.current=false; }
   });}
+  async function resendConfirmation(){await run(async()=>{
+    if(!auth)throw Error("Email sign-in is not connected yet.");
+    const {error}=await auth.auth.resend({type:"signup",email:email.trim().toLowerCase()});
+    if(error)throw error;
+    setCooldown(60);setNotice("A new confirmation email was sent.");
+  });}
   async function signOut(){await run(async()=>{
     if(session&&auth){const {error}=await auth.auth.signOut({scope:"local"});if(error)throw error;if(Platform.OS!=="web")await SecureStore.deleteItemAsync(lockKey(session.user.id));}
-    setGuest(false);setProfile(null);setSession(null);setEditing(false);setSecurity(false);setLocked(false);setLockEnabled(false);setConfirmation(false);setPassword("");
+    setGuest(false);setProfile(null);setSession(null);setEditing(false);setSecurity(false);setLocked(false);setLockEnabled(false);setConfirmation(false);setPassword("");setNotice("");
   });}
   async function unlock(enable=false){await run(async()=>{
     if(!biometric)throw Error("Biometric unlock is unavailable here. Sign in with email instead.");
@@ -111,6 +122,7 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
     <Text accessibilityRole="header" style={s.title}>{locked?"Welcome back.":security?"An easier way in.":confirmation?"Check your inbox.":authMode==="signup"?"Create your Orbit.":"Find your people.\nMake your plans."}</Text>
     <Text style={s.body}>{locked?"Unlock your signed-in session to continue.":security?"Use your device’s biometric check when you return to Orbit.":confirmation?`Confirm ${email}, then come back and sign in.`:authMode==="signup"?"Start with an account, then shape Orbit around your campus life.":"A place for life between classes. Sign in with your email and password."}</Text>
     {!!error&&<Text accessibilityRole="alert" style={[s.error,{marginTop:18}]}>{error}</Text>}
+    {!!notice&&<Text accessibilityRole="alert" style={[s.hint,{marginTop:18,color:t.active}]}>{notice}</Text>}
     {(locked||security)?<>
       {!!biometric&&session&&button(lockEnabled&&!locked?`Disable ${biometric}`:`${locked?"Unlock":"Enable"} ${biometric}`,()=>{if(lockEnabled&&!locked)void run(async()=>{await SecureStore.deleteItemAsync(lockKey(id));setLockEnabled(false);});else void unlock(!locked);})}
       {!biometric&&<Text style={s.hint}>{Platform.OS==="ios"&&Constants.appOwnership==="expo"?"Face ID is available in an installed Orbit development build, not Expo Go.":"Biometric unlock needs a supported device with Face ID or a fingerprint enrolled."}</Text>}
@@ -119,6 +131,7 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
       {button(guest?"Leave preview":"Sign out and use email",()=>void signOut(),true)}
     </>:session&&!profile?<>{button("Retry loading account",()=>setRetry(x=>x+1))}{button("Sign out",()=>void signOut(),true)}</>:confirmation?<>
       {button("I’ve confirmed my email",()=>{setConfirmation(false);setAuthMode("signin");setError("");})}
+      {button(cooldown?`Resend available in ${cooldown}s`:"Resend confirmation email",()=>void resendConfirmation(),true,!!cooldown)}
       {button("Use a different email",()=>{setConfirmation(false);setEmail("");setError("");},true)}
     </>:<>
       <Text style={[s.label,{marginTop:28}]}>Email address</Text>

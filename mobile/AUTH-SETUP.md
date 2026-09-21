@@ -11,6 +11,8 @@
 
 The local project is connected to Supabase through an ignored `.env.local` file. Without those variables the email action is disabled and Explore the preview remains usable. Preview is not a fake authenticated account. Email verification alone does not establish university enrollment.
 
+The confirmation screen includes a rate-limited resend action. For a Gmail SMTP test connection, use `smtp.gmail.com`, port `465`, the Gmail address as both sender and username, and a Google App Password rather than the normal account password. A dedicated transactional provider and verified sending domain are recommended before public release.
+
 ## Face ID / biometrics
 
 - Optional after sign-in, from Profile → Account & biometric unlock. First-time native onboarding also offers it after setup.
