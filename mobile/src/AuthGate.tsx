@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as LocalAuthentication from "expo-local-authentication";
+import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
 import Constants from "expo-constants";
 import type { Session } from "@supabase/supabase-js";
@@ -18,6 +19,7 @@ import { theme as t } from "./theme";
 export type AccountControls = { accountId?: string; profile: StudentProfile; editPreferences: () => void; signOut: () => void; security: () => void };
 const profileKey = (id: string) => `orbit-profile-${id}`;
 const lockKey = (id: string) => `orbit-lock-${id}`;
+const confirmationUrl = Linking.createURL("auth/confirmed");
 export default function AuthGate({ children }: { children: (controls: AccountControls) => React.ReactNode }) {
   const [session,setSession] = useState<Session|null>(null), [guest,setGuest] = useState(false), [loading,setLoading] = useState(true);
   const [profile,setProfile] = useState<StudentProfile|null>(null), [editing,setEditing] = useState(false), [locked,setLocked] = useState(true), [lockEnabled,setLockEnabled] = useState(false);
@@ -78,7 +80,7 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
     credentialEntry.current=true;
     try {
       if(authMode==="signup"){
-        const {data,error}=await auth.auth.signUp({email:email.trim().toLowerCase(),password});
+        const {data,error}=await auth.auth.signUp({email:email.trim().toLowerCase(),password,options:{emailRedirectTo:confirmationUrl}});
         if(error)throw error;
         setPassword("");
         if(!data.session){setConfirmation(true);setCooldown(60);setNotice("Confirmation email sent. Check your inbox and spam folder.");}
@@ -91,7 +93,7 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
   });}
   async function resendConfirmation(){await run(async()=>{
     if(!auth)throw Error("Email sign-in is not connected yet.");
-    const {error}=await auth.auth.resend({type:"signup",email:email.trim().toLowerCase()});
+    const {error}=await auth.auth.resend({type:"signup",email:email.trim().toLowerCase(),options:{emailRedirectTo:confirmationUrl}});
     if(error)throw error;
     setCooldown(60);setNotice("A new confirmation email was sent.");
   });}
