@@ -21,9 +21,10 @@ const profileKey = (id: string) => `orbit-profile-${id}`;
 const lockKey = (id: string) => `orbit-lock-${id}`;
 const confirmationUrl = Linking.createURL("auth/confirmed");
 export default function AuthGate({ children }: { children: (controls: AccountControls) => React.ReactNode }) {
+  const incomingUrl = Linking.useURL();
   const [session,setSession] = useState<Session|null>(null), [guest,setGuest] = useState(false), [loading,setLoading] = useState(true);
   const [profile,setProfile] = useState<StudentProfile|null>(null), [editing,setEditing] = useState(false), [locked,setLocked] = useState(true), [lockEnabled,setLockEnabled] = useState(false);
-  const [security,setSecurity] = useState(false), [biometric,setBiometric] = useState(""), [email,setEmail] = useState(""), [password,setPassword] = useState(""), [authMode,setAuthMode] = useState<"signin"|"signup">("signin"), [confirmation,setConfirmation] = useState(false), [notice,setNotice] = useState(""), [error,setError] = useState(""), [busy,setBusy] = useState(false), [cooldown,setCooldown] = useState(0), [retry,setRetry] = useState(0);
+  const [security,setSecurity] = useState(false), [biometric,setBiometric] = useState(""), [email,setEmail] = useState(""), [password,setPassword] = useState(""), [authMode,setAuthMode] = useState<"signin"|"signup">("signin"), [confirmation,setConfirmation] = useState(false), [confirmed,setConfirmed] = useState(false), [notice,setNotice] = useState(""), [error,setError] = useState(""), [busy,setBusy] = useState(false), [cooldown,setCooldown] = useState(0), [retry,setRetry] = useState(0);
   const prompting = useRef(false), operation = useRef(false), generation = useRef(0);
   const currentId = useRef<string|null>(null);
   const credentialEntry = useRef(false);
@@ -33,6 +34,10 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
     const timer=setTimeout(()=>setCooldown(value=>Math.max(0,value-1)),1000);
     return ()=>clearTimeout(timer);
   },[cooldown]);
+  useEffect(()=>{
+    if(!incomingUrl?.includes("auth/confirmed"))return;
+    setConfirmation(false);setConfirmed(true);setAuthMode("signin");setError("");setNotice("Your email is verified. Sign in to enter Orbit.");
+  },[incomingUrl]);
   useEffect(() => {
     if (Platform.OS === "web" || (Platform.OS === "ios" && Constants.appOwnership === "expo")) return;
     Promise.all([LocalAuthentication.hasHardwareAsync(),LocalAuthentication.isEnrolledAsync(),LocalAuthentication.supportedAuthenticationTypesAsync()])
@@ -99,7 +104,7 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
   });}
   async function signOut(){await run(async()=>{
     if(session&&auth){const {error}=await auth.auth.signOut({scope:"local"});if(error)throw error;if(Platform.OS!=="web")await SecureStore.deleteItemAsync(lockKey(session.user.id));}
-    setGuest(false);setProfile(null);setSession(null);setEditing(false);setSecurity(false);setLocked(false);setLockEnabled(false);setConfirmation(false);setPassword("");setNotice("");
+    setGuest(false);setProfile(null);setSession(null);setEditing(false);setSecurity(false);setLocked(false);setLockEnabled(false);setConfirmation(false);setConfirmed(false);setPassword("");setNotice("");
   });}
   async function unlock(enable=false){await run(async()=>{
     if(!biometric)throw Error("Biometric unlock is unavailable here. Sign in with email instead.");
@@ -117,12 +122,12 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
     if(!profile.completed||editing)return <Onboarding key={id} initial={profile} preview={guest} save={saveProfile} finish={p=>{setProfile(p);setEditing(false);if(session&&!profile.completed&&Platform.OS!=="web")setSecurity(true);}} cancel={()=>{if(profile.completed)setEditing(false);else void signOut();}}/>;
     return <>{children({accountId:session?.user.id,profile,editPreferences:()=>setEditing(true),signOut:()=>{setSecurity(true);},security:()=>setSecurity(true)})}</>;
   }
-  return <SafeAreaView style={s.safe}><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==="ios"?"padding":"height"}><StepMotion step={locked?"locked":security?"security":confirmation?"confirmation":authMode}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content,{flexGrow:1}]}>
+  return <SafeAreaView style={s.safe}><KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==="ios"?"padding":"height"}><StepMotion step={locked?"locked":security?"security":confirmation?"confirmation":confirmed?"confirmed":authMode}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[s.content,{flexGrow:1}]}>
     <Text style={[s.brand,{marginBottom:42}]}>orbit.</Text>
     <View style={{height:130,justifyContent:"center",alignItems:"center",marginBottom:25}}><View style={{width:190,height:90,borderWidth:1,borderColor:t.teal,borderRadius:100,transform:[{rotate:"-20deg"}],alignItems:"center",justifyContent:"center"}}><View style={{width:68,height:68,borderRadius:34,backgroundColor:t.teal,alignItems:"center",justifyContent:"center"}}><Ionicons name={locked||security?"scan-outline":"planet-outline"} color={t.cream} size={34}/></View></View></View>
-    <Text style={s.overline}>{locked?"YOUR SPACE, PROTECTED":security?"YOUR ACCOUNT":"CAMPUS LIFE, WITH YOUR PEOPLE"}</Text>
-    <Text accessibilityRole="header" style={s.title}>{locked?"Welcome back.":security?"An easier way in.":confirmation?"Check your inbox.":authMode==="signup"?"Create your Orbit.":"Find your people.\nMake your plans."}</Text>
-    <Text style={s.body}>{locked?"Unlock your signed-in session to continue.":security?"Use your device’s biometric check when you return to Orbit.":confirmation?`Confirm ${email}, then come back and sign in.`:authMode==="signup"?"Start with an account, then shape Orbit around your campus life.":"A place for life between classes. Sign in with your email and password."}</Text>
+    <Text style={s.overline}>{locked?"YOUR SPACE, PROTECTED":security?"YOUR ACCOUNT":confirmed?"YOU’RE IN":"CAMPUS LIFE, WITH YOUR PEOPLE"}</Text>
+    <Text accessibilityRole="header" style={s.title}>{locked?"Welcome back.":security?"An easier way in.":confirmation?"Check your inbox.":confirmed?"Email confirmed.":authMode==="signup"?"Create your Orbit.":"Find your people.\nMake your plans."}</Text>
+    <Text style={s.body}>{locked?"Unlock your signed-in session to continue.":security?"Use your device’s biometric check when you return to Orbit.":confirmation?`Confirm ${email}, then come back and sign in.`:confirmed?"Your Orbit account is ready. Sign in below to continue.":authMode==="signup"?"Start with an account, then shape Orbit around your campus life.":"A place for life between classes. Sign in with your email and password."}</Text>
     {!!error&&<Text accessibilityRole="alert" style={[s.error,{marginTop:18}]}>{error}</Text>}
     {!!notice&&<Text accessibilityRole="alert" style={[s.hint,{marginTop:18,color:t.active}]}>{notice}</Text>}
     {(locked||security)?<>
@@ -141,7 +146,7 @@ export default function AuthGate({ children }: { children: (controls: AccountCon
       <Text style={[s.label,{marginTop:16}]}>Password</Text>
       <Input accessibilityLabel="Password" value={password} onChangeText={value=>{setPassword(value);setError("");}} placeholder="8 or more characters" placeholderTextColor={t.muted} autoCapitalize="none" autoCorrect={false} secureTextEntry textContentType={authMode==="signup"?"newPassword":"password"} style={s.input}/>
       {button(busy?"Please wait…":authMode==="signup"?"Create account":"Sign in",()=>void submitAuth(),false,!auth)}
-      {button(authMode==="signup"?"Already have an account? Sign in":"New to Orbit? Create an account",()=>{setAuthMode(mode=>mode==="signup"?"signin":"signup");setPassword("");setError("");},true)}
+      {button(authMode==="signup"?"Already have an account? Sign in":"New to Orbit? Create an account",()=>{setAuthMode(mode=>mode==="signup"?"signin":"signup");setConfirmed(false);setPassword("");setError("");},true)}
       {!auth&&<Text style={s.hint}>Email login is awaiting the backend connection. No account is created in preview mode.</Text>}
       {button("Explore the preview",()=>void preview(),true)}
       <Text style={s.hint}>Email verification confirms your inbox—not university enrollment.</Text>
