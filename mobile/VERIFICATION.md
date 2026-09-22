@@ -95,3 +95,14 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Phone-size override did not apply to the browser screenshots in this session; observed screenshots were desktop width. Native small-screen, software keyboard, Face ID, biometric cancellation, and background locking remain device verification tasks.
 - The local Expo environment is connected to the ORBIT Supabase project with its publishable client key. Email/password sign-up, confirmation guidance, sign-in, session storage, and sign-out are implemented. The provider, new-user signup, and confirmation settings are enabled. No test email was sent and no real user account was created, so delivery, confirmed login, session refresh, and remote sign-out still need an authorized test account. Production delivery needs custom SMTP.
 - Face ID requires a signed Orbit development build. Expo Go provides the local onboarding preview; it does not support Face ID on iOS.
+
+
+## Entry experience redesign — September 22, 2026
+
+- Redesigned email sign-in, account creation, confirmation, password recovery, biometric entry, and all four onboarding stages with shared dark-theme controls.
+- 33 automated tests pass, including eight new checks covering bare/expired/unrelated callback URLs, Expo and installed-app paths, recovery classification, and signup versus sign-in password validation.
+- Native TypeScript, root Vite build, and iOS/Android/web exports pass.
+- Visually reviewed login, signup, interests, and profile review at 390 × 844 and signup at 375 × 667. Primary signup action remains visible on the smaller size; supplementary content scrolls. Native keyboard and font-scaling behavior still need device testing.
+- Browser walkthrough: saved draft restored; residence/year/major/interests retained; selected controls expose checked state; review edits jump directly back; completion opens personalized Home; cancelling an existing-profile edit preserves the previous preferences.
+- Expired confirmation link shows an error instead of a success claim. Password visibility, signup password-length validation, confirmation navigation, and recovery entry were exercised. No successful live recovery/password change or native biometric flow was verified in this pass.
+- Physical iPhone checks remaining: email deep link from Mail, keyboard next/done and avoidance, Face ID success/cancel/background locking in a signed build. Expo Go on iOS cannot verify Face ID.
