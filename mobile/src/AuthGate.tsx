@@ -23,9 +23,14 @@ import {
   validProfile,
   type StudentProfile,
 } from "../../src/studentProfile";
-import { credentialError, parseEmailCallback } from "../../src/authFlow";
+import {
+  credentialError,
+  parseEmailCallback,
+  authErrorMessage,
+} from "../../src/authFlow";
 import { auth } from "./authClient";
 import { Brand, Field, Feedback, Primary, TextAction, ui } from "./EntryUI";
+import { SignupChecks } from "./EntryExperience";
 import Touch from "./Touch";
 import StepMotion from "./StepMotion";
 import PasswordRecovery from "./PasswordRecovery";
@@ -278,9 +283,7 @@ export default function AuthGate({
     try {
       await fn();
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Something went wrong. Try again.",
-      );
+      setError(authErrorMessage(e));
     } finally {
       operation.current = false;
       setBusy(false);
@@ -610,6 +613,13 @@ export default function AuthGate({
               />
             )}
             <Feedback error={error} notice={notice} />
+            {authMode === "signin" && error.startsWith("Account not found") && (
+              <TextAction
+                label="Create an Orbit account"
+                disabled={busy}
+                onPress={() => switchMode("signup")}
+              />
+            )}
             {protectedView ? (
               <View style={a.actions}>
                 {!!biometric && session && (
@@ -763,11 +773,6 @@ export default function AuthGate({
                       ? "Create a password"
                       : "Enter your password"
                   }
-                  hint={
-                    authMode === "signup"
-                      ? "At least 8 characters. Make it unique to Orbit."
-                      : undefined
-                  }
                   autoCapitalize="none"
                   autoCorrect={false}
                   secureTextEntry
@@ -781,6 +786,9 @@ export default function AuthGate({
                   onSubmitEditing={() => void submitAuth()}
                   editable={!busy}
                 />
+                {authMode === "signup" && (
+                  <SignupChecks email={email} password={password} />
+                )}
                 {authMode === "signin" && (
                   <View style={{ alignItems: "flex-end" }}>
                     <TextAction

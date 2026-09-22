@@ -72,3 +72,35 @@ describe("credential validation", () => {
     );
   });
 });
+import { authErrorMessage } from "./authFlow";
+
+describe("helpful authentication errors", () => {
+  it("does not claim an ambiguous credentials error proves an account is missing", () => {
+    expect(
+      authErrorMessage({
+        code: "invalid_credentials",
+        message: "Invalid login credentials",
+      }),
+    ).toBe(
+      "Account not found or password incorrect. New to Orbit? Create an account first.",
+    );
+  });
+  it("handles older SDK errors without a code", () => {
+    expect(authErrorMessage(new Error("Invalid login credentials"))).toContain(
+      "Create an account first",
+    );
+  });
+  it("shows an exact missing-account message only when the service identifies it", () => {
+    expect(authErrorMessage({ code: "user_not_found" })).toBe(
+      "Account not found. Create an Orbit account first.",
+    );
+  });
+  it("gives confirmation and retry guidance", () => {
+    expect(authErrorMessage({ code: "email_not_confirmed" })).toContain(
+      "Confirm your email",
+    );
+    expect(authErrorMessage({ code: "over_request_rate_limit" })).toContain(
+      "Wait a moment",
+    );
+  });
+});

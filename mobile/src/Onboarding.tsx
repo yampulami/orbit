@@ -19,6 +19,7 @@ import {
   toggleInterest,
   type StudentProfile,
 } from "../../src/studentProfile";
+import { SetupProgress, YourOrbitPreview } from "./EntryExperience";
 import Touch from "./Touch";
 import StepMotion from "./StepMotion";
 import { Brand, Field, Feedback, Primary, ui } from "./EntryUI";
@@ -206,31 +207,7 @@ export default function Onboarding({
           <Brand />
           <Text style={ui.caption}>{step + 1} of 4</Text>
         </View>
-        <View
-          accessibilityRole="progressbar"
-          accessibilityLabel="Setup progress"
-          accessibilityValue={{
-            min: 1,
-            max: 4,
-            now: step + 1,
-            text: stages[step],
-          }}
-          style={s.progress}
-        >
-          {stages.map((label, i) => (
-            <View key={label} style={{ flex: 1, gap: 8 }}>
-              <View
-                style={[
-                  s.track,
-                  { backgroundColor: i <= step ? t.active : t.line },
-                ]}
-              />
-              <Text style={[s.stepLabel, i === step && { color: t.text }]}>
-                {label}
-              </Text>
-            </View>
-          ))}
-        </View>
+        <SetupProgress step={step} labels={stages} />
         <StepMotion step={step}>
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -325,6 +302,16 @@ export default function Onboarding({
                     </Touch>
                   ))}
                 </View>
+                {!!profile.lifestyle && (
+                  <Text
+                    accessibilityLiveRegion="polite"
+                    style={[ui.caption, { color: t.active, marginTop: 10 }]}
+                  >
+                    {profile.lifestyle === "Commuter"
+                      ? "Your home will put between-class plans first."
+                      : "Your home will keep shared plans and everyday tasks together."}
+                  </Text>
+                )}
               </>
             )}
             {step === 1 && (
@@ -365,6 +352,7 @@ export default function Onboarding({
             )}
             {step === 2 && (
               <>
+                <YourOrbitPreview profile={profile} />
                 <View style={s.sectionRow}>
                   <Text style={s.section}>Outside the classroom</Text>
                   <Text style={ui.caption}>
@@ -439,6 +427,7 @@ export default function Onboarding({
                     </Text>
                   </View>
                 </View>
+                <YourOrbitPreview profile={profile} />
                 {review(
                   "You & your campus",
                   [profile.name, profile.campus, profile.lifestyle]
@@ -456,30 +445,6 @@ export default function Onboarding({
                   [...profile.hobbies, ...profile.clubs].join(" · "),
                   2,
                 )}
-                <View style={s.aside}>
-                  <Ionicons
-                    accessible={false}
-                    name={
-                      profile.lifestyle === "Commuter"
-                        ? "train-outline"
-                        : "people-outline"
-                    }
-                    size={23}
-                    color={t.active}
-                  />
-                  <View style={{ flex: 1, gap: 5 }}>
-                    <Text style={s.optionTitle}>
-                      {profile.lifestyle === "Commuter"
-                        ? "Make the time between classes count."
-                        : "Start with your circle."}
-                    </Text>
-                    <Text style={ui.caption}>
-                      {profile.lifestyle === "Commuter"
-                        ? "Explore campus plans and find something worth staying for."
-                        : "Explore shared plans, everyday tasks, and campus life."}
-                    </Text>
-                  </View>
-                </View>
                 <Text style={ui.caption}>
                   Preferences are saved on this device. Campus listings in the
                   preview are samples.

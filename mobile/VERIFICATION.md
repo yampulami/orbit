@@ -106,3 +106,10 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Browser walkthrough: saved draft restored; residence/year/major/interests retained; selected controls expose checked state; review edits jump directly back; completion opens personalized Home; cancelling an existing-profile edit preserves the previous preferences.
 - Expired confirmation link shows an error instead of a success claim. Password visibility, signup password-length validation, confirmation navigation, and recovery entry were exercised. No successful live recovery/password change or native biometric flow was verified in this pass.
 - Physical iPhone checks remaining: email deep link from Mail, keyboard next/done and avoidance, Face ID success/cancel/background locking in a signed build. Expo Go on iOS cannot verify Face ID.
+
+## Interactive entry refinement — September 22, 2026
+
+- Re-read both supplied onboarding transcripts. Applied live form feedback, showing the effect of preferences, and gentle progress motion. No purchased assets or extra icon libraries are needed.
+- Supabase's ambiguous invalid_credentials response now explains that the account may be missing or the password incorrect, with an explicit create-account action preserving the entered email. A definite missing-account message is only used for a definite user_not_found response.
+- Signup shows live email-format and password-length checks. Setup animates progress with Reduce Motion support and previews the same plan/club suggestions used by Home as interests change.
+- 37 tests pass, TypeScript passes, and iOS/Android/web exports pass. Browser tested a nonexistent reserved-domain login, confirmed its actionable error, and verified the signup action preserved email. Phone-size visual review and live hobby-to-preview updates passed.

@@ -50,3 +50,23 @@ export function credentialError(
     return "Use at least 8 characters for your password.";
   return "";
 }
+
+export function authErrorMessage(error: unknown): string {
+  const detail = error as { code?: string; message?: string } | null;
+  const code = detail?.code;
+  if (code === "user_not_found")
+    return "Account not found. Create an Orbit account first.";
+  if (
+    code === "invalid_credentials" ||
+    detail?.message === "Invalid login credentials"
+  )
+    return "Account not found or password incorrect. New to Orbit? Create an account first.";
+  if (code === "email_not_confirmed")
+    return "Confirm your email before signing in. You can request a new confirmation below.";
+  if (
+    code === "over_request_rate_limit" ||
+    code === "over_email_send_rate_limit"
+  )
+    return "Too many attempts in a short time. Wait a moment, then try again.";
+  return detail?.message || "Something went wrong. Please try again.";
+}
