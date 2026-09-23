@@ -146,7 +146,7 @@ export default function AuthGate({
         }
         return;
       }
-      setEmail(data.user.email || "");
+
       setConfirmed(true);
       setError("");
       setNotice("Email verified. You’re ready to sign in.");
@@ -290,6 +290,8 @@ export default function AuthGate({
     }
   }
   async function preview() {
+    setEmail("");
+    setPassword("");
     await run(async () => {
       const raw = await AsyncStorage.getItem(profileKey("preview"));
       const p = raw ? JSON.parse(raw) : emptyProfile();
@@ -376,6 +378,7 @@ export default function AuthGate({
       setLockEnabled(false);
       setConfirmation(false);
       setConfirmed(false);
+      setEmail("");
       setPassword("");
       setNotice("");
     });
@@ -507,9 +510,6 @@ export default function AuthGate({
       >
         <View style={a.header}>
           <Brand />
-          <Text style={a.headerNote}>
-            {protectedView ? "YOUR ACCOUNT" : "LIFE BETWEEN CLASSES"}
-          </Text>
         </View>
         <StepMotion
           step={
@@ -560,43 +560,28 @@ export default function AuthGate({
                 />
               </View>
             )}
-            <Text style={ui.eyebrow}>
-              {locked
-                ? "WELCOME BACK"
-                : security
-                  ? "A LITTLE PEACE OF MIND"
-                  : confirmation
-                    ? "ONE LAST CHECK"
-                    : confirmed
-                      ? "EMAIL VERIFIED"
-                      : authMode === "signup"
-                        ? "YOUR NEXT CHAPTER"
-                        : "GOOD TO SEE YOU"}
-            </Text>
-            <Text accessibilityRole="header" style={ui.title}>
-              {locked
-                ? "Your Orbit awaits."
-                : security
-                  ? "Keep your space yours."
-                  : confirmation
-                    ? "Confirm your email."
-                    : confirmed
-                      ? "You’re all set."
-                      : authMode === "signup"
-                        ? "A place for your people."
-                        : "Back to your Orbit."}
-            </Text>
-            <Text style={ui.body}>
-              {locked
-                ? "Unlock to pick up where you left off."
-                : security
-                  ? "A quick biometric check keeps your signed-in account private on this device."
-                  : confirmation
-                    ? "Open your Orbit confirmation email, or request a fresh link below."
-                    : authMode === "signup"
-                      ? "Make an account. Then make yourself at home."
-                      : "Your people, shared plans, and campus life in one place."}
-            </Text>
+            {(protectedView || confirmation || confirmed) && (
+              <>
+                <Text accessibilityRole="header" style={ui.title}>
+                  {locked
+                    ? "Unlock Orbit"
+                    : security
+                      ? "Account security"
+                      : confirmation
+                        ? "Confirm your email"
+                        : "Email confirmed"}
+                </Text>
+                <Text style={ui.body}>
+                  {locked
+                    ? "Unlock to continue."
+                    : security
+                      ? "Use a biometric check to protect your signed-in account on this device."
+                      : confirmation
+                        ? "Open your Orbit confirmation email, or request a fresh link below."
+                        : "Sign in to continue."}
+                </Text>
+              </>
+            )}
             {confirmation && (
               <Field
                 label="Email address"
@@ -743,6 +728,7 @@ export default function AuthGate({
             ) : (
               <>
                 <Field
+                  suppressAutofill
                   label="Email address"
                   value={email}
                   onChangeText={(value) => {
@@ -753,8 +739,10 @@ export default function AuthGate({
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
-                  textContentType="emailAddress"
-                  autoComplete="email"
+                  textContentType={
+                    Platform.OS === "web" ? "none" : "emailAddress"
+                  }
+                  autoComplete={Platform.OS === "web" ? "off" : "email"}
                   maxLength={254}
                   returnKeyType="next"
                   onSubmitEditing={() => passwordInput.current?.focus()}
@@ -762,6 +750,7 @@ export default function AuthGate({
                 />
                 <Field
                   ref={passwordInput}
+                  suppressAutofill
                   label="Password"
                   value={password}
                   onChangeText={(value) => {
@@ -777,10 +766,18 @@ export default function AuthGate({
                   autoCorrect={false}
                   secureTextEntry
                   textContentType={
-                    authMode === "signup" ? "newPassword" : "password"
+                    Platform.OS === "web"
+                      ? "none"
+                      : authMode === "signup"
+                        ? "newPassword"
+                        : "password"
                   }
                   autoComplete={
-                    authMode === "signup" ? "new-password" : "current-password"
+                    Platform.OS === "web"
+                      ? "off"
+                      : authMode === "signup"
+                        ? "new-password"
+                        : "current-password"
                   }
                   returnKeyType="go"
                   onSubmitEditing={() => void submitAuth()}
@@ -841,13 +838,12 @@ export default function AuthGate({
                 />
               </>
             )}
-            <Text style={a.bottomNote}>
-              {confirmation
-                ? "The link confirms your email address only."
-                : protectedView
-                  ? "Your device handles the biometric check. Orbit doesn’t store your biometric data."
-                  : "A little less organizing. A little more living."}
-            </Text>
+            {protectedView && (
+              <Text style={a.bottomNote}>
+                Your device handles the biometric check. Orbit doesn’t store
+                your biometric data.
+              </Text>
+            )}
           </ScrollView>
         </StepMotion>
       </KeyboardAvoidingView>
@@ -874,7 +870,7 @@ const a = StyleSheet.create({
     flexDirection: "row",
     borderBottomWidth: 1,
     borderColor: t.line,
-    marginBottom: 34,
+    marginBottom: 4,
   },
   tab: {
     paddingVertical: 15,

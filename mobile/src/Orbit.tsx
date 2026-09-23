@@ -44,6 +44,7 @@ import {
   setGroceryDone,
   groceryGroups,
 } from "../../src/ux";
+import ProfilePanel from "./ProfilePanel";
 import HomeDashboard from "./HomeDashboard";
 import { theme } from "./theme";
 import BottomNavigation from "./BottomNavigation";
@@ -221,6 +222,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
   useEffect(() => {
     if (attempted) setFormError(currentIssue?.message ?? "");
   }, [attempted, modal, title, amount, date, time, email]);
+  const [campusCategory, setCampusCategory] = useState("Events");
   const [taskFilter, setTaskFilter] = useState("Open");
   const [query, setQuery] = useState("");
   const [groceryFilter, setGroceryFilter] = useState("Needed");
@@ -743,6 +745,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
         <Text style={s.demo}>{accountId ? "● LOCAL DATA" : "● PREVIEW"}</Text>
       </View>
       <ScrollView
+        showsVerticalScrollIndicator={false}
         ref={scroll}
         contentContainerStyle={[
           s.content,
@@ -775,7 +778,9 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
               go("Roommates");
             }}
             hangouts={() => go("Hangouts")}
-            campus={() => go("Campus")}
+            campus={() => { setCampusCategory("Events"); go("Campus"); }}
+            exploreClubs={() => { setCampusCategory("Clubs"); go("Campus"); }}
+            planDetails={setPlanDetails}
             toggleTask={toggleTask}
           />
         )}
@@ -1110,7 +1115,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
         {page === "Hangouts" && (
           <HangoutsScreen state={state} save={save} open={open} vote={vote} details={setPlanDetails} />
         )}
-        {page === "Campus" && <CampusScreen state={state} save={save} />}
+        {page === "Campus" && <CampusScreen state={state} save={save} profile={profile} category={campusCategory} onCategoryChange={setCampusCategory} />}
       </ScrollView>
       {!!notice && (
         <View style={s.toast} accessibilityLiveRegion="polite">
@@ -1213,8 +1218,9 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                     <Icon name="close" />
                   </Pressable>
                 </View>
-                <Text style={s.composerContext}>{["task", "grocery", "expense"].includes(modal) ? space.name : modal === "hangout" ? "Your circle" : "Orbit"}</Text>
+                {modal !== "profile" && <Text style={s.composerContext}>{["task", "grocery", "expense"].includes(modal) ? space.name : modal === "hangout" ? "Your circle" : "Orbit"}</Text>}
                 <ScrollView
+                  showsVerticalScrollIndicator={false}
                   style={{ flex: 1 }}
                   keyboardDismissMode="on-drag"
                   keyboardShouldPersistTaps="handled"
@@ -1434,17 +1440,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                       />
                     </>
                   )}
-                  {modal === "profile" && (
-                    <>
-                      <Text style={s.cardTitle}>{profile.name}</Text>
-                      <Text style={s.body}>{[profile.campus,profile.lifestyle,profile.year,profile.major].filter(Boolean).join(" · ")}</Text>
-                      <Text style={s.body}>{[...profile.hobbies,...profile.clubs].join(" · ") || "Choose interests to personalize Orbit."}</Text>
-                      <Button title="Edit campus preferences" onPress={()=>{closeForm();editPreferences();}} />
-                      <Button title="Account & biometric unlock" secondary onPress={()=>{closeForm();security();}} />
-                      <Button title={accountId?"Sign out":"Leave preview"} secondary onPress={()=>{closeForm();signOut();}} />
-
-                    </>
-                  )}
+                  {modal === "profile" && <ProfilePanel profile={profile} signedIn={!!accountId} edit={()=>{closeForm();editPreferences();}} security={()=>{closeForm();security();}} signOut={()=>{closeForm();signOut();}}/>}
                   {modal === "space" && (
                     <Text style={s.body}>
                       Creates a separate local space with the four demo

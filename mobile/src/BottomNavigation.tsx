@@ -46,6 +46,7 @@ function NavigationItem<T extends string>({
       accessibilityRole="tab"
       accessibilityLabel={item.page}
       accessibilityState={{ selected: active }}
+      aria-selected={active}
       onPress={() => onSelect(item.page)}
       style={({ pressed }) => [s.item, pressed && { opacity: 0.65 }]}
     >
@@ -53,6 +54,7 @@ function NavigationItem<T extends string>({
         style={s.icon}
         pointerEvents="none"
         accessibilityElementsHidden
+        aria-hidden={true}
         importantForAccessibility="no-hide-descendants"
       >
         <Animated.View

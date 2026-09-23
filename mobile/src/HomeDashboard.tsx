@@ -4,7 +4,10 @@ import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SpaceDrawing } from "./LineArt";
 import { theme } from "./theme";
-import { profileSuggestions, type StudentProfile } from "../../src/studentProfile";
+import {
+  profileSuggestions,
+  type StudentProfile,
+} from "../../src/studentProfile";
 import { planTimeline, priorityTasks } from "../../src/ux";
 import { useCurrentTime } from "./useCurrentTime";
 import { balances, money, type State, type Space } from "../../src/model";
@@ -18,6 +21,8 @@ type Props = {
   roommates: (section: string, mine?: boolean) => void;
   hangouts: () => void;
   campus: () => void;
+  exploreClubs: () => void;
+  planDetails: (id: string) => void;
   toggleTask: (id: string) => void;
 };
 
@@ -29,6 +34,8 @@ export default function HomeDashboard({
   roommates,
   hangouts,
   campus,
+  exploreClubs,
+  planDetails,
   toggleTask,
 }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -60,6 +67,7 @@ export default function HomeDashboard({
           accessibilityRole="button"
           accessibilityLabel={`${label}, ${detail}`}
           accessibilityState={{ expanded: isOpen }}
+          aria-expanded={isOpen}
           onPress={() => setExpanded(isOpen ? null : id)}
           style={h.sectionHeader}
         >
@@ -86,73 +94,79 @@ export default function HomeDashboard({
   }
   return (
     <View style={h.dashboard}>
-      {profile.lifestyle !== "Commuter" && <View style={h.summary}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Open ${space.name}`}
-        onPress={() => roommates("Tasks")}
-        style={h.space}
-      >
-        <View style={h.grow}>
-          <Text style={h.overline}>YOUR SPACE</Text>
-          <Text style={h.spaceName}>{space.name}</Text>
-          <Text style={h.spaceDetail}>
-            {pending.length} chores · {groceries.length} groceries
-          </Text>
-        </View>
-        <SpaceDrawing />
-      </Pressable>
-      <View style={h.metrics}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${own.length} your to-dos`}
-          onPress={() => roommates("Tasks", true)}
-          style={[h.metric, h.todoMetric]}
-        >
-          <View style={h.metricTop}>
-            <Ionicons name="checkmark-done-outline" size={19} color="#aac7ca" />
-            <Ionicons
-              accessible={false}
-              name="arrow-up-outline"
-              size={13}
-              color="#aac7ca"
-              style={h.arrow}
-            />
-          </View>
-          <View style={h.metricBottom}>
-            <Text style={h.todoNumber}>{own.length}</Text>
-            <Text style={h.todoLabel}>Your to-dos</Text>
-          </View>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${balance >= 0 ? "Owed to you" : "You owe"} ${money(Math.abs(balance))}`}
-          onPress={() => roommates("Expenses")}
-          style={[h.metric, h.moneyMetric]}
-        >
-          <View style={h.metricTop}>
-            <Text style={h.moneyLabel}>
-              {balance >= 0 ? "Owed to you" : "You owe"}
-            </Text>
-            <Ionicons
-              accessible={false}
-              name="arrow-up-outline"
-              size={13}
-              color="#aac7ca"
-              style={h.arrow}
-            />
-          </View>
-          <Text
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
-            numberOfLines={1}
-            style={h.moneyNumber}
+      {profile.lifestyle !== "Commuter" && (
+        <View style={h.summary}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${space.name}`}
+            onPress={() => roommates("Tasks")}
+            style={h.space}
           >
-            {money(Math.abs(balance))}
-          </Text>
-        </Pressable>
-      </View>
-      </View>}
+            <View style={h.grow}>
+              <Text style={h.overline}>YOUR SPACE</Text>
+              <Text style={h.spaceName}>{space.name}</Text>
+              <Text style={h.spaceDetail}>
+                {pending.length} chores · {groceries.length} groceries
+              </Text>
+            </View>
+            <SpaceDrawing />
+          </Pressable>
+          <View style={h.metrics}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${own.length} your to-dos`}
+              onPress={() => roommates("Tasks", true)}
+              style={[h.metric, h.todoMetric]}
+            >
+              <View style={h.metricTop}>
+                <Ionicons
+                  name="checkmark-done-outline"
+                  size={19}
+                  color="#aac7ca"
+                />
+                <Ionicons
+                  accessible={false}
+                  name="arrow-up-outline"
+                  size={13}
+                  color="#aac7ca"
+                  style={h.arrow}
+                />
+              </View>
+              <View style={h.metricBottom}>
+                <Text style={h.todoNumber}>{own.length}</Text>
+                <Text style={h.todoLabel}>Your to-dos</Text>
+              </View>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${balance >= 0 ? "Owed to you" : "You owe"} ${money(Math.abs(balance))}`}
+              onPress={() => roommates("Expenses")}
+              style={[h.metric, h.moneyMetric]}
+            >
+              <View style={h.metricTop}>
+                <Text style={h.moneyLabel}>
+                  {balance >= 0 ? "Owed to you" : "You owe"}
+                </Text>
+                <Ionicons
+                  accessible={false}
+                  name="arrow-up-outline"
+                  size={13}
+                  color="#aac7ca"
+                  style={h.arrow}
+                />
+              </View>
+              <Text
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                numberOfLines={1}
+                style={h.moneyNumber}
+              >
+                {money(Math.abs(balance))}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
       <View style={h.actions}>
         {actions.map((a) => (
           <Pressable
@@ -163,15 +177,42 @@ export default function HomeDashboard({
             key={a.kind}
           >
             <View style={h.actionIcon}>
-              <Ionicons accessible={false} name={a.icon} size={22} color={theme.text} />
+              <Ionicons
+                accessible={false}
+                name={a.icon}
+                size={22}
+                color={theme.text}
+              />
             </View>
             <Text style={h.actionLabel}>{a.label}</Text>
           </Pressable>
         ))}
       </View>
       <View>
-        <Text style={h.sectionHeading}>{profile.lifestyle === "Commuter" ? "Between classes" : "For your Orbit"}</Text>
-        {profileSuggestions(profile).slice(0,profile.lifestyle === "Commuter" ? 2 : 1).map(item=><Pressable key={item.title} accessibilityRole="button" accessibilityLabel={item.title} onPress={item.destination === "hangouts" ? hangouts : campus} style={h.link}><View style={{flex:1}}><Text style={h.taskTitle}>{item.title}</Text><Text style={h.detail}>{item.detail}</Text></View><Ionicons name="arrow-forward" size={18} color={theme.active}/></Pressable>)}
+        <Text style={h.sectionHeading}>
+          {profile.lifestyle === "Commuter"
+            ? "Between classes"
+            : "For your Orbit"}
+        </Text>
+        {profileSuggestions(profile)
+          .slice(0, profile.lifestyle === "Commuter" ? 2 : 1)
+          .map((item) => (
+            <Pressable
+              key={item.title}
+              accessibilityRole="button"
+              accessibilityLabel={item.title}
+              onPress={
+                item.destination === "hangouts" ? hangouts : exploreClubs
+              }
+              style={h.link}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={h.taskTitle}>{item.title}</Text>
+                <Text style={h.detail}>{item.detail}</Text>
+              </View>
+              <Ionicons name="arrow-forward" size={18} color={theme.active} />
+            </Pressable>
+          ))}
       </View>
       <Text style={h.sectionHeading}>Your activity</Text>
       <View style={h.sections}>
@@ -182,6 +223,9 @@ export default function HomeDashboard({
           String(pending.length),
           "people-outline",
           <>
+            {!pending.length && (
+              <Text style={h.detail}>All caught up in this space.</Text>
+            )}
             {pending.slice(0, 3).map((t) => (
               <Pressable
                 key={t.id}
@@ -213,9 +257,17 @@ export default function HomeDashboard({
           String(upcoming.length),
           "cafe-outline",
           <>
-            {!upcoming.length && <Text style={h.detail}>Make a plan when you’re ready.</Text>}
+            {!upcoming.length && (
+              <Text style={h.detail}>Make a plan when you’re ready.</Text>
+            )}
             {upcoming.slice(0, 2).map((p) => (
-              <View style={h.plan} key={p.id}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`View plan ${p.title}`}
+                onPress={() => planDetails(p.id)}
+                style={h.plan}
+                key={p.id}
+              >
                 <Text style={h.taskTitle}>{p.title}</Text>
                 <Text style={h.detail}>
                   {new Date(p.date).toLocaleString(undefined, {
@@ -226,7 +278,7 @@ export default function HomeDashboard({
                   })}{" "}
                   · {p.votes.length}/4 available
                 </Text>
-              </View>
+              </Pressable>
             ))}
             <Pressable
               accessibilityRole="button"
@@ -266,7 +318,11 @@ export default function HomeDashboard({
 
 const h = StyleSheet.create({
   dashboard: { gap: 18 },
-  summary: { backgroundColor: theme.teal, borderRadius: 18, overflow: "hidden" },
+  summary: {
+    backgroundColor: theme.teal,
+    borderRadius: 18,
+    overflow: "hidden",
+  },
   grow: { flex: 1 },
   space: {
     backgroundColor: theme.teal,
@@ -285,7 +341,13 @@ const h = StyleSheet.create({
   },
   spaceName: { color: theme.text, fontSize: 18, fontWeight: "400" },
   spaceDetail: { fontSize: 10, color: "#d0dfde", marginTop: 7 },
-  metrics: { flexDirection: "row", marginHorizontal: 18, paddingVertical: 14, borderTopWidth: 1, borderColor: "#7cabb044" },
+  metrics: {
+    flexDirection: "row",
+    marginHorizontal: 18,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderColor: "#7cabb044",
+  },
   metric: {
     flex: 1,
     paddingHorizontal: 0,
@@ -293,7 +355,11 @@ const h = StyleSheet.create({
     justifyContent: "space-between",
     gap: 4,
   },
-  todoMetric: { borderRightWidth: 1, borderColor: "#7cabb044", marginRight: 18 },
+  todoMetric: {
+    borderRightWidth: 1,
+    borderColor: "#7cabb044",
+    marginRight: 18,
+  },
   moneyMetric: {},
   metricTop: {
     flexDirection: "row",
@@ -329,7 +395,7 @@ const h = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  actionLabel: { fontSize: 10, color: "#bdc6c4" },
+  actionLabel: { fontSize: 12, color: "#bdc6c4" },
   sectionHeading: {
     fontSize: 14,
     color: theme.text,
@@ -360,11 +426,11 @@ const h = StyleSheet.create({
   },
   sectionTitle: {
     color: theme.text,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "400",
     marginBottom: 4,
   },
-  detail: { color: "#a4b5b7", fontSize: 10, lineHeight: 16 },
+  detail: { color: "#a4b5b7", fontSize: 12, lineHeight: 18 },
   badge: {
     color: "#b9c8c8",
     fontSize: 10,
@@ -379,7 +445,7 @@ const h = StyleSheet.create({
     minHeight: 46,
     paddingVertical: 8,
   },
-  taskTitle: { color: theme.text, fontSize: 12, lineHeight: 18, flex: 1 },
+  taskTitle: { color: theme.text, fontSize: 14, lineHeight: 20, flex: 1 },
   plan: { paddingVertical: 7, gap: 3 },
   link: {
     flexDirection: "row",
@@ -388,5 +454,5 @@ const h = StyleSheet.create({
     minHeight: 44,
     paddingVertical: 10,
   },
-  linkText: { fontSize: 11, fontWeight: "400", color: "#a6ccd0" },
+  linkText: { fontSize: 13, fontWeight: "400", color: "#a6ccd0" },
 });

@@ -113,3 +113,12 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Supabase's ambiguous invalid_credentials response now explains that the account may be missing or the password incorrect, with an explicit create-account action preserving the entered email. A definite missing-account message is only used for a definite user_not_found response.
 - Signup shows live email-format and password-length checks. Setup animates progress with Reduce Motion support and previews the same plan/club suggestions used by Home as interests change.
 - 37 tests pass, TypeScript passes, and iOS/Android/web exports pass. Browser tested a nonexistent reserved-domain login, confirmed its actionable error, and verified the signup action preserved email. Phone-size visual review and live hobby-to-preview updates passed.
+
+## Compact entry and discovery — September 23, 2026
+
+- Removed repetitive login/signup marketing headings. Web entry fields suppress automatic credential population until focused; native credential behavior is unchanged. Reloaded preview showed empty fields, and focusing enabled input.
+- Home club suggestions open Clubs directly. Campus ranks sample clubs using selected interests, supports search and saved-only filtering, and labels saving separately from real enrollment. Saved Code Collective survived reload; the temporary save was removed afterward, preserving the original Outdoor Club save.
+- Replaced large profile buttons with compact settings rows and readable campus/studies/interests. Increased Home text sizes; upcoming Home plans open details. Selected tabs expose selection state.
+- Hangouts search appears before results with specific recovery actions. Browser checked Past plans and no-match search; Dining vegetarian filter correctly reduced three places to two. Reviewed Home, Dining, Hangouts, and Profile at 390 by 844.
+- 42 automated tests, mobile TypeScript, root production build, and Android/iOS/web exports pass. Export was performed before final accessibility/style cleanup; final TypeScript and tests include those edits.
+- Campus content remains sample data. App activity and profile preferences are local to the device. This pass did not validate live email delivery, native keyboards, or Face ID on a physical phone.

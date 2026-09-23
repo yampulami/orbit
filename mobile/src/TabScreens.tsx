@@ -1,4 +1,4 @@
-import TextInput from "./FocusInput";
+import SearchField from "./SearchField";
 import Pressable from "./Touch";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
@@ -84,6 +84,7 @@ export function SectionTabs({
         <Pressable
           accessibilityRole="tab"
           accessibilityState={{ selected: v === value }}
+          aria-selected={v === value}
           key={v}
           onPress={() => onChange(v)}
           style={[d.tab, v === value && d.tabSelected]}
@@ -241,6 +242,10 @@ export function HangoutsScreen({
         value={filter}
         onChange={setFilter}
       />
+      <SearchField label="Find a plan" value={search} onChange={setSearch} />
+      <Text accessibilityLiveRegion="polite" style={d.caption}>
+        {plans.length} {plans.length === 1 ? "plan" : "plans"}
+      </Text>
       {!plans.length && (
         <View style={d.empty}>
           <I name="calendar-outline" size={32} />
@@ -249,7 +254,9 @@ export function HangoutsScreen({
               ? "No plans match your search."
               : filter === "I’m going"
                 ? "No upcoming plans you’ve joined."
-                : past ? "No past plans yet." : "Your next plan starts here."}
+                : past
+                  ? "No past plans yet."
+                  : "Your next plan starts here."}
           </Text>
           {!!search && (
             <Pill label="Clear search" onPress={() => setSearch("")} />
@@ -263,28 +270,19 @@ export function HangoutsScreen({
               }}
             />
           )}
-          <Pill label="Make a plan" onPress={() => open("hangout")} />
+          {!search && !past && filter !== "I’m going" && (
+            <Pill label="Make a plan" onPress={() => open("hangout")} />
+          )}
         </View>
       )}
-      <TextInput
-        accessibilityLabel="Find a plan"
-        placeholder="Find a plan"
-        placeholderTextColor={t.muted}
-        style={d.search}
-        value={search}
-        onChangeText={setSearch}
-      />
-      {plans.map((plan, i) => {
+      {plans.map((plan) => {
         const when = new Date(plan.date),
           cream = false,
           ink = cream ? t.onCream : t.text;
         return (
           <View
             key={plan.id}
-            style={[
-              d.planCard,
-              { backgroundColor: t.background },
-            ]}
+            style={[d.planCard, { backgroundColor: t.background }]}
           >
             <View style={d.headingRow}>
               <View style={[d.dateTile, cream && { borderColor: "#aea8a0" }]}>
@@ -309,8 +307,22 @@ export function HangoutsScreen({
                 </Text>
                 <Text style={[d.planTitle, { color: ink }]}>{plan.title}</Text>
               </View>
-              <Pressable accessibilityRole="button" accessibilityLabel={`View plan ${plan.title}`} onPress={() => details(plan.id)} style={{ minHeight: 44, minWidth: 44, justifyContent: "center", alignItems: "center" }}>
-                <I name="ellipsis-horizontal" size={24} color={cream ? t.onCream : t.active} />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`View plan ${plan.title}`}
+                onPress={() => details(plan.id)}
+                style={{
+                  minHeight: 44,
+                  minWidth: 44,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <I
+                  name="ellipsis-horizontal"
+                  size={24}
+                  color={cream ? t.onCream : t.active}
+                />
                 <Text style={[d.caption, { color: ink }]}>Details</Text>
               </Pressable>
             </View>
@@ -344,371 +356,37 @@ export function HangoutsScreen({
                     : `${plan.votes.length} of 4 ${past ? "responded" : "available"}`}
                 </Text>
               </View>
-              {past ? <Text style={d.caption}>{plan.votes.includes("You") ? "You joined" : "Not joined"}</Text> : <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`${plan.votes.includes("You") ? "Undo vote for" : "Join"} ${plan.title}`}
-                onPress={() => vote(plan.id)}
-                style={[
-                  d.planVote,
-                  { backgroundColor: cream ? t.background : t.teal },
-                ]}
-              >
-                <Text style={d.pillText}>
-                  {plan.votes.includes("You") ? "Going ✓" : "Count me in"}
+              {past ? (
+                <Text style={d.caption}>
+                  {plan.votes.includes("You") ? "You joined" : "Not joined"}
                 </Text>
-              </Pressable>}
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`${plan.votes.includes("You") ? "Undo vote for" : "Join"} ${plan.title}`}
+                  onPress={() => vote(plan.id)}
+                  style={[
+                    d.planVote,
+                    { backgroundColor: cream ? t.background : t.teal },
+                  ]}
+                >
+                  <Text style={d.pillText}>
+                    {plan.votes.includes("You") ? "Going ✓" : "Count me in"}
+                  </Text>
+                </Pressable>
+              )}
             </View>
           </View>
         );
       })}
-      <Text style={d.footnote}>{past ? "Plans move here after their start time. " : ""}Local plans · demo participants</Text>
-    </>
-  );
-}
-const eventData = [
-  {
-    id: "ev1",
-    name: "Sunset on the quad",
-    date: "18",
-    month: "SEP",
-    time: "Fri · 5:30 PM",
-    place: "The main quad",
-    tag: "OUTDOORS",
-    icon: "sunny-outline" as IconName,
-  },
-  {
-    id: "ev2",
-    name: "A little coffee, a little code",
-    date: "19",
-    month: "SEP",
-    time: "Sat · 10 AM",
-    place: "Student Union Café",
-    tag: "MEETUP",
-    icon: "cafe-outline" as IconName,
-  },
-  {
-    id: "ev3",
-    name: "Find your people",
-    date: "22",
-    month: "SEP",
-    time: "Tue · Noon",
-    place: "Student center",
-    tag: "CLUB FAIR",
-    icon: "people-outline" as IconName,
-  },
-];
-const clubs = [
-  {
-    name: "Outdoor Club",
-    tag: "OUTDOORS",
-    desc: "Trails, fresh air, and good company.",
-    icon: "leaf-outline" as IconName,
-  },
-  {
-    name: "Code Collective",
-    tag: "TECHNOLOGY",
-    desc: "Build something with your people.",
-    icon: "code-slash-outline" as IconName,
-  },
-  {
-    name: "The Creative Corner",
-    tag: "ART & CULTURE",
-    desc: "Make room for your next idea.",
-    icon: "color-palette-outline" as IconName,
-  },
-];
-const halls = [
-  {
-    name: "Maple Dining Hall",
-    food: "Harvest grain bowl",
-    hours: "7 AM – 9 PM",
-    veg: true,
-    icon: "leaf-outline" as IconName,
-  },
-  {
-    name: "Student Union Café",
-    food: "Avocado toast & cold brew",
-    hours: "8 AM – 6 PM",
-    veg: true,
-    icon: "cafe-outline" as IconName,
-  },
-  {
-    name: "The Commons Grill",
-    food: "Grilled chicken sandwich",
-    hours: "11 AM – 10 PM",
-    veg: false,
-    icon: "restaurant-outline" as IconName,
-  },
-];
-export function CampusScreen({ state, save }: { state: State; save: Save }) {
-  const [category, setCategory] = useState("Events"),
-    [veg, setVeg] = useState(false);
-  const [search, setSearch] = useState("");
-  const matches = (value: string) =>
-    value.toLowerCase().includes(search.trim().toLowerCase());
-  const toggleRsvp = (id: string) =>
-    save((x) => ({
-      ...x,
-      rsvps: x.rsvps.includes(id)
-        ? x.rsvps.filter((v) => v !== id)
-        : [...x.rsvps, id],
-    }));
-  return (
-    <>
-      <View style={d.headingRow}>
-        <View>
-          <Text style={d.overline}>CAMPUS DISCOVERY</Text>
-          <Text style={d.pageTitle}>Out & about.</Text>
-        </View>
-        <View style={d.previewTag}>
-          <Text style={d.caption}>Preview</Text>
-        </View>
-      </View>
-      <SectionTabs
-        values={["Events", "Clubs", "Dining", "Services"]}
-        value={category}
-        onChange={(value) => {
-          setCategory(value);
-          setSearch("");
-        }}
-      />
-      {category !== "Services" && (
-        <TextInput
-          accessibilityLabel="Search campus"
-          value={search}
-          onChangeText={setSearch}
-          placeholder={
-            category === "Events"
-              ? "Find an event or place"
-              : category === "Clubs"
-                ? "Find a club or interest"
-                : "Find food or a dining hall"
-          }
-          placeholderTextColor={t.muted}
-          style={d.search}
-        />
-      )}
-      {category !== "Services" &&
-        search !== "" &&
-        !(category === "Events"
-          ? eventData.some((e) => matches(e.name + " " + e.place))
-          : category === "Clubs"
-            ? clubs.some((c) => matches(c.name + " " + c.tag + " " + c.desc))
-            : halls.some(
-                (h) => matches(h.name + " " + h.food) && (!veg || h.veg),
-              )) && (
-          <View style={d.empty}>
-            <Text style={d.body}>No matches. Try a broader search.</Text>
-            <Pill label="Clear search" onPress={() => setSearch("")} />
-          </View>
-        )}
-      {category === "Events" && (
-        <>
-          {matches(eventData[0].name + " " + eventData[0].place) && (
-            <View style={d.feature}>
-              <View style={d.headingRow}>
-                <Text style={d.featureTag}>OUTDOORS · SEP 18</Text>
-                <I name="sunny-outline" color="#c6dadd" size={39} />
-              </View>
-              <Text style={d.featureTitle}>Sunset on{"\n"}the quad.</Text>
-              <View style={d.headingRow}>
-                <Text style={d.featureDetail}>5:30 PM · The main quad</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="RSVP Sunset on the quad"
-                  onPress={() => toggleRsvp("ev1")}
-                  style={d.featureRsvp}
-                >
-                  <Text style={d.featureRsvpText}>
-                    {state.rsvps.includes("ev1") ? "Going ✓" : "RSVP ↗"}
-                  </Text>
-                </Pressable>
-              </View>
-              <View style={d.featureArc} />
-            </View>
-          )}
-          {!search && <Text style={d.listHeading}>Coming up</Text>}
-          {eventData
-            .slice(1)
-            .filter((ev) => matches(ev.name + " " + ev.place))
-            .map((ev) => (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={`RSVP ${ev.name}`}
-                onPress={() => toggleRsvp(ev.id)}
-                style={d.eventRow}
-                key={ev.id}
-              >
-                <View style={d.smallDate}>
-                  <Text style={d.smallDay}>{ev.date}</Text>
-                  <Text style={d.month}>{ev.month}</Text>
-                </View>
-                <View style={d.flex}>
-                  <Text style={d.eventTitle}>{ev.name}</Text>
-                  <Text style={d.caption}>
-                    {ev.time} · {ev.place}
-                  </Text>
-                </View>
-                <I
-                  name={
-                    state.rsvps.includes(ev.id)
-                      ? "checkmark-circle"
-                      : "add-circle-outline"
-                  }
-                  size={23}
-                />
-              </Pressable>
-            ))}
-        </>
-      )}
-      {category === "Clubs" && (
-        <>
-          <View style={d.clubIntro}>
-            <Text style={d.clubIntroTitle}>Find your people.</Text>
-            <Text style={d.caption}>
-              {state.joined.length} joined · explore a new interest
-            </Text>
-          </View>
-          {clubs
-            .filter((club) =>
-              matches(club.name + " " + club.tag + " " + club.desc),
-            )
-            .map((club) => (
-              <View style={d.clubRow} key={club.name}>
-                <View
-                  style={[
-                    d.clubMark,
-                    {
-                      backgroundColor: state.joined.includes(club.name)
-                        ? t.teal
-                        : t.raised,
-                    },
-                  ]}
-                >
-                  <I name={club.icon} size={28} color={t.text} />
-                </View>
-                <View style={d.flex}>
-                  <Text style={d.miniTag}>{club.tag}</Text>
-                  <Text style={d.eventTitle}>{club.name}</Text>
-                  <Text style={d.caption}>{club.desc}</Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${state.joined.includes(club.name) ? "Leave" : "Join"} ${club.name}`}
-                    onPress={() =>
-                      save((x) => ({
-                        ...x,
-                        joined: x.joined.includes(club.name)
-                          ? x.joined.filter((v) => v !== club.name)
-                          : [...x.joined, club.name],
-                      }))
-                    }
-                    style={d.clubJoin}
-                  >
-                    <Text style={d.linkText}>
-                      {state.joined.includes(club.name)
-                        ? "Joined ✓ · leave"
-                        : "Join club ↗"}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            ))}
-        </>
-      )}
-      {category === "Dining" && (
-        <>
-          <View style={d.headingRow}>
-            <View>
-              <Text style={d.listHeading}>What sounds good?</Text>
-              <Text style={d.caption}>Sample menus & hours</Text>
-            </View>
-            <View>
-              <Text style={d.miniTag}>VEGETARIAN</Text>
-              <Switch
-                accessibilityLabel="Vegetarian only"
-                value={veg}
-                onValueChange={setVeg}
-                trackColor={{ false: t.raised, true: t.teal }}
-                thumbColor={t.cream}
-              />
-            </View>
-          </View>
-          {halls
-            .filter((x) => (!veg || x.veg) && matches(x.name + " " + x.food))
-            .map((hall, i) => (
-              <View
-                key={hall.name}
-                style={d.diningCard}
-              >
-                <View style={d.headingRow}>
-                  <Text style={[d.miniTag, { color: t.muted }]}>
-                    {hall.hours}
-                  </Text>
-                  <I
-                    name={hall.icon}
-                    color={t.active}
-                    size={28}
-                  />
-                </View>
-                <Text style={[d.diningName, { color: t.text }]}>
-                  {hall.name}
-                </Text>
-                <View
-                  style={[d.menuLine, { borderTopColor: t.line }]}
-                >
-                  <Text style={[d.body, { color: t.text }]}>
-                    {hall.food}
-                  </Text>
-                  {hall.veg && (
-                    <Text style={[d.caption, { color: t.muted }]}>
-                      Vegetarian
-                    </Text>
-                  )}
-                </View>
-              </View>
-            ))}
-        </>
-      )}
-      {category === "Services" && (
-        <>
-          <Text style={d.footnote}>
-            Official university connections are needed to activate these
-            services.
-          </Text>
-          {[
-            {
-              name: "Safety & alerts",
-              icon: "shield-checkmark-outline" as IconName,
-              desc: "RA notices and official university alerts. This demo does not receive alerts or send reports.",
-            },
-            {
-              name: "Study rooms",
-              icon: "library-outline" as IconName,
-              desc: "Room availability and reservations. Booking is not connected yet.",
-            },
-            {
-              name: "Campus jobs",
-              icon: "briefcase-outline" as IconName,
-              desc: "University job listings and application tracking. An official job source is needed.",
-            },
-          ].map((x) => (
-            <View key={x.name} style={d.service}>
-              <I name={x.icon} size={24} />
-              <View style={d.flex}>
-                <Text style={d.eventTitle}>{x.name}</Text>
-                <Text style={d.caption}>{x.desc}</Text>
-                <Text style={d.serviceStatus}>NOT CONNECTED</Text>
-              </View>
-            </View>
-          ))}
-        </>
-      )}
       <Text style={d.footnote}>
-        Sample campus content · preferences saved on this device
+        {past ? "Plans move here after their start time. " : ""}Local plans ·
+        demo participants
       </Text>
     </>
   );
 }
+export { default as CampusScreen } from "./CampusScreen";
 const d = StyleSheet.create({
   compactStats: {
     flexDirection: "row",
@@ -729,16 +407,6 @@ const d = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
-  },
-  search: {
-    minHeight: 46,
-    borderBottomWidth: 1,
-    borderColor: t.line,
-    color: t.text,
-    paddingVertical: 12,
-    paddingHorizontal: 2,
-    marginBottom: 16,
-    fontSize: 14,
   },
   flex: { flex: 1 },
   overline: {
@@ -812,25 +480,6 @@ const d = StyleSheet.create({
     minHeight: 44,
   },
   spaceTitle: { color: t.text, fontSize: 20, fontWeight: "400" },
-  spaceLower: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  onTealSmall: { fontSize: 10, color: "#c3d7d7", marginTop: 8 },
-  spaceStats: {
-    flexDirection: "row",
-    gap: 22,
-    alignItems: "center",
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: "#6c929a",
-  },
-  statValue: { fontSize: 23, color: t.text },
-  statSuffix: { fontSize: 15, color: "#afcdd0" },
-  statDivider: { height: 33, width: 1, backgroundColor: "#72939b" },
   spaceChooser: {
     padding: 16,
     backgroundColor: t.surface,
@@ -858,16 +507,13 @@ const d = StyleSheet.create({
     borderColor: t.line,
     marginBottom: 18,
   },
-  availabilityTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 17,
-  },
-  liveLabel: { flexDirection: "row", alignItems: "center", gap: 6 },
-  statusDot: { width: 5, height: 5, borderRadius: 3 },
   availabilityTitle: { fontSize: 16, color: t.text, marginBottom: 4 },
-  planCard: { paddingVertical: 20, borderBottomWidth: 1, borderColor: t.line, marginBottom: 4 },
+  planCard: {
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderColor: t.line,
+    marginBottom: 4,
+  },
   dateTile: {
     width: 46,
     alignItems: "center",
@@ -879,13 +525,12 @@ const d = StyleSheet.create({
   month: { fontSize: 8, letterSpacing: 1, color: "#b0c7c9", marginTop: 3 },
   planTime: { fontSize: 10, marginBottom: 7 },
   planTitle: { fontSize: 18, lineHeight: 24, fontWeight: "400" },
-  planDivider: { height: 1, backgroundColor: "#73898b44", marginBottom: 14 },
   planBottom: { flexDirection: "row", gap: 12, alignItems: "center" },
   voteDots: { flexDirection: "row", gap: 4, marginBottom: 6 },
   voteDot: { width: 17, height: 4, borderRadius: 3 },
   planVote: {
     paddingHorizontal: 17,
-    minHeight: 42,
+    minHeight: 44,
     justifyContent: "center",
     borderRadius: 24,
   },
@@ -896,127 +541,4 @@ const d = StyleSheet.create({
     marginVertical: 16,
   },
   empty: { padding: 24, alignItems: "center", gap: 15 },
-  previewTag: {
-    borderWidth: 1,
-    borderColor: t.line,
-    borderRadius: 15,
-    paddingHorizontal: 11,
-    paddingVertical: 5,
-  },
-  feature: {
-    backgroundColor: t.teal,
-    borderRadius: 14,
-    padding: 20,
-    marginBottom: 23,
-    overflow: "hidden",
-  },
-  featureTag: { fontSize: 11, letterSpacing: 1.1, color: "#ffffff" },
-  featureTitle: {
-    fontSize: 27,
-    lineHeight: 32,
-    color: t.text,
-    marginBottom: 20,
-    fontWeight: "400",
-  },
-  featureDetail: { fontSize: 12, color: "#ffffff", flex: 1 },
-  featureRsvp: {
-    backgroundColor: t.cream,
-    borderRadius: 23,
-    minHeight: 44,
-    paddingHorizontal: 17,
-    justifyContent: "center",
-    zIndex: 2,
-  },
-  featureRsvpText: { fontSize: 11, color: t.onCream },
-  featureArc: {
-    position: "absolute",
-    right: -62,
-    top: 60,
-    width: 180,
-    height: 180,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: "#b9d1d344",
-    pointerEvents: "none",
-  },
-  listHeading: { fontSize: 17, color: t.text, marginBottom: 12 },
-  eventRow: {
-    flexDirection: "row",
-    gap: 14,
-    alignItems: "center",
-    paddingVertical: 17,
-    borderBottomWidth: 1,
-    borderBottomColor: t.line,
-  },
-  smallDate: { width: 42, alignItems: "center" },
-  smallDay: { fontSize: 23, color: t.text },
-  eventTitle: { fontSize: 15, color: t.text, marginBottom: 6, lineHeight: 21 },
-  clubIntro: {
-    backgroundColor: t.background,
-    borderBottomWidth: 1,
-    borderColor: t.line,
-    paddingVertical: 16,
-    marginBottom: 8,
-  },
-  clubIntroTitle: { fontSize: 22, color: t.text, marginBottom: 8 },
-  clubRow: {
-    flexDirection: "row",
-    gap: 16,
-    paddingVertical: 23,
-    borderBottomWidth: 1,
-    borderBottomColor: t.line,
-  },
-  clubMark: {
-    width: 54,
-    height: 65,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  miniTag: {
-    fontSize: 8,
-    letterSpacing: 1.1,
-    color: "#8ba8ad",
-    marginBottom: 6,
-  },
-  clubJoin: {
-    minHeight: 40,
-    justifyContent: "center",
-    alignSelf: "flex-start",
-  },
-  linkText: { color: "#b5d3d5", fontSize: 12 },
-  diningCard: {
-    backgroundColor: t.background,
-    borderRadius: 0,
-    borderBottomWidth: 1,
-    borderColor: t.line,
-    paddingVertical: 20,
-    marginTop: 0,
-  },
-  diningName: {
-    fontSize: 23,
-    color: t.text,
-    lineHeight: 29,
-    marginVertical: 7,
-  },
-  menuLine: {
-    borderTopWidth: 1,
-    borderTopColor: "#3e5960",
-    paddingTop: 15,
-    marginTop: 12,
-    gap: 5,
-  },
-  service: {
-    flexDirection: "row",
-    gap: 16,
-    paddingVertical: 22,
-    borderBottomWidth: 1,
-    borderBottomColor: t.line,
-  },
-  serviceStatus: {
-    fontSize: 8,
-    letterSpacing: 1,
-    color: "#9ab7bb",
-    marginTop: 13,
-  },
 });

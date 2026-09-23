@@ -1,6 +1,7 @@
 import React, { forwardRef, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -95,56 +96,71 @@ export function TextAction({
 }
 export const Field = forwardRef<
   TextInput,
-  TextInputProps & { label: string; hint?: string; invalid?: boolean }
->(({ label, hint, invalid, secureTextEntry, ...props }, ref) => {
-  const [focused, setFocused] = useState(false),
-    [visible, setVisible] = useState(false);
-  return (
-    <View style={ui.fieldGroup}>
-      <Text style={ui.label}>{label}</Text>
-      <View
-        style={[
-          ui.field,
-          focused && ui.fieldFocused,
-          invalid && { borderColor: "#e8ad9f" },
-        ]}
-      >
-        <TextInput
-          ref={ref}
-          {...props}
-          accessibilityLabel={label}
-          placeholderTextColor="#71888d"
-          selectionColor={t.active}
-          secureTextEntry={secureTextEntry && !visible}
-          onFocus={(e) => {
-            setFocused(true);
-            props.onFocus?.(e);
-          }}
-          onBlur={(e) => {
-            setFocused(false);
-            props.onBlur?.(e);
-          }}
-          style={[ui.input, props.style]}
-        />
-        {secureTextEntry && (
-          <Touch
-            accessibilityRole="button"
-            accessibilityLabel={visible ? "Hide password" : "Show password"}
-            onPress={() => setVisible(!visible)}
-            style={ui.eye}
-          >
-            <Ionicons
-              name={visible ? "eye-off-outline" : "eye-outline"}
-              size={20}
-              color={t.muted}
-            />
-          </Touch>
-        )}
+  TextInputProps & {
+    label: string;
+    hint?: string;
+    invalid?: boolean;
+    suppressAutofill?: boolean;
+  }
+>(
+  (
+    { label, hint, invalid, secureTextEntry, suppressAutofill, ...props },
+    ref,
+  ) => {
+    const [focused, setFocused] = useState(false),
+      [visible, setVisible] = useState(false);
+    return (
+      <View style={ui.fieldGroup}>
+        <Text style={ui.label}>{label}</Text>
+        <View
+          style={[
+            ui.field,
+            focused && ui.fieldFocused,
+            invalid && { borderColor: "#e8ad9f" },
+          ]}
+        >
+          <TextInput
+            ref={ref}
+            {...props}
+            readOnly={
+              Platform.OS === "web" && suppressAutofill && !focused
+                ? true
+                : props.readOnly
+            }
+            accessibilityLabel={label}
+            placeholderTextColor="#71888d"
+            selectionColor={t.active}
+            secureTextEntry={secureTextEntry && !visible}
+            onFocus={(e) => {
+              setFocused(true);
+              props.onFocus?.(e);
+            }}
+            onBlur={(e) => {
+              setFocused(false);
+              props.onBlur?.(e);
+            }}
+            style={[ui.input, props.style]}
+          />
+          {secureTextEntry && (
+            <Touch
+              accessibilityRole="button"
+              accessibilityLabel={visible ? "Hide password" : "Show password"}
+              onPress={() => setVisible(!visible)}
+              style={ui.eye}
+            >
+              <Ionicons
+                name={visible ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color={t.muted}
+              />
+            </Touch>
+          )}
+        </View>
+        {!!hint && <Text style={ui.caption}>{hint}</Text>}
       </View>
-      {!!hint && <Text style={ui.caption}>{hint}</Text>}
-    </View>
-  );
-});
+    );
+  },
+);
 export function Feedback({
   error,
   notice,
