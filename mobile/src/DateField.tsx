@@ -87,10 +87,12 @@ export default function DateField({
           )}
         </>
       )}
+      {!!error && <Text accessibilityRole="alert" style={s.error}>{error}</Text>}
     </View>
   );
 }
 const s = StyleSheet.create({
+  error: { color: "#e8ad9f", fontSize: 12, lineHeight: 18 },
   field: { gap: 8, marginVertical: 10 },
   label: { color: theme.text, fontSize: 14 },
   control: {

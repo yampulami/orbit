@@ -1,8 +1,9 @@
 import TextInput from "./FocusInput";
-import { validateForm } from "../../src/formValidation";
+import { ChoiceField, EffortField } from "./ComposerControls";
+import { amountValid, validateForm } from "../../src/formValidation";
 import ExpenseDetails from "./ExpenseDetails";
 import PlanDetails from "./PlanDetails";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   AccessibilityInfo,
@@ -185,6 +186,7 @@ function Field({
         maxLength={multiline ? 500 : 100}
         multiline={multiline}
       />
+      {!!error && <Text accessibilityRole="alert" style={s.fieldError}>{error}</Text>}
     </View>
   );
 }
@@ -197,7 +199,8 @@ export default function Orbit() {
   );
 }
 function OrbitApp({accountId, profile, editPreferences, signOut, security}: AccountControls) {
-  const store = useMemo(() => createLocalStore(AsyncStorage, accountId), [accountId]);
+  // The account key remounts OrbitApp on sign-in/out; state preserves this loaded store during Fast Refresh.
+  const [store] = useState(() => createLocalStore(AsyncStorage, accountId));
   const { save: persist, load: restore, saveDrafts: persistDrafts } = store;
   const [state, setState] = useState<State>(seed),
     [ready, setReady] = useState(false),
@@ -257,7 +260,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
       });
   }
   useEffect(() => {
-    if (!ready || !modal || modal === "assign") return;
+    if (!ready || !modal || modal === "assign" || modal === "profile") return;
     drafts.current[draftKey(state.active, modal)] = {
       title,
       amount,
@@ -1229,11 +1232,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                   {modal !== "quiet" && modal !== "assign" && modal !== "profile" && (
                     <Field
                       label={
-                        modal === "profile"
-                          ? "Your first name"
-                          : modal === "concern"
-                            ? "What needs a conversation?"
-                            : "Name"
+                        ({ task: "Task", grocery: "Item", expense: "What was it for?", hangout: "Plan", concern: "What needs a conversation?" } as Record<string, string>)[modal] || "Name"
                       }
                       placeholder={
                         modal === "task"
@@ -1287,52 +1286,17 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                       ))}
                     </View>
                   )}
-                  {modal === "task" && (
-                    <>
-                      <Text style={s.fieldLabel}>Assign to</Text>
-                      <View style={s.wrap}>
-                        {["Auto", ...members].map((m) => (
-                          <Chip
-                            key={m}
-                            label={m}
-                            selected={owner === m}
-                            onPress={() => setOwner(m)}
-                          />
-                        ))}
-                      </View>
-                      <Text style={s.small}>
-                        {owner === "Auto"
-                          ? "Suggested: " +
-                            nextOwner(space.tasks) +
-                            " · lowest assigned effort"
-                          : "Assigned to " + owner}
-                      </Text>
-                      <Text style={s.fieldLabel}>
-                        Effort · 1 quick / 5 substantial
-                      </Text>
-                      <View style={s.wrap}>
-                        {["1", "2", "3", "4", "5"].map((n) => (
-                          <Chip
-                            key={n}
-                            label={n}
-                            selected={points === n}
-                            onPress={() => setPoints(n)}
-                          />
-                        ))}
-                      </View>
-                    </>
-                  )}
-                  {modal === "grocery" && (
-                    <View>
-                      <Text style={s.fieldLabel}>Category</Text>
-                      {["Produce", "Dairy & alternatives", "Pantry", "Household", "Other"].map((c) => (
-                        <Pressable key={c} accessibilityRole="radio" accessibilityLabel={c} accessibilityState={{ checked: category === c }} onPress={() => setCategory(c)} style={[s.row, { justifyContent: "space-between", minHeight: 50 }]}>
-                          <Text style={[s.rowTitle, { color: category === c ? theme.text : theme.muted }]}>{c}</Text>
-                          <Icon name={category === c ? "checkmark" : "ellipse-outline"} size={category === c ? 20 : 14} color={category === c ? theme.active : theme.line} />
-                        </Pressable>
-                      ))}
-                    </View>
-                  )}
+                  {modal === "task" && <>
+                    <ChoiceField label="Assign to" value={owner} onChange={setOwner} options={[
+                      { value: "Auto", label: "Auto assign", detail: `Suggested: ${nextOwner(space.tasks)} · lowest assigned effort` },
+                      ...members.map(member => ({ value: member, label: member }))
+                    ]} />
+                    {owner === "Auto" && <Text style={[s.small, { marginTop: 8 }]}>Suggested: {nextOwner(space.tasks)}</Text>}
+                    <EffortField value={points} onChange={setPoints} />
+                  </>}
+                  {modal === "grocery" && <ChoiceField label="Category" value={category} onChange={setCategory} options={
+                    ["Produce", "Dairy & alternatives", "Pantry", "Household", "Other"].map(value => ({ value, label: value }))
+                  } />}
                   {modal === "expense" && (
                     <>
                       <Field
@@ -1348,33 +1312,19 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                         keyboardType="decimal-pad"
                         placeholder="0.00"
                       />
-                      <Text style={s.fieldLabel}>Paid by</Text>
-                      <View style={s.wrap}>
-                        {members.map((m) => (
-                          <Chip
-                            key={m}
-                            label={m}
-                            selected={owner === m}
-                            onPress={() => setOwner(m)}
-                          />
-                        ))}
-                      </View>
-                      <Text style={s.body}>
-                        Split equally among four roommates.
-                      </Text>
+                      <ChoiceField label="Paid by" value={owner} onChange={setOwner} options={members.map(member => ({ value: member, label: member }))} />
+                      <Text style={[s.small, { marginTop: 12 }]}>Split equally across {members.length} people in this space.</Text>
                     </>
                   )}
                   {modal === "expense" &&
-                    /^\d+(\.\d{1,2})?$/.test(amount.trim()) &&
-                    Number(amount) > 0 &&
-                    Number(amount) <= 100000 && (
+                    amountValid(amount) && (
                       <View style={s.splitPreview}>
                         <Text style={s.eyebrow}>SPLIT PREVIEW</Text>
-                        {shares(
+                        <View style={s.splitPeople}>{shares(
                           Math.round(Number(amount) * 100),
                           members.length,
                         ).map((cents, i) => (
-                          <View style={s.between} key={members[i]}>
+                          <View style={s.splitPerson} key={members[i]}>
                             <Text style={s.small}>{members[i]}</Text>
                             <Text
                               style={[
@@ -1385,7 +1335,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                               {money(cents)}
                             </Text>
                           </View>
-                        ))}
+                        ))}</View>
                       </View>
                     )}
                   {modal === "hangout" && (
@@ -1457,7 +1407,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                   {modal !== "assign" && (
                     <View style={s.between}>
                       <Text style={s.small}>
-                        {recovered ? "Draft restored" : draftStatus.startsWith("Draft not") ? "Not saved" : draftStatus.includes("saved") ? "Draft saved" : "Saving draft…"}
+                        {draftStatus.startsWith("Draft not") ? "Draft not saved" : draftStatus === "Saving draft…" ? "Saving draft…" : recovered ? "Draft restored" : "Draft saved"}
                       </Text>
                       <Pressable
                         accessibilityRole="button"
@@ -1479,7 +1429,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                       }}
                     />
                   )}
-                  {!!formError && (
+                  {!!formError && !currentIssue && (
                     <Text accessibilityRole="alert" style={s.error}>
                       {formError}
                     </Text>
@@ -1512,6 +1462,8 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
 
 const s = StyleSheet.create({
   emptyState: { paddingVertical: 28, alignItems: "center", gap: 12 },
+  splitPeople: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  splitPerson: { flex: 1, minWidth: 60, gap: 6 },
   splitPreview: {
     backgroundColor: theme.background,
     borderTopWidth: 1,
@@ -1840,9 +1792,9 @@ const s = StyleSheet.create({
     alignSelf: "center",
   },
   composerTitle: { fontSize: 23, color: theme.text, letterSpacing: -0.6 },
-  composerContext: { fontSize: 12, color: theme.muted, marginBottom: 32 },
-  titleInput: { fontSize: 27, lineHeight: 35, minHeight: 80, letterSpacing: -0.7 },
-  field: { marginBottom: 26 },
+  composerContext: { fontSize: 12, color: theme.muted, marginBottom: 22 },
+  titleInput: { fontSize: 23, lineHeight: 31, minHeight: 62, letterSpacing: -0.4 },
+  field: { marginBottom: 18 },
   fieldLabel: { fontSize: 12, fontWeight: "400", color: theme.muted },
   input: {
     backgroundColor: theme.background,
@@ -1856,5 +1808,6 @@ const s = StyleSheet.create({
     marginTop: 8,
     minHeight: 48,
   },
+  fieldError: { color: "#e8ad9f", fontSize: 12, lineHeight: 18, marginTop: 6 },
   error: { color: "#e8ad9f", fontSize: 12, lineHeight: 20, marginBottom: 15 },
 });

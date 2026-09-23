@@ -19,7 +19,7 @@ export function OrbitMark({ size = 38 }: { size?: number }) {
       width={size}
       height={size}
       viewBox="0 0 60 60"
-      accessibilityElementsHidden
+      {...(Platform.OS === "web" ? { "aria-hidden": true } : { accessibilityElementsHidden: true })}
     >
       <Circle cx="30" cy="30" r="12" fill={t.active} />
       <Ellipse
@@ -27,8 +27,7 @@ export function OrbitMark({ size = 38 }: { size?: number }) {
         cy="30"
         rx="27"
         ry="13"
-        rotation="-35"
-        origin="30,30"
+        transform="rotate(-35 30 30)"
         stroke={t.cream}
         strokeWidth="1.5"
         fill="none"

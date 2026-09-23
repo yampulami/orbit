@@ -122,3 +122,12 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Hangouts search appears before results with specific recovery actions. Browser checked Past plans and no-match search; Dining vegetarian filter correctly reduced three places to two. Reviewed Home, Dining, Hangouts, and Profile at 390 by 844.
 - 42 automated tests, mobile TypeScript, root production build, and Android/iOS/web exports pass. Export was performed before final accessibility/style cleanup; final TypeScript and tests include those edits.
 - Campus content remains sample data. App activity and profile preferences are local to the device. This pass did not validate live email delivery, native keyboards, or Face ID on a physical phone.
+
+## Compact creation forms and preview stability — September 23, 2026
+
+- Assignment, expense payer, and grocery category now use expandable inline selectors. Task effort uses a single labeled segmented control. Reduced title-field height and spacing; expense shares appear in a wrapping row instead of a tall list.
+- Field-specific errors appear beside the relevant input without a duplicate footer error. Draft-write errors take priority over the restored-draft label. Viewing a profile no longer writes a form draft.
+- Fixed a reproduced Fast Refresh crash: useMemo recreated the local store while retained ready state allowed draft writes before load. The account-keyed component now holds its store in state. An open task retained its typed title, Alex assignment, and Moderate effort across a subsequent source refresh.
+- Removed web console warnings from the Orbit SVG mark using an explicit SVG rotation transform and platform-specific accessibility props.
+- Browser at 375 by 667: collapsed task and expense forms fit, all four shares for $10.01 are visible, invalid $10.001 is rejected, February 30 is rejected with an inline date error, and grocery category selection collapses to its chosen value. Only disposable local drafts were used and cleared; no records or remote accounts were created.
+- 42 tests and mobile TypeScript pass. Final Android, iOS, and web exports pass. Physical-phone keyboard behavior and Face ID remain unverified.
