@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import ModalSafeArea from "./ModalSafeArea";
 import { Ionicons } from "@expo/vector-icons";
 import { randomUUID } from "expo-crypto";
 import {
@@ -54,7 +54,7 @@ export default function FeedScreen({
   const posts = state.feed ?? samples,
     now = useCurrentTime();
   const [draft, setDraft] = useState<PostDraft>(() => newPostDraft(author)),
-    [composerTool, setComposerTool] = useState(""),
+    [searching, setSearching] = useState(false),
     [composing, setComposing] = useState(false),
     [filter, setFilter] = useState("All"),
     [query, setQuery] = useState(""),
@@ -90,7 +90,6 @@ export default function FeedScreen({
           : Date.parse(p.event!.startsAt) > now),
   );
   function openComposer() {
-    setComposerTool("");
     if (eventsOnly) setDraft({ ...draft, kind: "event" });
     setComposing(true);
   }
@@ -160,7 +159,17 @@ export default function FeedScreen({
           <Text style={s.wordmark}>orbit</Text>
         </Touch>
         <View style={{ flex: 1 }} />
-        <Text style={s.meta}>LOCAL PREVIEW</Text>
+        <Touch
+          accessibilityRole="button"
+          accessibilityLabel={searching ? "Close feed search" : "Search feed"}
+          onPress={() => {
+            setSearching(!searching);
+            setQuery("");
+          }}
+          style={s.iconTouch}
+        >
+          {icon(searching ? "close" : "search-outline", 23, t.text)}
+        </Touch>
         <Touch
           accessibilityRole="button"
           accessibilityLabel="Notifications"
@@ -196,44 +205,10 @@ export default function FeedScreen({
             <Text style={s.initial}>{author[0]?.toUpperCase()}</Text>
           </View>
           <Text style={s.prompt}>
-            {draft.body
-              ? "Continue your draft…"
-              : "What’s happening in your orbit?"}
+            {draft.body ? "Continue your draft…" : "What’s on your mind?"}
           </Text>
           {icon("create-outline", 22, t.active)}
         </Touch>
-      )}
-      {!eventsOnly && (
-        <View style={s.composerTools}>
-          {(
-            [
-              ["image-outline", "Photo"],
-              ["happy-outline", "Emoji"],
-              ["location-outline", "Location"],
-              ["stats-chart-outline", "Poll"],
-            ] as const
-          ).map(([name, label]) => (
-            <Touch
-              key={label}
-              accessibilityRole="button"
-              accessibilityLabel={`Create ${label.toLowerCase()} post`}
-              onPress={() => {
-                setComposerTool(label.toLowerCase());
-                if (label === "Poll")
-                  setDraft({
-                    ...draft,
-                    kind: "post",
-                    pollOptions: draft.pollOptions ?? ["", ""],
-                  });
-                setComposing(true);
-              }}
-              style={s.action}
-            >
-              {icon(name, 18, t.active)}
-              <Text style={s.caption}>{label}</Text>
-            </Touch>
-          ))}
-        </View>
       )}
       <ScrollView
         horizontal
@@ -265,14 +240,16 @@ export default function FeedScreen({
           );
         })}
       </ScrollView>
-      <View style={s.search}>
-        <SearchField
-          label={eventsOnly ? "Search events" : "Search feed"}
-          placeholder={eventsOnly ? "Search events" : "Search your campus"}
-          value={query}
-          onChange={setQuery}
-        />
-      </View>
+      {searching && (
+        <View style={s.search}>
+          <SearchField
+            label={eventsOnly ? "Search events" : "Search feed"}
+            placeholder={eventsOnly ? "Search events" : "Search your campus"}
+            value={query}
+            onChange={setQuery}
+          />
+        </View>
+      )}
       {!!error && (
         <Text accessibilityRole="alert" style={s.error}>
           {error}
@@ -585,7 +562,6 @@ export default function FeedScreen({
       <Text style={s.end}>You’re caught up · local preview</Text>
       {composing && (
         <FeedComposer
-          initialTool={composerTool}
           draft={draft}
           setDraft={setDraft}
           author={author}
@@ -598,7 +574,7 @@ export default function FeedScreen({
         animationType="slide"
         onRequestClose={() => setPanel(null)}
       >
-        <SafeAreaView style={s.safe}>
+        <ModalSafeArea style={s.safe}>
           <KeyboardAvoidingView
             style={s.safe}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -701,7 +677,7 @@ export default function FeedScreen({
               </View>
             )}
           </KeyboardAvoidingView>
-        </SafeAreaView>
+        </ModalSafeArea>
       </Modal>
     </View>
   );
@@ -726,22 +702,20 @@ const s = StyleSheet.create({
   },
   iconTouch: {
     minWidth: 44,
-    minHeight: 44,
+    minHeight: 52,
     justifyContent: "center",
     alignItems: "center",
   },
   composer: {
     marginHorizontal: 18,
-    marginTop: 20,
+    marginTop: 8,
     padding: 14,
     minHeight: 76,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    borderWidth: 1,
+    borderBottomWidth: 1,
     borderColor: t.line,
-    borderRadius: 10,
-    backgroundColor: t.surface,
   },
   avatar: {
     width: 37,

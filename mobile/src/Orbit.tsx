@@ -1,3 +1,4 @@
+import ModalSafeArea from "./ModalSafeArea";
 import TextInput from "./FocusInput";
 import { ChoiceField, EffortField } from "./ComposerControls";
 import { amountValid, validateForm } from "../../src/formValidation";
@@ -1168,7 +1169,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={s.modalKeyboard}
           >
-            <SafeAreaView edges={["bottom", "top"]} style={s.modalSafe}>
+            <ModalSafeArea style={s.modalSafe}>
               <View style={s.modal}>
                 <View style={s.between}>
                   <Text style={s.composerTitle}>
@@ -1193,7 +1194,8 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                     accessibilityRole="button"
                     accessibilityLabel="Close dialog"
                     onPress={closeForm}
-                    style={s.iconTouch}
+                    style={[s.iconTouch, {minWidth:52,minHeight:52}]}
+                    hitSlop={8}
                   >
                     <Icon name="close" />
                   </Pressable>
@@ -1429,7 +1431,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                   />
                 </View>}
               </View>
-            </SafeAreaView>
+            </ModalSafeArea>
           </KeyboardAvoidingView>
         </View>
       </Modal>

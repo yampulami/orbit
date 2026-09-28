@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import ModalSafeArea from "./ModalSafeArea";
 import { Ionicons } from "@expo/vector-icons";
 import { randomUUID } from "expo-crypto";
 import Touch from "./Touch";
@@ -45,7 +45,8 @@ export default function FeedComposer({
 }: Props) {
   const [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [tools, setTools] = useState(initialTool);
+    [tools, setTools] = useState(initialTool),
+    [selection, setSelection] = useState<"kind" | "community" | null>(null);
   const change = (patch: Partial<PostDraft>) => {
     setDraft({ ...d, ...patch });
     setError("");
@@ -64,7 +65,7 @@ export default function FeedComposer({
     multiline = false,
   ) => (
     <View style={s.field}>
-      <Text style={s.label}>{label}</Text>
+      {key !== "body" && <Text style={s.label}>{label}</Text>}
       <Input
         accessibilityLabel={label}
         value={d[key]}
@@ -76,6 +77,7 @@ export default function FeedComposer({
         keyboardType={key === "price" ? "decimal-pad" : "default"}
         autoCapitalize={key === "link" ? "none" : "sentences"}
         style={[s.input, multiline && s.body]}
+        underlineColorAndroid="transparent"
       />
     </View>
   );
@@ -114,7 +116,7 @@ export default function FeedComposer({
   }
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={s.safe}>
+      <ModalSafeArea style={s.safe}>
         <KeyboardAvoidingView
           style={s.safe}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -124,15 +126,32 @@ export default function FeedComposer({
               accessibilityRole="button"
               accessibilityLabel="Close post composer"
               onPress={onClose}
-              style={s.icon}
+              style={s.close}
+              hitSlop={8}
             >
               <Ionicons name="close" size={24} color={t.text} />
             </Touch>
-            <Text style={s.heading}>Create</Text>
-            <Text style={s.caption}>Local preview</Text>
+            <Text style={s.heading}>
+              {d.kind === "event"
+                ? "New event"
+                : d.kind === "marketplace"
+                  ? "New listing"
+                  : "New post"}
+            </Text>
+            <Touch
+              accessibilityRole="button"
+              accessibilityLabel="Publish post"
+              disabled={busy || !d.body.trim()}
+              onPress={publish}
+              style={[s.publish, (busy || !d.body.trim()) && { opacity: 0.4 }]}
+            >
+              <Text style={s.publishText}>Post</Text>
+            </Touch>
           </View>
           <ScrollView
             keyboardShouldPersistTaps="handled"
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
             contentContainerStyle={s.content}
           >
             <View style={s.byline}>
@@ -141,42 +160,104 @@ export default function FeedComposer({
               </View>
               <View>
                 <Text style={s.name}>{author}</Text>
-                <Text style={s.caption}>Share with your campus</Text>
+                <Text style={s.caption}>Local preview</Text>
               </View>
             </View>
-            <ChoiceField
-              label="Post as"
-              value={d.kind}
-              options={[
-                {
-                  value: "post",
-                  label: "Post",
-                  detail: "Thoughts, questions, and polls",
-                },
-                {
-                  value: "event",
-                  label: "Event",
-                  detail: "A date, a place, and people to join",
-                },
-                {
-                  value: "marketplace",
-                  label: "Marketplace",
-                  detail: "Something to sell or give away",
-                },
-              ]}
-              onChange={(kind) => change({ kind: kind as PostKind })}
-            />
-            {d.kind !== "marketplace" && (
-              <ChoiceField
-                label="Community"
-                value={d.community}
-                options={communities
-                  .filter((x) => x !== "Marketplace")
-                  .map((value) => ({ value, label: value }))}
-                onChange={(community) =>
-                  change({ community: community as Community })
+            <View style={s.choices}>
+              <Touch
+                accessibilityRole="button"
+                accessibilityLabel={`Post as: ${d.kind === "post" ? "Post" : d.kind === "event" ? "Event" : "Marketplace"}`}
+                accessibilityState={{ expanded: selection === "kind" }}
+                onPress={() =>
+                  setSelection(selection === "kind" ? null : "kind")
                 }
-              />
+                style={s.choice}
+              >
+                <Ionicons
+                  name={
+                    d.kind === "event"
+                      ? "calendar-outline"
+                      : d.kind === "marketplace"
+                        ? "pricetag-outline"
+                        : "document-text-outline"
+                  }
+                  size={15}
+                  color={t.active}
+                />
+                <Text style={s.choiceText}>
+                  {d.kind === "post"
+                    ? "Post"
+                    : d.kind === "event"
+                      ? "Event"
+                      : "Marketplace"}
+                </Text>
+                <Ionicons name="chevron-down" size={13} color={t.muted} />
+              </Touch>
+              {d.kind !== "marketplace" && (
+                <Touch
+                  accessibilityRole="button"
+                  accessibilityLabel={`Community: ${d.community}`}
+                  accessibilityState={{ expanded: selection === "community" }}
+                  onPress={() =>
+                    setSelection(selection === "community" ? null : "community")
+                  }
+                  style={s.choice}
+                >
+                  <Ionicons name="people-outline" size={15} color={t.active} />
+                  <Text style={s.choiceText}>{d.community}</Text>
+                  <Ionicons name="chevron-down" size={13} color={t.muted} />
+                </Touch>
+              )}
+            </View>
+            {selection && (
+              <View
+                style={s.options}
+                accessibilityRole="radiogroup"
+                accessibilityLabel={
+                  selection === "kind" ? "Post type" : "Community"
+                }
+              >
+                {(selection === "kind"
+                  ? [
+                      { value: "post", label: "Post" },
+                      { value: "event", label: "Event" },
+                      { value: "marketplace", label: "Marketplace" },
+                    ]
+                  : communities
+                      .filter((x) => x !== "Marketplace")
+                      .map((value) => ({ value, label: value }))
+                ).map((option) => (
+                  <Touch
+                    key={option.value}
+                    accessibilityRole="radio"
+                    accessibilityLabel={option.label}
+                    accessibilityState={{
+                      checked:
+                        (selection === "kind" ? d.kind : d.community) ===
+                        option.value,
+                    }}
+                    aria-checked={
+                      (selection === "kind" ? d.kind : d.community) ===
+                      option.value
+                    }
+                    onPress={() => {
+                      change(
+                        selection === "kind"
+                          ? { kind: option.value as PostKind }
+                          : { community: option.value as Community },
+                      );
+                      setSelection(null);
+                    }}
+                    style={s.option}
+                  >
+                    <Text style={s.choiceText}>{option.label}</Text>
+                    {(selection === "kind" ? d.kind : d.community) ===
+                      option.value && (
+                      <Ionicons name="checkmark" size={19} color={t.active} />
+                    )}
+                  </Touch>
+                ))}
+              </View>
             )}
             {d.kind !== "post" &&
               field(
@@ -194,7 +275,7 @@ export default function FeedComposer({
                   : "Item details",
               "body",
               d.kind === "post"
-                ? "What’s happening in your orbit?"
+                ? "What’s on your mind?"
                 : "What should people know?",
               true,
             )}
@@ -322,6 +403,13 @@ export default function FeedComposer({
                 ))}
               </View>
             )}
+          </ScrollView>
+          <View style={s.footer}>
+            {!!error && (
+              <Text accessibilityRole="alert" style={s.error}>
+                {error}
+              </Text>
+            )}
             <View style={s.toolRow}>
               {(
                 [
@@ -361,38 +449,10 @@ export default function FeedComposer({
               ))}
               {busy && <ActivityIndicator color={t.active} />}
             </View>
-            <Text style={s.caption}>
-              Saved on this device. Posts aren’t visible to other students yet.
-            </Text>
-          </ScrollView>
-          <View style={s.footer}>
-            {!!error && (
-              <Text accessibilityRole="alert" style={s.error}>
-                {error}
-              </Text>
-            )}
-            <Touch
-              accessibilityRole="button"
-              accessibilityLabel="Publish post"
-              disabled={busy}
-              onPress={publish}
-              style={[s.publish, busy && { opacity: 0.5 }]}
-            >
-              <Text style={s.publishText}>
-                {d.kind === "event"
-                  ? "Publish event"
-                  : d.kind === "marketplace"
-                    ? "Publish listing"
-                    : "Post"}
-              </Text>
-              <Ionicons name="arrow-up" size={20} color={t.text} />
-            </Touch>
-            <Text style={s.caption}>
-              Closing keeps this draft until you leave Feed or Events.
-            </Text>
+            <Text style={s.caption}>Only on this device for now.</Text>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </ModalSafeArea>
     </Modal>
   );
 }
@@ -401,12 +461,45 @@ const s = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
+    paddingHorizontal: 18,
+    paddingBottom: 10,
     gap: 10,
     borderBottomWidth: 1,
     borderColor: t.line,
   },
-  heading: { flex: 1, fontSize: 21, color: t.text },
+  heading: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+    color: t.text,
+  },
+  close: {
+    width: 52,
+    height: 52,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  choice: {
+    minHeight: 40,
+    borderWidth: 1,
+    borderColor: t.line,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+  choiceText: { color: t.text, fontSize: 13 },
+  options: { backgroundColor: t.surface, borderRadius: 8, padding: 6 },
+  option: {
+    minHeight: 46,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   icon: {
     minWidth: 44,
     minHeight: 44,
@@ -448,10 +541,11 @@ const s = StyleSheet.create({
     paddingVertical: 10,
   },
   body: {
-    minHeight: 105,
+    minHeight: 210,
+    borderBottomWidth: 0,
     textAlignVertical: "top",
-    fontSize: 18,
-    lineHeight: 27,
+    fontSize: 22,
+    lineHeight: 32,
   },
   section: { fontSize: 11, letterSpacing: 1.5, color: t.active, marginTop: 12 },
   toolRow: {
@@ -463,8 +557,9 @@ const s = StyleSheet.create({
   remove: { minHeight: 44, justifyContent: "center" },
   link: { color: t.active, fontSize: 13 },
   footer: {
-    padding: 18,
-    gap: 8,
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    gap: 4,
     borderTopWidth: 1,
     borderColor: t.line,
     maxWidth: 620,
@@ -474,7 +569,9 @@ const s = StyleSheet.create({
   publish: {
     backgroundColor: t.teal,
     borderRadius: 9,
-    minHeight: 50,
+    minHeight: 40,
+    minWidth: 64,
+    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

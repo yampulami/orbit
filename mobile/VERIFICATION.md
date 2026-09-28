@@ -137,3 +137,10 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Implemented the three-type composer, community-filtered feed, events tab, and local marketplace messaging while retaining the dark teal theme. Scope and persistence/media limitations are documented in FEED-DESIGN.md.
 - 49 tests, TypeScript, root build, and final Android/iOS/web exports pass. Phone-size browser checks covered publishing all three types, image attachment, poll/like/comment persistence, shared event registration state, tag filtering, and marketplace chat. Temporary posts removed and sample registration restored.
 - No live backend publication or message delivery is implemented. Native media picking/video playback, native share sheet, keyboard behavior, and Face ID require physical-device checks.
+
+## Minimal composer and modal touch clearance — September 28, 2026
+
+- Removed photo/emoji/location/poll shortcuts from the Feed page. Search now opens from the header. The entry prompt is an unboxed row, bringing posts higher on screen.
+- Composer now has a centered title, compact type/community selectors, a larger unlined writing area, a top-right Post action, and attachment tools in the bottom toolbar. No introductory slogan or redundant field label.
+- Shared ModalSafeArea reserves explicit window inset space plus 12 points above modal content, with native fallback clearance during presentation. Applied to composer, feed details/chat/notifications, profile/shared-space forms, expense details, and plan details. Enlarged close controls.
+- 49 tests, TypeScript, and Android/iOS/web exports pass. Browser at 390 by 844 verified the minimal Feed, composer controls, selector expansion, location field, and close action. Physical iPhone status-bar clearance and touch behavior remain to be confirmed on device.

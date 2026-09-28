@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import ModalSafeArea from "./ModalSafeArea";
 import type { Hangout, State } from "../../src/model";
 import { updatePlan } from "../../src/ux";
 import { validateForm } from "../../src/formValidation";
@@ -50,7 +50,7 @@ export default function PlanDetails({ plan, onClose, save }: Props) {
   return <Modal visible presentationStyle="fullScreen" animationType="slide" onRequestClose={editing ? cancel : onClose}>
     <View style={s.backdrop}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-        <SafeAreaView edges={["top", "bottom"]} style={s.sheet}>
+        <ModalSafeArea style={s.sheet}>
           <View style={s.row}>
             <Text style={s.heading}>{editing ? "Edit plan" : "Plan details"}</Text>
             <Touch accessibilityRole="button" accessibilityLabel={editing ? "Cancel plan edit" : "Close plan details"} onPress={editing ? cancel : onClose} style={s.close}>
@@ -85,7 +85,7 @@ export default function PlanDetails({ plan, onClose, save }: Props) {
           <Touch accessibilityRole="button" accessibilityLabel={editing ? "Save plan changes" : "Edit plan"} onPress={editing ? commit : () => setEditing(true)} style={s.button}>
             <Text style={s.text}>{editing ? "Save changes" : "Edit plan"}</Text>
           </Touch>
-        </SafeAreaView>
+        </ModalSafeArea>
       </KeyboardAvoidingView>
     </View>
   </Modal>;
@@ -95,7 +95,7 @@ const s = StyleSheet.create({
   sheet: { flex: 1, padding: 24, backgroundColor: t.background, maxWidth: 600, width: "100%", alignSelf: "center" },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 12 },
   heading: { fontSize: 21, color: t.text, flexShrink: 1 },
-  close: { minHeight: 44, paddingHorizontal: 8, justifyContent: "center" },
+  close: { minHeight: 52, minWidth: 52, paddingHorizontal: 8, justifyContent: "center" },
   text: { fontSize: 14, lineHeight: 21, color: t.text },
   muted: { fontSize: 12, lineHeight: 19, color: t.muted },
   panel: { paddingVertical: 16, borderTopWidth: 1, borderColor: t.line, backgroundColor: t.background, gap: 8 },

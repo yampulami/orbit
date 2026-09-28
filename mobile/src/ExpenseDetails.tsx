@@ -11,7 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import ModalSafeArea from "./ModalSafeArea";
 import { balances, members, money, shares, type State } from "../../src/model";
 import { updateExpense } from "../../src/ux";
 import Touch from "./Touch";
@@ -105,7 +105,7 @@ export default function ExpenseDetails({
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={s.keyboard}
         >
-          <SafeAreaView edges={["top", "bottom"]} style={s.sheet}>
+          <ModalSafeArea style={s.sheet}>
             <View style={s.row}>
               <Text style={s.heading}>
                 {editing ? "Edit expense" : "Expense details"}
@@ -241,7 +241,7 @@ export default function ExpenseDetails({
                 </Text>
               </Touch>
             </View>
-          </SafeAreaView>
+          </ModalSafeArea>
         </KeyboardAvoidingView>
       </View>
     </Modal>
@@ -272,7 +272,7 @@ const s = StyleSheet.create({
     gap: 10,
     paddingVertical: 8,
   },
-  close: { minHeight: 44, justifyContent: "center", paddingHorizontal: 8 },
+  close: { minHeight: 52, minWidth: 52, justifyContent: "center", paddingHorizontal: 8 },
   text: { color: t.text, fontSize: 14 },
   muted: { color: t.muted, fontSize: 12, lineHeight: 19 },
   label: { color: t.muted, fontSize: 11, marginTop: 16, marginBottom: 8 },
