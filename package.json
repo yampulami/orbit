@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "vitest run src/model.test.ts src/ux.test.ts src/localStore.test.ts src/formValidation.test.ts src/authFlow.test.ts src/discovery.test.ts",
+    "test": "vitest run src/model.test.ts src/ux.test.ts src/localStore.test.ts src/formValidation.test.ts src/authFlow.test.ts src/discovery.test.ts src/feed.test.ts",
     "mobile": "npm --prefix mobile start -- --go --lan",
     "mobile:tunnel": "npm --prefix mobile start -- --go --tunnel",
     "mobile:check": "npm --prefix mobile run typecheck"

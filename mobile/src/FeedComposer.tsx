@@ -1,0 +1,485 @@
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { randomUUID } from "expo-crypto";
+import Touch from "./Touch";
+import Input from "./FocusInput";
+import DateField from "./DateField";
+import { ChoiceField } from "./ComposerControls";
+import FeedMedia, { pickFeedMedia, retainFeedMedia } from "./FeedMedia";
+import {
+  communities,
+  createPost,
+  validatePost,
+  type FeedPost,
+  type PostDraft,
+  type PostKind,
+  type Community,
+} from "../../src/feed";
+import { theme as t } from "./theme";
+type Props = {
+  initialTool?: string;
+  draft: PostDraft;
+  setDraft: (draft: PostDraft) => void;
+  author: string;
+  onClose: () => void;
+  onPublish: (post: FeedPost) => void;
+};
+export default function FeedComposer({
+  initialTool = "",
+  draft: d,
+  setDraft,
+  author,
+  onClose,
+  onPublish,
+}: Props) {
+  const [error, setError] = useState(""),
+    [busy, setBusy] = useState(false),
+    [tools, setTools] = useState(initialTool);
+  const change = (patch: Partial<PostDraft>) => {
+    setDraft({ ...d, ...patch });
+    setError("");
+  };
+  const field = (
+    label: string,
+    key:
+      | "title"
+      | "body"
+      | "organizer"
+      | "audience"
+      | "location"
+      | "price"
+      | "link",
+    placeholder = "",
+    multiline = false,
+  ) => (
+    <View style={s.field}>
+      <Text style={s.label}>{label}</Text>
+      <Input
+        accessibilityLabel={label}
+        value={d[key]}
+        onChangeText={(value) => change({ [key]: value })}
+        placeholder={placeholder}
+        placeholderTextColor={t.muted}
+        multiline={multiline}
+        maxLength={key === "body" ? 3000 : key === "link" ? 1000 : 160}
+        keyboardType={key === "price" ? "decimal-pad" : "default"}
+        autoCapitalize={key === "link" ? "none" : "sentences"}
+        style={[s.input, multiline && s.body]}
+      />
+    </View>
+  );
+  async function pick() {
+    try {
+      setBusy(true);
+      const media = await pickFeedMedia();
+      if (media) change({ media });
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Could not open your media library.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+  function publish() {
+    const issue = validatePost(d);
+    if (issue) {
+      setError(issue);
+      return;
+    }
+    try {
+      const id = randomUUID();
+      const post = createPost(
+        { ...d, media: retainFeedMedia(d.media, id) },
+        author,
+        id,
+      );
+      onPublish(post);
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Could not save this post. Try again.",
+      );
+    }
+  }
+  return (
+    <Modal visible animationType="slide" onRequestClose={onClose}>
+      <SafeAreaView style={s.safe}>
+        <KeyboardAvoidingView
+          style={s.safe}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={s.header}>
+            <Touch
+              accessibilityRole="button"
+              accessibilityLabel="Close post composer"
+              onPress={onClose}
+              style={s.icon}
+            >
+              <Ionicons name="close" size={24} color={t.text} />
+            </Touch>
+            <Text style={s.heading}>Create</Text>
+            <Text style={s.caption}>Local preview</Text>
+          </View>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={s.content}
+          >
+            <View style={s.byline}>
+              <View style={s.avatar}>
+                <Text style={s.initial}>{author[0]?.toUpperCase()}</Text>
+              </View>
+              <View>
+                <Text style={s.name}>{author}</Text>
+                <Text style={s.caption}>Share with your campus</Text>
+              </View>
+            </View>
+            <ChoiceField
+              label="Post as"
+              value={d.kind}
+              options={[
+                {
+                  value: "post",
+                  label: "Post",
+                  detail: "Thoughts, questions, and polls",
+                },
+                {
+                  value: "event",
+                  label: "Event",
+                  detail: "A date, a place, and people to join",
+                },
+                {
+                  value: "marketplace",
+                  label: "Marketplace",
+                  detail: "Something to sell or give away",
+                },
+              ]}
+              onChange={(kind) => change({ kind: kind as PostKind })}
+            />
+            {d.kind !== "marketplace" && (
+              <ChoiceField
+                label="Community"
+                value={d.community}
+                options={communities
+                  .filter((x) => x !== "Marketplace")
+                  .map((value) => ({ value, label: value }))}
+                onChange={(community) =>
+                  change({ community: community as Community })
+                }
+              />
+            )}
+            {d.kind !== "post" &&
+              field(
+                d.kind === "event" ? "Event title" : "Item name",
+                "title",
+                d.kind === "event"
+                  ? "What’s happening?"
+                  : "What are you selling?",
+              )}
+            {field(
+              d.kind === "post"
+                ? "Your post"
+                : d.kind === "event"
+                  ? "Description"
+                  : "Item details",
+              "body",
+              d.kind === "post"
+                ? "What’s happening in your orbit?"
+                : "What should people know?",
+              true,
+            )}
+            {d.media && (
+              <View style={{ gap: 8 }}>
+                <FeedMedia media={d.media} />
+                <Touch
+                  accessibilityRole="button"
+                  onPress={() => change({ media: undefined })}
+                  style={s.remove}
+                >
+                  <Text style={s.link}>Remove attachment</Text>
+                </Touch>
+              </View>
+            )}
+            {d.kind === "event" && (
+              <>
+                <Text style={s.section}>THE DETAILS</Text>
+                {field("Organizer", "organizer")}
+                <DateField
+                  label="Event date"
+                  mode="date"
+                  value={d.date}
+                  onChange={(date) => change({ date })}
+                />
+                <DateField
+                  label="Event time"
+                  mode="time"
+                  value={d.time}
+                  onChange={(time) => change({ time })}
+                />
+                <Text style={s.caption}>
+                  Times use your device’s time zone.
+                </Text>
+                <ChoiceField
+                  label="Who’s it for?"
+                  value={d.audience}
+                  options={[
+                    "Everyone on campus",
+                    "Commuters",
+                    "Residents",
+                    "First-year students",
+                    "Students in my major",
+                    "Club members",
+                  ].map((value) => ({ value, label: value }))}
+                  onChange={(audience) => change({ audience })}
+                />
+              </>
+            )}
+            {d.kind === "marketplace" && (
+              <>
+                {field("Price ($)", "price", "0.00 for free")}
+                <ChoiceField
+                  label="Exchange"
+                  value={d.delivery}
+                  options={["Pickup", "Drop-off", "Either"].map((value) => ({
+                    value,
+                    label: value,
+                  }))}
+                  onChange={(delivery) =>
+                    change({ delivery: delivery as PostDraft["delivery"] })
+                  }
+                />
+              </>
+            )}
+            {(d.kind !== "post" || tools === "location" || !!d.location) &&
+              field("Location", "location", "Enter a place — no map needed")}
+            {(tools === "link" || !!d.link) &&
+              field("Link", "link", "https://")}
+            {d.kind === "post" && d.pollOptions && (
+              <View style={s.field}>
+                <Text style={s.section}>POLL OPTIONS</Text>
+                {d.pollOptions.map((option, i) => (
+                  <Input
+                    key={i}
+                    accessibilityLabel={`Poll option ${i + 1}`}
+                    value={option}
+                    onChangeText={(value) =>
+                      change({
+                        pollOptions: d.pollOptions!.map((x, n) =>
+                          n === i ? value : x,
+                        ),
+                      })
+                    }
+                    maxLength={100}
+                    placeholder={`Option ${i + 1}`}
+                    placeholderTextColor={t.muted}
+                    style={s.input}
+                  />
+                ))}
+                <View style={s.toolRow}>
+                  {d.pollOptions.length < 4 && (
+                    <Touch
+                      accessibilityRole="button"
+                      onPress={() =>
+                        change({ pollOptions: [...d.pollOptions!, ""] })
+                      }
+                      style={s.remove}
+                    >
+                      <Text style={s.link}>Add option</Text>
+                    </Touch>
+                  )}
+                  <Touch
+                    accessibilityRole="button"
+                    onPress={() => change({ pollOptions: undefined })}
+                    style={s.remove}
+                  >
+                    <Text style={s.link}>Remove poll</Text>
+                  </Touch>
+                </View>
+              </View>
+            )}
+            {tools === "emoji" && (
+              <View style={s.toolRow}>
+                {["👋", "☕", "✨", "📚", "🎉", "💭"].map((emoji) => (
+                  <Touch
+                    key={emoji}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Insert ${emoji}`}
+                    style={s.icon}
+                    onPress={() => change({ body: d.body + emoji })}
+                  >
+                    <Text style={{ fontSize: 25 }}>{emoji}</Text>
+                  </Touch>
+                ))}
+              </View>
+            )}
+            <View style={s.toolRow}>
+              {(
+                [
+                  ["image-outline", "Photo or video"],
+                  ["happy-outline", "Emoji"],
+                  ["location-outline", "Location"],
+                  ["link-outline", "Link"],
+                  ...(d.kind === "post"
+                    ? [["stats-chart-outline", "Poll"]]
+                    : []),
+                ] as const
+              ).map(([icon, label]) => (
+                <Touch
+                  key={label}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Add ${label.toLowerCase()}`}
+                  disabled={busy}
+                  onPress={() => {
+                    if (label === "Photo or video") {
+                      void pick();
+                      return;
+                    }
+                    if (label === "Poll") {
+                      change({
+                        pollOptions: d.pollOptions ? undefined : ["", ""],
+                      });
+                      return;
+                    }
+                    setTools(
+                      tools === label.toLowerCase() ? "" : label.toLowerCase(),
+                    );
+                  }}
+                  style={s.icon}
+                >
+                  <Ionicons name={icon as any} size={23} color={t.active} />
+                </Touch>
+              ))}
+              {busy && <ActivityIndicator color={t.active} />}
+            </View>
+            <Text style={s.caption}>
+              Saved on this device. Posts aren’t visible to other students yet.
+            </Text>
+          </ScrollView>
+          <View style={s.footer}>
+            {!!error && (
+              <Text accessibilityRole="alert" style={s.error}>
+                {error}
+              </Text>
+            )}
+            <Touch
+              accessibilityRole="button"
+              accessibilityLabel="Publish post"
+              disabled={busy}
+              onPress={publish}
+              style={[s.publish, busy && { opacity: 0.5 }]}
+            >
+              <Text style={s.publishText}>
+                {d.kind === "event"
+                  ? "Publish event"
+                  : d.kind === "marketplace"
+                    ? "Publish listing"
+                    : "Post"}
+              </Text>
+              <Ionicons name="arrow-up" size={20} color={t.text} />
+            </Touch>
+            <Text style={s.caption}>
+              Closing keeps this draft until you leave Feed or Events.
+            </Text>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: t.background },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    gap: 10,
+    borderBottomWidth: 1,
+    borderColor: t.line,
+  },
+  heading: { flex: 1, fontSize: 21, color: t.text },
+  icon: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  content: {
+    padding: 22,
+    gap: 12,
+    maxWidth: 620,
+    width: "100%",
+    alignSelf: "center",
+  },
+  byline: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: t.raised,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  initial: { fontSize: 18, color: t.active },
+  name: { fontSize: 15, color: t.text, fontWeight: "600" },
+  caption: { fontSize: 12, lineHeight: 18, color: t.muted },
+  label: { fontSize: 12, color: t.muted },
+  field: { gap: 6, marginTop: 8 },
+  input: {
+    minHeight: 48,
+    color: t.text,
+    fontSize: 16,
+    borderBottomWidth: 1,
+    borderColor: t.line,
+    paddingVertical: 10,
+  },
+  body: {
+    minHeight: 105,
+    textAlignVertical: "top",
+    fontSize: 18,
+    lineHeight: 27,
+  },
+  section: { fontSize: 11, letterSpacing: 1.5, color: t.active, marginTop: 12 },
+  toolRow: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+    alignItems: "center",
+  },
+  remove: { minHeight: 44, justifyContent: "center" },
+  link: { color: t.active, fontSize: 13 },
+  footer: {
+    padding: 18,
+    gap: 8,
+    borderTopWidth: 1,
+    borderColor: t.line,
+    maxWidth: 620,
+    width: "100%",
+    alignSelf: "center",
+  },
+  publish: {
+    backgroundColor: t.teal,
+    borderRadius: 9,
+    minHeight: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+  publishText: { color: t.text, fontSize: 16, fontWeight: "600" },
+  error: { color: "#e8ad9f", fontSize: 13, lineHeight: 20 },
+});

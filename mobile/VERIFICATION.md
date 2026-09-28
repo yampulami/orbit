@@ -131,3 +131,9 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Removed web console warnings from the Orbit SVG mark using an explicit SVG rotation transform and platform-specific accessibility props.
 - Browser at 375 by 667: collapsed task and expense forms fit, all four shares for $10.01 are visible, invalid $10.001 is rejected, February 30 is rejected with an inline date error, and grocery category selection collapses to its chosen value. Only disposable local drafts were used and cleared; no records or remote accounts were created.
 - 42 tests and mobile TypeScript pass. Final Android, iOS, and web exports pass. Physical-phone keyboard behavior and Face ID remain unverified.
+
+## Feed replaces Home — September 28, 2026
+
+- Implemented the three-type composer, community-filtered feed, events tab, and local marketplace messaging while retaining the dark teal theme. Scope and persistence/media limitations are documented in FEED-DESIGN.md.
+- 49 tests, TypeScript, root build, and final Android/iOS/web exports pass. Phone-size browser checks covered publishing all three types, image attachment, poll/like/comment persistence, shared event registration state, tag filtering, and marketplace chat. Temporary posts removed and sample registration restored.
+- No live backend publication or message delivery is implemented. Native media picking/video playback, native share sheet, keyboard behavior, and Face ID require physical-device checks.

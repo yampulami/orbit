@@ -25,6 +25,15 @@
         {
           "faceIDPermission": "Allow Orbit to use Face ID to unlock your signed-in session."
         }
+      ],
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Orbit to attach photos and videos you choose to your posts.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ]
   }

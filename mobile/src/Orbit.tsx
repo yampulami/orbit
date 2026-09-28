@@ -46,7 +46,7 @@ import {
   groceryGroups,
 } from "../../src/ux";
 import ProfilePanel from "./ProfilePanel";
-import HomeDashboard from "./HomeDashboard";
+import FeedScreen from "./FeedScreen";
 import { theme } from "./theme";
 import BottomNavigation from "./BottomNavigation";
 import {
@@ -58,7 +58,7 @@ import {
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type SaveFeedback = { message?: string; undo?: (current: State) => State };
-type Page = "Home" | "Roommates" | "Hangouts" | "Campus";
+type Page = "Feed" | "Events" | "Roommates" | "Hangouts" | "Campus";
 const colors = {
   ink: theme.text,
   teal: theme.teal,
@@ -69,8 +69,9 @@ const colors = {
   sage: theme.raised,
 };
 const nav: { page: Page; icon: IconName }[] = [
-  { page: "Home", icon: "home-outline" },
+  { page: "Feed", icon: "albums-outline" },
   { page: "Roommates", icon: "people-outline" },
+  { page: "Events", icon: "calendar-outline" },
   { page: "Hangouts", icon: "cafe-outline" },
   { page: "Campus", icon: "compass-outline" },
 ];
@@ -206,7 +207,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
     [ready, setReady] = useState(false),
     [loadError, setLoadError] = useState(false),
     [error, setError] = useState("");
-  const [page, setPage] = useState<Page>("Home"),
+  const [page, setPage] = useState<Page>("Feed"),
     [section, setSection] = useState("Tasks");
   const [modal, setModal] = useState(""),
     [title, setTitle] = useState(""),
@@ -342,8 +343,8 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
         closeForm();
         return true;
       }
-      if (page !== "Home") {
-        setPage("Home");
+      if (page !== "Feed") {
+        setPage("Feed");
         return true;
       }
       return false;
@@ -714,17 +715,11 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
     );
   return (
     <SafeAreaView
-      style={[s.safe, page === "Home" && { backgroundColor: theme.background }]}
+      style={[s.safe, page === "Feed" && { backgroundColor: theme.background }]}
     >
       <StatusBar style="light" />
-      <View
-        style={[
-          s.topbar,
-          page === "Home" && {
-            borderBottomColor: "#213a43",
-            paddingVertical: 8,
-          },
-        ]}
+      {page !== "Feed" && page !== "Events" && <View
+        style={s.topbar}
       >
         <View style={s.inline}>
           <Pressable
@@ -739,20 +734,20 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
             style={{
               fontSize: 14,
               fontWeight: "400",
-              color: page === "Home" ? "#d9e5de" : colors.ink,
+              color: colors.ink,
             }}
           >
             {page}
           </Text>
         </View>
         <Text style={s.demo}>{accountId ? "● LOCAL DATA" : "● PREVIEW"}</Text>
-      </View>
+      </View>}
       <ScrollView
         showsVerticalScrollIndicator={false}
         ref={scroll}
         contentContainerStyle={[
           s.content,
-          page === "Home" && { padding: 14, paddingBottom: 8 },
+          (page === "Feed" || page === "Events") && { padding: 0, paddingBottom: 8 },
         ]}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
@@ -768,25 +763,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
             />
           </View>
         )}
-        {page === "Home" && (
-          <HomeDashboard
-            state={state}
-            space={space}
-            profile={profile}
-            open={open}
-            roommates={(next, mine) => {
-              setSection(next);
-              setTaskFilter(mine ? "Mine" : "Open");
-              setQuery("");
-              go("Roommates");
-            }}
-            hangouts={() => go("Hangouts")}
-            campus={() => { setCampusCategory("Events"); go("Campus"); }}
-            exploreClubs={() => { setCampusCategory("Clubs"); go("Campus"); }}
-            planDetails={setPlanDetails}
-            toggleTask={toggleTask}
-          />
-        )}
+        {(page === "Feed" || page === "Events") && <FeedScreen state={state} save={save} author={profile.name} eventsOnly={page === "Events"} showFeed={()=>go("Feed")} profile={()=>open("profile")} />}
         {page === "Roommates" && (
           <>
             <RoommateOverview

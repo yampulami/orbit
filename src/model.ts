@@ -1,3 +1,4 @@
+import type { FeedPost } from "./feed";
 export const members = ["You", "Alex", "Jordan", "Sam"];
 export type Task = {
   id: string;
@@ -36,6 +37,7 @@ export type Space = {
 };
 export type State = {
   version: 1;
+  feed?: FeedPost[];
   name: string;
   email: string;
   active: string;
