@@ -11,7 +11,9 @@ Feed replaces Home and is the default screen. Bottom navigation is Feed, Roommat
 Community tags are Everyone, Commuters, Residents, Roommates, and Marketplace. Marketplace listings receive the Marketplace tag automatically. Feed supports text search and community filtering. Event search is separate from feed search.
 
 ## Behavior and persistence
-Posts, likes, comments, single-choice poll votes, registrations, and preview messages are saved in the existing account-scoped local store. An optional feed field preserves compatibility with old saves. Three clearly labeled sample posts illustrate the types. Removing your own post offers session-only Undo. Share invokes the platform share sheet with post text; no public post URLs exist yet.
+Signed-in accounts with a university use a Supabase-backed campus feed. Posts, likes, comments, single-choice poll votes, and event registrations are shared with accounts whose normalized university matches. Realtime changes refresh an open feed, and pull-to-refresh performs a full fetch. Row-level security limits reads to the account's university; group posts are additionally limited to members of that group. Existing local posts are uploaded once when the shared feed first connects. Removing your own post offers session-only Undo. Share invokes the platform share sheet with post text; no public post URLs exist yet.
+
+Preview accounts and signed-in accounts without a university remain local. Three clearly labeled sample posts illustrate the types in preview. Marketplace chat remains a local preview and is not delivered.
 
 Composer drafts survive closing the composer and switching between Feed and Events while that screen remains mounted. They are not durable across app reloads or leaving these tabs. Published posts are durable.
 
@@ -19,7 +21,7 @@ Composer drafts survive closing the composer and switching between Feed and Even
 Native media selection accepts photos/videos under 40 MB and copies published local files into the app document directory. Videos have playback controls and do not autoplay. Web preview accepts image attachments up to about 1.5 MB as embedded data, avoiding expired object URLs after reload. Video picking/playback and photo permissions still need physical-device testing. Deleted post attachments are retained locally so Undo can restore the post; media cleanup is future work.
 
 ## Still local
-No posts are sent to other students. Event registrations are local selections, not organizer confirmations. Marketplace messages are not delivered, and the notification bell does not fabricate replies or reminders. A live release needs Supabase feed tables and access rules, storage uploads, server-backed registration and messaging, moderation/reporting, and real notification delivery. GIF search is not included.
+Profile preferences, composer drafts, roommate spaces, hangouts, and marketplace messages are still stored on the device. Local photo/video URIs are omitted from shared posts until Storage upload is implemented. A production release still needs verified university membership, moderation/reporting, marketplace messaging, notifications, media storage, and alias-safe university selection. GIF search is not included.
 
 ## Verification
 49 automated tests cover existing features plus post validation, safe links, currency precision, vote changes, registration counts, filtering, backwards compatibility, and account isolation. Mobile TypeScript, root Vite build, and iOS/Android/web exports pass.

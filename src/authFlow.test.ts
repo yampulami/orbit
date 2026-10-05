@@ -75,6 +75,13 @@ describe("credential validation", () => {
 import { authErrorMessage } from "./authFlow";
 
 describe("helpful authentication errors", () => {
+  it("explains gateway failures without blaming account credentials", () => {
+    for (const status of [502, 503, 504]) {
+      expect(authErrorMessage({ status, message: "upstream failure" })).toContain("temporarily unavailable");
+    }
+    expect(authErrorMessage(new Error("Gateway Timeout"))).toContain("try again");
+    expect(authErrorMessage({ status: 400, message: "Password is too short" })).toBe("Password is too short");
+  });
   it("does not claim an ambiguous credentials error proves an account is missing", () => {
     expect(
       authErrorMessage({

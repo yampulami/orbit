@@ -52,8 +52,13 @@ export function credentialError(
 }
 
 export function authErrorMessage(error: unknown): string {
-  const detail = error as { code?: string; message?: string } | null;
+  const detail = error as { code?: string; message?: string; status?: number } | null;
   const code = detail?.code;
+  if (
+    [502, 503, 504].includes(detail?.status ?? 0) ||
+    /gateway (timeout|error)|bad gateway|service unavailable/i.test(detail?.message ?? "")
+  )
+    return "Orbit’s account service is temporarily unavailable. Please wait a few minutes and try again.";
   if (code === "user_not_found")
     return "Account not found. Create an Orbit account first.";
   if (

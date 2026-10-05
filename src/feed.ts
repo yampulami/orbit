@@ -12,6 +12,7 @@ export type Media = { uri: string; type: "image" | "video" };
 export type Comment = {
   id: string;
   author: string;
+  mine?: boolean;
   body: string;
   createdAt: string;
 };

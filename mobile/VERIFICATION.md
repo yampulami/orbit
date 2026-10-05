@@ -144,3 +144,10 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Composer now has a centered title, compact type/community selectors, a larger unlined writing area, a top-right Post action, and attachment tools in the bottom toolbar. No introductory slogan or redundant field label.
 - Shared ModalSafeArea reserves explicit window inset space plus 12 points above modal content, with native fallback clearance during presentation. Applied to composer, feed details/chat/notifications, profile/shared-space forms, expense details, and plan details. Enlarged close controls.
 - 49 tests, TypeScript, and Android/iOS/web exports pass. Browser at 390 by 844 verified the minimal Feed, composer controls, selector expansion, location field, and close action. Physical iPhone status-bar clearance and touch behavior remain to be confirmed on device.
+## October 5, 2026 — shared university feed
+
+- Applied `supabase/migrations/20261005170000_campus_feed.sql` to the Orbit Supabase project.
+- Confirmed 8/8 feed tables have row-level security, 24 policies are active, and 5/5 activity tables are published through Supabase Realtime.
+- Ran a rollback-only three-account database test: two Caldwell University members shared one post; a member of another university saw zero matching posts. Confirmed the test left zero posts and zero memberships behind.
+- Added realtime feed refresh, pull-to-refresh, one-time local post migration, shared likes/comments/poll votes/event registrations, campus/group boundaries, and profile Posts/Replies history.
+- Passed 52 automated tests, mobile TypeScript, and Expo exports for iOS, Android, and web.

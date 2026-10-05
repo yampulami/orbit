@@ -744,11 +744,13 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
         <Text style={s.demo}>{accountId ? "● LOCAL DATA" : "● PREVIEW"}</Text>
       </View>}
       <ScrollView
+        style={{ flex: 1 }}
+        scrollEnabled={page !== "Feed" && page !== "Events"}
         showsVerticalScrollIndicator={false}
         ref={scroll}
         contentContainerStyle={[
           s.content,
-          (page === "Feed" || page === "Events") && { padding: 0, paddingBottom: 8 },
+          (page === "Feed" || page === "Events") && { padding: 0, paddingBottom: 8, flexGrow: 1 },
         ]}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
@@ -764,7 +766,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
             />
           </View>
         )}
-        {(page === "Feed" || page === "Events") && <FeedScreen state={state} save={save} author={profile.name} eventsOnly={page === "Events"} showFeed={()=>go("Feed")} profile={()=>open("profile")} />}
+        {(page === "Feed" || page === "Events") && <FeedScreen state={state} save={save} author={profile.name} accountId={accountId} campus={profile.campus} eventsOnly={page === "Events"} showFeed={()=>go("Feed")} profile={()=>open("profile")} />}
         {page === "Roommates" && (
           <>
             <RoommateOverview
@@ -1369,7 +1371,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
                       />
                     </>
                   )}
-                  {modal === "profile" && <ProfilePanel profile={profile} signedIn={!!accountId} edit={()=>{closeForm();editPreferences();}} security={()=>{closeForm();security();}} signOut={()=>{closeForm();signOut();}}/>}
+                  {modal === "profile" && <ProfilePanel profile={profile} posts={state.feed ?? []} signedIn={!!accountId} edit={()=>{closeForm();editPreferences();}} security={()=>{closeForm();security();}} signOut={()=>{closeForm();signOut();}}/>}
                   {modal === "space" && (
                     <Text style={s.body}>
                       Creates a separate local space with the four demo

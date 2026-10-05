@@ -1,23 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Touch from "./Touch";
 import { theme as t } from "./theme";
 import type { StudentProfile } from "../../src/studentProfile";
+import type { FeedPost } from "../../src/feed";
 export default function ProfilePanel({
   profile,
+  posts,
   signedIn,
   edit,
   security,
   signOut,
 }: {
   profile: StudentProfile;
+  posts: FeedPost[];
   signedIn: boolean;
   edit: () => void;
   security: () => void;
   signOut: () => void;
 }) {
   const interests = [...new Set([...profile.hobbies, ...profile.clubs])];
+  const [activity, setActivity] = useState<"Posts" | "Replies">("Posts");
+  const myPosts = posts.filter((post) => post.mine && !post.sample);
+  const replies = posts.flatMap((post) =>
+    post.comments
+      .filter((comment) => comment.mine || (!signedIn && comment.author === profile.name))
+      .map((comment) => ({ comment, post })),
+  ).sort((a, b) => b.comment.createdAt.localeCompare(a.comment.createdAt));
   function action(
     label: string,
     detail: string,
@@ -89,6 +99,40 @@ export default function ProfilePanel({
           </Text>
         )}
       </View>
+      <View style={s.activityHeader}>
+        <Text style={s.section}>Activity</Text>
+        <View accessibilityRole="tablist" style={s.tabs}>
+          {(["Posts", "Replies"] as const).map((value) => (
+            <Touch
+              key={value}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activity === value }}
+              aria-selected={activity === value}
+              onPress={() => setActivity(value)}
+              style={[s.tab, activity === value && s.tabActive]}
+            >
+              <Text style={[s.tabText, activity === value && s.tabTextActive]}>{value}</Text>
+            </Touch>
+          ))}
+        </View>
+      </View>
+      <View style={s.activityList}>
+        {activity === "Posts" ? (
+          myPosts.length ? myPosts.map((post) => (
+            <View key={post.id} style={s.activityRow}>
+              <Text style={s.activityMeta}>{post.community} · {new Date(post.createdAt).toLocaleDateString()}</Text>
+              <Text numberOfLines={3} style={s.activityText}>{post.event?.title ?? post.listing?.title ?? post.body}</Text>
+              {(post.event?.title || post.listing?.title) && <Text numberOfLines={2} style={s.caption}>{post.body}</Text>}
+            </View>
+          )) : <Text style={s.caption}>Your campus posts will appear here.</Text>
+        ) : replies.length ? replies.map(({ comment, post }) => (
+          <View key={comment.id} style={s.activityRow}>
+            <Text style={s.activityMeta}>Reply to {post.author} · {new Date(comment.createdAt).toLocaleDateString()}</Text>
+            <Text numberOfLines={3} style={s.activityText}>{comment.body}</Text>
+            <Text numberOfLines={1} style={s.caption}>On: {post.event?.title ?? post.listing?.title ?? post.body}</Text>
+          </View>
+        )) : <Text style={s.caption}>Your replies will appear here.</Text>}
+      </View>
       <View style={s.actions}>
         {action(
           "Edit campus preferences",
@@ -114,8 +158,9 @@ export default function ProfilePanel({
         )}
       </View>
       <Text style={s.footnote}>
-        Your preferences and app activity are stored on this device. They do not
-        sync to other phones yet.
+        {signedIn
+          ? "Campus posts and replies sync through your university feed. Profile preferences remain on this device for now."
+          : "Preview activity is stored only on this device."}
       </Text>
     </View>
   );
@@ -157,6 +202,16 @@ const s = StyleSheet.create({
     backgroundColor: t.surface,
   },
   actions: { marginTop: 24 },
+  activityHeader: { marginTop: 22, borderTopWidth: 1, borderColor: t.line },
+  tabs: { flexDirection: "row", gap: 20 },
+  tab: { minHeight: 42, justifyContent: "center", borderBottomWidth: 2, borderBottomColor: "transparent" },
+  tabActive: { borderBottomColor: t.active },
+  tabText: { color: t.muted, fontSize: 13 },
+  tabTextActive: { color: t.text },
+  activityList: { paddingTop: 4 },
+  activityRow: { paddingVertical: 14, gap: 5, borderBottomWidth: 1, borderColor: t.line },
+  activityMeta: { color: t.active, fontSize: 11, lineHeight: 16 },
+  activityText: { color: t.text, fontSize: 14, lineHeight: 20 },
   action: {
     minHeight: 76,
     flexDirection: "row",

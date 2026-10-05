@@ -32,10 +32,12 @@ If same-Wi-Fi scanning fails (common on university Wi-Fi), stop the LAN server w
 - Fairness view, activity history, concerns, maintenance notes, and quiet hours
 - Hangout creation, votes, group overlap, and free status
 - Sample event RSVPs, club memberships, vegetarian menu filtering
-- Local profile with optional .edu format validation
+- Local profile preferences with university-scoped shared feed membership
+- Shared campus posts, replies, likes, poll votes, and event registrations through Supabase
+- Realtime feed updates and pull-to-refresh across signed-in devices
 - Serialized AsyncStorage persistence, with loading and storage error feedback
 
-This is a native implementation, not an embedded website. Phone and web demo data are separate. Email verification, invitations, live sync, payments, real campus feeds, safety reporting, room reservations, and jobs still require a backend and integrations. The native prototype does not yet expose the website's expense/grocery deletion controls.
+This is a native implementation, not an embedded website. Phone and web demo data are separate. The campus feed uses Supabase once `supabase/migrations/20261005170000_campus_feed.sql` is applied. Profile preferences, roommate data, hangouts, marketplace chat, and local media are not synced yet. Invitations, payments, safety reporting, room reservations, and jobs still require additional integrations. The native prototype does not yet expose the website's expense/grocery deletion controls.
 
 ## Development
 

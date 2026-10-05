@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
+  RefreshControl,
   ScrollView,
   Share,
   StyleSheet,
@@ -34,11 +36,24 @@ import FeedMedia from "./FeedMedia";
 import { OrbitMark } from "./EntryUI";
 import { useCurrentTime } from "./useCurrentTime";
 import { theme as t } from "./theme";
+import { validCampus } from "../../src/campus";
+import {
+  addCampusComment,
+  fetchCampusFeed,
+  publishCampusPost,
+  removeCampusPost,
+  setCampusLike,
+  setEventRegistration,
+  setPollVote,
+  subscribeCampusFeed,
+} from "./campusFeed";
 const samples = sampleFeed();
 type Props = {
   state: State;
   save: (update: (s: State) => State) => void;
   author: string;
+  accountId?: string;
+  campus: string;
   eventsOnly: boolean;
   profile: () => void;
   showFeed: () => void;
@@ -47,18 +62,23 @@ export default function FeedScreen({
   state,
   save,
   author,
+  accountId,
+  campus,
   eventsOnly,
   profile,
   showFeed,
 }: Props) {
   const posts = state.feed ?? samples,
     now = useCurrentTime();
+  const live = !!accountId && validCampus(campus);
   const [draft, setDraft] = useState<PostDraft>(() => newPostDraft(author)),
     [searching, setSearching] = useState(false),
     [composing, setComposing] = useState(false),
     [filter, setFilter] = useState("All"),
     [query, setQuery] = useState(""),
-    [eventFilter, setEventFilter] = useState("Upcoming");
+    [eventFilter, setEventFilter] = useState("Upcoming"),
+    [refreshing, setRefreshing] = useState(false),
+    [loadingFeed, setLoadingFeed] = useState(live);
   const [panel, setPanel] = useState<{
       kind: "comments" | "chat" | "notifications";
       id?: string;
@@ -66,10 +86,53 @@ export default function FeedScreen({
     [message, setMessage] = useState(""),
     [error, setError] = useState(""),
     [removed, setRemoved] = useState<FeedPost | null>(null);
+  const migrated = useRef(false), refreshingRef = useRef(false);
+  const saveRef = useRef(save);
+  saveRef.current = save;
   useEffect(() => {
     setQuery("");
   }, [eventsOnly]);
   const selected = posts.find((p) => p.id === panel?.id);
+  const refresh = useCallback(async (showSpinner = true) => {
+    if (!live || refreshingRef.current) return;
+    refreshingRef.current = true;
+    if (showSpinner) setRefreshing(true);
+    try {
+      const remote = await fetchCampusFeed(campus);
+      saveRef.current((current) => ({ ...current, feed: remote }));
+      setError("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn’t refresh your university feed.");
+    } finally {
+      refreshingRef.current = false;
+      setRefreshing(false);
+      setLoadingFeed(false);
+    }
+  }, [campus, live]);
+  useEffect(() => {
+    if (!live) { setLoadingFeed(false); return; }
+    let active = true;
+    async function start() {
+      try {
+        if (!migrated.current) {
+          const local = (state.feed ?? []).filter((post) => post.mine && !post.sample);
+          await Promise.all(local.map((post) => publishCampusPost(campus, post)));
+          migrated.current = true;
+        }
+        if (active) await refresh(false);
+      } catch (e) {
+        if (active) {
+          setError(e instanceof Error ? e.message : "Couldn’t connect your university feed.");
+          setLoadingFeed(false);
+        }
+      }
+    }
+    void start();
+    const unsubscribe = subscribeCampusFeed(campus, () => { if (active) void refresh(false); });
+    return () => { active = false; unsubscribe(); };
+    // The local feed is intentionally read only once for migration.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campus, live, refresh]);
   const update = (id: string, fn: (post: FeedPost) => FeedPost) =>
     save((s) => ({
       ...s,
@@ -98,7 +161,8 @@ export default function FeedScreen({
     setMessage("");
     setError("");
   }
-  function publish(post: FeedPost) {
+  async function publish(post: FeedPost) {
+    if (live) await publishCampusPost(campus, post);
     save((s) => ({ ...s, feed: [post, ...(s.feed ?? samples)] }));
     setComposing(false);
     setDraft(newPostDraft(author));
@@ -106,6 +170,7 @@ export default function FeedScreen({
     setQuery("");
     setEventFilter("Upcoming");
     if (eventsOnly && post.kind !== "event") showFeed();
+    if (live) await refresh(false);
   }
   async function share(post: FeedPost) {
     try {
@@ -123,11 +188,12 @@ export default function FeedScreen({
       setError("Sharing is unavailable here. Try again on your phone.");
     }
   }
-  function send() {
+  async function send() {
     if (!selected || !message.trim()) return;
     const entry = {
       id: randomUUID(),
       author,
+      mine: true,
       body: message.trim(),
       createdAt: new Date().toISOString(),
     };
@@ -140,6 +206,10 @@ export default function FeedScreen({
         : { ...p, comments: [...p.comments, entry] },
     );
     setMessage("");
+    if (live && panel?.kind === "comments") {
+      try { await addCampusComment(selected.id, entry); await refresh(false); }
+      catch (e) { setError(e instanceof Error ? e.message : "Couldn’t post your comment."); }
+    }
   }
   const icon = (
     name: React.ComponentProps<typeof Ionicons>["name"],
@@ -148,6 +218,12 @@ export default function FeedScreen({
   ) => <Ionicons accessible={false} name={name} size={size} color={color} />;
   return (
     <View style={s.root}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        refreshControl={live ? <RefreshControl refreshing={refreshing} onRefresh={() => { void refresh(true); }} tintColor={t.active} colors={[t.active]} /> : undefined}
+      >
       <View style={s.header}>
         <Touch
           accessibilityRole="button"
@@ -255,6 +331,16 @@ export default function FeedScreen({
           {error}
         </Text>
       )}
+      {!accountId && (
+        <Text style={s.syncNote}>Preview posts stay on this device. Sign in to join a university feed.</Text>
+      )}
+      {!!accountId && !validCampus(campus) && (
+        <Touch accessibilityRole="button" onPress={profile} style={s.campusPrompt}>
+          <Text style={s.title}>Choose your university</Text>
+          <Text style={s.caption}>Add it to your profile so Orbit knows which campus feed to show.</Text>
+        </Touch>
+      )}
+      {live && loadingFeed && <ActivityIndicator color={t.active} style={{ marginVertical: 28 }} />}
       {removed && (
         <View style={s.undo}>
           <Text style={s.caption}>Post removed</Text>
@@ -263,6 +349,7 @@ export default function FeedScreen({
             accessibilityLabel="Undo remove post"
             onPress={() => {
               save((s) => ({ ...s, feed: [removed, ...(s.feed ?? samples)] }));
+              if (live) void publishCampusPost(campus, removed).then(() => refresh(false)).catch((e) => setError(e instanceof Error ? e.message : "Couldn’t restore your post."));
               setRemoved(null);
             }}
             style={s.iconTouch}
@@ -350,6 +437,11 @@ export default function FeedScreen({
                     ...s,
                     feed: (s.feed ?? samples).filter((p) => p.id !== post.id),
                   }));
+                  if (live) void removeCampusPost(post.id).then(() => refresh(false)).catch((e) => {
+                    save((current) => ({ ...current, feed: [post, ...(current.feed ?? [])] }));
+                    setRemoved(null);
+                    setError(e instanceof Error ? e.message : "Couldn’t remove your post.");
+                  });
                 }}
                 style={s.iconTouch}
               >
@@ -434,7 +526,11 @@ export default function FeedScreen({
                     accessibilityLabel={`${option}, ${post.poll!.votes[i]} votes`}
                     accessibilityState={{ checked: post.poll!.choice === i }}
                     aria-checked={post.poll!.choice === i}
-                    onPress={() => update(post.id, (p) => votePost(p, i))}
+                    onPress={() => {
+                      const next = votePost(post, i);
+                      update(post.id, () => next);
+                      if (live) void setPollVote(post.id, next.poll?.choice ?? null).then(() => refresh(false)).catch((e) => setError(e instanceof Error ? e.message : "Couldn’t save your vote."));
+                    }}
                     style={[
                       s.pollOption,
                       post.poll!.choice === i && { borderColor: t.active },
@@ -486,7 +582,11 @@ export default function FeedScreen({
                   Date.parse(post.event.startsAt) <= now &&
                   !post.event.registered
                 }
-                onPress={() => update(post.id, (p) => registerPost(p, now))}
+                onPress={() => {
+                  const next = registerPost(post, now);
+                  update(post.id, () => next);
+                  if (live) void setEventRegistration(post.id, !!next.event?.registered).then(() => refresh(false)).catch((e) => setError(e instanceof Error ? e.message : "Couldn’t update registration."));
+                }}
                 style={[
                   s.register,
                   post.event.registered && { backgroundColor: t.surface },
@@ -526,7 +626,11 @@ export default function FeedScreen({
               accessibilityLabel={`${post.liked ? "Unlike" : "Like"} post by ${post.author}`}
               accessibilityState={{ selected: post.liked }}
               aria-pressed={post.liked}
-              onPress={() => update(post.id, likePost)}
+              onPress={() => {
+                const next = likePost(post);
+                update(post.id, () => next);
+                if (live) void setCampusLike(post.id, next.liked).then(() => refresh(false)).catch((e) => setError(e instanceof Error ? e.message : "Couldn’t update your like."));
+              }}
               style={s.action}
             >
               {icon(
@@ -559,7 +663,8 @@ export default function FeedScreen({
           </View>
         </View>
       ))}
-      <Text style={s.end}>You’re caught up · local preview</Text>
+      <Text style={s.end}>{live ? `You’re caught up · ${campus}` : "You’re caught up · local preview"}</Text>
+      </ScrollView>
       {composing && (
         <FeedComposer
           draft={draft}
@@ -669,7 +774,7 @@ export default function FeedScreen({
                       : "Post comment"
                   }
                   disabled={!message.trim()}
-                  onPress={send}
+                  onPress={() => { void send(); }}
                   style={[s.newEvent, !message.trim() && { opacity: 0.4 }]}
                 >
                   {icon("arrow-up", 23, t.text)}
@@ -683,7 +788,7 @@ export default function FeedScreen({
   );
 }
 const s = StyleSheet.create({
-  root: { paddingBottom: 8 },
+  root: { flex: 1, paddingBottom: 8 },
   safe: { flex: 1, backgroundColor: t.background },
   header: {
     flexDirection: "row",
@@ -749,6 +854,8 @@ const s = StyleSheet.create({
   filterActive: { borderBottomColor: t.active },
   filterText: { fontSize: 13, color: t.muted },
   search: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 4 },
+  syncNote: { color: t.muted, fontSize: 12, lineHeight: 18, paddingHorizontal: 22, paddingVertical: 10 },
+  campusPrompt: { marginHorizontal: 18, marginTop: 12, padding: 16, borderWidth: 1, borderColor: t.active, borderRadius: 14, gap: 5 },
   post: {
     paddingHorizontal: 22,
     paddingTop: 22,

@@ -33,7 +33,7 @@ type Props = {
   setDraft: (draft: PostDraft) => void;
   author: string;
   onClose: () => void;
-  onPublish: (post: FeedPost) => void;
+  onPublish: (post: FeedPost) => void | Promise<void>;
 };
 export default function FeedComposer({
   initialTool = "",
@@ -94,24 +94,27 @@ export default function FeedComposer({
       setBusy(false);
     }
   }
-  function publish() {
+  async function publish() {
     const issue = validatePost(d);
     if (issue) {
       setError(issue);
       return;
     }
     try {
+      setBusy(true);
       const id = randomUUID();
       const post = createPost(
         { ...d, media: retainFeedMedia(d.media, id) },
         author,
         id,
       );
-      onPublish(post);
+      await onPublish(post);
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Could not save this post. Try again.",
       );
+    } finally {
+      setBusy(false);
     }
   }
   return (
@@ -142,7 +145,7 @@ export default function FeedComposer({
               accessibilityRole="button"
               accessibilityLabel="Publish post"
               disabled={busy || !d.body.trim()}
-              onPress={publish}
+              onPress={() => { void publish(); }}
               style={[s.publish, (busy || !d.body.trim()) && { opacity: 0.4 }]}
             >
               <Text style={s.publishText}>Post</Text>
