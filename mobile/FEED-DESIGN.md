@@ -1,7 +1,7 @@
 # Orbit Feed — September 28, 2026
 
 ## Navigation
-Feed replaces Home and is the default screen. Bottom navigation is Feed, Roommates, Events, Hangouts, Campus. Existing shared-space data and personal hangouts remain accessible. The Orbit mark opens the profile; the bell opens notification status.
+Feed replaces Home and is the default screen. Bottom navigation is Feed, Roommates, Messages, Hangouts, Campus. Feed events also appear under Campus → Events. Existing shared-space data and personal hangouts remain accessible. The Orbit mark opens the profile; the bell opens notification status. Post creation uses a floating action above the navigation bar.
 
 ## Post types
 - Post: text, one photo/video attachment, explicit hyperlink, manually entered location, emoji insertion, optional 2–4-option poll.
@@ -18,10 +18,10 @@ Preview accounts and signed-in accounts without a university remain local. Three
 Composer drafts survive closing the composer and switching between Feed and Events while that screen remains mounted. They are not durable across app reloads or leaving these tabs. Published posts are durable.
 
 ## Media
-Native media selection accepts photos/videos under 40 MB and copies published local files into the app document directory. Videos have playback controls and do not autoplay. Web preview accepts image attachments up to about 1.5 MB as embedded data, avoiding expired object URLs after reload. Video picking/playback and photo permissions still need physical-device testing. Deleted post attachments are retained locally so Undo can restore the post; media cleanup is future work.
+Native media selection accepts photos/videos under 40 MB and copies selected files into the app document directory. Shared posts upload attachments to the private `feed-media` Supabase bucket. Storage policies limit reads to the uploader's university, and the app converts private object paths into one-hour signed display URLs. Videos have playback controls and do not autoplay. Web preview accepts image attachments up to about 1.5 MB. Existing local files named for a post are recovered and uploaded when that account reconnects, fixing posts created before cloud media was enabled.
 
 ## Still local
-Profile preferences, composer drafts, roommate spaces, hangouts, and marketplace messages are still stored on the device. Local photo/video URIs are omitted from shared posts until Storage upload is implemented. A production release still needs verified university membership, moderation/reporting, marketplace messaging, notifications, media storage, and alias-safe university selection. GIF search is not included.
+Profile preferences, composer drafts, roommate spaces, hangouts, and marketplace seller messages are still stored on the device. Campus group messages are live and restricted to joined group members. A production release still needs verified university membership, moderation/reporting, direct marketplace messaging, notifications, media processing, and alias-safe university selection. GIF search is not included.
 
 ## Verification
 49 automated tests cover existing features plus post validation, safe links, currency precision, vote changes, registration counts, filtering, backwards compatibility, and account isolation. Mobile TypeScript, root Vite build, and iOS/Android/web exports pass.

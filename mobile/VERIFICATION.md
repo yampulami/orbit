@@ -151,3 +151,11 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Ran a rollback-only three-account database test: two Caldwell University members shared one post; a member of another university saw zero matching posts. Confirmed the test left zero posts and zero memberships behind.
 - Added realtime feed refresh, pull-to-refresh, one-time local post migration, shared likes/comments/poll votes/event registrations, campus/group boundaries, and profile Posts/Replies history.
 - Passed 52 automated tests, mobile TypeScript, and Expo exports for iOS, Android, and web.
+
+## October 5, 2026 — private media and campus messages
+
+- Applied `supabase/migrations/20261005200000_media_and_group_chat.sql` to create private feed media storage, author-only post updates, realtime group messages, and group discovery/membership.
+- Ran a rollback-only three-account test: a joined Caldwell member could read a group message and private media object; an authenticated user at another university could read neither.
+- Replaced the Events bottom tab with Messages, moved live Feed events into the Campus Events section, and replaced the inline Feed composer with a floating create button.
+- Added recovery and upload for existing on-device post media, one-hour signed attachment URLs, live Campus Lounge chat, custom group creation, joining, realtime updates, and pull-to-refresh.
+- Passed 52 automated tests, mobile TypeScript, and Expo exports for iOS, Android, and web. Browser at 390 × 844 confirmed the floating compose button stays above the five-tab navigation.

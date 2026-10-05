@@ -8,7 +8,12 @@ export const communities = [
 ] as const;
 export type Community = (typeof communities)[number];
 export type PostKind = "post" | "event" | "marketplace";
-export type Media = { uri: string; type: "image" | "video" };
+export type Media = {
+  uri: string;
+  type: "image" | "video";
+  /** Private Supabase object path; uri is a temporary signed display URL. */
+  storagePath?: string;
+};
 export type Comment = {
   id: string;
   author: string;

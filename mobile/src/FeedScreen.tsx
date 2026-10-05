@@ -270,22 +270,7 @@ export default function FeedScreen({
             {icon("add", 24, t.text)}
           </Touch>
         </View>
-      ) : (
-        <Touch
-          accessibilityRole="button"
-          accessibilityLabel="Write a post"
-          onPress={openComposer}
-          style={s.composer}
-        >
-          <View style={s.avatar}>
-            <Text style={s.initial}>{author[0]?.toUpperCase()}</Text>
-          </View>
-          <Text style={s.prompt}>
-            {draft.body ? "Continue your draft…" : "What’s on your mind?"}
-          </Text>
-          {icon("create-outline", 22, t.active)}
-        </Touch>
-      )}
+      ) : null}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -437,7 +422,7 @@ export default function FeedScreen({
                     ...s,
                     feed: (s.feed ?? samples).filter((p) => p.id !== post.id),
                   }));
-                  if (live) void removeCampusPost(post.id).then(() => refresh(false)).catch((e) => {
+                  if (live) void removeCampusPost(post.id, post.media?.storagePath).then(() => refresh(false)).catch((e) => {
                     save((current) => ({ ...current, feed: [post, ...(current.feed ?? [])] }));
                     setRemoved(null);
                     setError(e instanceof Error ? e.message : "Couldn’t remove your post.");
@@ -665,6 +650,16 @@ export default function FeedScreen({
       ))}
       <Text style={s.end}>{live ? `You’re caught up · ${campus}` : "You’re caught up · local preview"}</Text>
       </ScrollView>
+      {!eventsOnly && (
+        <Touch
+          accessibilityRole="button"
+          accessibilityLabel={draft.body ? "Continue post draft" : "Create post"}
+          onPress={openComposer}
+          style={s.fab}
+        >
+          {icon(draft.body ? "create" : "add", 28, t.text)}
+        </Touch>
+      )}
       {composing && (
         <FeedComposer
           draft={draft}
@@ -832,6 +827,22 @@ const s = StyleSheet.create({
   },
   initial: { fontSize: 16, color: t.active },
   prompt: { flex: 1, color: t.muted, fontSize: 15, lineHeight: 22 },
+  fab: {
+    position: "absolute",
+    right: 20,
+    bottom: 18,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: t.teal,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
   composerTools: {
     flexDirection: "row",
     alignItems: "center",

@@ -48,6 +48,7 @@ import {
 } from "../../src/ux";
 import ProfilePanel from "./ProfilePanel";
 import FeedScreen from "./FeedScreen";
+import MessagesScreen from "./MessagesScreen";
 import { theme } from "./theme";
 import BottomNavigation from "./BottomNavigation";
 import {
@@ -59,7 +60,7 @@ import {
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type SaveFeedback = { message?: string; undo?: (current: State) => State };
-type Page = "Feed" | "Events" | "Roommates" | "Hangouts" | "Campus";
+type Page = "Feed" | "Roommates" | "Messages" | "Hangouts" | "Campus";
 const colors = {
   ink: theme.text,
   teal: theme.teal,
@@ -72,7 +73,7 @@ const colors = {
 const nav: { page: Page; icon: IconName }[] = [
   { page: "Feed", icon: "albums-outline" },
   { page: "Roommates", icon: "people-outline" },
-  { page: "Events", icon: "calendar-outline" },
+  { page: "Messages", icon: "chatbubbles-outline" },
   { page: "Hangouts", icon: "cafe-outline" },
   { page: "Campus", icon: "compass-outline" },
 ];
@@ -719,7 +720,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
       style={[s.safe, page === "Feed" && { backgroundColor: theme.background }]}
     >
       <StatusBar style="light" />
-      {page !== "Feed" && page !== "Events" && <View
+      {page !== "Feed" && page !== "Messages" && <View
         style={s.topbar}
       >
         <View style={s.inline}>
@@ -743,15 +744,24 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
         </View>
         <Text style={s.demo}>{accountId ? "● LOCAL DATA" : "● PREVIEW"}</Text>
       </View>}
+      {(page === "Feed" || page === "Messages") && (
+        <View style={{ flex: 1 }}>
+          {!!error && (
+            <View style={s.info}>
+              <Text accessibilityRole="alert" style={s.body}>{error}</Text>
+              <Button title="Retry save" onPress={() => writeState(stateRef.current)} />
+            </View>
+          )}
+          {page === "Feed" && <FeedScreen state={state} save={save} author={profile.name} accountId={accountId} campus={profile.campus} eventsOnly={false} showFeed={()=>go("Feed")} profile={()=>open("profile")} />}
+          {page === "Messages" && <MessagesScreen accountId={accountId} campus={profile.campus} author={profile.name} profile={()=>open("profile")} />}
+        </View>
+      )}
+      {page !== "Feed" && page !== "Messages" && (
       <ScrollView
         style={{ flex: 1 }}
-        scrollEnabled={page !== "Feed" && page !== "Events"}
         showsVerticalScrollIndicator={false}
         ref={scroll}
-        contentContainerStyle={[
-          s.content,
-          (page === "Feed" || page === "Events") && { padding: 0, paddingBottom: 8, flexGrow: 1 },
-        ]}
+        contentContainerStyle={s.content}
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
       >
@@ -766,7 +776,6 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
             />
           </View>
         )}
-        {(page === "Feed" || page === "Events") && <FeedScreen state={state} save={save} author={profile.name} accountId={accountId} campus={profile.campus} eventsOnly={page === "Events"} showFeed={()=>go("Feed")} profile={()=>open("profile")} />}
         {page === "Roommates" && (
           <>
             <RoommateOverview
@@ -1100,6 +1109,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
         )}
         {page === "Campus" && <CampusScreen state={state} save={save} profile={profile} category={campusCategory} onCategoryChange={setCampusCategory} />}
       </ScrollView>
+      )}
       {!!notice && (
         <View style={s.toast} accessibilityLiveRegion="polite">
           <View style={{ flex: 1 }}>

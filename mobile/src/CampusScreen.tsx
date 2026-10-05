@@ -7,37 +7,9 @@ import { theme as t } from "./theme";
 import { discoverClubs } from "../../src/discovery";
 import type { StudentProfile } from "../../src/studentProfile";
 import type { State } from "../../src/model";
+import { sampleFeed } from "../../src/feed";
 
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
-const events = [
-  {
-    id: "ev1",
-    name: "Sunset on the quad",
-    date: "18",
-    month: "SEP",
-    time: "5:30 PM",
-    place: "The main quad",
-    category: "Outdoors",
-  },
-  {
-    id: "ev2",
-    name: "A little coffee, a little code",
-    date: "19",
-    month: "SEP",
-    time: "10 AM",
-    place: "Student Union Café",
-    category: "Technology",
-  },
-  {
-    id: "ev3",
-    name: "Find your people",
-    date: "22",
-    month: "SEP",
-    time: "Noon",
-    place: "Student center",
-    category: "Club fair",
-  },
-];
 const dining = [
   {
     name: "Maple Dining Hall",
@@ -76,6 +48,20 @@ export default function CampusScreen({
     [veg, setVeg] = useState(false);
   const matches = (text: string) =>
     text.toLowerCase().includes(query.trim().toLowerCase());
+  const events = (state.feed ?? sampleFeed())
+    .filter((post) => !!post.event)
+    .map((post) => {
+      const starts = new Date(post.event!.startsAt);
+      return {
+        id: post.id,
+        name: post.event!.title,
+        date: String(starts.getDate()),
+        month: starts.toLocaleDateString(undefined, { month: "short" }).toUpperCase(),
+        time: starts.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }),
+        place: post.location ?? "Location not added",
+        category: post.community === "Everyone" ? "Campus event" : post.community,
+      };
+    });
   const clubs = discoverClubs(profile, query, state.joined, savedOnly);
   const visibleEvents = events.filter(
     (e) =>
@@ -142,9 +128,9 @@ export default function CampusScreen({
       </View>
       <View style={s.context}>
         <View style={s.sample}>
-          <Text style={s.sampleText}>SAMPLE CONTENT</Text>
+          <Text style={s.sampleText}>{category === "Events" ? "CAMPUS FEED" : "SAMPLE CONTENT"}</Text>
         </View>
-        <Text style={s.caption}>Saved on this device</Text>
+        <Text style={s.caption}>{category === "Events" ? "Shared at your university" : "Saved on this device"}</Text>
       </View>
       {category !== "Services" && (
         <>
@@ -179,7 +165,7 @@ export default function CampusScreen({
                   thumbColor={t.cream}
                 />
               </View>
-            ) : (
+            ) : category === "Clubs" ? (
               <Touch
                 accessibilityRole="button"
                 accessibilityLabel="Show saved only"
@@ -195,7 +181,7 @@ export default function CampusScreen({
                 />
                 <Text style={s.filterText}>Saved</Text>
               </Touch>
-            )}
+            ) : <Text style={s.caption}>Posted in Feed</Text>}
           </View>
           {!count && (
             <View style={s.empty}>
@@ -243,9 +229,7 @@ export default function CampusScreen({
                 {event.time} · {event.place}
               </Text>
             </View>
-            {bookmark(event.name, state.rsvps.includes(event.id), () =>
-              toggleSaved("rsvps", event.id),
-            )}
+            <Text style={s.liveLabel}>FROM FEED</Text>
           </View>
         ))}
       {category === "Clubs" &&
@@ -424,6 +408,7 @@ const s = StyleSheet.create({
   meta: { fontSize: 10, color: t.muted },
   title: { fontSize: 16, lineHeight: 22, color: t.text, fontWeight: "500" },
   reason: { fontSize: 11, lineHeight: 17, color: t.active, marginTop: 3 },
+  liveLabel: { color: t.active, fontSize: 9, letterSpacing: 1, alignSelf: "center" },
   date: {
     width: 44,
     paddingVertical: 9,

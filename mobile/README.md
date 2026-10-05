@@ -35,9 +35,11 @@ If same-Wi-Fi scanning fails (common on university Wi-Fi), stop the LAN server w
 - Local profile preferences with university-scoped shared feed membership
 - Shared campus posts, replies, likes, poll votes, and event registrations through Supabase
 - Realtime feed updates and pull-to-refresh across signed-in devices
+- Private university-scoped photo/video attachments
+- Realtime campus group chats with a shared Campus Lounge
 - Serialized AsyncStorage persistence, with loading and storage error feedback
 
-This is a native implementation, not an embedded website. Phone and web demo data are separate. The campus feed uses Supabase once `supabase/migrations/20261005170000_campus_feed.sql` is applied. Profile preferences, roommate data, hangouts, marketplace chat, and local media are not synced yet. Invitations, payments, safety reporting, room reservations, and jobs still require additional integrations. The native prototype does not yet expose the website's expense/grocery deletion controls.
+This is a native implementation, not an embedded website. Phone and web demo data are separate. The live campus features use the migrations under `supabase/migrations`. Profile preferences, roommate data, personal hangouts, and marketplace seller chat are not synced yet. Invitations, payments, safety reporting, room reservations, and jobs still require additional integrations. The native prototype does not yet expose the website's expense/grocery deletion controls.
 
 ## Development
 

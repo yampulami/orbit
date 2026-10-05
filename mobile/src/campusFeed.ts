@@ -1,6 +1,8 @@
 import { auth } from "./authClient";
+import { Platform } from "react-native";
+import { Directory, File, Paths } from "expo-file-system";
 import { campusKey, validCampus } from "../../src/campus";
-import type { Comment, FeedPost } from "../../src/feed";
+import type { Comment, FeedPost, Media } from "../../src/feed";
 
 type Row = {
   id: string;
@@ -91,6 +93,15 @@ function rowToPost(row: Row, me: string): FeedPost {
   };
 }
 
+async function hydrateMedia(post: FeedPost) {
+  const stored = post.media?.uri;
+  if (!stored?.startsWith("storage:")) return post;
+  const path = stored.slice("storage:".length);
+  const { data, error } = await client().storage.from("feed-media").createSignedUrl(path, 60 * 60);
+  if (error) return { ...post, media: undefined };
+  return { ...post, media: { ...post.media!, uri: data.signedUrl, storagePath: path } };
+}
+
 export async function fetchCampusFeed(campus: string) {
   const me = await joinCampus(campus);
   const { data, error } = await client()
@@ -99,15 +110,56 @@ export async function fetchCampusFeed(campus: string) {
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) throw new Error(message(error));
-  return ((data ?? []) as unknown as Row[]).map((row) => rowToPost(row, me));
+  return Promise.all(((data ?? []) as unknown as Row[]).map((row) => hydrateMedia(rowToPost(row, me))));
 }
 
-function remotePayload(post: FeedPost): Partial<FeedPost> {
+function recoverLocalMedia(post: FeedPost): Media | undefined {
+  if (post.media || Platform.OS === "web") return post.media;
+  try {
+    const match = new Directory(Paths.document)
+      .list()
+      .find((entry) => entry instanceof File && entry.name.startsWith(`orbit-post-${post.id}.`));
+    if (!(match instanceof File)) return;
+    const video = [".mp4", ".mov", ".m4v", ".webm"].includes(match.extension.toLowerCase());
+    return { uri: match.uri, type: video ? "video" : "image" };
+  } catch {
+    return;
+  }
+}
+
+function mediaType(media: Media, extension: string) {
+  if (media.type === "video")
+    return extension === ".mov" ? "video/quicktime" : extension === ".webm" ? "video/webm" : "video/mp4";
+  return extension === ".png" ? "image/png" : extension === ".webp" ? "image/webp" : extension === ".heic" ? "image/heic" : extension === ".heif" ? "image/heif" : "image/jpeg";
+}
+
+async function uploadMedia(campus: string, me: string, post: FeedPost) {
+  const media = recoverLocalMedia(post);
+  if (!media) return;
+  if (media.storagePath) return { ...media, uri: `storage:${media.storagePath}` };
+  if (media.uri.startsWith("storage:")) return media;
+  if (media.uri.startsWith("http")) return media;
+  let extension = media.uri.match(/\.(png|webp|heic|heif|jpe?g|mp4|mov|m4v|webm)(?:\?|$)/i)?.[0]?.toLowerCase();
+  if (!extension || extension === ".jpeg" || extension === ".m4v")
+    extension = media.type === "video" ? ".mp4" : ".jpg";
+  const path = `${campusKey(campus)}/${me}/${post.id}${extension}`;
+  const bytes = media.uri.startsWith("file:")
+    ? await new File(media.uri).arrayBuffer()
+    : await (await fetch(media.uri)).arrayBuffer();
+  const { error } = await client().storage.from("feed-media").upload(path, bytes, {
+    contentType: mediaType(media, extension),
+    upsert: true,
+  });
+  if (error) throw new Error(`Couldn’t upload the attachment. ${message(error)}`);
+  return { type: media.type, uri: `storage:${path}` } satisfies Media;
+}
+
+function remotePayload(post: FeedPost, media?: Media): Partial<FeedPost> {
   const { id: _id, author: _author, createdAt: _createdAt, mine: _mine, sample: _sample,
     liked: _liked, likes: _likes, comments: _comments, ...payload } = post;
   return {
     ...payload,
-    media: post.media?.uri.startsWith("http") ? post.media : undefined,
+    media,
     poll: post.poll ? { ...post.poll, votes: [], choice: null } : undefined,
     event: post.event ? { ...post.event, going: 0, registered: false } : undefined,
     listing: post.listing ? { ...post.listing, messages: [] } : undefined,
@@ -116,6 +168,7 @@ function remotePayload(post: FeedPost): Partial<FeedPost> {
 
 export async function publishCampusPost(campus: string, post: FeedPost) {
   const me = await joinCampus(campus);
+  const media = await uploadMedia(campus, me, post);
   const { error } = await client().from("campus_posts").upsert({
     id: post.id,
     campus_key: campusKey(campus),
@@ -123,15 +176,16 @@ export async function publishCampusPost(campus: string, post: FeedPost) {
     author_name: post.author,
     kind: post.kind,
     community: post.community,
-    payload: remotePayload(post),
+    payload: remotePayload(post, media),
     created_at: post.createdAt,
-  }, { onConflict: "id", ignoreDuplicates: true });
+  }, { onConflict: "id" });
   if (error) throw new Error(message(error));
 }
 
-export async function removeCampusPost(id: string) {
+export async function removeCampusPost(id: string, storagePath?: string) {
   const { error } = await client().from("campus_posts").delete().eq("id", id);
   if (error) throw new Error(message(error));
+  if (storagePath) await client().storage.from("feed-media").remove([storagePath]);
 }
 
 export async function setCampusLike(postId: string, liked: boolean) {
