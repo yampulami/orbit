@@ -4,12 +4,13 @@ export const hobbies = ["Music", "Gaming", "Fitness", "Photography", "Art", "Rea
 export const clubInterests = ["Technology", "Arts & culture", "Academic", "Volunteering", "Sports & recreation", "Student leadership"];
 export type StudentProfile = {
   version: 1; name: string; campus: string; lifestyle: string; year: string; major: string;
-  hobbies: string[]; clubs: string[]; completed: boolean;
+  bio?: string; hobbies: string[]; clubs: string[]; completed: boolean;
 };
-export const emptyProfile = (): StudentProfile => ({ version: 1, name: "", campus: "", lifestyle: "", year: "", major: "", hobbies: [], clubs: [], completed: false });
+export const emptyProfile = (): StudentProfile => ({ version: 1, name: "", campus: "", lifestyle: "", year: "", major: "", bio: "", hobbies: [], clubs: [], completed: false });
 export function validProfile(value: unknown): value is StudentProfile {
   const p = value as StudentProfile;
   return !!p && p.version === 1 && [p.name,p.campus,p.lifestyle,p.year,p.major].every(x => typeof x === "string" && x.length <= 100)
+    && (p.bio === undefined || (typeof p.bio === "string" && p.bio.length <= 240))
     && [p.hobbies,p.clubs].every(x => Array.isArray(x) && x.length <= 30 && x.every(v => typeof v === "string" && v.length <= 100)) && typeof p.completed === "boolean";
 }
 export function toggleInterest(values: string[], value: string) { return values.includes(value) ? values.filter(x => x !== value) : [...values,value]; }

@@ -211,6 +211,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
     [error, setError] = useState("");
   const [page, setPage] = useState<Page>("Feed"),
     [section, setSection] = useState("Tasks");
+  const [directPeer, setDirectPeer] = useState<{ id: string; name: string } | null>(null);
   const [modal, setModal] = useState(""),
     [title, setTitle] = useState(""),
     [amount, setAmount] = useState(""),
@@ -752,8 +753,8 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
               <Button title="Retry save" onPress={() => writeState(stateRef.current)} />
             </View>
           )}
-          {page === "Feed" && <FeedScreen state={state} save={save} author={profile.name} accountId={accountId} campus={profile.campus} eventsOnly={false} showFeed={()=>go("Feed")} profile={()=>open("profile")} />}
-          {page === "Messages" && <MessagesScreen accountId={accountId} campus={profile.campus} author={profile.name} profile={()=>open("profile")} />}
+          {page === "Feed" && <FeedScreen state={state} save={save} author={profile.name} accountId={accountId} campus={profile.campus} eventsOnly={false} showFeed={()=>go("Feed")} profile={()=>open("profile")} messageStudent={(student)=>{setDirectPeer(student);go("Messages");}} />}
+          {page === "Messages" && <MessagesScreen accountId={accountId} campus={profile.campus} author={profile.name} profile={()=>open("profile")} directPeer={directPeer} directOpened={()=>setDirectPeer(null)} />}
         </View>
       )}
       {page !== "Feed" && page !== "Messages" && (

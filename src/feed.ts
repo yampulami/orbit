@@ -16,6 +16,8 @@ export type Media = {
 };
 export type Comment = {
   id: string;
+  userId?: string;
+  parentId?: string;
   author: string;
   mine?: boolean;
   body: string;
@@ -23,6 +25,7 @@ export type Comment = {
 };
 export type FeedPost = {
   id: string;
+  authorId?: string;
   kind: PostKind;
   author: string;
   mine?: boolean;

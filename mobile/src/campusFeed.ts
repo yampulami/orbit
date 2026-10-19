@@ -13,7 +13,7 @@ type Row = {
   payload: Partial<FeedPost>;
   created_at: string;
   post_likes?: { user_id: string }[];
-  post_comments?: { id: string; user_id: string; author_name: string; body: string; created_at: string }[];
+  post_comments?: { id: string; user_id: string; parent_id?: string | null; author_name: string; body: string; created_at: string }[];
   event_registrations?: { user_id: string }[];
   poll_votes?: { user_id: string; choice: number }[];
 };
@@ -55,7 +55,7 @@ export async function joinCampus(campus: string) {
 
 function rowToPost(row: Row, me: string): FeedPost {
   const comments: Comment[] = (row.post_comments ?? [])
-    .map((x) => ({ id: x.id, author: x.author_name, mine: x.user_id === me, body: x.body, createdAt: x.created_at }))
+    .map((x) => ({ id: x.id, userId: x.user_id, parentId: x.parent_id ?? undefined, author: x.author_name, mine: x.user_id === me, body: x.body, createdAt: x.created_at }))
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   const votes = row.poll_votes ?? [];
   const options = row.payload.poll?.options ?? [];
@@ -63,6 +63,7 @@ function rowToPost(row: Row, me: string): FeedPost {
   return {
     ...(row.payload as FeedPost),
     id: row.id,
+    authorId: row.author_id,
     author: row.author_name,
     kind: row.kind,
     community: row.community,
@@ -106,7 +107,7 @@ export async function fetchCampusFeed(campus: string) {
   const me = await joinCampus(campus);
   const { data, error } = await client()
     .from("campus_posts")
-    .select("id,author_id,author_name,kind,community,payload,created_at,post_likes(user_id),post_comments(id,user_id,author_name,body,created_at),event_registrations(user_id),poll_votes(user_id,choice)")
+    .select("id,author_id,author_name,kind,community,payload,created_at,post_likes(user_id),post_comments(id,user_id,parent_id,author_name,body,created_at),event_registrations(user_id),poll_votes(user_id,choice)")
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) throw new Error(message(error));
@@ -201,7 +202,7 @@ export async function addCampusComment(postId: string, comment: Comment) {
   const me = await userId();
   const { error } = await client().from("post_comments").insert({
     id: comment.id, post_id: postId, user_id: me, author_name: comment.author,
-    body: comment.body, created_at: comment.createdAt,
+    parent_id: comment.parentId ?? null, body: comment.body, created_at: comment.createdAt,
   });
   if (error) throw new Error(message(error));
 }

@@ -68,6 +68,7 @@ export default function ProfilePanel({
           <Text style={s.caption}>
             {signedIn ? "Signed in" : "Preview account"}
           </Text>
+          {!!profile.bio?.trim() && <Text style={s.bio}>{profile.bio.trim()}</Text>}
         </View>
       </View>
       <View style={s.details}>
@@ -159,7 +160,7 @@ export default function ProfilePanel({
       </View>
       <Text style={s.footnote}>
         {signedIn
-          ? "Campus posts and replies sync through your university feed. Profile preferences remain on this device for now."
+          ? "Your profile, posts, and replies are shared securely with people at your university."
           : "Preview activity is stored only on this device."}
       </Text>
     </View>
@@ -184,6 +185,7 @@ const s = StyleSheet.create({
   initial: { color: t.cream, fontSize: 28 },
   name: { fontSize: 25, color: t.text, fontWeight: "500" },
   caption: { fontSize: 12, lineHeight: 18, color: t.muted },
+  bio: { fontSize: 13, lineHeight: 19, color: t.text, marginTop: 3 },
   details: {
     borderTopWidth: 1,
     borderBottomWidth: 1,

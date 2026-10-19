@@ -36,6 +36,7 @@ import StepMotion from "./StepMotion";
 import PasswordRecovery from "./PasswordRecovery";
 import Onboarding from "./Onboarding";
 import { theme as t } from "./theme";
+import { syncCampusProfile } from "./campusSocial";
 
 export type AccountControls = {
   accountId?: string;
@@ -219,6 +220,8 @@ export default function AuthGate({
             );
           if (!alive || version !== generation.current) return;
           setProfile(p);
+          if (p.completed && p.name.trim() && p.campus.trim())
+            void syncCampusProfile(p).catch(() => {});
           setLockEnabled(preference === "enabled");
           setLocked(preference === "enabled" && !credentialReentry);
         } else {
@@ -414,6 +417,8 @@ export default function AuthGate({
   }
   async function saveProfile(p: StudentProfile) {
     await AsyncStorage.setItem(profileKey(id), JSON.stringify(p));
+    if (session && p.completed && p.name.trim() && p.campus.trim())
+      await syncCampusProfile(p);
   }
   if (loading)
     return (

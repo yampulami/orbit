@@ -159,3 +159,10 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Replaced the Events bottom tab with Messages, moved live Feed events into the Campus Events section, and replaced the inline Feed composer with a floating create button.
 - Added recovery and upload for existing on-device post media, one-hour signed attachment URLs, live Campus Lounge chat, custom group creation, joining, realtime updates, and pull-to-refresh.
 - Passed 52 automated tests, mobile TypeScript, and Expo exports for iOS, Android, and web. Browser at 390 × 844 confirmed the floating compose button stays above the five-tab navigation.
+
+## October 19, 2026 — social profiles and private conversations
+
+- Applied `supabase/migrations/20261019090000_social_profiles_direct_messages.sql` and confirmed profiles, conversations, messages, notifications, and threaded replies are live with 11 row-level security policies.
+- Synced onboarding profiles to each university, added campus profile cards, post editing, threaded replies, and persistent activity notifications.
+- Split Messages into Direct and Groups, with unread state and real private Marketplace seller conversations.
+- Passed 52 automated tests, mobile TypeScript, and final Expo exports for iOS, Android, and web. Reviewed the post-detail experience at 390 × 844.

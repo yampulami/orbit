@@ -253,6 +253,15 @@ export default function Onboarding({
                   returnKeyType="done"
                   editable={!busy}
                 />
+                <Field
+                  label="About you · optional"
+                  value={profile.bio ?? ""}
+                  onChangeText={(bio) => patch({ bio })}
+                  placeholder="A short introduction for people on your campus"
+                  maxLength={240}
+                  multiline
+                  editable={!busy}
+                />
                 <Text style={s.section}>
                   Campus life <Text style={ui.caption}>· optional</Text>
                 </Text>

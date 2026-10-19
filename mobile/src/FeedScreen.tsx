@@ -47,6 +47,14 @@ import {
   setPollVote,
   subscribeCampusFeed,
 } from "./campusFeed";
+import {
+  fetchNotifications,
+  fetchCampusProfile,
+  markNotificationsRead,
+  subscribeCampusSocial,
+  type OrbitNotification,
+  type CampusProfile,
+} from "./campusSocial";
 const samples = sampleFeed();
 type Props = {
   state: State;
@@ -57,6 +65,7 @@ type Props = {
   eventsOnly: boolean;
   profile: () => void;
   showFeed: () => void;
+  messageStudent: (student: { id: string; name: string }) => void;
 };
 export default function FeedScreen({
   state,
@@ -67,6 +76,7 @@ export default function FeedScreen({
   eventsOnly,
   profile,
   showFeed,
+  messageStudent,
 }: Props) {
   const posts = state.feed ?? samples,
     now = useCurrentTime();
@@ -80,10 +90,13 @@ export default function FeedScreen({
     [refreshing, setRefreshing] = useState(false),
     [loadingFeed, setLoadingFeed] = useState(live);
   const [panel, setPanel] = useState<{
-      kind: "comments" | "chat" | "notifications";
+      kind: "comments" | "chat" | "notifications" | "edit" | "profile";
       id?: string;
     } | null>(null),
     [message, setMessage] = useState(""),
+    [replyingTo, setReplyingTo] = useState<{ id: string; author: string } | null>(null),
+    [notifications, setNotifications] = useState<OrbitNotification[]>([]),
+    [campusProfile, setCampusProfile] = useState<CampusProfile | null>(null),
     [error, setError] = useState(""),
     [removed, setRemoved] = useState<FeedPost | null>(null);
   const migrated = useRef(false), refreshingRef = useRef(false);
@@ -93,6 +106,7 @@ export default function FeedScreen({
     setQuery("");
   }, [eventsOnly]);
   const selected = posts.find((p) => p.id === panel?.id);
+  const unreadNotifications = notifications.filter((item) => !item.read).length;
   const refresh = useCallback(async (showSpinner = true) => {
     if (!live || refreshingRef.current) return;
     refreshingRef.current = true;
@@ -133,6 +147,15 @@ export default function FeedScreen({
     // The local feed is intentionally read only once for migration.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campus, live, refresh]);
+  const refreshNotifications = useCallback(async () => {
+    if (!live) return;
+    try { setNotifications(await fetchNotifications()); }
+    catch { /* Feed remains usable when notifications are unavailable. */ }
+  }, [live]);
+  useEffect(() => {
+    void refreshNotifications();
+    return subscribeCampusSocial(() => { void refreshNotifications(); });
+  }, [refreshNotifications]);
   const update = (id: string, fn: (post: FeedPost) => FeedPost) =>
     save((s) => ({
       ...s,
@@ -156,10 +179,20 @@ export default function FeedScreen({
     if (eventsOnly) setDraft({ ...draft, kind: "event" });
     setComposing(true);
   }
-  function openPanel(kind: "comments" | "chat" | "notifications", id?: string) {
+  function openPanel(kind: "comments" | "chat" | "notifications" | "edit" | "profile", id?: string) {
     setPanel({ kind, id });
-    setMessage("");
+    setMessage(kind === "edit" ? posts.find((post) => post.id === id)?.body ?? "" : "");
+    setReplyingTo(null);
     setError("");
+    if (kind === "notifications" && live) {
+      void markNotificationsRead().then(refreshNotifications).catch(() => {});
+    }
+  }
+  function openStudent(post: FeedPost) {
+    if (!live || !post.authorId) return;
+    setCampusProfile(null);
+    openPanel("profile", post.id);
+    void fetchCampusProfile(post.authorId).then(setCampusProfile).catch((e) => setError(e instanceof Error ? e.message : "Couldn’t open this profile."));
   }
   async function publish(post: FeedPost) {
     if (live) await publishCampusPost(campus, post);
@@ -192,6 +225,7 @@ export default function FeedScreen({
     if (!selected || !message.trim()) return;
     const entry = {
       id: randomUUID(),
+      parentId: replyingTo?.id,
       author,
       mine: true,
       body: message.trim(),
@@ -206,9 +240,21 @@ export default function FeedScreen({
         : { ...p, comments: [...p.comments, entry] },
     );
     setMessage("");
+    setReplyingTo(null);
     if (live && panel?.kind === "comments") {
       try { await addCampusComment(selected.id, entry); await refresh(false); }
       catch (e) { setError(e instanceof Error ? e.message : "Couldn’t post your comment."); }
+    }
+  }
+  async function saveEdit() {
+    if (!selected || !message.trim()) return;
+    const next = { ...selected, body: message.trim() };
+    update(selected.id, () => next);
+    setPanel(null);
+    setMessage("");
+    if (live) {
+      try { await publishCampusPost(campus, next); await refresh(false); }
+      catch (e) { update(selected.id, () => selected); setError(e instanceof Error ? e.message : "Couldn’t update your post."); }
     }
   }
   const icon = (
@@ -253,6 +299,7 @@ export default function FeedScreen({
           style={s.iconTouch}
         >
           {icon("notifications-outline", 23, t.text)}
+          {unreadNotifications > 0 && <View style={s.notificationDot} />}
         </Touch>
       </View>
       {eventsOnly ? (
@@ -401,7 +448,7 @@ export default function FeedScreen({
               )}
             </View>
             <View style={{ flex: 1, gap: 3 }}>
-              <Text style={s.author}>{post.author}</Text>
+              <Touch disabled={!live || !post.authorId} accessibilityRole={live && post.authorId ? "button" : undefined} accessibilityLabel={`Open ${post.author}'s profile`} onPress={() => openStudent(post)} style={s.authorTouch}><Text style={s.author}>{post.author}</Text></Touch>
               <Text style={s.meta}>
                 {post.community} ·{" "}
                 {post.sample
@@ -413,25 +460,23 @@ export default function FeedScreen({
               </Text>
             </View>
             {post.mine && (
-              <Touch
-                accessibilityRole="button"
-                accessibilityLabel={`Remove ${post.event?.title ?? post.listing?.title ?? "post"}`}
-                onPress={() => {
-                  setRemoved(post);
-                  save((s) => ({
-                    ...s,
-                    feed: (s.feed ?? samples).filter((p) => p.id !== post.id),
-                  }));
-                  if (live) void removeCampusPost(post.id, post.media?.storagePath).then(() => refresh(false)).catch((e) => {
-                    save((current) => ({ ...current, feed: [post, ...(current.feed ?? [])] }));
-                    setRemoved(null);
-                    setError(e instanceof Error ? e.message : "Couldn’t remove your post.");
-                  });
-                }}
-                style={s.iconTouch}
-              >
-                {icon("trash-outline", 18)}
-              </Touch>
+              <View style={s.ownerActions}>
+                <Touch accessibilityRole="button" accessibilityLabel="Edit post" onPress={() => openPanel("edit", post.id)} style={s.iconTouch}>{icon("create-outline", 18)}</Touch>
+                <Touch
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${post.event?.title ?? post.listing?.title ?? "post"}`}
+                  onPress={() => {
+                    setRemoved(post);
+                    save((s) => ({ ...s, feed: (s.feed ?? samples).filter((p) => p.id !== post.id) }));
+                    if (live) void removeCampusPost(post.id, post.media?.storagePath).then(() => refresh(false)).catch((e) => {
+                      save((current) => ({ ...current, feed: [post, ...(current.feed ?? [])] }));
+                      setRemoved(null);
+                      setError(e instanceof Error ? e.message : "Couldn’t remove your post.");
+                    });
+                  }}
+                  style={s.iconTouch}
+                >{icon("trash-outline", 18)}</Touch>
+              </View>
             )}
           </View>
           {post.event && (
@@ -598,11 +643,14 @@ export default function FeedScreen({
             <Touch
               accessibilityRole="button"
               accessibilityLabel={`Message seller about ${post.listing.title}`}
-              onPress={() => openPanel("chat", post.id)}
+              onPress={() => {
+                if (live && post.authorId && !post.mine) messageStudent({ id: post.authorId, name: post.author });
+                else openPanel("chat", post.id);
+              }}
               style={s.register}
             >
               {icon("chatbubble-outline", 20, t.text)}
-              <Text style={s.registerText}>Interested? Message seller</Text>
+              <Text style={s.registerText}>{post.mine ? "Your marketplace listing" : "Interested? Message seller"}</Text>
             </Touch>
           )}
           <View style={s.actions}>
@@ -683,9 +731,13 @@ export default function FeedScreen({
               <Text style={s.heading}>
                 {panel?.kind === "notifications"
                   ? "Notifications"
+                  : panel?.kind === "profile"
+                    ? "Campus profile"
+                  : panel?.kind === "edit"
+                    ? "Edit post"
                   : panel?.kind === "chat"
                     ? "Message seller"
-                    : "Comments"}
+                    : "Post"}
               </Text>
               <Touch
                 accessibilityRole="button"
@@ -701,14 +753,26 @@ export default function FeedScreen({
               keyboardShouldPersistTaps="handled"
             >
               {panel?.kind === "notifications" ? (
-                <View style={s.empty}>
-                  {icon("notifications-outline", 35, t.active)}
-                  <Text style={s.title}>You’re all caught up</Text>
-                  <Text style={s.caption}>
-                    Live replies and event reminders will appear here once
-                    campus accounts are connected.
-                  </Text>
-                </View>
+                notifications.length ? notifications.map((item) => (
+                  <View key={item.id} style={[s.notification, !item.read && s.notificationUnread]}>
+                    <View style={s.notificationIcon}>{icon(item.kind === "like" ? "heart" : item.kind === "message" ? "chatbubble" : "return-down-forward", 18, t.active)}</View>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Text style={s.body}><Text style={s.author}>{item.actorName}</Text> {item.body}</Text>
+                      <Text style={s.meta}>{new Date(item.createdAt).toLocaleString()}</Text>
+                    </View>
+                  </View>
+                )) : <View style={s.empty}>{icon("notifications-outline", 35, t.active)}<Text style={s.title}>You’re all caught up</Text><Text style={s.caption}>Likes, replies, messages, and event reminders appear here.</Text></View>
+              ) : panel?.kind === "profile" ? (
+                campusProfile ? <View style={s.profileCard}>
+                  <View style={s.profileAvatar}><Text style={s.profileInitial}>{campusProfile.name[0]?.toUpperCase()}</Text></View>
+                  <Text style={s.profileName}>{campusProfile.name}</Text>
+                  <Text style={s.caption}>{[campusProfile.year, campusProfile.major].filter(Boolean).join(" · ") || "Student"}</Text>
+                  {!!campusProfile.bio && <Text style={s.profileBio}>{campusProfile.bio}</Text>}
+                  <View style={s.profileFacts}>{[campusProfile.lifestyle, ...campusProfile.hobbies.slice(0, 3), ...campusProfile.clubs.slice(0, 2)].filter(Boolean).map((fact) => <View key={fact} style={s.profileFact}><Text style={s.caption}>{fact}</Text></View>)}</View>
+                  {selected?.authorId !== accountId && <Touch accessibilityRole="button" accessibilityLabel={`Message ${campusProfile.name}`} onPress={() => { setPanel(null); messageStudent({ id: campusProfile.userId, name: campusProfile.name }); }} style={s.profileMessage}>{icon("chatbubble-outline", 19, t.text)}<Text style={s.registerText}>Message</Text></Touch>}
+                </View> : <ActivityIndicator color={t.active} style={{ marginVertical: 36 }} />
+              ) : panel?.kind === "edit" ? (
+                <View style={s.editIntro}><Text style={s.caption}>Update the text of your post. Its attachment and audience stay the same.</Text></View>
               ) : (
                 <>
                   <Text style={s.title}>
@@ -723,16 +787,11 @@ export default function FeedScreen({
                       seller.
                     </Text>
                   )}
-                  {(panel?.kind === "chat"
-                    ? selected?.listing?.messages
-                    : selected?.comments
-                  )?.map((comment) => (
-                    <View key={comment.id} style={s.comment}>
-                      <Text style={s.author}>{comment.author}</Text>
-                      <Text style={s.body}>{comment.body}</Text>
-                      <Text style={s.meta}>
-                        {new Date(comment.createdAt).toLocaleString()}
-                      </Text>
+                  {panel?.kind === "comments" && selected && <View style={s.postDetail}><Text style={s.meta}>{selected.author} · {selected.community}</Text><Text style={s.body}>{selected.body}</Text>{selected.media && <FeedMedia media={selected.media} />}</View>}
+                  {panel?.kind === "chat" ? selected?.listing?.messages.map((comment) => <View key={comment.id} style={s.comment}><Text style={s.author}>{comment.author}</Text><Text style={s.body}>{comment.body}</Text><Text style={s.meta}>{new Date(comment.createdAt).toLocaleString()}</Text></View>) : selected?.comments.filter((comment) => !comment.parentId).map((comment) => (
+                    <View key={comment.id} style={s.thread}>
+                      <View style={s.comment}><Text style={s.author}>{comment.author}</Text><Text style={s.body}>{comment.body}</Text><View style={s.commentMeta}><Text style={s.meta}>{new Date(comment.createdAt).toLocaleString()}</Text><Touch accessibilityRole="button" accessibilityLabel={`Reply to ${comment.author}`} onPress={() => setReplyingTo({ id: comment.id, author: comment.author })} style={s.replyButton}><Text style={s.replyText}>Reply</Text></Touch></View></View>
+                      {selected.comments.filter((reply) => reply.parentId === comment.id).map((reply) => <View key={reply.id} style={s.reply}><Text style={s.author}>{reply.author}</Text><Text style={s.body}>{reply.body}</Text><Text style={s.meta}>{new Date(reply.createdAt).toLocaleString()}</Text></View>)}
                     </View>
                   ))}
                   {panel?.kind === "comments" && !selected?.comments.length && (
@@ -741,22 +800,24 @@ export default function FeedScreen({
                 </>
               )}
             </ScrollView>
-            {panel?.kind !== "notifications" && (
+            {panel?.kind !== "notifications" && panel?.kind !== "profile" && (
+              <View>
+                {replyingTo && panel?.kind === "comments" && <View style={s.replying}><Text style={s.caption}>Replying to {replyingTo.author}</Text><Touch accessibilityRole="button" accessibilityLabel="Cancel reply" onPress={() => setReplyingTo(null)} style={s.iconTouch}>{icon("close", 17)}</Touch></View>}
               <View style={s.messageRow}>
                 <Input
                   accessibilityLabel={
-                    panel?.kind === "chat"
+                    panel?.kind === "edit" ? "Edit post" : panel?.kind === "chat"
                       ? "Message seller"
                       : "Write a comment"
                   }
                   value={message}
                   onChangeText={setMessage}
                   multiline
-                  maxLength={1000}
+                  maxLength={panel?.kind === "edit" ? 3000 : 1000}
                   placeholder={
-                    panel?.kind === "chat"
+                    panel?.kind === "edit" ? "Post text" : panel?.kind === "chat"
                       ? "Is this still available?"
-                      : "Add a comment…"
+                      : replyingTo ? `Reply to ${replyingTo.author}…` : "Add a comment…"
                   }
                   placeholderTextColor={t.muted}
                   style={s.message}
@@ -764,16 +825,17 @@ export default function FeedScreen({
                 <Touch
                   accessibilityRole="button"
                   accessibilityLabel={
-                    panel?.kind === "chat"
+                    panel?.kind === "edit" ? "Save post changes" : panel?.kind === "chat"
                       ? "Save preview message"
                       : "Post comment"
                   }
                   disabled={!message.trim()}
-                  onPress={() => { void send(); }}
+                  onPress={() => { if (panel?.kind === "edit") void saveEdit(); else void send(); }}
                   style={[s.newEvent, !message.trim() && { opacity: 0.4 }]}
                 >
                   {icon("arrow-up", 23, t.text)}
                 </Touch>
+              </View>
               </View>
             )}
           </KeyboardAvoidingView>
@@ -1018,4 +1080,26 @@ const s = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
   },
+  ownerActions: { flexDirection: "row", alignItems: "center" },
+  notificationDot: { position: "absolute", top: 9, right: 9, width: 7, height: 7, borderRadius: 4, backgroundColor: t.active, borderWidth: 1, borderColor: t.background },
+  notification: { flexDirection: "row", gap: 12, paddingVertical: 14, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: t.line },
+  notificationUnread: { backgroundColor: t.surface, marginHorizontal: -8, paddingHorizontal: 12, borderRadius: 8 },
+  notificationIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: t.raised, alignItems: "center", justifyContent: "center" },
+  editIntro: { minHeight: 42 },
+  postDetail: { gap: 12, paddingBottom: 16, borderBottomWidth: 1, borderColor: t.line },
+  thread: { gap: 0 },
+  reply: { marginLeft: 28, paddingVertical: 12, paddingLeft: 14, borderLeftWidth: 2, borderColor: t.line, gap: 6 },
+  commentMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  replyButton: { minHeight: 36, minWidth: 52, alignItems: "center", justifyContent: "center" },
+  replyText: { color: t.active, fontSize: 12, fontWeight: "600" },
+  replying: { minHeight: 38, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: t.surface },
+  authorTouch: { alignSelf: "flex-start", minHeight: 22, justifyContent: "center" },
+  profileCard: { alignItems: "center", paddingVertical: 18, gap: 8 },
+  profileAvatar: { width: 76, height: 76, borderRadius: 38, backgroundColor: t.teal, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  profileInitial: { color: t.cream, fontSize: 31, fontWeight: "600" },
+  profileName: { color: t.text, fontSize: 25, fontWeight: "600", letterSpacing: -0.5 },
+  profileBio: { color: t.text, fontSize: 14, lineHeight: 21, textAlign: "center", marginTop: 9, maxWidth: 420 },
+  profileFacts: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 7, marginTop: 10 },
+  profileFact: { backgroundColor: t.surface, borderRadius: 13, paddingHorizontal: 11, paddingVertical: 6 },
+  profileMessage: { minHeight: 46, borderRadius: 23, backgroundColor: t.teal, paddingHorizontal: 22, marginTop: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
 });
