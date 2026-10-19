@@ -180,3 +180,4 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Added a realtime unread indicator to the Messages bottom tab and descriptive unread accessibility text.
 - Updated the Expo SDK 57 patch packages required by Expo Doctor. All 21 Doctor checks, 52 automated tests, TypeScript, and iOS/Android/web exports pass.
 - Visually reviewed the unauthenticated Messages state and five-tab navigation in the browser preview. The signed-in people and group directories still need a physical-account walkthrough.
+- Fixed a physical-device render failure caused when Feed and the app shell subscribed to the same named Supabase Realtime channel. Every feed, message, and social listener now receives a UUID channel name, including across Expo Fast Refresh.

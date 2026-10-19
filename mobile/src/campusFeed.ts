@@ -1,5 +1,6 @@
 import { auth } from "./authClient";
 import { Platform } from "react-native";
+import { randomUUID } from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import { campusKey, validCampus } from "../../src/campus";
 import type { Comment, FeedPost, Media } from "../../src/feed";
@@ -228,7 +229,7 @@ export async function setPollVote(postId: string, choice: number | null) {
 export function subscribeCampusFeed(campus: string, refresh: () => void) {
   const supabase = auth;
   if (!supabase || !validCampus(campus)) return () => {};
-  const channel = supabase.channel(`campus-feed-${campusKey(campus)}`);
+  const channel = supabase.channel(`campus-feed-${campusKey(campus)}-${randomUUID()}`);
   for (const table of TABLES)
     channel.on("postgres_changes", { event: "*", schema: "public", table }, refresh);
   channel.subscribe();

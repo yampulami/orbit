@@ -1,4 +1,5 @@
 import { auth } from "./authClient";
+import { randomUUID } from "expo-crypto";
 import { campusKey, validCampus } from "../../src/campus";
 import { joinCampus } from "./campusFeed";
 
@@ -174,7 +175,7 @@ export async function sendGroupMessage(groupId: string, id: string, senderName: 
 export function subscribeCampusMessages(campus: string, refresh: () => void) {
   const supabase = auth;
   if (!supabase || !validCampus(campus)) return () => {};
-  const channel = supabase.channel(`campus-messages-${campusKey(campus)}`);
+  const channel = supabase.channel(`campus-messages-${campusKey(campus)}-${randomUUID()}`);
   for (const table of ["campus_groups", "campus_group_memberships", "group_messages"])
     channel.on("postgres_changes", { event: "*", schema: "public", table }, refresh);
   channel.subscribe();

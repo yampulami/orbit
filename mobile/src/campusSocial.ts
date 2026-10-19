@@ -1,4 +1,5 @@
 import { auth } from "./authClient";
+import { randomUUID } from "expo-crypto";
 import { campusKey, validCampus } from "../../src/campus";
 import type { StudentProfile } from "../../src/studentProfile";
 import { joinCampus } from "./campusFeed";
@@ -304,7 +305,7 @@ export async function markNotificationsRead() {
 export function subscribeCampusSocial(refresh: () => void) {
   const supabase = auth;
   if (!supabase) return () => {};
-  const channel = supabase.channel("orbit-social");
+  const channel = supabase.channel(`orbit-social-${randomUUID()}`);
   for (const table of ["direct_conversations", "direct_messages", "notifications", "student_profiles", "student_follows", "user_blocks"])
     channel.on("postgres_changes", { event: "*", schema: "public", table }, refresh);
   channel.subscribe();
