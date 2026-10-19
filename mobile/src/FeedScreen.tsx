@@ -50,10 +50,16 @@ import {
 import {
   fetchNotifications,
   fetchCampusProfile,
+  fetchFollowedIds,
+  setStudentFollow,
+  blockStudent,
+  unblockStudent,
+  reportCampusPost,
   markNotificationsRead,
   subscribeCampusSocial,
   type OrbitNotification,
   type CampusProfile,
+  type ReportReason,
 } from "./campusSocial";
 const samples = sampleFeed();
 type Props = {
@@ -90,13 +96,17 @@ export default function FeedScreen({
     [refreshing, setRefreshing] = useState(false),
     [loadingFeed, setLoadingFeed] = useState(live);
   const [panel, setPanel] = useState<{
-      kind: "comments" | "chat" | "notifications" | "edit" | "profile";
+      kind: "comments" | "chat" | "notifications" | "edit" | "profile" | "report";
       id?: string;
     } | null>(null),
     [message, setMessage] = useState(""),
     [replyingTo, setReplyingTo] = useState<{ id: string; author: string } | null>(null),
     [notifications, setNotifications] = useState<OrbitNotification[]>([]),
+    [followedIds, setFollowedIds] = useState<string[]>([]),
     [campusProfile, setCampusProfile] = useState<CampusProfile | null>(null),
+    [reportReason, setReportReason] = useState<ReportReason>("spam"),
+    [reportDetail, setReportDetail] = useState(""),
+    [blockedStudent, setBlockedStudent] = useState<{ id: string; name: string } | null>(null),
     [error, setError] = useState(""),
     [removed, setRemoved] = useState<FeedPost | null>(null);
   const migrated = useRef(false), refreshingRef = useRef(false);
@@ -149,7 +159,11 @@ export default function FeedScreen({
   }, [campus, live, refresh]);
   const refreshNotifications = useCallback(async () => {
     if (!live) return;
-    try { setNotifications(await fetchNotifications()); }
+    try {
+      const [nextNotifications, nextFollowed] = await Promise.all([fetchNotifications(), fetchFollowedIds()]);
+      setNotifications(nextNotifications);
+      setFollowedIds(nextFollowed);
+    }
     catch { /* Feed remains usable when notifications are unavailable. */ }
   }, [live]);
   useEffect(() => {
@@ -163,10 +177,10 @@ export default function FeedScreen({
     }));
   const visible = filterPosts(
     posts,
-    eventsOnly ? "All" : filter,
+    eventsOnly || filter === "Following" ? "All" : filter,
     query,
     eventsOnly,
-  ).filter(
+  ).filter((post) => filter !== "Following" || (!!post.authorId && followedIds.includes(post.authorId))).filter(
     (p) =>
       !eventsOnly ||
       (eventFilter === "Registered"
@@ -179,10 +193,11 @@ export default function FeedScreen({
     if (eventsOnly) setDraft({ ...draft, kind: "event" });
     setComposing(true);
   }
-  function openPanel(kind: "comments" | "chat" | "notifications" | "edit" | "profile", id?: string) {
+  function openPanel(kind: "comments" | "chat" | "notifications" | "edit" | "profile" | "report", id?: string) {
     setPanel({ kind, id });
     setMessage(kind === "edit" ? posts.find((post) => post.id === id)?.body ?? "" : "");
     setReplyingTo(null);
+    if (kind === "report") { setReportReason("spam"); setReportDetail(""); }
     setError("");
     if (kind === "notifications" && live) {
       void markNotificationsRead().then(refreshNotifications).catch(() => {});
@@ -257,6 +272,31 @@ export default function FeedScreen({
       catch (e) { update(selected.id, () => selected); setError(e instanceof Error ? e.message : "Couldn’t update your post."); }
     }
   }
+  async function toggleProfileFollow() {
+    if (!campusProfile) return;
+    try {
+      await setStudentFollow(campusProfile.userId, !campusProfile.followedByMe);
+      const [nextProfile] = await Promise.all([fetchCampusProfile(campusProfile.userId), refreshNotifications()]);
+      setCampusProfile(nextProfile);
+    } catch (e) { setError(e instanceof Error ? e.message : "Couldn’t update this connection."); }
+  }
+  async function blockProfile() {
+    if (!campusProfile) return;
+    try {
+      await blockStudent(campusProfile.userId);
+      setBlockedStudent({ id: campusProfile.userId, name: campusProfile.name });
+      setPanel(null);
+      await refresh(false);
+    } catch (e) { setError(e instanceof Error ? e.message : "Couldn’t block this account."); }
+  }
+  async function submitReport() {
+    if (!selected) return;
+    try {
+      await reportCampusPost(selected.id, selected.authorId, reportReason, reportDetail);
+      setPanel(null);
+      setReportDetail("");
+    } catch (e) { setError(e instanceof Error ? e.message : "Couldn’t submit this report."); }
+  }
   const icon = (
     name: React.ComponentProps<typeof Ionicons>["name"],
     size = 21,
@@ -326,7 +366,7 @@ export default function FeedScreen({
       >
         {(eventsOnly
           ? ["Upcoming", "Registered", "Past"]
-          : ["All", ...communities.filter((x) => x !== "Everyone")]
+          : ["All", ...(live ? ["Following"] : []), ...communities.filter((x) => x !== "Everyone")]
         ).map((value) => {
           const active = (eventsOnly ? eventFilter : filter) === value;
           return (
@@ -363,6 +403,7 @@ export default function FeedScreen({
           {error}
         </Text>
       )}
+      {blockedStudent && <View style={s.undo}><Text style={s.caption}>{blockedStudent.name} blocked</Text><Touch accessibilityRole="button" accessibilityLabel={`Unblock ${blockedStudent.name}`} onPress={() => { const student = blockedStudent; void unblockStudent(student.id).then(() => { setBlockedStudent(null); return refresh(false); }).catch((e) => setError(e instanceof Error ? e.message : "Couldn’t unblock this account.")); }} style={s.iconTouch}><Text style={s.link}>Undo</Text></Touch></View>}
       {!accountId && (
         <Text style={s.syncNote}>Preview posts stay on this device. Sign in to join a university feed.</Text>
       )}
@@ -477,6 +518,9 @@ export default function FeedScreen({
                   style={s.iconTouch}
                 >{icon("trash-outline", 18)}</Touch>
               </View>
+            )}
+            {!post.mine && live && post.authorId && (
+              <Touch accessibilityRole="button" accessibilityLabel={`More options for ${post.author}'s post`} onPress={() => openPanel("report", post.id)} style={s.iconTouch}>{icon("ellipsis-horizontal", 20)}</Touch>
             )}
           </View>
           {post.event && (
@@ -733,6 +777,8 @@ export default function FeedScreen({
                   ? "Notifications"
                   : panel?.kind === "profile"
                     ? "Campus profile"
+                  : panel?.kind === "report"
+                    ? "Report post"
                   : panel?.kind === "edit"
                     ? "Edit post"
                   : panel?.kind === "chat"
@@ -767,10 +813,20 @@ export default function FeedScreen({
                   <View style={s.profileAvatar}><Text style={s.profileInitial}>{campusProfile.name[0]?.toUpperCase()}</Text></View>
                   <Text style={s.profileName}>{campusProfile.name}</Text>
                   <Text style={s.caption}>{[campusProfile.year, campusProfile.major].filter(Boolean).join(" · ") || "Student"}</Text>
+                  <View style={s.profileStats}><View><Text style={s.statNumber}>{campusProfile.followers}</Text><Text style={s.caption}>Followers</Text></View><View><Text style={s.statNumber}>{campusProfile.following}</Text><Text style={s.caption}>Following</Text></View></View>
                   {!!campusProfile.bio && <Text style={s.profileBio}>{campusProfile.bio}</Text>}
                   <View style={s.profileFacts}>{[campusProfile.lifestyle, ...campusProfile.hobbies.slice(0, 3), ...campusProfile.clubs.slice(0, 2)].filter(Boolean).map((fact) => <View key={fact} style={s.profileFact}><Text style={s.caption}>{fact}</Text></View>)}</View>
-                  {selected?.authorId !== accountId && <Touch accessibilityRole="button" accessibilityLabel={`Message ${campusProfile.name}`} onPress={() => { setPanel(null); messageStudent({ id: campusProfile.userId, name: campusProfile.name }); }} style={s.profileMessage}>{icon("chatbubble-outline", 19, t.text)}<Text style={s.registerText}>Message</Text></Touch>}
+                  {selected?.authorId !== accountId && <View style={s.profileActions}><Touch accessibilityRole="button" accessibilityState={{ selected: campusProfile.followedByMe }} onPress={() => { void toggleProfileFollow(); }} style={[s.profileMessage, campusProfile.followedByMe && s.profileSecondary]}>{icon(campusProfile.followedByMe ? "checkmark" : "person-add-outline", 19, t.text)}<Text style={s.registerText}>{campusProfile.followedByMe ? "Following" : "Follow"}</Text></Touch><Touch accessibilityRole="button" accessibilityLabel={`Message ${campusProfile.name}`} onPress={() => { setPanel(null); messageStudent({ id: campusProfile.userId, name: campusProfile.name }); }} style={[s.profileMessage, s.profileSecondary]}>{icon("chatbubble-outline", 19, t.text)}<Text style={s.registerText}>Message</Text></Touch></View>}
+                  {selected?.authorId !== accountId && <Touch accessibilityRole="button" accessibilityLabel={`Block ${campusProfile.name}`} onPress={() => { void blockProfile(); }} style={s.blockAction}><Text style={s.blockText}>Block this account</Text></Touch>}
                 </View> : <ActivityIndicator color={t.active} style={{ marginVertical: 36 }} />
+              ) : panel?.kind === "report" ? (
+                <View style={s.reportForm}>
+                  <Text style={s.title}>Why are you reporting this?</Text>
+                  <Text style={s.caption}>Reports are saved for campus moderation. The author is not notified who submitted it.</Text>
+                  <View style={s.reasonList}>{([['spam','Spam or promotion'],['harassment','Harassment'],['unsafe','Unsafe activity'],['misinformation','Misinformation'],['other','Something else']] as [ReportReason,string][]).map(([value, label]) => <Touch key={value} accessibilityRole="radio" accessibilityState={{ checked: reportReason === value }} onPress={() => setReportReason(value)} style={[s.reason, reportReason === value && s.reasonActive]}><Ionicons name={reportReason === value ? "radio-button-on" : "radio-button-off"} size={19} color={reportReason === value ? t.active : t.muted} /><Text style={s.body}>{label}</Text></Touch>)}</View>
+                  <Input accessibilityLabel="Report details" value={reportDetail} onChangeText={setReportDetail} placeholder="Add context · optional" placeholderTextColor={t.muted} multiline maxLength={500} style={s.reportInput} />
+                  <Touch accessibilityRole="button" onPress={() => { void submitReport(); }} style={s.reportSubmit}><Text style={s.registerText}>Submit report</Text></Touch>
+                </View>
               ) : panel?.kind === "edit" ? (
                 <View style={s.editIntro}><Text style={s.caption}>Update the text of your post. Its attachment and audience stay the same.</Text></View>
               ) : (
@@ -800,7 +856,7 @@ export default function FeedScreen({
                 </>
               )}
             </ScrollView>
-            {panel?.kind !== "notifications" && panel?.kind !== "profile" && (
+            {panel?.kind !== "notifications" && panel?.kind !== "profile" && panel?.kind !== "report" && (
               <View>
                 {replyingTo && panel?.kind === "comments" && <View style={s.replying}><Text style={s.caption}>Replying to {replyingTo.author}</Text><Touch accessibilityRole="button" accessibilityLabel="Cancel reply" onPress={() => setReplyingTo(null)} style={s.iconTouch}>{icon("close", 17)}</Touch></View>}
               <View style={s.messageRow}>
@@ -1102,4 +1158,16 @@ const s = StyleSheet.create({
   profileFacts: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 7, marginTop: 10 },
   profileFact: { backgroundColor: t.surface, borderRadius: 13, paddingHorizontal: 11, paddingVertical: 6 },
   profileMessage: { minHeight: 46, borderRadius: 23, backgroundColor: t.teal, paddingHorizontal: 22, marginTop: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
+  profileSecondary: { backgroundColor: t.raised },
+  profileActions: { flexDirection: "row", gap: 9 },
+  profileStats: { flexDirection: "row", gap: 35, marginTop: 9 },
+  statNumber: { color: t.text, fontSize: 17, fontWeight: "600", textAlign: "center" },
+  blockAction: { minHeight: 44, alignItems: "center", justifyContent: "center", marginTop: 5, paddingHorizontal: 16 },
+  blockText: { color: "#e8ad9f", fontSize: 12 },
+  reportForm: { gap: 16 },
+  reasonList: { borderTopWidth: 1, borderColor: t.line },
+  reason: { minHeight: 52, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: 1, borderColor: t.line, paddingHorizontal: 4 },
+  reasonActive: { backgroundColor: t.surface, marginHorizontal: -8, paddingHorizontal: 12 },
+  reportInput: { minHeight: 100, maxHeight: 160, color: t.text, backgroundColor: t.surface, borderRadius: 9, padding: 13, textAlignVertical: "top" },
+  reportSubmit: { minHeight: 48, borderRadius: 24, backgroundColor: t.teal, alignItems: "center", justifyContent: "center" },
 });

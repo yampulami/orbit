@@ -12,6 +12,10 @@ export type CampusProfile = {
   major: string;
   hobbies: string[];
   clubs: string[];
+  followers: number;
+  following: number;
+  followedByMe: boolean;
+  blockedByMe: boolean;
 };
 
 export type DirectThread = {
@@ -84,11 +88,19 @@ export async function syncCampusProfile(profile: StudentProfile) {
 }
 
 export async function fetchCampusProfile(userId: string): Promise<CampusProfile | null> {
+  const current = await me();
   const result = await client().from("student_profiles")
     .select("user_id,display_name,bio,lifestyle,academic_year,major,hobbies,clubs")
     .eq("user_id", userId).maybeSingle();
   if (result.error) throw new Error(issue(result.error));
   if (!result.data) return null;
+  const [followers, following, relationship, block] = await Promise.all([
+    client().from("student_follows").select("follower_id", { count: "exact", head: true }).eq("followed_id", userId),
+    client().from("student_follows").select("followed_id", { count: "exact", head: true }).eq("follower_id", userId),
+    client().from("student_follows").select("followed_id").eq("follower_id", current).eq("followed_id", userId).maybeSingle(),
+    client().from("user_blocks").select("blocked_id").eq("blocker_id", current).eq("blocked_id", userId).maybeSingle(),
+  ]);
+  for (const query of [followers, following, relationship, block]) if (query.error) throw new Error(issue(query.error));
   return {
     userId: result.data.user_id,
     name: result.data.display_name,
@@ -98,7 +110,52 @@ export async function fetchCampusProfile(userId: string): Promise<CampusProfile 
     major: result.data.major,
     hobbies: result.data.hobbies ?? [],
     clubs: result.data.clubs ?? [],
+    followers: followers.count ?? 0,
+    following: following.count ?? 0,
+    followedByMe: !!relationship.data,
+    blockedByMe: !!block.data,
   };
+}
+
+export async function setStudentFollow(userId: string, followed: boolean) {
+  const current = await me();
+  const query = followed
+    ? client().from("student_follows").upsert({ follower_id: current, followed_id: userId })
+    : client().from("student_follows").delete().eq("follower_id", current).eq("followed_id", userId);
+  const result = await query;
+  if (result.error) throw new Error(issue(result.error));
+}
+
+export async function fetchFollowedIds() {
+  const current = await me();
+  const result = await client().from("student_follows").select("followed_id").eq("follower_id", current);
+  if (result.error) throw new Error(issue(result.error));
+  return (result.data ?? []).map((row) => row.followed_id as string);
+}
+
+export async function blockStudent(userId: string) {
+  const current = await me();
+  const result = await client().from("user_blocks").upsert({ blocker_id: current, blocked_id: userId });
+  if (result.error) throw new Error(issue(result.error));
+}
+
+export async function unblockStudent(userId: string) {
+  const current = await me();
+  const result = await client().from("user_blocks").delete().eq("blocker_id", current).eq("blocked_id", userId);
+  if (result.error) throw new Error(issue(result.error));
+}
+
+export type ReportReason = "spam" | "harassment" | "unsafe" | "misinformation" | "other";
+export async function reportCampusPost(postId: string, reportedUserId: string | undefined, reason: ReportReason, detail: string) {
+  const current = await me();
+  const result = await client().from("content_reports").insert({
+    reporter_id: current,
+    post_id: postId,
+    reported_user_id: reportedUserId ?? null,
+    reason,
+    detail: detail.trim(),
+  });
+  if (result.error) throw new Error(issue(result.error));
 }
 
 export async function openDirectConversation(campus: string, peerId: string) {
@@ -221,7 +278,7 @@ export function subscribeCampusSocial(refresh: () => void) {
   const supabase = auth;
   if (!supabase) return () => {};
   const channel = supabase.channel("orbit-social");
-  for (const table of ["direct_conversations", "direct_messages", "notifications", "student_profiles"])
+  for (const table of ["direct_conversations", "direct_messages", "notifications", "student_profiles", "student_follows", "user_blocks"])
     channel.on("postgres_changes", { event: "*", schema: "public", table }, refresh);
   channel.subscribe();
   return () => { void supabase.removeChannel(channel); };

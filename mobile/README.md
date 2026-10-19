@@ -39,6 +39,7 @@ If same-Wi-Fi scanning fails (common on university Wi-Fi), stop the LAN server w
 - Realtime campus group chats with a shared Campus Lounge
 - Campus-visible student profiles, threaded replies, and activity notifications
 - Private same-campus direct messages and live Marketplace seller contact
+- Following feed, follower counts, post reporting, and reversible account blocking
 - Serialized AsyncStorage persistence, with loading and storage error feedback
 
 This is a native implementation, not an embedded website. Phone and web demo data are separate. The live campus features use the migrations under `supabase/migrations`. Roommate data and personal hangouts are not synced yet. Invitations, payments, safety reporting, room reservations, and jobs still require additional integrations. The native prototype does not yet expose the website's expense/grocery deletion controls.

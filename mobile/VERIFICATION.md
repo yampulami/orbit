@@ -166,3 +166,9 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Synced onboarding profiles to each university, added campus profile cards, post editing, threaded replies, and persistent activity notifications.
 - Split Messages into Direct and Groups, with unread state and real private Marketplace seller conversations.
 - Passed 52 automated tests, mobile TypeScript, and final Expo exports for iOS, Android, and web. Reviewed the post-detail experience at 390 × 844.
+
+## October 19, 2026 — connections and safety
+
+- Applied `supabase/migrations/20261019130000_safety_and_connections.sql` for campus follows, account blocks, content reports, and server-enforced blocked-account visibility.
+- Added follower/following counts, Follow and Message actions, a Following feed, post report reasons, account blocking, and immediate Undo.
+- Confirmed 8 relationship/safety policies and two Realtime tables. A rollback-only two-account test showed the blocker's record was visible while the blocked account's posts and profile both returned zero rows.
