@@ -54,8 +54,7 @@ function NavigationItem<T extends string>({
       style={({ pressed }) => [s.item, pressed && { opacity: 0.65 }]}
     >
       <View
-        style={s.icon}
-        pointerEvents="none"
+        style={[s.icon, { pointerEvents: "none" }]}
         accessibilityElementsHidden
         aria-hidden={true}
         importantForAccessibility="no-hide-descendants"
@@ -141,9 +140,9 @@ export default function BottomNavigation<T extends string>({
       {width > 0 && (
         <Animated.View
           testID="active-tab-indicator"
-          pointerEvents="none"
           style={[
             s.indicator,
+            { pointerEvents: "none" },
             { width: indicatorWidth, transform: [{ translateX: position }] },
           ]}
         />

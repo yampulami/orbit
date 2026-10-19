@@ -955,11 +955,16 @@ const s = StyleSheet.create({
     backgroundColor: t.teal,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    ...Platform.select({
+      web: { boxShadow: "0 5px 8px rgba(0, 0, 0, 0.3)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 5 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+      },
+    }),
   },
   composerTools: {
     flexDirection: "row",
