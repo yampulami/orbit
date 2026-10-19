@@ -18,6 +18,15 @@ export type CampusProfile = {
   blockedByMe: boolean;
 };
 
+export type CampusDirectoryProfile = {
+  userId: string;
+  name: string;
+  bio: string;
+  lifestyle: string;
+  year: string;
+  major: string;
+};
+
 export type DirectThread = {
   id: string;
   peerId: string;
@@ -115,6 +124,24 @@ export async function fetchCampusProfile(userId: string): Promise<CampusProfile 
     followedByMe: !!relationship.data,
     blockedByMe: !!block.data,
   };
+}
+
+export async function fetchCampusDirectory(): Promise<CampusDirectoryProfile[]> {
+  const current = await me();
+  const result = await client().from("student_profiles")
+    .select("user_id,display_name,bio,lifestyle,academic_year,major")
+    .neq("user_id", current)
+    .order("display_name")
+    .limit(100);
+  if (result.error) throw new Error(issue(result.error));
+  return (result.data ?? []).map((row) => ({
+    userId: row.user_id,
+    name: row.display_name,
+    bio: row.bio,
+    lifestyle: row.lifestyle,
+    year: row.academic_year,
+    major: row.major,
+  }));
 }
 
 export async function setStudentFollow(userId: string, followed: boolean) {

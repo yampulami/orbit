@@ -172,3 +172,11 @@ See DESIGN-REVIEW.md for the transcript-by-transcript decisions, implemented sco
 - Applied `supabase/migrations/20261019130000_safety_and_connections.sql` for campus follows, account blocks, content reports, and server-enforced blocked-account visibility.
 - Added follower/following counts, Follow and Message actions, a Following feed, post report reasons, account blocking, and immediate Undo.
 - Confirmed 8 relationship/safety policies and two Realtime tables. A rollback-only two-account test showed the blocker's record was visible while the blocked account's posts and profile both returned zero rows.
+
+## October 19, 2026 — message discovery and app-shell status
+
+- Added a same-campus people directory so a private conversation can start from Messages instead of requiring a Marketplace post.
+- Replaced group discovery buried below chat history with a dedicated directory showing descriptions, member totals, ownership, and Join/Leave controls. Campus Lounge remains universally available.
+- Added a realtime unread indicator to the Messages bottom tab and descriptive unread accessibility text.
+- Updated the Expo SDK 57 patch packages required by Expo Doctor. All 21 Doctor checks, 52 automated tests, TypeScript, and iOS/Android/web exports pass.
+- Visually reviewed the unauthenticated Messages state and five-tab navigation in the browser preview. The signed-in people and group directories still need a physical-account walkthrough.

@@ -39,6 +39,7 @@ If same-Wi-Fi scanning fails (common on university Wi-Fi), stop the LAN server w
 - Realtime campus group chats with a shared Campus Lounge
 - Campus-visible student profiles, threaded replies, and activity notifications
 - Private same-campus direct messages and live Marketplace seller contact
+- Searchable campus people directory, group discovery, membership controls, and unread message badges
 - Following feed, follower counts, post reporting, and reversible account blocking
 - Serialized AsyncStorage persistence, with loading and storage error feedback
 

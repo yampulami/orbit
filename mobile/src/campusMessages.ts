@@ -7,6 +7,8 @@ export type CampusGroup = {
   name: string;
   description: string;
   joined: boolean;
+  memberCount: number;
+  createdByMe: boolean;
   createdAt: string;
 };
 
@@ -78,18 +80,26 @@ export async function fetchCampusGroups(campus: string) {
   if (!validCampus(campus)) throw new Error("Add your university in your profile to use messages.");
   const me = await joinCampus(campus);
   await ensureCampusLounge(campus, me);
-  const [groups, memberships] = await Promise.all([
-    client().from("campus_groups").select("id,name,description,created_at").eq("campus_key", campusKey(campus)).order("created_at"),
+  const [groups, memberships, allMemberships] = await Promise.all([
+    client().from("campus_groups").select("id,name,description,created_by,created_at").eq("campus_key", campusKey(campus)).order("created_at"),
     client().from("campus_group_memberships").select("group_id").eq("user_id", me),
+    client().from("campus_group_memberships").select("group_id"),
   ]);
   if (groups.error) throw new Error(detail(groups.error));
   if (memberships.error) throw new Error(detail(memberships.error));
+  if (allMemberships.error) throw new Error(detail(allMemberships.error));
   const joined = new Set((memberships.data ?? []).map((row) => row.group_id));
+  const counts = (allMemberships.data ?? []).reduce((map, row) => {
+    map.set(row.group_id, (map.get(row.group_id) ?? 0) + 1);
+    return map;
+  }, new Map<string, number>());
   return (groups.data ?? []).map((row) => ({
     id: row.id,
     name: row.name,
     description: row.description,
     joined: joined.has(row.id),
+    memberCount: counts.get(row.id) ?? 0,
+    createdByMe: row.created_by === me,
     createdAt: row.created_at,
   })) satisfies CampusGroup[];
 }
@@ -115,6 +125,17 @@ export async function joinCampusGroup(groupId: string) {
   const { data, error } = await client().auth.getUser();
   if (error || !data.user) throw new Error("Sign in to join this group.");
   const result = await client().from("campus_group_memberships").upsert({ group_id: groupId, user_id: data.user.id });
+  if (result.error) throw new Error(detail(result.error));
+}
+
+export async function leaveCampusGroup(groupId: string) {
+  const { data, error } = await client().auth.getUser();
+  if (error || !data.user) throw new Error("Sign in to leave this group.");
+  const group = await client().from("campus_groups").select("name").eq("id", groupId).single();
+  if (group.error) throw new Error(detail(group.error));
+  if (group.data.name === "Campus Lounge") throw new Error("The Campus Lounge stays available to everyone at your university.");
+  const result = await client().from("campus_group_memberships").delete()
+    .eq("group_id", groupId).eq("user_id", data.user.id);
   if (result.error) throw new Error(detail(result.error));
 }
 

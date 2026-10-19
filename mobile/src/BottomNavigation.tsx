@@ -21,11 +21,13 @@ function NavigationItem<T extends string>({
   active,
   onSelect,
   reduced,
+  badge,
 }: {
   item: Item<T>;
   active: boolean;
   onSelect: (page: T) => void;
   reduced: boolean;
+  badge?: number;
 }) {
   const progress = useRef(new Animated.Value(active ? 1 : 0)).current;
   useEffect(() => {
@@ -45,6 +47,7 @@ function NavigationItem<T extends string>({
     <Pressable
       accessibilityRole="tab"
       accessibilityLabel={item.page}
+      accessibilityHint={badge ? `${badge} unread` : undefined}
       accessibilityState={{ selected: active }}
       aria-selected={active}
       onPress={() => onSelect(item.page)}
@@ -70,6 +73,7 @@ function NavigationItem<T extends string>({
         <Animated.View style={[s.iconOverlay, { opacity: progress }]}>
           <Ionicons name={item.icon} size={23} color={ACTIVE} />
         </Animated.View>
+        {!!badge && <View style={s.badge}><View style={s.badgeCore} /></View>}
       </View>
       <Animated.Text style={[s.label, { color }]}>{item.page}</Animated.Text>
     </Pressable>
@@ -80,10 +84,12 @@ export default function BottomNavigation<T extends string>({
   items,
   value,
   onChange,
+  badges,
 }: {
   items: Item<T>[];
   value: T;
   onChange: (page: T) => void;
+  badges?: Partial<Record<T, number>>;
 }) {
   const [width, setWidth] = useState(0);
   const [reduced, setReduced] = useState(true);
@@ -149,6 +155,7 @@ export default function BottomNavigation<T extends string>({
           active={value === item.page}
           onSelect={onChange}
           reduced={reduced}
+          badge={badges?.[item.page]}
         />
       ))}
     </View>
@@ -189,4 +196,6 @@ const s = StyleSheet.create({
   },
   icon: { width: 23, height: 23 },
   iconOverlay: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
+  badge: { position: "absolute", top: -5, right: -7, width: 12, height: 12, borderRadius: 6, backgroundColor: theme.background, alignItems: "center", justifyContent: "center" },
+  badgeCore: { width: 7, height: 7, borderRadius: 4, backgroundColor: ACTIVE },
 });

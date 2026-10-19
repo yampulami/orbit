@@ -51,6 +51,8 @@ import FeedScreen from "./FeedScreen";
 import MessagesScreen from "./MessagesScreen";
 import { theme } from "./theme";
 import BottomNavigation from "./BottomNavigation";
+import { fetchDirectThreads, subscribeCampusSocial } from "./campusSocial";
+import { validCampus } from "../../src/campus";
 import {
   RoommateOverview,
   SectionTabs,
@@ -212,6 +214,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
   const [page, setPage] = useState<Page>("Feed"),
     [section, setSection] = useState("Tasks");
   const [directPeer, setDirectPeer] = useState<{ id: string; name: string } | null>(null);
+  const [messageUnread, setMessageUnread] = useState(0);
   const [modal, setModal] = useState(""),
     [title, setTitle] = useState(""),
     [amount, setAmount] = useState(""),
@@ -250,6 +253,18 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
   const [draftStatus, setDraftStatus] = useState("");
   const [recovered, setRecovered] = useState(false);
   const draftVersion = useRef(0);
+  useEffect(() => {
+    if (!accountId || !validCampus(profile.campus)) { setMessageUnread(0); return; }
+    let mounted = true;
+    const refreshUnread = () => {
+      void fetchDirectThreads().then((threads) => {
+        if (mounted) setMessageUnread(threads.reduce((sum, thread) => sum + thread.unread, 0));
+      }).catch(() => {});
+    };
+    refreshUnread();
+    const unsubscribe = subscribeCampusSocial(refreshUnread);
+    return () => { mounted = false; unsubscribe(); };
+  }, [accountId, profile.campus, page]);
   function writeDrafts() {
     const version = ++draftVersion.current;
     setDraftStatus("Saving draft…");
@@ -1170,7 +1185,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
           />
         </View>
       )}
-      <BottomNavigation items={nav} value={page} onChange={go} />
+      <BottomNavigation items={nav} value={page} onChange={go} badges={{ Messages: messageUnread }} />
       <Modal
         visible={!!modal}
         animationType="slide"
