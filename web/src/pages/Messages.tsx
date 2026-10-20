@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { motion } from "framer-motion";
 import { Send } from "lucide-react";
+import { enter, slide } from "../lib/motion";
 
 type Msg = { mine: boolean; text: string };
 const seedThreads: Record<string, Msg[]> = {
@@ -13,30 +15,38 @@ export default function Messages() {
   const [threads, setThreads] = useState(seedThreads);
   const [active, setActive] = useState("Maya");
   const [text, setText] = useState("");
+  const [fresh, setFresh] = useState("");
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [active, threads[active].length]);
 
   function send(e: FormEvent) {
     e.preventDefault();
     const t = text.trim(); if (!t) return;
     setThreads((s) => ({ ...s, [active]: [...s[active], { mine: true, text: t }] }));
+    setFresh(`${active}-${threads[active].length}`);
     setText("");
   }
 
   return (
-    <>
-      <h1>Messages</h1>
-      <p className="notice" style={{ marginBottom: 14 }}>Demo mode: conversations are local to this page.</p>
+    <div className="page">
+      <h1 className="sr">Messages</h1>
       <div className="chat">
         <div className="threads" role="tablist" aria-label="Conversations">
           {Object.keys(threads).map((n) => (
             <button key={n} role="tab" aria-selected={n === active} className={"thread" + (n === active ? " on" : "")} onClick={() => setActive(n)}>
+              {n === active && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
               <strong>{n}</strong>
               <span className="muted">{threads[n][threads[n].length - 1].text}</span>
             </button>
           ))}
         </div>
         <div className="convo card">
-          <div className="bubbles">
-            {threads[active].map((m, i) => <p key={i} className={"bubble" + (m.mine ? " mine" : "")}>{m.text}</p>)}
+          <div className="convo-head"><div><h2>{active}</h2><p className="muted">Sample conversation</p></div></div>
+          <div className="bubbles" ref={scroller}>
+            {threads[active].map((m, i) => {
+              const isNew = fresh === `${active}-${i}`;
+              return <motion.p key={`${active}-${i}`} className={"bubble" + (m.mine ? " mine" : "")} initial={isNew ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }} transition={enter}>{m.text}</motion.p>;
+            })}
           </div>
           <form className="comment-form" onSubmit={send}>
             <input aria-label="Message" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Message ${active}…`} />
@@ -44,6 +54,6 @@ export default function Messages() {
           </form>
         </div>
       </div>
-    </>
+    </div>
   );
 }
