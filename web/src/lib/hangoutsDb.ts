@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
-import { YOU, type HangState, type Rsvp } from "./hangTypes";
+import { type HangState, type Rsvp } from "./hangTypes";
+import { loadNames, makeLabeler, watchTables } from "./people";
 
 /** Groups, chat, hangouts and answers in the database. The rows are turned into the same shapes the screens already use (people are shown by
  *  display name, and the signed-in student is "You"), so nothing on screen has to know where the data lives. */
@@ -18,11 +19,8 @@ export type Raw = {
 
 /** Pure: rows in, screen state out. Two different people with the same display name get a short suffix so they stay apart. */
 export function buildState(raw: Raw): HangState {
-  const ids = new Set<string>([...raw.members.map((m) => m.user_id), ...raw.rsvps.map((r) => r.user_id), ...raw.hangouts.map((h) => h.created_by), ...raw.messages.map((m) => m.sender_id)]);
-  const base = (id: string) => (raw.names[id] ?? raw.messages.find((m) => m.sender_id === id)?.sender_name ?? "Student").trim() || "Student";
-  const count = new Map<string, number>();
-  ids.forEach((id) => { if (id !== raw.me) count.set(base(id), (count.get(base(id)) ?? 0) + 1); });
-  const label = (id: string) => (id === raw.me ? YOU : (count.get(base(id)) ?? 0) > 1 ? `${base(id)} ${id.slice(0, 4)}` : base(id));
+  const ids = [...raw.members.map((m) => m.user_id), ...raw.rsvps.map((r) => r.user_id), ...raw.hangouts.map((h) => h.created_by), ...raw.messages.map((m) => m.sender_id)];
+  const label = makeLabeler(raw.me, ids, raw.names, (id) => raw.messages.find((m) => m.sender_id === id)?.sender_name);
 
   const groups = raw.groups.map((g) => {
     const mine = raw.members.filter((m) => m.group_id === g.id).map((m) => m.user_id);
@@ -75,22 +73,10 @@ export async function loadRaw(me: string): Promise<Raw> {
   const msgs = (messages.data ?? []) as RawMessage[];
 
   const userIds = unique([...members.map((m) => m.user_id), ...rsvps.map((r) => r.user_id), ...hangs.map((h) => h.created_by), ...msgs.map((m) => m.sender_id)]);
-  const prof = userIds.length ? await sb.from("student_profiles").select("user_id,display_name").in("user_id", userIds) : { data: [] as never[], error: null };
-  const names: Record<string, string> = {};
-  ((prof.data ?? []) as { user_id: string; display_name: string }[]).forEach((p) => { names[p.user_id] = p.display_name; });
+  const names = await loadNames(userIds);
 
   return { me, groups: (groups.data ?? []) as RawGroup[], members, codes: (codes.data ?? []) as RawCode[], messages: msgs, hangouts: hangs, rsvps, names };
 }
 
 /** Reload whenever anything relevant changes. The data is small, so reloading is simpler and safer than patching it piece by piece. */
-export function watch(me: string, onChange: () => void): () => void {
-  const sb = supabase!;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const soon = () => { clearTimeout(timer); timer = setTimeout(onChange, 250); };
-  const ch = sb.channel(`orbit-hang-${me}-${Math.random().toString(36).slice(2, 8)}`);
-  for (const table of ["group_messages", "campus_hangouts", "campus_hangout_rsvps", "campus_group_memberships"]) {
-    ch.on("postgres_changes", { event: "*", schema: "public", table }, soon);
-  }
-  ch.subscribe();
-  return () => { clearTimeout(timer); void sb.removeChannel(ch); };
-}
+export const watch = (me: string, onChange: () => void) => watchTables(`orbit-hang-${me}`, ["group_messages", "campus_hangouts", "campus_hangout_rsvps", "campus_group_memberships"], onChange);

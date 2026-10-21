@@ -1,9 +1,13 @@
 import { useSyncExternalStore } from "react";
 import { YOU } from "./hangouts";
 import type { PlaceCategory } from "./campus";
+import { supabase } from "./supabase";
+import { dbRun } from "./privateDb";
+import { buildProposals, loadPlaces } from "./placesDb";
+import { watchTables } from "./people";
 
 /** Places students add to the map and confirm for each other. A proposal goes live once enough different students agree it is right.
- *  Saved on this device only for now; the shape matches a `place_proposals` and `place_votes` table, so it can move to Supabase. */
+ *  With a database they are shared with everyone on the campus; without one (demo mode) they are saved on this device. */
 export type Vote = 1 | -1;
 export type Proposal = { id: string; campusKey: string; name: string; category: PlaceCategory; lat: number; lng: number; details?: string; by: string; at: string; votes: Record<string, Vote> };
 
@@ -51,13 +55,38 @@ function load(): Proposal[] {
   return seed();
 }
 
-let state: Proposal[] = load();
+const live = !!supabase;
+let state: Proposal[] = live ? [] : load();
 const subs = new Set<() => void>();
 function set(next: Proposal[]) {
   state = next;
-  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ }
+  if (!live) { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ } }
   subs.forEach((f) => f());
 }
+
+/* ---------- database mode: proposals and votes are shared with everyone on the campus, live ---------- */
+let who: string | null = null;
+let stop: (() => void) | null = null;
+let loadId = 0;
+async function reload() {
+  if (!who) return;
+  const me = who, mine = ++loadId;
+  try { const next = buildProposals(await loadPlaces(me)); if (mine === loadId && who === me) set(next); } catch { /* keep what is on screen */ }
+}
+export function bindPlaces(userId: string) {
+  if (!live || who === userId) return;
+  unbindPlaces();
+  who = userId;
+  void reload();
+  stop = watchTables(`orbit-places-${userId}`, ["campus_places", "place_votes"], () => void reload());
+}
+export function unbindPlaces() {
+  if (!live) return;
+  stop?.(); stop = null;
+  who = null; loadId++;
+  set([]);
+}
+const sync = (what: string, job: () => PromiseLike<{ error: { message: string } | null }>) => { if (live && who) dbRun(what, job, () => void reload()); };
 
 export type ProposeResult = { ok: true; id: string } | { ok: false; reason: "name" | "limit" | "duplicate"; existing?: string };
 
@@ -70,7 +99,10 @@ export const proposalActions = {
     const dup = existing.find((p) => sameSpot(p, { name, lat: o.lat, lng: o.lng }));
     if (dup) return { ok: false, reason: "duplicate", existing: dup.id };
     const id = crypto.randomUUID();
-    set([...state, { id, campusKey: o.campusKey, name, category: o.category, lat: o.lat, lng: o.lng, details: o.details?.trim().slice(0, 200) || undefined, by: YOU, at: new Date().toISOString(), votes: { [YOU]: 1 } }]);
+    const details = o.details?.trim().slice(0, 200) || undefined;
+    set([...state, { id, campusKey: o.campusKey, name, category: o.category, lat: o.lat, lng: o.lng, details, by: YOU, at: new Date().toISOString(), votes: { [YOU]: 1 } }]);
+    // The database enforces the same limits and adds your first confirmation itself.
+    sync("Adding that place", () => supabase!.from("campus_places").insert({ id, campus_key: o.campusKey, name, category: o.category, lat: o.lat, lng: o.lng, blurb: details ?? null, status: "open", source: "students", created_by: who! }));
     return { ok: true, id };
   },
   /** Confirm (1), say it is wrong (-1), or take the vote back (null). You cannot change the vote on your own proposal. */
@@ -81,10 +113,19 @@ export const proposalActions = {
       if (v === null) delete votes[YOU]; else votes[YOU] = v;
       return { ...p, votes };
     }));
+    if (live && who) {
+      const me = who;
+      sync("Saving your vote", () => (v === null
+        ? supabase!.from("place_votes").delete().eq("place_id", id).eq("user_id", me)
+        : supabase!.from("place_votes").upsert({ place_id: id, user_id: me, vote: v, updated_at: new Date().toISOString() })));
+    }
   },
   /** Only the person who added it can take it back, and only while it is still open. */
   withdraw(id: string) {
-    set(state.filter((p) => !(p.id === id && p.by === YOU && statusOf(p) === "open")));
+    const mine = state.find((p) => p.id === id && p.by === YOU && statusOf(p) === "open");
+    if (!mine) return;
+    set(state.filter((p) => p.id !== id));
+    sync("Taking that place back", () => supabase!.from("campus_places").delete().eq("id", id).eq("created_by", who!));
   },
 };
 

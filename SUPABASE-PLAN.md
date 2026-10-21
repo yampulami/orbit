@@ -19,7 +19,9 @@ Applied to the project in `web/.env.local` (`ywhoyolsbgjqgkfziyin`), each first 
 
 - Reminders and pins (`reminders`, `user_pins`): added, marked done, deleted and undone, all saved to the account. After a reload nothing is kept on the device, and everything came back from the database. They refresh when you return to the tab, not live.
 
-**Still saved only on the device:** roommates (chores, groceries, expenses, notes), and the map's student-added places and votes. The checklist above (two-user policy checks) was exercised for groups, hangouts and profiles through the app, but not yet line by line.
+**Map places and votes** now live in `campus_places` and `place_votes`. Adding a place and reloading was checked live; confirming from a second and third account (going live at 3 yes) was not yet checked in the app, only by the converter tests and the migration's triggers.
+
+**Still saved only on the device:** roommates (chores, groceries, expenses, notes). The checklist above (two-user policy checks) was exercised for groups, hangouts and profiles through the app, but not yet line by line.
 
 **How groups work now:** a student makes a group and gets a 10-character code (and a link, `/join/CODE`). Only members can see the group, its members and its code. Nobody can add themselves directly; they must know the code. The person who made the group can replace the code. Two groups may share a name.
 
