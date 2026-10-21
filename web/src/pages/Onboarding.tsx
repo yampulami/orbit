@@ -6,6 +6,7 @@ import CampusSearch from "../components/CampusSearch";
 import OrbitArt from "../components/OrbitArt";
 import { useAuth } from "../lib/auth";
 import { demoAuth, isGuestEmail } from "../lib/demoAuth";
+import { pushSupported } from "../lib/push";
 import { deviceSupported, disableDeviceAlerts, enableDeviceAlerts, useDeviceAlerts } from "../lib/deviceAlerts";
 import { notice } from "../lib/notice";
 import { feedApi } from "../lib/feedData";
@@ -151,7 +152,7 @@ export default function Onboarding() {
     living: "So we can point you to the right groups and places.",
     interests: "Pick any that fit, or skip this one.",
     pace: "A friendly show-up streak and small badges. Optional, low pressure, and you can change your mind any time.",
-    nudges: "A bell in the top bar collects what needs you. Orbit is a website, so alerts reach your device only while it is open in a tab.",
+    nudges: pushSupported() ? "A bell in the top bar collects what needs you. You can also get alerts on this device, even when Orbit is closed." : "A bell in the top bar collects what needs you. Orbit is a website, so alerts reach your device only while it is open in a tab.",
     look: "You can switch any time from the sidebar.",
     done: `${uni?.name ?? "Your campus"} is ready. Your feed and map are waiting.`,
   };
@@ -191,7 +192,7 @@ export default function Onboarding() {
       {([["hangouts", "Hangouts that need your answer"], ["reminders", "Reminders you set"], ["places", "Places on the map that need a vote"]] as const).map(([k, label], n) => (
         <Switch key={k} index={n} on={nudges[k]} label={label} onClick={() => { setNudges((s) => ({ ...s, [k]: !s[k] })); setKick((c) => c + 1); }} />
       ))}
-      {deviceSupported() && <Switch index={3} on={device.on} label="Alert me on my device while Orbit is open in another tab" onClick={toggleDevice} />}
+      {deviceSupported() && <Switch index={3} on={device.on} label="Alert me on my device" onClick={toggleDevice} />}
     </div>,
     look: <div className="onb-choices three" role="radiogroup" aria-label="Look">{LOOKS.map((l, n) => <Choice key={l.id} group="look" index={n} on={look === l.id} onClick={() => { answer(setLook)(l.id); setThemePref(l.id); }} label={l.label} icon={<l.icon size={20} aria-hidden="true" />} />)}</div>,
     done: <p className="onb-done-note">You can change any of this from your profile.</p>,

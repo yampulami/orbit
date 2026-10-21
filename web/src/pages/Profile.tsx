@@ -1,4 +1,5 @@
 import { Flame, LogOut } from "lucide-react";
+import { pushSupported } from "../lib/push";
 import { disableDeviceAlerts, enableDeviceAlerts, useDeviceAlerts } from "../lib/deviceAlerts";
 import { setNudge, useNudges } from "../lib/nudges";
 import { notice } from "../lib/notice";
@@ -58,10 +59,10 @@ export default function Profile() {
           </div>
         ))}
         <div className="notif-row">
-          <span id="n-device">Alert me on this device while Orbit is open in another tab</span>
+          <span id="n-device">Alert me on this device</span>
           <button type="button" role="switch" aria-checked={device.on} aria-labelledby="n-device" className="switch" onClick={toggleDevice} disabled={!device.supported}><span /></button>
         </div>
-        <p className="muted notif-note">Alerts only reach you while Orbit is open in a tab or window. Alerts when Orbit is closed need a notification server, which is not set up yet.</p>
+        <p className="muted notif-note">{pushSupported() ? "Reminders and hangouts about to start reach this device even when Orbit is closed. On iPhone, add Orbit to your Home Screen first." : "Alerts only reach you while Orbit is open in a tab or window."}</p>
       </section>
 
       <section className="track">
