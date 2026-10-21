@@ -2,7 +2,7 @@
 
 Today only the feed, the campus membership, group chat, profiles, follows, blocks and reports live in Supabase. Everything else is saved in each person's own browser, so it cannot be shared between students, cannot be seen by a server, and does not follow a student to another device. This plan moves it.
 
-The migration is `supabase/migrations/20261021120000_hangouts_reminders_places_push.sql`. Its tables are named `campus_hangouts` and `campus_hangout_rsvps` (not `hangouts`) because the project it is meant for already contains an older Orbit schema with its own `hangouts` table, which this must not touch. **It was applied on 2026-10-21 to the project in `web/.env.local` (`ywhoyolsbgjqgkfziyin`)**, first as a dry run inside `begin; … rollback;` (it succeeded and left nothing behind), then for real. After that, all 8 new tables had row-level security on, 25 policies, 6 triggers and 7 new profile columns existed, and the 6 existing users were untouched. Caldwell University and its 11 places were loaded as live. The checks below (two test users) have **not** been run yet, so the rules are applied but not yet proven.
+The migration is `supabase/migrations/20261021120000_hangouts_reminders_places_push.sql`. Its tables are named `campus_hangouts` and `campus_hangout_rsvps` (not `hangouts`) because the project it is meant for already contains an older Orbit schema with its own `hangouts` table, which this must not touch. **It was applied on 2026-10-21 to the project in `web/.env.local` (`ywhoyolsbgjqgkfziyin`)**, first as a dry run inside `begin; … rollback;` (it succeeded and left nothing behind), then for real. After that, all 8 new tables had row-level security on, 25 policies, 6 triggers and 7 new profile columns existed, and the 6 existing users were untouched. Caldwell University and its 11 places were loaded as live. The checks below were run on 2026-10-22 as real test users and all gave the expected result (see "Check results").
 
 A second project (`smuilaiwgzbnqbkaawne`) holds an older schema (friend groups, spaces, tasks, expenses, with its own `hangouts` and `is_group_member`). Nothing in this plan touches it.
 
@@ -23,7 +23,7 @@ Applied to the project in `web/.env.local` (`ywhoyolsbgjqgkfziyin`), each first 
 
 **Roommate households** (migration `20261022100000_households.sql`, applied 2026-10-22) are a private group plus `households`, `household_tasks`, `household_groceries`, `household_expenses` and `household_notes`, all readable and editable by the group's members only. Roommates join with the group's invite code. Checked live with two guest accounts: the second saw nothing before joining, then saw the first one's chore and grocery, and an expense it added was split between both. **Push** (`20261022110000_push_sender.sql`, applied) adds `reminders.due_at` and `push_sent`; the sender and the four steps you do are in `PUSH-SETUP.md`.
 
-**Nothing is device-only any more** except each person's theme, last-seen markers and similar small preferences. The checklist above (two-user policy checks) was exercised for groups, hangouts and profiles through the app, but not yet line by line.
+**Nothing is device-only any more** except each person's theme, last-seen markers and similar small preferences.
 
 **How groups work now:** a student makes a group and gets a 10-character code (and a link, `/join/CODE`). Only members can see the group, its members and its code. Nobody can add themselves directly; they must know the code. The person who made the group can replace the code. Two groups may share a name.
 
@@ -93,6 +93,29 @@ set local role authenticated;
 | Read another student's `reminders` or `push_subscriptions` | no rows |
 
 If a check does not give that result, the policy or trigger named in the migration is the place to look. Report it and I will fix the migration.
+
+## Check results (2026-10-22)
+
+Run in the SQL editor by acting as three Caldwell test users (Taylor, Riley, Casey) inside one transaction that was rolled back, so nothing was kept. Other-campus access was checked by moving Casey to another campus inside that same rolled-back transaction, because no real student from another campus exists yet.
+
+| Check | Result |
+| --- | --- |
+| Another campus reads Caldwell places, votes, hangouts, household chores, groups, profiles | 0 rows each |
+| Another campus adds a Caldwell place | refused by the policy |
+| Insert a place as `live` | refused by the policy |
+| Same name within a few meters | "That place is already on the map." |
+| Daily limit | 3 more accepted on top of 2 already that day, then "You can add up to 5 places a day." |
+| Change the vote on your own place | refused, no vote changed |
+| Three students vote +1 | status became `live` |
+| Group hangout read by a member / a non-member | 1 row / 0 rows |
+| Answer a hangout you cannot see | refused by the policy |
+| Overlapping hangout | "You already have plans then." |
+| Pins | 2 more accepted on top of 1 already, then "You can pin up to 3 things." |
+| Household chores read by a member / a non-member | 1 row / 0 rows |
+| Add a chore to a household you are not in | refused by the policy |
+| Give a chore to someone outside the household | "That person is not in this household." |
+| Read another student's reminders and push addresses | 0 rows each |
+| Read `push_sent` as a student | 0 rows |
 
 ## What changes in the app after that
 
