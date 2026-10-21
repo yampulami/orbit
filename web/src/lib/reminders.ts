@@ -1,7 +1,9 @@
 import { useSyncExternalStore } from "react";
 import { undo } from "./undo";
+import { supabase } from "./supabase";
+import { dbRun, loadReminders, refreshOnReturn, toReminderRow } from "./privateDb";
 
-/** Reminders the person sets on the calendar. Saved on this device only. */
+/** Reminders the person sets on the calendar. With a database they follow you between devices; without one they are saved on this device. */
 export type Reminder = { id: string; title: string; date: string; time?: string; done: boolean; /** Already shown as an alert, so it does not pop up twice. */ notified?: boolean };
 
 /** Quick picks for the time of a reminder. A reminder with no time alerts at 9:00 that morning. */
@@ -50,30 +52,59 @@ function load(): Reminder[] {
   ];
 }
 
-let state: Reminder[] = load();
+const live = !!supabase;
+let state: Reminder[] = live ? [] : load();
 const subs = new Set<() => void>();
 function set(next: Reminder[]) {
   state = next;
-  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ }
+  if (!live) { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ } }
   subs.forEach((f) => f());
 }
+
+/* ---------- database mode: reminders belong to the signed-in student and follow them between devices ---------- */
+let owner: string | null = null;
+let stopRefresh: (() => void) | null = null;
+async function reload() {
+  if (!owner) return;
+  const mine = owner;
+  try { const next = await loadReminders(); if (owner === mine) set(next); } catch { /* keep what is on screen; the next return will try again */ }
+}
+export function bindReminders(userId: string) {
+  if (!live || owner === userId) return;
+  unbindReminders();
+  owner = userId;
+  void reload();
+  stopRefresh = refreshOnReturn(() => void reload());
+}
+export function unbindReminders() {
+  if (!live) return;
+  stopRefresh?.(); stopRefresh = null;
+  owner = null;
+  set([]);
+}
+const sync = (what: string, job: () => PromiseLike<{ error: { message: string } | null }>) => { if (live && owner) dbRun(what, job, () => void reload()); };
 
 export const reminderActions = {
   add(title: string, date: string, time?: string) {
     const r: Reminder = { id: crypto.randomUUID(), title, date, time: time || undefined, done: false };
     // One set for a moment that has already passed should not alert straight away.
-    set([...state, { ...r, notified: dueAt(r).getTime() <= Date.now() }]);
+    const full = { ...r, notified: dueAt(r).getTime() <= Date.now() };
+    set([...state, full]);
+    sync("Saving that reminder", () => supabase!.from("reminders").insert(toReminderRow(owner!, full)));
   },
   markNotified(id: string) {
     set(state.map((r) => (r.id === id ? { ...r, notified: true } : r)));
+    sync("Saving that reminder", () => supabase!.from("reminders").update({ notified: true }).eq("id", id));
   },
   /** Moves a reminder to later today and lets it alert again. */
   snooze(id: string, minutes: number) {
     const at = inMinutes(new Date(), minutes);
     set(state.map((r) => (r.id === id ? { ...r, ...at, done: false, notified: false } : r)));
+    sync("Snoozing that reminder", () => supabase!.from("reminders").update({ remind_on: at.date, remind_at: at.time, done: false, notified: false }).eq("id", id));
   },
   setDone(id: string, done: boolean) {
     set(state.map((r) => (r.id === id ? { ...r, done } : r)));
+    sync("Saving that reminder", () => supabase!.from("reminders").update({ done }).eq("id", id));
   },
   /** Removing offers Undo for a few seconds. */
   remove(id: string) {
@@ -81,8 +112,14 @@ export const reminderActions = {
     if (index < 0) return;
     const item = state[index];
     set(state.filter((r) => r.id !== id));
+    sync("Deleting that reminder", () => supabase!.from("reminders").delete().eq("id", id));
     undo.show(`Reminder “${item.title}” deleted`, {
-      onUndo: () => { if (!state.some((r) => r.id === id)) { const next = [...state]; next.splice(Math.min(index, next.length), 0, item); set(next); } },
+      onUndo: () => {
+        if (!state.some((r) => r.id === id)) {
+          const next = [...state]; next.splice(Math.min(index, next.length), 0, item); set(next);
+          sync("Bringing that reminder back", () => supabase!.from("reminders").upsert(toReminderRow(owner!, item)));
+        }
+      },
       commit: () => {},
     });
   },

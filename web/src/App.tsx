@@ -9,6 +9,8 @@ import { loadProfile, pullProfile, saveProfile } from "./lib/profile";
 import { profileChanged } from "./lib/nudges";
 import { bindHang, hangActions, hangLive, unbindHang } from "./lib/hangouts";
 import { notice } from "./lib/notice";
+import { bindReminders, unbindReminders } from "./lib/reminders";
+import { bindPins, unbindPins } from "./lib/pins";
 
 // Everything except the main feed loads when it is first opened, so the first download stays small.
 const Landing = lazy(() => import("./pages/Landing"));
@@ -62,6 +64,8 @@ function InApp({ children }: { children: ReactNode }) {
     const meta = session?.user.user_metadata as { name?: string } | undefined;
     const name = loadProfile(uid)?.name || meta?.name || session?.user.email?.split("@")[0] || "Student";
     bindHang({ id: uid, name, campusKey });
+    bindReminders(uid);
+    bindPins(uid);
     // An invite link opened before signing in leaves its code here. Use it now that the person is in.
     let waiting: string | null = null;
     try { waiting = sessionStorage.getItem("orbit-join-code"); if (waiting) sessionStorage.removeItem("orbit-join-code"); } catch { /* ignore */ }
@@ -71,7 +75,7 @@ function InApp({ children }: { children: ReactNode }) {
         else { notice.show({ icon: "pin", title: "You joined the group", message: "It is on your Groups list.", ms: 4000 }); nav("/app/groups"); }
       });
     }
-    return () => unbindHang();
+    return () => { unbindHang(); unbindReminders(); unbindPins(); };
   }, [done, uid, campusKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (done === "checking") return <p className="muted" style={{ padding: 24 }} role="status">Loading…</p>;
   return done === "yes" ? <>{children}</> : <Navigate to="/onboarding" replace />;

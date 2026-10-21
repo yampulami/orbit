@@ -17,7 +17,9 @@ Applied to the project in `web/.env.local` (`ywhoyolsbgjqgkfziyin`), each first 
 - Onboarding answers (`student_profiles`). Restored on a new device, and nudge changes in Profile reach the database.
 - Groups, group chat, hangouts and Yes/No answers. A made a group and got a code; B could see nothing until B entered the code, then saw the group, the message and the hangout, answered, and the database showed both answers. A message sent in one tab appeared in another without a reload.
 
-**Still saved only on the device:** reminders, pins, roommates (chores, groceries, expenses, notes), and the map's student-added places and votes. The checklist above (two-user policy checks) was exercised for groups, hangouts and profiles through the app, but not yet line by line.
+- Reminders and pins (`reminders`, `user_pins`): added, marked done, deleted and undone, all saved to the account. After a reload nothing is kept on the device, and everything came back from the database. They refresh when you return to the tab, not live.
+
+**Still saved only on the device:** roommates (chores, groceries, expenses, notes), and the map's student-added places and votes. The checklist above (two-user policy checks) was exercised for groups, hangouts and profiles through the app, but not yet line by line.
 
 **How groups work now:** a student makes a group and gets a 10-character code (and a link, `/join/CODE`). Only members can see the group, its members and its code. Nobody can add themselves directly; they must know the code. The person who made the group can replace the code. Two groups may share a name.
 
