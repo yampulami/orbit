@@ -140,12 +140,12 @@ export function findConflict(when: string, len = HANG_LEN): Hangout | undefined 
 export const isVisible = (h: Hangout, groups: { id: string }[]) => !h.canceled && (h.visibility === "campus" || groups.some((g) => g.id === h.groupId));
 
 export const hangActions = {
-  createGroup(name: string, members: string[]) {
+  createGroup(name: string, members: string[], household = false) {
     const id = crypto.randomUUID();
     set({ ...state, groups: [...state.groups, { id, name, members: [YOU, ...members], messages: [] }] });
     if (live && who) {
       // The database makes the group, adds you, and hands back the invite code that friends use to join.
-      supabase!.rpc("create_friend_group", { gid: id, gname: name }).then(({ data, error }) => {
+      supabase!.rpc(household ? "create_household" : "create_friend_group", { gid: id, gname: name }).then(({ data, error }) => {
         if (error) throw new Error(error.message);
         set({ ...state, groups: state.groups.map((g) => (g.id === id ? { ...g, code: String(data) } : g)) });
       }).then(undefined, (e: Error) => { notice.show({ icon: "alert", title: "The group was not made", message: e.message }); void reload(); });

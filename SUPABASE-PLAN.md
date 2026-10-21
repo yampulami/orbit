@@ -21,7 +21,9 @@ Applied to the project in `web/.env.local` (`ywhoyolsbgjqgkfziyin`), each first 
 
 **Map places and votes** now live in `campus_places` and `place_votes`. Adding a place and reloading was checked live; confirming from a second and third account (going live at 3 yes) was not yet checked in the app, only by the converter tests and the migration's triggers.
 
-**Still saved only on the device:** roommates (chores, groceries, expenses, notes). The checklist above (two-user policy checks) was exercised for groups, hangouts and profiles through the app, but not yet line by line.
+**Roommate households** (migration `20261022100000_households.sql`, applied 2026-10-22) are a private group plus `households`, `household_tasks`, `household_groceries`, `household_expenses` and `household_notes`, all readable and editable by the group's members only. Roommates join with the group's invite code. Checked live with two guest accounts: the second saw nothing before joining, then saw the first one's chore and grocery, and an expense it added was split between both. **Push** (`20261022110000_push_sender.sql`, applied) adds `reminders.due_at` and `push_sent`; the sender and the four steps you do are in `PUSH-SETUP.md`.
+
+**Nothing is device-only any more** except each person's theme, last-seen markers and similar small preferences. The checklist above (two-user policy checks) was exercised for groups, hangouts and profiles through the app, but not yet line by line.
 
 **How groups work now:** a student makes a group and gets a 10-character code (and a link, `/join/CODE`). Only members can see the group, its members and its code. Nobody can add themselves directly; they must know the code. The person who made the group can replace the code. Two groups may share a name.
 

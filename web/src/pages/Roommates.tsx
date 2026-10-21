@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocation } from "react-router-dom";
-import { Receipt, Scale, ShoppingBasket, StickyNote, ListChecks, UserPlus, type LucideIcon } from "lucide-react";
-import { hangActions, YOU } from "../lib/hangouts";
+import { Receipt, Scale, ShoppingBasket, StickyNote, ListChecks, UserPlus, Copy, type LucideIcon } from "lucide-react";
+import { hangActions, hangLive, useHang, YOU } from "../lib/hangouts";
+import { notice } from "../lib/notice";
 import { roomActions, useSpace } from "../lib/roommates";
 import { Avatar } from "./roommates/Avatar";
 import Tasks from "./roommates/Tasks";
@@ -23,6 +24,10 @@ const names = (s: string) => [...new Set(s.split(",").map((m) => m.trim()).filte
 
 export default function Roommates() {
   const space = useSpace();
+  const { groups } = useHang();
+  const code = groups.find((g) => g.id === space?.groupId)?.code;
+  const [joinCode, setJoinCode] = useState("");
+  const [joining, setJoining] = useState(false);
   const loc = useLocation();
   const asked = (loc.state as { section?: Section } | null)?.section;
   const [section, setSection] = useState<Section>(asked && SECTIONS.some((x) => x.id === asked) ? asked : "tasks");
@@ -39,6 +44,21 @@ export default function Roommates() {
     if (!houseName.trim()) { setError("Give your household a name."); return; }
     roomActions.createSpace(houseName.trim(), names(others));
     setHouseName(""); setOthers(""); setError("");
+  }
+
+  async function join(e: FormEvent) {
+    e.preventDefault();
+    if (!joinCode.trim()) { setError("Type the code your roommate sent."); return; }
+    setJoining(true);
+    const problem = await hangActions.joinWithCode(joinCode);
+    setJoining(false);
+    if (problem) { setError(problem); return; }
+    setJoinCode(""); setError("");
+  }
+
+  async function copy(text: string, what: string) {
+    try { await navigator.clipboard.writeText(text); notice.show({ icon: "pin", title: `${what} copied`, message: "Send it to your roommates.", ms: 3500 }); }
+    catch { notice.show({ icon: "alert", title: "Could not copy", message: "Select it and copy it by hand." }); }
   }
 
   function addMore(e: FormEvent) {
@@ -58,13 +78,21 @@ export default function Roommates() {
           <h2>Set up your household</h2>
           <p className="muted">One shared place for chores, groceries, bills and house rules. You also get a private group chat for it.</p>
           <label className="field">Household name<input value={houseName} onChange={(e) => setHouseName(e.target.value)} placeholder="e.g. Hamilton 3F" maxLength={40} /></label>
-          <label className="field">Your roommates (names, separated by commas)<input value={others} onChange={(e) => setOthers(e.target.value)} placeholder="Maya, Jordan, Priya" /></label>
+          {!hangLive && <label className="field">Your roommates (names, separated by commas)<input value={others} onChange={(e) => setOthers(e.target.value)} placeholder="Maya, Jordan, Priya" /></label>}
           {error && <p className="error" role="alert">{error}</p>}
           <div className="rm-setup-actions">
             <button className="btn primary">Create household</button>
-            <button type="button" className="btn" onClick={() => roomActions.createSample()}>Try a sample household</button>
+            {!hangLive && <button type="button" className="btn" onClick={() => roomActions.createSample()}>Try a sample household</button>}
           </div>
         </form>
+        {hangLive && (
+          <form className="rm-setup" onSubmit={join}>
+            <h2>Already have a code?</h2>
+            <p className="muted">If a roommate already set up the household, type the code they sent you.</p>
+            <label className="field">Invite code<input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="10 letters and numbers" maxLength={10} autoCapitalize="characters" /></label>
+            <div className="rm-setup-actions"><button className="btn" disabled={joining}>{joining ? "Joining…" : "Join household"}</button></div>
+          </form>
+        )}
       </div>
     );
   }
@@ -83,11 +111,26 @@ export default function Roommates() {
         <button type="button" className="btn" aria-expanded={adding} onClick={() => { setAdding((v) => !v); setError(""); }}><UserPlus size={18} aria-hidden="true" />Add roommates</button>
       </header>
       {adding && (
+        hangLive ? (
+          <div className="plan-form invite">
+            {code ? (
+              <>
+                <p className="muted">Send this code, or the link, to your roommates. They paste it under “Already have a code?” on this page, or open the link.</p>
+                <div className="invite-code" aria-label="Invite code">{code}</div>
+                <div className="invite-actions">
+                  <button type="button" className="btn" onClick={() => copy(code, "Code")}><Copy size={16} aria-hidden="true" /> Copy code</button>
+                  <button type="button" className="btn" onClick={() => copy(`${location.origin}/join/${code}`, "Link")}><Copy size={16} aria-hidden="true" /> Copy link</button>
+                </div>
+              </>
+            ) : <p className="muted">Getting your invite code…</p>}
+          </div>
+        ) : (
         <form className="plan-form" onSubmit={addMore}>
           <label className="field">Names, separated by commas<input autoFocus value={more} onChange={(e) => setMore(e.target.value)} placeholder="Sam, Riley" /></label>
           {error && <p className="error" role="alert">{error}</p>}
           <button className="btn primary">Add to {space.name}</button>
         </form>
+        )
       )}
 
       <div className="pills" role="group" aria-label="Household sections">

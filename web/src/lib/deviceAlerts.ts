@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { subscribePush, unsubscribePush } from "./push";
 
 /** Alerts from your device (the corner of the screen) while Orbit is open in a tab you are not looking at. This is the browser's Notification
  *  permission and needs no server. Alerts when Orbit is closed need web push, which needs a server to send them (see README). */
@@ -22,9 +23,11 @@ export async function enableDeviceAlerts(): Promise<DevicePermission> {
   if (!deviceSupported()) return "unsupported";
   const p = devicePermission() === "granted" ? "granted" : await Notification.requestPermission();
   store(p === "granted");
+  // With a server set up, also register this device so alerts arrive when Orbit is closed.
+  if (p === "granted") void subscribePush();
   return p;
 }
-export const disableDeviceAlerts = () => store(false);
+export const disableDeviceAlerts = () => { store(false); void unsubscribePush(); };
 
 /** Show an alert from the device, but only when asked for and only when the person is not already looking at Orbit. */
 export function notifyDevice(title: string, body: string, tag: string) {

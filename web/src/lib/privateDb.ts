@@ -4,12 +4,18 @@ import type { Reminder } from "./reminders";
 import type { Pin, PinKind } from "./pins";
 
 /** Reminders and pins in the database. Both are private to their owner, so the rules in the database only ever return your own rows. */
-export type ReminderRow = { id: string; user_id: string; title: string; remind_on: string; remind_at: string | null; done: boolean; notified: boolean };
+export type ReminderRow = { id: string; user_id: string; title: string; remind_on: string; remind_at: string | null; done: boolean; notified: boolean; /** The exact moment, so the server can send a push on time. */ due_at?: string | null };
 export type PinRow = { user_id: string; kind: PinKind; item_id: string };
 
 /** The database stores a time of day as "15:00:00"; the app uses "15:00". */
 export const toReminder = (r: ReminderRow): Reminder => ({ id: r.id, title: r.title, date: r.remind_on, time: r.remind_at ? r.remind_at.slice(0, 5) : undefined, done: r.done, notified: r.notified });
-export const toReminderRow = (userId: string, r: Reminder): ReminderRow => ({ id: r.id, user_id: userId, title: r.title, remind_on: r.date, remind_at: r.time || null, done: r.done, notified: !!r.notified });
+/** The reminder's date and local time as one exact moment (null when it has no time, or the time is not valid). */
+const dueAt = (r: Reminder) => {
+  if (!r.time) return null;
+  const d = new Date(`${r.date}T${r.time}`);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+};
+export const toReminderRow = (userId: string, r: Reminder): ReminderRow => ({ id: r.id, user_id: userId, title: r.title, remind_on: r.date, remind_at: r.time || null, done: r.done, notified: !!r.notified, due_at: dueAt(r) });
 export const toPin = (r: Pick<PinRow, "kind" | "item_id">): Pin => ({ kind: r.kind, id: r.item_id });
 
 export async function loadReminders(): Promise<Reminder[]> {

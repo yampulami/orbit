@@ -75,16 +75,9 @@ Orbit is a website, so what it can do depends on whether it is open.
 | --- | --- |
 | Orbit open and in view | The bell in the top bar lists what needs you (hangouts waiting for an answer, reminders that are due, places waiting for a vote). A reminder also pops up when its time comes, with Done and Snooze. Each kind can be turned off in Profile. |
 | Orbit open in another tab | The same reminders can alert you from your device, if you allow it (Profile, or the nudges step of onboarding). This uses the browser's own Notification permission and needs no server. |
-| Orbit closed | Needs **web push**, which is not set up. The service worker (`public/sw.js`) already has the `push` and `notificationclick` handlers, so only the server side is missing. |
+| Orbit closed | **Web push**, once the sender is set up. The app, the service worker, the database tables and the sending function are all in the repo; turning it on needs a key pair, two secrets and a schedule. See `../PUSH-SETUP.md`. |
 
-What real push needs, in order:
-
-1. **A VAPID key pair** (`npx web-push generate-vapid-keys`). The public key goes in the app as `VITE_VAPID_PUBLIC_KEY`; the private key stays on the server.
-2. **A subscription step in the app.** After permission is granted, call `registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey })` and save the result in a `push_subscriptions` table (user id, endpoint, keys), with row-level rules so people only manage their own.
-3. **Something that sends them.** For example a Supabase Edge Function using the `web-push` library, run every minute by `pg_cron`, that finds hangouts starting soon and reminders that are due and sends a push to that person's subscriptions. This also means hangouts and reminders must live in the database first, because the server cannot see what is saved in a browser.
-4. **Platform limits.** Chrome, Edge and Firefox support push on desktop and Android. On iPhone and iPad it only works after the person adds Orbit to the Home Screen (iOS 16.4 or later), and then asks for permission from a tap. Safari on Mac works from version 16.
-
-Until then, the bell and the in-app and device alerts above are what students get.
+Without that setup the bell and the in-app and device alerts above are what students get. On iPhone and iPad, push only works after Orbit is added to the Home Screen (iOS 16.4 or later).
 
 ## Accessibility notes
 

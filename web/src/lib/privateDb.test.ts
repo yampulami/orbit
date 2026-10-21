@@ -11,11 +11,14 @@ describe("reminder rows", () => {
     expect(toReminder({ ...row, remind_at: null }).time).toBeUndefined();
   });
   it("round-trips without losing anything", () => {
-    expect(toReminderRow("u1", toReminder(row))).toEqual({ ...row, remind_at: "15:00" });
+    const { due_at, ...rest } = toReminderRow("u1", toReminder(row));
+    expect(rest).toEqual({ ...row, remind_at: "15:00" });
+    expect(new Date(due_at!).getTime()).toBe(new Date("2026-10-22T15:00").getTime());
   });
   it("sends no time as null and a missing notified flag as false", () => {
     const r = toReminderRow("u1", { id: "r2", title: "Call mom", date: "2026-10-23", done: false });
     expect(r.remind_at).toBeNull();
+    expect(r.due_at).toBeNull();
     expect(r.notified).toBe(false);
     expect(r.user_id).toBe("u1");
   });

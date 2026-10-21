@@ -62,16 +62,19 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-/* Web push. Nothing sends pushes yet (that needs a server, see the README), but when one does, these show the alert and open the right page. */
+/* Web push, sent by the send-due-pushes function (see PUSH-SETUP.md). If Orbit is already open and in view, the app alerts for itself, so skip the duplicate. */
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { /* plain text pushes are ignored */ }
-  event.waitUntil(self.registration.showNotification(data.title || "Orbit", {
-    body: data.body || "",
-    icon: "/icon-192.png",
-    badge: "/icon-192.png",
-    tag: data.tag,
-    data: { url: data.url || "/app" },
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+    if (list.some((c) => c.visibilityState === "visible")) return;
+    return self.registration.showNotification(data.title || "Orbit", {
+      body: data.body || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: data.tag,
+      data: { url: data.url || "/app" },
+    });
   }));
 });
 
