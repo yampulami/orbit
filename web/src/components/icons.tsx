@@ -52,3 +52,28 @@ export function PlansIcon({ size = 24, strokeWidth: _s, ...props }: IconProps) {
     </svg>
   );
 }
+
+/** A house key. It tilts when the tab is hovered or becomes active. */
+export function RoommatesIcon({ size = 24, strokeWidth: _s, ...props }: IconProps) {
+  void _s;
+  return (
+    <svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <g className="ic-key">
+        <circle {...line} cx="7.5" cy="15.5" r="3.5" />
+        <path {...line} d="M10 13l9.5-9.5M16.5 6.5l2.5 2.5M13.5 9.5l2 2" />
+      </g>
+    </svg>
+  );
+}
+
+/** A folded map with a pin. The pin drops when the tab is hovered or becomes active. */
+export function MapIcon({ size = 24, strokeWidth: _s, ...props }: IconProps) {
+  void _s;
+  return (
+    <svg width={size} height={size} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" {...props}>
+      <path {...line} d="M3.5 6.5l5.5-2.2 6 2.4 5.5-2.2v13l-5.5 2.2-6-2.4-5.5 2.2z" />
+      <path {...line} d="M9 4.3v13M15 6.7v13" />
+      <circle className="ic-ring" {...line} cx="12" cy="11" r="1.6" />
+    </svg>
+  );
+}

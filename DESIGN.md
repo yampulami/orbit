@@ -182,7 +182,7 @@ Night (#0e0c15) ground, Night Panel (#191624), Night Surface (#211d2e), Night Ra
 
 ## Layout
 
-A website first. At 1100px and up the home page is the feed column plus a 320px right column holding the collapsible calendar and "Active on campus". Under 1100px the right column stacks. Under 900px the floating icon rail becomes a slim rounded top bar with the same icons. Under 560px the bar keeps only the logo, New post, the four tabs and the profile avatar; sign out and appearance live on Profile.
+A website first. At 1100px and up the home page is the feed column plus a 320px right column holding the collapsible calendar and the "Coming up" list. Under 1100px the right column stacks. Under 900px the floating icon rail becomes a slim rounded top bar with the same icons. Under 560px the bar keeps only the logo, New post, the four tabs and the profile avatar; sign out and appearance live on Profile.
 
 Spacing is relaxed: 14px between cards in a grid, 18 to 20px between sections, 24px inside large cards. Hangout cards sit three to a row, then two, then one. The post grid is two columns, then one.
 
@@ -236,6 +236,12 @@ Round everything that can be tapped. Pills (999px) for buttons, filters, toggles
 
 ### Hangout card (signature)
 A pastel gradient card with a soft highlight in the top corner. Group chip and date on top, a bold title, a glass place pill, then a fixed footer: avatars with the going count, and a full-width Yes / No toggle. The selected answer is a glossy droplet that slides across (green for Yes, rose for No). Organizers get a small Cancel pill with Undo. Inside a group chat the same card is plain.
+
+### Search and profile
+A white pill search box with a magnifier, right-aligned in a top line, with the round profile picture at its right. It opens a results card of the same pill-and-circle language; each result has a round icon, a title, a short line and a small kind label. On phones the picture lives in the top bar and the search sits below it.
+
+### Coming up
+A white card of rounded rows, one per hangout, chore or reminder, each with a round tinted icon (mint, lavender, butter). Status is a small pill (orange "Needs your answer", pink "Overdue", green "Today" or "Soon"). Reminders can be ticked off from the row.
 
 ### Calendar
 A month grid inside one card; collapsible on Home, always open on Plans. One tab stop with arrow-key navigation. Hangout days take the answer color with a shape cue; today is Gold; the selected day is Ink with a ring in its answer color.

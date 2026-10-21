@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import HangoutCard from "./HangoutCard";
-import { useHang, YOU, type Hangout } from "../lib/hangouts";
+import { enter, exit } from "../lib/motion";
+import HangoutCard, { fmtWhen } from "./HangoutCard";
+import RemindersPanel from "./RemindersPanel";
+import { hangActions, useHang, YOU, type Hangout } from "../lib/hangouts";
+import { fromYmd, useReminders } from "../lib/reminders";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -14,14 +18,24 @@ const dayMark = (hs: Hangout[]): Mark | undefined => {
   return (["pending", "yes", "no"] as const).find((m) => marks.includes(m));
 };
 
-/** Month grid. Dots mark days with posts; tinted days have hangouts. `day` is a Date.toDateString() key. */
-export default function Calendar({ posts, day, onDay }: {
+/** Month grid. Dots mark days with posts, tinted days have hangouts, a small bell marks days with reminders. `day` is a Date.toDateString() key. */
+export default function Calendar({ posts, day, onDay, compact = false, details = true }: {
   posts: { created_at: string }[];
   day: string | null;
   onDay: (key: string | null) => void;
+  /** In the narrow right column, hangouts on the picked day show as short rows instead of full cards. */
+  compact?: boolean;
+  /** Show the picked day's reminders and hangouts under the grid. Plans shows them in its own agenda instead. */
+  details?: boolean;
 }) {
   const { groups, hangouts } = useHang();
-  const [month, setMonth] = useState(0);
+  const reminders = useReminders();
+  const [month, setMonth] = useState(() => {
+    // Open on the month of the picked day, for example when a search result sent you here.
+    if (!day) return 0;
+    const d = new Date(day), t = new Date();
+    return (d.getFullYear() - t.getFullYear()) * 12 + d.getMonth() - t.getMonth();
+  });
   const [cursor, setCursor] = useState<string | null>(null);
   const grid = useRef<HTMLDivElement>(null);
   const moved = useRef(false);
@@ -31,6 +45,7 @@ export default function Calendar({ posts, day, onDay }: {
   const total = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
   const cells = Array.from({ length: Math.ceil((lead + total) / 7) * 7 }, (_, k) => new Date(view.getFullYear(), view.getMonth(), k - lead + 1));
   const withPosts = new Set(posts.map((p) => new Date(p.created_at).toDateString()));
+  const withReminders = new Set(reminders.filter((r) => !r.done).map((r) => fromYmd(r.date).toDateString()));
 
   // Hangouts by day. A past hangout nobody answered no longer asks for attention.
   const byDay = new Map<string, Hangout[]>();
@@ -88,16 +103,36 @@ export default function Calendar({ posts, day, onDay }: {
         {cells.map((d) => {
           const key = d.toDateString();
           const mark = byDay.has(key) ? dayMark(byDay.get(key)!) : undefined;
-          const cls = ["cal-day", d.getMonth() !== view.getMonth() ? "out" : "", withPosts.has(key) ? "has" : "", key === today.toDateString() ? "today" : "", mark ? `hm-${mark}` : "", key === day ? "sel" : ""].join(" ");
-          const label = d.toLocaleDateString(undefined, { dateStyle: "full" }) + (mark ? `, hangout: ${MARK_TEXT[mark]}` : "");
-          return <button key={key} type="button" data-key={key} tabIndex={key === stop ? 0 : -1} className={cls} aria-pressed={key === day} aria-label={label} title={mark ? MARK_TEXT[mark] : undefined} onClick={() => onDay(key === day ? null : key)}>{d.getDate()}</button>;
+          const cls = ["cal-day", d.getMonth() !== view.getMonth() ? "out" : "", withPosts.has(key) ? "has" : "", withReminders.has(key) ? "rem" : "", key === today.toDateString() ? "today" : "", mark ? `hm-${mark}` : "", key === day ? "sel" : ""].join(" ");
+          const label = d.toLocaleDateString(undefined, { dateStyle: "full" }) + (mark ? `, hangout: ${MARK_TEXT[mark]}` : "") + (withReminders.has(key) ? ", has a reminder" : "");
+          return <button key={key} type="button" data-key={key} tabIndex={key === stop ? 0 : -1} className={cls} aria-pressed={key === day} aria-label={label} title={mark ? MARK_TEXT[mark] : withReminders.has(key) ? "Has a reminder" : undefined} onClick={() => onDay(key === day ? null : key)}>{d.getDate()}</button>;
         })}
       </div>
-      {chosen.length > 0 && (
-        <div className="cal-hangs">
-          {chosen.map((h, i) => <HangoutCard key={h.id} h={h} group={groups.find((g) => g.id === h.groupId)?.name ?? ""} tone={i} />)}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {day && details && (
+          <motion.div key="details" className="cal-details" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1, transition: enter }} exit={{ height: 0, opacity: 0, transition: exit }}>
+          <RemindersPanel day={day} />
+        {chosen.length > 0 && (
+          <div className="cal-hangs">
+            {compact
+              ? chosen.map((h) => {
+                  const mine = h.rsvps[YOU];
+                  return (
+                    <div key={h.id} className="cal-hrow">
+                      <div className="cal-hinfo"><strong>{h.title}</strong><span>{fmtWhen(h.when)} · {h.place}</span></div>
+                      <div className="cal-hbtns" role="group" aria-label={`Are you going to ${h.title}?`}>
+                        <button type="button" data-a="yes" aria-pressed={mine === "yes"} onClick={() => hangActions.setRsvp(h.id, mine === "yes" ? null : "yes")}>Yes</button>
+                        <button type="button" data-a="no" aria-pressed={mine === "no"} onClick={() => hangActions.setRsvp(h.id, mine === "no" ? null : "no")}>No</button>
+                      </div>
+                    </div>
+                  );
+                })
+              : chosen.map((h, i) => <HangoutCard key={h.id} h={h} group={groups.find((g) => g.id === h.groupId)?.name ?? ""} tone={i} />)}
+          </div>
+        )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

@@ -1,0 +1,102 @@
+{
+  "reviewed": true,
+  "campus": {
+    "key": "caldwell-university",
+    "name": "Caldwell University",
+    "center": [
+      40.8337,
+      -74.2727
+    ],
+    "zoom": 17
+  },
+  "places": [
+    {
+      "id": "jennings-library",
+      "name": "Jennings Library",
+      "category": "study",
+      "lat": 40.83362,
+      "lng": -74.271654,
+      "osm": "way/1132628728"
+    },
+    {
+      "id": "student-center",
+      "name": "Visceglia Art Building / Student Center",
+      "category": "fun",
+      "lat": 40.8326,
+      "lng": -74.272925,
+      "osm": "way/1132618566"
+    },
+    {
+      "id": "werner",
+      "name": "Werner Hall / Academic Building",
+      "category": "class",
+      "lat": 40.833644,
+      "lng": -74.272497,
+      "osm": "way/1091742838"
+    },
+    {
+      "id": "science",
+      "name": "Albertus Magnus Hall / Raymond Hall / Science Building",
+      "category": "class",
+      "lat": 40.83332,
+      "lng": -74.272832,
+      "osm": "way/1122109285"
+    },
+    {
+      "id": "angelica",
+      "name": "Angelica Hall",
+      "category": "other",
+      "lat": 40.833495,
+      "lng": -74.273398,
+      "osm": "way/1133770569"
+    },
+    {
+      "id": "alumni-theatre",
+      "name": "Alumni Theatre",
+      "category": "fun",
+      "lat": 40.833393,
+      "lng": -74.271929,
+      "osm": "way/1132628729"
+    },
+    {
+      "id": "newman",
+      "name": "George R. Newman Center",
+      "category": "other",
+      "lat": 40.832376,
+      "lng": -74.271498,
+      "osm": "relation/15339656"
+    },
+    {
+      "id": "athletic",
+      "name": "Mt. St. Dominic Athletic Center",
+      "category": "outdoors",
+      "lat": 40.834541,
+      "lng": -74.274022,
+      "osm": "way/1091742835"
+    },
+    {
+      "id": "dominican",
+      "name": "Dominican Hall",
+      "category": "residence",
+      "lat": 40.834802,
+      "lng": -74.271624,
+      "osm": "way/1091742833"
+    },
+    {
+      "id": "mother-joseph",
+      "name": "Mother Joseph Residence Hall",
+      "category": "residence",
+      "lat": 40.834133,
+      "lng": -74.269588,
+      "osm": "way/1091742840"
+    },
+    {
+      "id": "security",
+      "name": "Security Guard House",
+      "category": "services",
+      "lat": 40.833526,
+      "lng": -74.273667,
+      "osm": "way/1132618567"
+    }
+  ]
+}

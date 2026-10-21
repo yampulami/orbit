@@ -1,22 +1,24 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link } from "react-router-dom";
-import { CalendarDays, ChevronDown, Flame, Heart, MessageCircle, Trash2 } from "lucide-react";
+import { Link, Navigate } from "react-router-dom";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Flame, Pin, Heart, MessageCircle, Trash2 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi as api, type Row } from "../lib/feedData";
 import { campusKey, validCampus } from "../shared/campus";
 import { communities, type Community } from "../shared/feed";
 import { enter, exit } from "../lib/motion";
 import Calendar from "../components/Calendar";
+import UpcomingList from "../components/UpcomingList";
 import CommunityPicker from "../components/CommunityPicker";
 import { communityIcon } from "../lib/communityUi";
+import { usePins } from "../lib/pins";
+import { notice } from "../lib/notice";
 import HangoutCard from "../components/HangoutCard";
-import { useHang } from "../lib/hangouts";
+import { useHang, YOU } from "../lib/hangouts";
 import { progress, streakWeeks, useProgress } from "../lib/progress";
 import { undo } from "../lib/undo";
 
 const MAX = 1000;
-const hue: Record<string, string> = { Everyone: "var(--pink)", Commuters: "var(--peach)", Residents: "var(--mint)", Roommates: "var(--lav)", Marketplace: "var(--butter)" };
 const initials = (n: string) => n.trim().slice(0, 1).toUpperCase() || "?";
 const when = (iso: string) => {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -24,12 +26,30 @@ const when = (iso: string) => {
   return new Date(iso).toLocaleDateString();
 };
 
+/** Keeps the right column pinned under the search with no scrollbar of its own. If it is ever taller than the window, it rides up until its bottom shows and holds there.
+ *  This only moves the column. It never changes what is inside it, so it cannot set off a loop. */
+function useStickyRail(ref: React.RefObject<HTMLElement | null>, ready: boolean) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !ready) return;
+    const place = () => {
+      if (getComputedStyle(el).position !== "sticky") return;
+      const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--topline-h")) + 8;
+      el.style.top = `${Math.min(top, window.innerHeight - el.offsetHeight - 16)}px`;
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(el);
+    window.addEventListener("resize", place);
+    return () => { ro.disconnect(); window.removeEventListener("resize", place); };
+  }, [ready]); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
 export default function Feed() {
   const { session } = useAuth();
   const me = session?.user.id ?? "";
   const name = (session?.user.user_metadata?.name as string | undefined) || session?.user.email?.split("@")[0] || "Student";
 
-  const [campusInput, setCampusInput] = useState("");
   const [campus, setCampus] = useState<{ name: string; key: string } | null>(null);
   const [posts, setPosts] = useState<Row[]>([]);
   const [error, setError] = useState("");
@@ -40,21 +60,31 @@ export default function Feed() {
   const [open, setOpen] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [filter, setFilter] = useState<"All" | Community>("All");
+  const [hangsOpen, setHangsOpen] = useState(() => { try { return localStorage.getItem("orbit-feed-hangs") !== "0"; } catch { return true; } });
+  const toggleHangs = () => setHangsOpen((v) => { try { localStorage.setItem("orbit-feed-hangs", v ? "0" : "1"); } catch { /* ignore */ } return !v; });
   const [calOpen, setCalOpen] = useState(() => { try { return localStorage.getItem("orbit-feed-cal") === "1"; } catch { return false; } });
   const toggleCal = () => setCalOpen((v) => { try { localStorage.setItem("orbit-feed-cal", v ? "0" : "1"); } catch { /* ignore */ } return !v; });
   const [day, setDay] = useState<string | null>(null);
+  const [hangTab, setHangTab] = useState<"ask" | "going" | "all" | null>(null);
+  const hangRow = useRef<HTMLDivElement>(null);
+  const staying = useRef<{ tab: string; ids: Map<string, number | null> } | null>(null);
+  const [, nudge] = useState(0);
 
+  const rail = useRef<HTMLElement>(null);
+  useStickyRail(rail, !loading && !!campus);
   const { groups, hangouts } = useHang();
+  const pins = usePins();
+  useEffect(() => { const t = setTimeout(() => nudge((n) => n + 1), 1600); return () => clearTimeout(t); }, [hangouts]);
+  const pinKey = pins.filter((p) => p.kind === "hangout").map((p) => p.id).join();
+  useEffect(() => { hangRow.current?.scrollTo({ left: 0, behavior: "smooth" }); }, [pinKey]);
   const prog = useProgress();
   const weeks = prog.enabled ? streakWeeks(prog) : 0;
-  const run = async (fn: () => Promise<void>) => { setError(""); try { await fn(); } catch (e) { setError((e as Error).message); } };
+  const run = async (fn: () => Promise<void>) => { setError(""); try { await fn(); } catch (e) { notice.show({ icon: "wifi", title: "That did not go through", message: `${(e as Error).message || "Something went wrong."} Check your connection and try again.` }); } };
   const load = () => run(async () => { const c = await api.campus(); setCampus(c); if (c) setPosts(await api.list()); setLoading(false); });
   useEffect(() => { load(); }, []);
+  // A post made from the sidebar window appears here without a reload.
+  useEffect(() => { const again = () => { load(); }; window.addEventListener("orbit-posts-changed", again); return () => window.removeEventListener("orbit-posts-changed", again); }, []);
 
-  const join = () => run(async () => {
-    if (!validCampus(campusInput)) throw new Error("Enter your university name.");
-    await api.join({ name: campusInput.trim(), key: campusKey(campusInput) }, me); await load();
-  });
 
   async function publish(e: FormEvent) {
     e.preventDefault();
@@ -90,24 +120,30 @@ export default function Feed() {
         </div>
       </div>
     );
-  if (!campus)
-    return (
-      <div className="page">
-        <h1 style={{ maxWidth: "12ch" }}>Join your campus</h1>
-        <div className="card" style={{ display: "grid", gap: 12, maxWidth: 520 }}>
-          <p className="muted">Your feed is limited to your university. Enter it to continue.</p>
-          <label className="field">University<input value={campusInput} onChange={(e) => setCampusInput(e.target.value)} placeholder="e.g. Caldwell University" /></label>
-          {error && <p className="error">{error}</p>}
-          <button className="btn primary" onClick={join}>Join campus</button>
-        </div>
-      </div>
-    );
+  // Nobody reaches Home without a university: onboarding asks for it first.
+  if (!campus) return <Navigate to="/onboarding" replace />;
 
-  const shown = posts.filter((p) => (filter === "All" || p.community === filter) && (!day || new Date(p.created_at).toDateString() === day));
+  // Picking a day on the calendar shows that day's reminders and hangouts. It never hides posts from the feed.
+  const shown = posts.filter((p) => filter === "All" || p.community === filter);
   const upcoming = hangouts
     .filter((h) => !h.canceled && groups.some((g) => g.id === h.groupId) && new Date(h.when).getTime() > Date.now() - 3 * 3600000)
     .sort((x, y) => x.when.localeCompare(y.when));
-  const recent = [...new Map(posts.map((p) => [p.author_name, p] as const)).values()].slice(0, 5);
+
+  const asking = upcoming.filter((h) => !h.rsvps[YOU]);
+  const going = upcoming.filter((h) => h.rsvps[YOU] === "yes");
+  const tab = hangTab ?? (asking.length ? "ask" : "all");
+  const isPinned = (id: string) => pins.some((p) => p.kind === "hangout" && p.id === id);
+  // Pinned hangouts lead the row, and stay in it whichever tab is open.
+  const filtered = tab === "ask" ? asking : tab === "going" ? going : upcoming;
+  // A card you just answered lingers for a moment so you can see the toggle move, then leaves the tab it no longer belongs to.
+  if (!staying.current || staying.current.tab !== tab) staying.current = { tab, ids: new Map() };
+  const ids = staying.current.ids;
+  filtered.forEach((h) => ids.set(h.id, null));
+  ids.forEach((left, id) => { if (left === null && !filtered.some((h) => h.id === id)) ids.set(id, Date.now()); });
+  const base = tab === "all" ? upcoming : upcoming.filter((h) => { const left = ids.get(h.id); return left === null || (left !== undefined && Date.now() - left < 1500); });
+  const list = [...base].sort((a, b) => Number(isPinned(b.id)) - Number(isPinned(a.id)));
+  const tabs = [{ id: "ask", label: "Needs your answer", n: asking.length }, { id: "going", label: "You're going", n: going.length }, { id: "all", label: "All", n: upcoming.length }] as const;
+  const scrollHangs = (dir: number) => hangRow.current?.scrollBy({ left: dir * (hangRow.current.clientWidth * 0.9), behavior: "smooth" });
 
   return (
     <div className="feed-layout">
@@ -115,10 +151,29 @@ export default function Feed() {
         <h1 className="sr">Campus feed</h1>
         <section className="hangs" aria-label="Hangouts">
           <header>
-            <h2>Hangouts</h2>
+            <h2 className="sr">Hangouts</h2>
+            {upcoming.length > 0 && !hangsOpen && (
+              <button type="button" className="hang-sum" aria-expanded={false} onClick={toggleHangs}>
+                {asking.length > 0 && <span className="hang-dot" aria-hidden="true" />}
+                <span>{upcoming.length} hangout{upcoming.length === 1 ? "" : "s"}{asking.length > 0 && <> · <b>{asking.length} need{asking.length === 1 ? "s" : ""} your answer</b></>}</span>
+                {upcoming.filter((h) => isPinned(h.id)).slice(0, 2).map((h) => <span key={h.id} className="hang-sum-pin"><Pin size={12} fill="currentColor" aria-hidden="true" />{h.title}</span>)}
+              </button>
+            )}
+            {upcoming.length > 0 && hangsOpen && (
+              <div className="hang-tabs" role="tablist" aria-label="Filter hangouts">
+                {tabs.map((t) => <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} data-ask={t.id === "ask" && t.n > 0 ? "1" : undefined} onClick={() => { setHangTab(t.id); hangRow.current?.scrollTo({ left: 0 }); }}>{t.label}<b>{t.n}</b></button>)}
+              </div>
+            )}
             <div className="hangs-actions">
+              {upcoming.length > 0 && hangsOpen && (
+                <div className="hang-nav">
+                  <button type="button" aria-label="Scroll hangouts back" onClick={() => scrollHangs(-1)}><ChevronLeft size={18} /></button>
+                  <button type="button" aria-label="Scroll hangouts forward" onClick={() => scrollHangs(1)}><ChevronRight size={18} /></button>
+                </div>
+              )}
               {weeks > 0 && <span className="streak-chip" aria-label={`${weeks} week streak`}><Flame size={16} strokeWidth={1.75} aria-hidden="true" />{weeks} week{weeks === 1 ? "" : "s"}</span>}
               <Link to="/app/groups" className="pill-link">Plan one</Link>
+              {upcoming.length > 0 && <button type="button" className="hang-fold" aria-expanded={hangsOpen} aria-label={hangsOpen ? "Collapse hangouts" : "Expand hangouts"} onClick={toggleHangs}><ChevronUp size={18} aria-hidden="true" style={{ transform: hangsOpen ? "none" : "rotate(180deg)", transition: "transform .25s" }} /></button>}
             </div>
           </header>
           {upcoming.length === 0 ? (
@@ -127,15 +182,29 @@ export default function Feed() {
               <Link to="/app/groups" className="btn primary">Go to groups</Link>
             </div>
           ) : (
-            <div className="hang-row">
-              {upcoming.map((h, i) => <HangoutCard key={h.id} h={h} group={groups.find((g) => g.id === h.groupId)?.name ?? ""} tone={i} />)}
-            </div>
+            <AnimatePresence initial={false}>
+              {hangsOpen && (
+                <motion.div key="hangs-body" className="hangs-body" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1, transition: enter }} exit={{ height: 0, opacity: 0, transition: exit }}>
+              {list.length === 0
+                ? <p className="muted hang-none">{tab === "ask" ? "You're all caught up. Nothing needs an answer." : "Nothing here yet."}</p>
+                : <div key={tab} className={"hang-row" + (list.some((h) => isPinned(h.id)) ? " has-pins" : "")} ref={hangRow}>
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {list.map((h, i) => (
+                        <motion.div key={h.id} className="hang-slot" layout="position" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1, transition: enter }} exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.18 } }}>
+                          <HangoutCard h={h} group={groups.find((g) => g.id === h.groupId)?.name ?? ""} tone={i} />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>}
+                </motion.div>
+              )}
+            </AnimatePresence>
           )}
         </section>
-        <form className="card post composer" onSubmit={publish}>
+        <form className={"card post composer" + (body ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
             <span className="sr">Write a post</span>
-            <textarea id="composer" rows={3} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder="What’s happening on campus?" />
+            <textarea id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder="What’s happening on campus?" />
           </label>
           <div className="composer-row">
             <div className="field" style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -146,18 +215,18 @@ export default function Feed() {
             <button className="btn primary" disabled={posting || !body.trim()}>{posting ? "Posting…" : "Post"}</button>
           </div>
         </form>
+        <h2 className="sr">Campus feed at {campus.name}</h2>
         <div className="pills" role="group" aria-label="Filter by community">
           {(["All", ...communities] as const).map((c) => {
             const { Icon, ink } = communityIcon[c];
             return (
-              <button key={c} type="button" className="pill" aria-pressed={filter === c} onClick={() => { setFilter(c); if (c === "All") setDay(null); }}>
+              <button key={c} type="button" className="pill" aria-pressed={filter === c} onClick={() => setFilter(c)}>
                 <span className="dot" style={{ color: ink }}><Icon size={16} strokeWidth={1.9} aria-hidden="true" /></span>{c}
               </button>
             );
           })}
         </div>
         {error && <p className="error" role="alert">{error}</p>}
-        <p className="label">{filter === "All" ? "Latest" : filter}{day ? ` on ${new Date(day).toLocaleDateString(undefined, { month: "short", day: "numeric" })}` : ""} at {campus.name}</p>
         <div className="posts">
           {shown.length === 0 && <p className="empty">{posts.length === 0 ? "No posts yet. Be the first." : `Nothing in ${filter} yet.`}</p>}
           <AnimatePresence initial={false}>
@@ -166,8 +235,8 @@ export default function Feed() {
               const expanded = open === p.id;
               const people = [...new Set(p.post_comments.map((c) => c.author_name))].slice(0, 3);
               return (
-                <motion.article key={p.id} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
-                  <div className="meta"><span><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong> · {when(p.created_at)}</span><span className="chip">{p.community}</span></div>
+                <motion.article key={p.id} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: -14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
+                  <div className="meta"><span className="who"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span><span><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong> · {when(p.created_at)}</span></span><span className="chip">{p.community}</span></div>
                   {p.payload.title && <h3>{p.payload.title}</h3>}
                   <p className="body" style={{ whiteSpace: "pre-wrap" }}>{p.payload.body ?? p.payload.text ?? ""}</p>
                   <div className="foot">
@@ -203,7 +272,7 @@ export default function Feed() {
           </AnimatePresence>
         </div>
       </div>
-      <aside className="rail" aria-label="Your campus summary">
+      <aside className="rail" ref={rail} aria-label="Your campus summary">
         <section className="cal-fold">
           <button type="button" className="cal-toggle" aria-expanded={calOpen} onClick={toggleCal}>
             <span className="cal-ico"><CalendarDays size={18} strokeWidth={1.75} /></span>
@@ -213,24 +282,12 @@ export default function Feed() {
           <AnimatePresence initial={false}>
             {calOpen && (
               <motion.div key="cal" className="reveal" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1, transition: enter }} exit={{ height: 0, opacity: 0, transition: exit }}>
-                <Calendar posts={posts} day={day} onDay={setDay} />
+                <Calendar posts={posts} day={day} onDay={setDay} compact />
               </motion.div>
             )}
           </AnimatePresence>
         </section>
-        <section className="people" aria-label="Active on campus">
-          <header><h3>Active on campus</h3><span className="muted">{recent.length}</span></header>
-          {recent.length === 0 && <p className="muted" style={{ fontSize: ".85rem" }}>No one has posted yet.</p>}
-          <ul>
-            {recent.map((p) => (
-              <li key={p.author_name}>
-                <span className="pa" style={{ background: hue[p.community] }} aria-hidden="true">{initials(p.author_name)}</span>
-                <div><strong>{p.author_name}</strong><span>Posted in {p.community}</span></div>
-                <time>{when(p.created_at)}</time>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <UpcomingList limit={5} moreTo="/app/plans" hide={["hangout"]} title="Reminders and chores" />
       </aside>
     </div>
   );

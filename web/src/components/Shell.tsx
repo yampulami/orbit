@@ -1,13 +1,19 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useEffect, useRef, type ComponentType } from "react";
-import { LogOut, Moon, Plus, Sun } from "lucide-react";
-import { GroupsIcon, HomeIcon, MessagesIcon, PlansIcon } from "./icons";
+import { useEffect, useRef, useState, type ComponentType } from "react";
+import { LogOut, Moon, SquarePen, Sun } from "lucide-react";
+import { GroupsIcon, HomeIcon, MapIcon, MessagesIcon, PlansIcon, RoommatesIcon } from "./icons";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { enter, slide } from "../lib/motion";
 import BadgeToast from "./BadgeToast";
 import UndoToast from "./UndoToast";
+import NoticeHost from "./NoticeHost";
+import Arrival from "./Arrival";
+import NotificationBell from "./NotificationBell";
+import ReminderAlerts from "./ReminderAlerts";
+import ComposeModal from "./ComposeModal";
+import GlobalSearch from "./GlobalSearch";
 import { setTheme, useTheme } from "../lib/theme";
 import { useHang, YOU } from "../lib/hangouts";
 
@@ -15,13 +21,15 @@ const items = [
   { to: "/app/feed", label: "Feed", icon: HomeIcon },
   { to: "/app/messages", label: "Messages", icon: MessagesIcon },
   { to: "/app/groups", label: "Groups", icon: GroupsIcon },
+  { to: "/app/roommates", label: "Roommates", icon: RoommatesIcon },
   { to: "/app/plans", label: "Plans", icon: PlansIcon },
+  { to: "/app/map", label: "Map", icon: MapIcon },
 ];
 
 export default function Shell() {
   const loc = useLocation();
   const nav = useNavigate();
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
   const dark = useTheme() === "dark";
   const main = useRef<HTMLElement>(null);
   const { groups, hangouts } = useHang();
@@ -36,17 +44,14 @@ export default function Shell() {
   }, [loc.pathname]);
   const name = (session?.user.user_metadata?.name as string | undefined) || session?.user.email?.split("@")[0] || "Student";
 
-  const newPost = () => {
-    nav("/app/feed");
-    setTimeout(() => document.getElementById("composer")?.focus(), 60);
-  };
+  const [composing, setComposing] = useState(false);
+  const newPost = () => setComposing(true);
 
   return (
     <div className="shell">
       <a className="skip" href="#main">Skip to content</a>
       <aside className="side">
         <NavLink to="/app/feed" className="logo" aria-label="Orbit home"><i /></NavLink>
-        <button className="navlink solo" title="New post" aria-label="New post" onClick={newPost}><Plus size={22} strokeWidth={1.75} /></button>
         <nav className="navgroup" aria-label="Primary">
           {items.map((i) => (
             <NavLink key={i.to} to={i.to} title={i.label} aria-label={i.label} className={({ isActive }) => "navlink" + (isActive ? " active" : "")}>
@@ -60,20 +65,32 @@ export default function Shell() {
             </NavLink>
           ))}
         </nav>
+        <button className="compose-btn solo" title="New post" aria-label="New post" onClick={newPost}><SquarePen size={24} strokeWidth={1.9} aria-hidden="true" /></button>
         <span className="spacer" />
         <button className="navlink extra" title={dark ? "Switch to light mode" : "Switch to dark mode"} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={dark} onClick={() => setTheme(dark ? "light" : "dark")}>
           {dark ? <Sun size={22} strokeWidth={1.75} /> : <Moon size={22} strokeWidth={1.75} />}
         </button>
-        <button className="navlink extra" title="Sign out" aria-label="Sign out" onClick={() => (supabase ? supabase.auth.signOut() : nav("/"))}>
+        <button className="navlink extra" title="Sign out" aria-label="Sign out" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}>
           <LogOut size={22} strokeWidth={1.75} />
         </button>
         <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="me">{name.slice(0, 1).toUpperCase()}</NavLink>
       </aside>
-      <motion.main key={loc.pathname} id="main" tabIndex={-1} ref={main} className="main" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={enter}>
-        <Outlet />
-      </motion.main>
+      <div className="content">
+        <div className="topline">
+          <GlobalSearch />
+          <NotificationBell />
+          <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="me topme">{name.slice(0, 1).toUpperCase()}</NavLink>
+        </div>
+        <motion.main key={loc.pathname} id="main" tabIndex={-1} ref={main} className="main" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={enter}>
+          <Outlet />
+        </motion.main>
+      </div>
       <BadgeToast />
       <UndoToast />
+      <NoticeHost />
+      <Arrival />
+      <ReminderAlerts />
+      <ComposeModal open={composing} onClose={() => setComposing(false)} />
     </div>
   );
 }

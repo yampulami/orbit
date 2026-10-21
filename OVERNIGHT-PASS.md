@@ -12,6 +12,19 @@ Everything below is in `web/` unless noted. Nothing is committed. All checks wer
 - **Landing page preview.** The hero now shows a picture of the app (made-up sample content) next to the headline.
 - **Show/hide password** and autofocus on the sign-in form.
 
+## Roommates tab (added after the overnight pass)
+A shared household with five sections: **Tasks** (effort points, auto-assign to the person with the least open work, Open/Mine/Done/All filters, search, reassign), **Groceries** (by category, Needed/Purchased/All), **Expenses** (equal split, who owes whom with the fewest payments, per-expense breakdown), **Fairness** (effort bars, no ranking) and **House notes**. Creating a household also creates its private group chat, and new chores and expenses post a short message there. Everything is saved on this device only, like groups. Deleting anything offers Undo. A "Try a sample household" button fills it with example data.
+
+## Search, profile and coming up (added after the overnight pass)
+- **Top right:** a search box and your profile picture now sit in the top right of every page, like the reference. Search covers posts, hangouts, chores, groceries, expenses, house notes, reminders and groups; Ctrl or Cmd + K jumps to it, and a result opens the right page and section. On phones the profile picture stays in the top bar and the search box sits under it.
+- **Reminders on the calendar:** pick a day, add a reminder with an optional time, tick it off or delete it (with Undo). Days with reminders get a small dot.
+- **Coming up:** a list under the calendar on Home and on Plans. It merges your hangouts (with "Needs your answer", "Today", "Soon", "Tomorrow"), your chores in the house, and your reminders, soonest first, with overdue things on top. Chores can now have an optional due date.
+- **Reminders alert you.** Pick a quick time (Morning, 9 AM, Noon, 3 PM, 6 PM) or a custom one. When the time comes while Orbit is open, a card pops up with Done and Snooze 10 min. A reminder with no time alerts at 9 in the morning.
+- Reminders are saved on this device only, like groups.
+
+## New post window (added after the overnight pass)
+The round pen button in the sidebar opens a window to write a post from any page (like the one on Twitter) instead of scrolling you to the feed. It has the same "Post to" community list, a character counter, Ctrl or Cmd + Enter to send, and a **Drafts** link: closing a post you did not send saves it as a draft you can reopen or delete. After posting, a short "Posted to Everyone" note offers Undo, and the feed updates by itself.
+
 ## Bugs found and fixed
 - On phones the top bar pushed sign out and your avatar off screen. The bar now keeps only what fits; sign out and appearance moved to Profile.
 - On short pages (Messages, Plans, Profile) the phone top bar stretched to double height.

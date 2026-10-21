@@ -1,0 +1,1142 @@
+{
+  "reviewed": false,
+  "campus": {
+    "key": "montclair-state-university",
+    "name": "Montclair State University",
+    "center": [
+      40.86469,
+      -74.19692
+    ],
+    "zoom": 17
+  },
+  "places": [
+    {
+      "id": "way-232850562",
+      "name": "1286 Valley Road",
+      "category": "other",
+      "lat": 40.858193,
+      "lng": -74.197396,
+      "osm": "way/232850562"
+    },
+    {
+      "id": "node-3189450910",
+      "name": "2mato at the Rathskeller",
+      "category": "dining",
+      "lat": 40.862465,
+      "lng": -74.197071,
+      "osm": "node/3189450910"
+    },
+    {
+      "id": "way-313032739",
+      "name": "Abbott & Costello Center",
+      "category": "other",
+      "lat": 40.870313,
+      "lng": -74.198799,
+      "osm": "way/313032739"
+    },
+    {
+      "id": "way-312849089",
+      "name": "Alexander Kasser Theater",
+      "category": "fun",
+      "lat": 40.859762,
+      "lng": -74.19975,
+      "osm": "way/312849089"
+    },
+    {
+      "id": "way-313023307",
+      "name": "Alumni Green",
+      "category": "other",
+      "lat": 40.859694,
+      "lng": -74.198425,
+      "osm": "way/313023307"
+    },
+    {
+      "id": "way-232846660",
+      "name": "Alumni House",
+      "category": "other",
+      "lat": 40.857566,
+      "lng": -74.201459,
+      "osm": "way/232846660"
+    },
+    {
+      "id": "way-232850516",
+      "name": "Amphitheater",
+      "category": "fun",
+      "lat": 40.86013,
+      "lng": -74.199279,
+      "osm": "way/232850516"
+    },
+    {
+      "id": "way-312845862",
+      "name": "Balance Kitchen at Freeman",
+      "category": "dining",
+      "lat": 40.857817,
+      "lng": -74.198318,
+      "osm": "way/312845862"
+    },
+    {
+      "id": "way-313031568",
+      "name": "Ben Samuels Children's Center",
+      "category": "other",
+      "lat": 40.867308,
+      "lng": -74.199016,
+      "osm": "way/313031568"
+    },
+    {
+      "id": "way-313029108",
+      "name": "Blanton Hall",
+      "category": "residence",
+      "lat": 40.864058,
+      "lng": -74.195487,
+      "osm": "way/313029108"
+    },
+    {
+      "id": "way-232853538",
+      "name": "Bohn Hall",
+      "category": "residence",
+      "lat": 40.863416,
+      "lng": -74.194501,
+      "osm": "way/232853538"
+    },
+    {
+      "id": "way-232846668",
+      "name": "Bond House",
+      "category": "other",
+      "lat": 40.856196,
+      "lng": -74.19945,
+      "osm": "way/232846668"
+    },
+    {
+      "id": "way-313024770",
+      "name": "Calcia Hall",
+      "category": "other",
+      "lat": 40.861642,
+      "lng": -74.198264,
+      "osm": "way/313024770"
+    },
+    {
+      "id": "way-232853476",
+      "name": "CarParc Diem",
+      "category": "transit",
+      "lat": 40.865303,
+      "lng": -74.197108,
+      "osm": "way/232853476"
+    },
+    {
+      "id": "way-232846651",
+      "name": "Center for Autism and Early Childhood Mental Health",
+      "category": "services",
+      "lat": 40.857143,
+      "lng": -74.199272,
+      "osm": "way/232846651"
+    },
+    {
+      "id": "way-233913261",
+      "name": "Center for Clinical Services",
+      "category": "services",
+      "lat": 40.872948,
+      "lng": -74.198485,
+      "osm": "way/233913261"
+    },
+    {
+      "id": "way-313024779",
+      "name": "Center for Computing and Information Science",
+      "category": "class",
+      "lat": 40.861939,
+      "lng": -74.196905,
+      "osm": "way/313024779"
+    },
+    {
+      "id": "way-313026393",
+      "name": "Center for Environmental and Life Sciences",
+      "category": "class",
+      "lat": 40.861662,
+      "lng": -74.196005,
+      "osm": "way/313026393"
+    },
+    {
+      "id": "relation-4196109",
+      "name": "Chapin Hall",
+      "category": "other",
+      "lat": 40.858294,
+      "lng": -74.199457,
+      "osm": "relation/4196109"
+    },
+    {
+      "id": "way-552443363",
+      "name": "Chapin Hall Quad",
+      "category": "other",
+      "lat": 40.858314,
+      "lng": -74.198849,
+      "osm": "way/552443363"
+    },
+    {
+      "id": "node-12244396463",
+      "name": "Chase ATM",
+      "category": "other",
+      "lat": 40.862526,
+      "lng": -74.197046,
+      "osm": "node/12244396463"
+    },
+    {
+      "id": "way-232846649",
+      "name": "Coder House",
+      "category": "other",
+      "lat": 40.857076,
+      "lng": -74.199064,
+      "osm": "way/232846649"
+    },
+    {
+      "id": "way-232850536",
+      "name": "Cogeneration Plant",
+      "category": "other",
+      "lat": 40.85936,
+      "lng": -74.200793,
+      "osm": "way/232850536"
+    },
+    {
+      "id": "way-313032036",
+      "name": "Count Basie Hall",
+      "category": "residence",
+      "lat": 40.870793,
+      "lng": -74.198313,
+      "osm": "way/313032036"
+    },
+    {
+      "id": "way-313021892",
+      "name": "Dickson Hall",
+      "category": "other",
+      "lat": 40.861079,
+      "lng": -74.199035,
+      "osm": "way/313021892"
+    },
+    {
+      "id": "way-313030394",
+      "name": "Dinallo Heights",
+      "category": "residence",
+      "lat": 40.865393,
+      "lng": -74.195923,
+      "osm": "way/313030394"
+    },
+    {
+      "id": "way-233324742",
+      "name": "Dioguardi Field",
+      "category": "outdoors",
+      "lat": 40.868426,
+      "lng": -74.196937,
+      "osm": "way/233324742"
+    },
+    {
+      "id": "node-3189419085",
+      "name": "DuMont Television Center",
+      "category": "other",
+      "lat": 40.860151,
+      "lng": -74.196866,
+      "osm": "node/3189419085"
+    },
+    {
+      "id": "node-6499745619",
+      "name": "Dunkin'",
+      "category": "dining",
+      "lat": 40.872072,
+      "lng": -74.19426,
+      "osm": "node/6499745619"
+    },
+    {
+      "id": "way-692422614",
+      "name": "Exxon",
+      "category": "other",
+      "lat": 40.872095,
+      "lng": -74.194296,
+      "osm": "way/692422614"
+    },
+    {
+      "id": "way-375626230",
+      "name": "Feliciano School of Business",
+      "category": "class",
+      "lat": 40.86176,
+      "lng": -74.199851,
+      "osm": "way/375626230"
+    },
+    {
+      "id": "way-313032033",
+      "name": "Fenwick Hall",
+      "category": "residence",
+      "lat": 40.870126,
+      "lng": -74.199618,
+      "osm": "way/313032033"
+    },
+    {
+      "id": "way-233324745",
+      "name": "Field House",
+      "category": "outdoors",
+      "lat": 40.866984,
+      "lng": -74.196081,
+      "osm": "way/233324745"
+    },
+    {
+      "id": "way-313021890",
+      "name": "Finley Hall",
+      "category": "other",
+      "lat": 40.860969,
+      "lng": -74.19765,
+      "osm": "way/313021890"
+    },
+    {
+      "id": "way-313031583",
+      "name": "Francis A. Sinatra Hall",
+      "category": "residence",
+      "lat": 40.86862,
+      "lng": -74.199518,
+      "osm": "way/313031583"
+    },
+    {
+      "id": "node-3757804483",
+      "name": "Freeman Hall",
+      "category": "other",
+      "lat": 40.858319,
+      "lng": -74.198244,
+      "osm": "node/3757804483"
+    },
+    {
+      "id": "way-1133060035",
+      "name": "Garret Village Building C",
+      "category": "residence",
+      "lat": 40.869403,
+      "lng": -74.191785,
+      "osm": "way/1133060035"
+    },
+    {
+      "id": "way-232846662",
+      "name": "Gilbreth House",
+      "category": "other",
+      "lat": 40.858003,
+      "lng": -74.197729,
+      "osm": "way/232846662"
+    },
+    {
+      "id": "way-274639156",
+      "name": "Great Notch Yard House",
+      "category": "other",
+      "lat": 40.873465,
+      "lng": -74.198149,
+      "osm": "way/274639156"
+    },
+    {
+      "id": "way-233913252",
+      "name": "Greenhouse",
+      "category": "other",
+      "lat": 40.866427,
+      "lng": -74.199368,
+      "osm": "way/233913252"
+    },
+    {
+      "id": "way-313030885",
+      "name": "Hawk Crossings - Accipiter",
+      "category": "residence",
+      "lat": 40.866763,
+      "lng": -74.200503,
+      "osm": "way/313030885"
+    },
+    {
+      "id": "way-313030893",
+      "name": "Hawk Crossings - Buteo",
+      "category": "residence",
+      "lat": 40.867494,
+      "lng": -74.200169,
+      "osm": "way/313030893"
+    },
+    {
+      "id": "way-313030872",
+      "name": "Hawk Crossings - Falco",
+      "category": "residence",
+      "lat": 40.865983,
+      "lng": -74.200847,
+      "osm": "way/313030872"
+    },
+    {
+      "id": "way-313027427",
+      "name": "Health Drop-In Center",
+      "category": "services",
+      "lat": 40.862589,
+      "lng": -74.196521,
+      "osm": "way/313027427"
+    },
+    {
+      "id": "way-313027434",
+      "name": "Irvin D. Reid Hall",
+      "category": "other",
+      "lat": 40.862771,
+      "lng": -74.195955,
+      "osm": "way/313027434"
+    },
+    {
+      "id": "node-3189504999",
+      "name": "Jersey Mike's Subs",
+      "category": "dining",
+      "lat": 40.863972,
+      "lng": -74.195221,
+      "osm": "node/3189504999"
+    },
+    {
+      "id": "node-3187535835",
+      "name": "John J. Cali School of Music",
+      "category": "class",
+      "lat": 40.858357,
+      "lng": -74.199445,
+      "osm": "node/3187535835"
+    },
+    {
+      "id": "node-3189425424",
+      "name": "L. Howard Fox Theater",
+      "category": "fun",
+      "lat": 40.86119,
+      "lng": -74.196167,
+      "osm": "node/3189425424"
+    },
+    {
+      "id": "way-232846635",
+      "name": "Legge House",
+      "category": "other",
+      "lat": 40.857025,
+      "lng": -74.198617,
+      "osm": "way/232846635"
+    },
+    {
+      "id": "way-277909135",
+      "name": "Li's Hot Pot & BBQ",
+      "category": "dining",
+      "lat": 40.872359,
+      "lng": -74.19558,
+      "osm": "way/277909135"
+    },
+    {
+      "id": "way-313021866",
+      "name": "Life Hall",
+      "category": "other",
+      "lat": 40.860507,
+      "lng": -74.196842,
+      "osm": "way/313021866"
+    },
+    {
+      "id": "way-312839920",
+      "name": "Lot 1",
+      "category": "transit",
+      "lat": 40.855816,
+      "lng": -74.19984,
+      "osm": "way/312839920"
+    },
+    {
+      "id": "way-312932817",
+      "name": "Lot 10",
+      "category": "transit",
+      "lat": 40.859109,
+      "lng": -74.19756,
+      "osm": "way/312932817"
+    },
+    {
+      "id": "way-313029107",
+      "name": "Lot 17",
+      "category": "transit",
+      "lat": 40.863737,
+      "lng": -74.196717,
+      "osm": "way/313029107"
+    },
+    {
+      "id": "way-313029928",
+      "name": "Lot 19",
+      "category": "transit",
+      "lat": 40.864761,
+      "lng": -74.194719,
+      "osm": "way/313029928"
+    },
+    {
+      "id": "way-291713843",
+      "name": "Lot 2",
+      "category": "transit",
+      "lat": 40.857115,
+      "lng": -74.199436,
+      "osm": "way/291713843"
+    },
+    {
+      "id": "way-233913205",
+      "name": "Lot 21",
+      "category": "transit",
+      "lat": 40.867428,
+      "lng": -74.193978,
+      "osm": "way/233913205"
+    },
+    {
+      "id": "way-233913240",
+      "name": "Lot 22",
+      "category": "transit",
+      "lat": 40.867973,
+      "lng": -74.19406,
+      "osm": "way/233913240"
+    },
+    {
+      "id": "way-313032759",
+      "name": "Lot 23",
+      "category": "transit",
+      "lat": 40.86654,
+      "lng": -74.19563,
+      "osm": "way/313032759"
+    },
+    {
+      "id": "way-313032760",
+      "name": "Lot 23N",
+      "category": "transit",
+      "lat": 40.867364,
+      "lng": -74.195081,
+      "osm": "way/313032760"
+    },
+    {
+      "id": "way-313030642",
+      "name": "Lot 24",
+      "category": "transit",
+      "lat": 40.866428,
+      "lng": -74.1966,
+      "osm": "way/313030642"
+    },
+    {
+      "id": "way-313030389",
+      "name": "Lot 25",
+      "category": "transit",
+      "lat": 40.864556,
+      "lng": -74.196647,
+      "osm": "way/313030389"
+    },
+    {
+      "id": "way-313030648",
+      "name": "Lot 27",
+      "category": "transit",
+      "lat": 40.865949,
+      "lng": -74.200069,
+      "osm": "way/313030648"
+    },
+    {
+      "id": "way-313031581",
+      "name": "Lot 28",
+      "category": "transit",
+      "lat": 40.868133,
+      "lng": -74.198535,
+      "osm": "way/313031581"
+    },
+    {
+      "id": "way-313031565",
+      "name": "Lot 28S",
+      "category": "transit",
+      "lat": 40.865991,
+      "lng": -74.199378,
+      "osm": "way/313031565"
+    },
+    {
+      "id": "way-313030881",
+      "name": "Lot 29",
+      "category": "transit",
+      "lat": 40.866769,
+      "lng": -74.200199,
+      "osm": "way/313030881"
+    },
+    {
+      "id": "way-312847995",
+      "name": "Lot 3",
+      "category": "transit",
+      "lat": 40.858139,
+      "lng": -74.200716,
+      "osm": "way/312847995"
+    },
+    {
+      "id": "way-313029916",
+      "name": "Lot 30",
+      "category": "transit",
+      "lat": 40.862779,
+      "lng": -74.200424,
+      "osm": "way/313029916"
+    },
+    {
+      "id": "way-313021899",
+      "name": "Lot 30S",
+      "category": "transit",
+      "lat": 40.860676,
+      "lng": -74.201447,
+      "osm": "way/313021899"
+    },
+    {
+      "id": "way-312848723",
+      "name": "Lot 33",
+      "category": "transit",
+      "lat": 40.859594,
+      "lng": -74.201329,
+      "osm": "way/312848723"
+    },
+    {
+      "id": "way-487498693",
+      "name": "Lot 36",
+      "category": "transit",
+      "lat": 40.857922,
+      "lng": -74.201071,
+      "osm": "way/487498693"
+    },
+    {
+      "id": "way-313028558",
+      "name": "Lot 38",
+      "category": "transit",
+      "lat": 40.863073,
+      "lng": -74.196984,
+      "osm": "way/313028558"
+    },
+    {
+      "id": "way-312841186",
+      "name": "Lot 4",
+      "category": "transit",
+      "lat": 40.857774,
+      "lng": -74.199654,
+      "osm": "way/312841186"
+    },
+    {
+      "id": "way-233913130",
+      "name": "Lot 41",
+      "category": "transit",
+      "lat": 40.865184,
+      "lng": -74.201018,
+      "osm": "way/233913130"
+    },
+    {
+      "id": "way-312848722",
+      "name": "Lot 42",
+      "category": "transit",
+      "lat": 40.859064,
+      "lng": -74.201813,
+      "osm": "way/312848722"
+    },
+    {
+      "id": "way-233913161",
+      "name": "Lot 45",
+      "category": "transit",
+      "lat": 40.871226,
+      "lng": -74.20034,
+      "osm": "way/233913161"
+    },
+    {
+      "id": "way-313032753",
+      "name": "Lot 46",
+      "category": "transit",
+      "lat": 40.871649,
+      "lng": -74.19834,
+      "osm": "way/313032753"
+    },
+    {
+      "id": "way-313032023",
+      "name": "Lot 47",
+      "category": "transit",
+      "lat": 40.869201,
+      "lng": -74.199326,
+      "osm": "way/313032023"
+    },
+    {
+      "id": "way-313032035",
+      "name": "Lot 48",
+      "category": "transit",
+      "lat": 40.870194,
+      "lng": -74.200186,
+      "osm": "way/313032035"
+    },
+    {
+      "id": "way-312841181",
+      "name": "Lot 5",
+      "category": "transit",
+      "lat": 40.857583,
+      "lng": -74.198711,
+      "osm": "way/312841181"
+    },
+    {
+      "id": "way-233913162",
+      "name": "Lot 60",
+      "category": "transit",
+      "lat": 40.873234,
+      "lng": -74.199804,
+      "osm": "way/233913162"
+    },
+    {
+      "id": "way-287527901",
+      "name": "Lot 60N",
+      "category": "transit",
+      "lat": 40.87296,
+      "lng": -74.198158,
+      "osm": "way/287527901"
+    },
+    {
+      "id": "way-313032754",
+      "name": "Lot 61",
+      "category": "transit",
+      "lat": 40.87208,
+      "lng": -74.198457,
+      "osm": "way/313032754"
+    },
+    {
+      "id": "way-785130900",
+      "name": "Lot 7",
+      "category": "transit",
+      "lat": 40.859205,
+      "lng": -74.200071,
+      "osm": "way/785130900"
+    },
+    {
+      "id": "way-291713841",
+      "name": "Lot 8",
+      "category": "transit",
+      "lat": 40.859334,
+      "lng": -74.19997,
+      "osm": "way/291713841"
+    },
+    {
+      "id": "way-312845867",
+      "name": "Lot 9",
+      "category": "transit",
+      "lat": 40.858275,
+      "lng": -74.198037,
+      "osm": "way/312845867"
+    },
+    {
+      "id": "way-313032843",
+      "name": "Machuga Heights",
+      "category": "residence",
+      "lat": 40.866608,
+      "lng": -74.194381,
+      "osm": "way/313032843"
+    },
+    {
+      "id": "way-583143719",
+      "name": "Machuga Lawn",
+      "category": "other",
+      "lat": 40.866375,
+      "lng": -74.194339,
+      "osm": "way/583143719"
+    },
+    {
+      "id": "way-232850495",
+      "name": "Maintenance Building",
+      "category": "other",
+      "lat": 40.859495,
+      "lng": -74.201439,
+      "osm": "way/232850495"
+    },
+    {
+      "id": "way-277909140",
+      "name": "McDonald's",
+      "category": "dining",
+      "lat": 40.872367,
+      "lng": -74.194759,
+      "osm": "way/277909140"
+    },
+    {
+      "id": "way-313021868",
+      "name": "Memorial Auditorium",
+      "category": "fun",
+      "lat": 40.860917,
+      "lng": -74.196425,
+      "osm": "way/313021868"
+    },
+    {
+      "id": "way-692422616",
+      "name": "Mobil",
+      "category": "other",
+      "lat": 40.872673,
+      "lng": -74.192407,
+      "osm": "way/692422616"
+    },
+    {
+      "id": "way-232853403",
+      "name": "Montclair District Energy Plant",
+      "category": "other",
+      "lat": 40.864356,
+      "lng": -74.197621,
+      "osm": "way/232853403"
+    },
+    {
+      "id": "way-233324743",
+      "name": "Montclair State University Ice Arena",
+      "category": "other",
+      "lat": 40.865846,
+      "lng": -74.198119,
+      "osm": "way/233324743"
+    },
+    {
+      "id": "way-232846896",
+      "name": "Montclair State University Police",
+      "category": "other",
+      "lat": 40.860041,
+      "lng": -74.201387,
+      "osm": "way/232846896"
+    },
+    {
+      "id": "way-312933183",
+      "name": "Morehead Hall",
+      "category": "other",
+      "lat": 40.859619,
+      "lng": -74.197491,
+      "osm": "way/312933183"
+    },
+    {
+      "id": "way-233324747",
+      "name": "MSU Softball Stadium",
+      "category": "outdoors",
+      "lat": 40.86717,
+      "lng": -74.197457,
+      "osm": "way/233324747"
+    },
+    {
+      "id": "way-233913117",
+      "name": "MSU Vehicle Maintainence",
+      "category": "other",
+      "lat": 40.872535,
+      "lng": -74.199116,
+      "osm": "way/233913117"
+    },
+    {
+      "id": "way-233913197",
+      "name": "NJ Transit Deck",
+      "category": "transit",
+      "lat": 40.869181,
+      "lng": -74.198173,
+      "osm": "way/233913197"
+    },
+    {
+      "id": "way-313431637",
+      "name": "Overlook Corporate Center",
+      "category": "services",
+      "lat": 40.871317,
+      "lng": -74.195418,
+      "osm": "way/313431637"
+    },
+    {
+      "id": "node-5161531862",
+      "name": "Panda Express",
+      "category": "dining",
+      "lat": 40.862758,
+      "lng": -74.197043,
+      "osm": "node/5161531862"
+    },
+    {
+      "id": "way-312847981",
+      "name": "Panzer Athletic Center",
+      "category": "outdoors",
+      "lat": 40.858306,
+      "lng": -74.200321,
+      "osm": "way/312847981"
+    },
+    {
+      "id": "way-313032037",
+      "name": "Paul Hall",
+      "category": "residence",
+      "lat": 40.87098,
+      "lng": -74.198817,
+      "osm": "way/313032037"
+    },
+    {
+      "id": "way-232853515",
+      "name": "Pittser Field",
+      "category": "outdoors",
+      "lat": 40.860861,
+      "lng": -74.20044,
+      "osm": "way/232853515"
+    },
+    {
+      "id": "way-232846644",
+      "name": "President's House",
+      "category": "other",
+      "lat": 40.856625,
+      "lng": -74.198875,
+      "osm": "way/232846644"
+    },
+    {
+      "id": "way-958074957",
+      "name": "Red Bulls Field House",
+      "category": "outdoors",
+      "lat": 40.861491,
+      "lng": -74.200415,
+      "osm": "way/958074957"
+    },
+    {
+      "id": "way-232850502",
+      "name": "Red Hawk Catholic",
+      "category": "other",
+      "lat": 40.859326,
+      "lng": -74.196618,
+      "osm": "way/232850502"
+    },
+    {
+      "id": "way-312849085",
+      "name": "Red Hawk Deck",
+      "category": "transit",
+      "lat": 40.859938,
+      "lng": -74.200577,
+      "osm": "way/312849085"
+    },
+    {
+      "id": "node-5161531863",
+      "name": "Red hawk Diner",
+      "category": "dining",
+      "lat": 40.863391,
+      "lng": -74.197419,
+      "osm": "node/5161531863"
+    },
+    {
+      "id": "way-313028560",
+      "name": "Red Hawk Diner",
+      "category": "dining",
+      "lat": 40.863392,
+      "lng": -74.197488,
+      "osm": "way/313028560"
+    },
+    {
+      "id": "way-313027426",
+      "name": "Richardson Hall",
+      "category": "other",
+      "lat": 40.862383,
+      "lng": -74.196175,
+      "osm": "way/313027426"
+    },
+    {
+      "id": "node-3757752848",
+      "name": "Russ Hall",
+      "category": "other",
+      "lat": 40.857864,
+      "lng": -74.198927,
+      "osm": "node/3757752848"
+    },
+    {
+      "id": "node-2417196295",
+      "name": "Sam's Place",
+      "category": "dining",
+      "lat": 40.866346,
+      "lng": -74.194888,
+      "osm": "node/2417196295"
+    },
+    {
+      "id": "way-313023306",
+      "name": "Schmitt Hall",
+      "category": "other",
+      "lat": 40.861366,
+      "lng": -74.197209,
+      "osm": "way/313023306"
+    },
+    {
+      "id": "way-1188721159",
+      "name": "School of Communication and Media",
+      "category": "class",
+      "lat": 40.860076,
+      "lng": -74.197124,
+      "osm": "way/1188721159"
+    },
+    {
+      "id": "way-313026395",
+      "name": "School of Nursing/The Graduate School",
+      "category": "class",
+      "lat": 40.862322,
+      "lng": -74.198165,
+      "osm": "way/313026395"
+    },
+    {
+      "id": "way-552443707",
+      "name": "Science Quad",
+      "category": "class",
+      "lat": 40.861905,
+      "lng": -74.196499,
+      "osm": "way/552443707"
+    },
+    {
+      "id": "way-313023807",
+      "name": "Speech Building",
+      "category": "other",
+      "lat": 40.861172,
+      "lng": -74.196167,
+      "osm": "way/313023807"
+    },
+    {
+      "id": "way-232846653",
+      "name": "Sprague Field",
+      "category": "outdoors",
+      "lat": 40.858601,
+      "lng": -74.20118,
+      "osm": "way/232846653"
+    },
+    {
+      "id": "way-313021863",
+      "name": "Sprague Library",
+      "category": "study",
+      "lat": 40.860284,
+      "lng": -74.198102,
+      "osm": "way/313021863"
+    },
+    {
+      "id": "node-3189419002",
+      "name": "Starbucks at Cafe Diem",
+      "category": "dining",
+      "lat": 40.86046,
+      "lng": -74.197817,
+      "osm": "node/3189419002"
+    },
+    {
+      "id": "way-313028565",
+      "name": "Stone Hall",
+      "category": "residence",
+      "lat": 40.862317,
+      "lng": -74.195347,
+      "osm": "way/313028565"
+    },
+    {
+      "id": "way-313026743",
+      "name": "Student Center",
+      "category": "fun",
+      "lat": 40.862724,
+      "lng": -74.197243,
+      "osm": "way/313026743"
+    },
+    {
+      "id": "way-313026744",
+      "name": "Student Center Annex",
+      "category": "fun",
+      "lat": 40.862834,
+      "lng": -74.197977,
+      "osm": "way/313026744"
+    },
+    {
+      "id": "node-3189450909",
+      "name": "Student Center Cafe",
+      "category": "dining",
+      "lat": 40.862613,
+      "lng": -74.196975,
+      "osm": "node/3189450909"
+    },
+    {
+      "id": "node-3189450908",
+      "name": "Student Center Dining Room",
+      "category": "dining",
+      "lat": 40.86295,
+      "lng": -74.197423,
+      "osm": "node/3189450908"
+    },
+    {
+      "id": "way-313024806",
+      "name": "Student Center Quad",
+      "category": "fun",
+      "lat": 40.861686,
+      "lng": -74.197633,
+      "osm": "way/313024806"
+    },
+    {
+      "id": "way-313029984",
+      "name": "Student Recreation Center",
+      "category": "outdoors",
+      "lat": 40.865594,
+      "lng": -74.194587,
+      "osm": "way/313029984"
+    },
+    {
+      "id": "way-312932811",
+      "name": "Susan A. Cole Hall",
+      "category": "other",
+      "lat": 40.859126,
+      "lng": -74.198537,
+      "osm": "way/312932811"
+    },
+    {
+      "id": "way-233324761",
+      "name": "Tennis Courts",
+      "category": "outdoors",
+      "lat": 40.866536,
+      "lng": -74.197626,
+      "osm": "way/233324761"
+    },
+    {
+      "id": "way-233913195",
+      "name": "TV Tower",
+      "category": "other",
+      "lat": 40.864958,
+      "lng": -74.200369,
+      "osm": "way/233913195"
+    },
+    {
+      "id": "way-785130901",
+      "name": "University Facilities",
+      "category": "other",
+      "lat": 40.873658,
+      "lng": -74.199265,
+      "osm": "way/785130901"
+    },
+    {
+      "id": "relation-4198963",
+      "name": "University Hall",
+      "category": "other",
+      "lat": 40.862393,
+      "lng": -74.199044,
+      "osm": "relation/4198963"
+    },
+    {
+      "id": "node-3189447940",
+      "name": "University Hall Cafe",
+      "category": "dining",
+      "lat": 40.86205,
+      "lng": -74.198768,
+      "osm": "node/3189447940"
+    },
+    {
+      "id": "way-1549169315",
+      "name": "Valley Animal Hospital",
+      "category": "other",
+      "lat": 40.861667,
+      "lng": -74.194231,
+      "osm": "way/1549169315"
+    },
+    {
+      "id": "way-1549169316",
+      "name": "Valley Regency",
+      "category": "other",
+      "lat": 40.862674,
+      "lng": -74.193612,
+      "osm": "way/1549169316"
+    },
+    {
+      "id": "way-313029100",
+      "name": "Webster Hall",
+      "category": "other",
+      "lat": 40.863332,
+      "lng": -74.195811,
+      "osm": "way/313029100"
+    },
+    {
+      "id": "way-313032032",
+      "name": "Williams Hall",
+      "category": "residence",
+      "lat": 40.869822,
+      "lng": -74.199216,
+      "osm": "way/313032032"
+    },
+    {
+      "id": "way-265888018",
+      "name": "Yogi Berra Museum & Learning Center",
+      "category": "other",
+      "lat": 40.868395,
+      "lng": -74.19456,
+      "osm": "way/265888018"
+    },
+    {
+      "id": "way-265888031",
+      "name": "Yogi Berra Stadium",
+      "category": "outdoors",
+      "lat": 40.868902,
+      "lng": -74.195174,
+      "osm": "way/265888031"
+    },
+    {
+      "id": "node-2411645285",
+      "name": "Zaro's",
+      "category": "dining",
+      "lat": 40.864224,
+      "lng": -74.194986,
+      "osm": "node/2411645285"
+    }
+  ]
+}

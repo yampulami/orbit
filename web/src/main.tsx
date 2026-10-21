@@ -6,6 +6,7 @@ import { AuthProvider } from "./lib/auth";
 import { DEMO_BUILD } from "./lib/supabase";
 import App from "./App";
 import "@fontsource-variable/dm-sans";
+import "@fontsource-variable/fraunces/opsz.css";
 import "./styles.css";
 
 const Router = DEMO_BUILD ? MemoryRouter : BrowserRouter; // hosted preview can't use real URLs

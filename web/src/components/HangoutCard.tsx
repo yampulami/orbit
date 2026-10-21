@@ -3,6 +3,8 @@ import { Check, MapPin, X } from "lucide-react";
 import { undo } from "../lib/undo";
 import { slide } from "../lib/motion";
 import { progress, useProgress } from "../lib/progress";
+import PinButton from "./PinButton";
+import { usePins } from "../lib/pins";
 import { hangActions, YOU, type Hangout } from "../lib/hangouts";
 
 export const fmtWhen = (iso: string) => {
@@ -13,6 +15,7 @@ export const fmtWhen = (iso: string) => {
 /** A planned hangout with a Yes / No answer for the current person. */
 export default function HangoutCard({ h, group, tone = 0, plain = false }: { h: Hangout; group: string; tone?: number; plain?: boolean }) {
   const mine = h.rsvps[YOU];
+  const pinned = usePins().some((p) => p.kind === "hangout" && p.id === h.id);
   const { enabled, checkins } = useProgress();
   const past = new Date(h.when).getTime() < Date.now();
   const went = checkins.includes(h.id);
@@ -24,7 +27,8 @@ export default function HangoutCard({ h, group, tone = 0, plain = false }: { h: 
   const answer = (a: "yes" | "no") => hangActions.setRsvp(h.id, mine === a ? null : a);
 
   return (
-    <article className={"hang" + (plain ? " plain" : "")} data-tone={tone % 5}>
+    <article className={"hang" + (plain ? " plain" : "") + (pinned ? " is-pinned" : "")} data-tone={tone % 5}>
+      {!plain && !past && <div className="hang-pin"><PinButton kind="hangout" id={h.id} title={h.title} /></div>}
       <div className="hang-top"><span className="chip">{group}</span><span className="hang-when">{fmtWhen(h.when)}</span></div>
       <h3>{h.title}</h3>
       <p className="hang-place"><MapPin size={16} strokeWidth={1.75} aria-hidden="true" />{h.place}</p>
