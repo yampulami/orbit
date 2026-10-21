@@ -2,7 +2,7 @@
 -- Everything is scoped by campus the same way the feed is (public.my_campus_key()), and private things stay private:
 --   hangouts and their answers are visible only to the members of the group they belong to,
 --   reminders, pins and push subscriptions are visible only to their owner.
--- NOT YET RUN against a database. Read SUPABASE-PLAN.md for how to apply and check it.
+-- Applied on 2026-10-21 to the Orbit project in a dry run first (rolled back), then for real. See SUPABASE-PLAN.md for the checks.
 
 -- ---------------------------------------------------------------------------------------------
 -- 1. Onboarding answers live on the existing profile
@@ -158,18 +158,20 @@ do $$ begin alter publication supabase_realtime add table public.campus_places; 
 do $$ begin alter publication supabase_realtime add table public.place_votes; exception when duplicate_object then null; end $$;
 
 -- ---------------------------------------------------------------------------------------------
--- 3. Hangouts and answers: visible only to the members of the group
+-- 3. Hangouts and answers: visible only to the members of the group, unless the hangout is marked public (open to the whole campus)
 -- ---------------------------------------------------------------------------------------------
-create or replace function public.is_group_member(gid uuid)
+create or replace function public.is_campus_group_member(gid uuid)
 returns boolean language sql stable security definer set search_path = public
 as $$ select exists (select 1 from public.campus_group_memberships where group_id = gid and user_id = auth.uid()) $$;
-revoke all on function public.is_group_member(uuid) from public;
-grant execute on function public.is_group_member(uuid) to authenticated;
+revoke all on function public.is_campus_group_member(uuid) from public;
+grant execute on function public.is_campus_group_member(uuid) to authenticated;
 
-create table if not exists public.hangouts (
+create table if not exists public.campus_hangouts (
   id uuid primary key default gen_random_uuid(),
   campus_key text not null check (campus_key ~ '^[a-z0-9-]{2,100}$'),
-  group_id uuid not null references public.campus_groups(id) on delete cascade,
+  -- A group hangout belongs to a group and is seen only by its members. A public hangout (visibility 'campus') is open to the whole campus and may have no group.
+  group_id uuid references public.campus_groups(id) on delete cascade,
+  visibility text not null default 'group' check (visibility in ('group','campus')),
   created_by uuid not null references auth.users(id) on delete cascade,
   title text not null check (char_length(title) between 1 and 100),
   place_name text not null check (char_length(place_name) between 1 and 120),
@@ -177,53 +179,61 @@ create table if not exists public.hangouts (
   starts_at timestamptz not null,
   duration_minutes integer not null default 90 check (duration_minutes between 15 and 720),
   canceled_at timestamptz,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  check (visibility = 'campus' or group_id is not null)
 );
-create index if not exists hangouts_group_idx on public.hangouts(group_id, starts_at);
+create index if not exists campus_hangouts_group_idx on public.campus_hangouts(group_id, starts_at);
+create index if not exists campus_hangouts_campus_idx on public.campus_hangouts(campus_key, starts_at) where visibility = 'campus';
 
-create table if not exists public.hangout_rsvps (
-  hangout_id uuid not null references public.hangouts(id) on delete cascade,
+create table if not exists public.campus_hangout_rsvps (
+  hangout_id uuid not null references public.campus_hangouts(id) on delete cascade,
   user_id uuid not null references auth.users(id) on delete cascade,
   answer text not null check (answer in ('yes','no')),
   updated_at timestamptz not null default now(),
   primary key (hangout_id, user_id)
 );
 
-alter table public.hangouts enable row level security;
-alter table public.hangout_rsvps enable row level security;
+alter table public.campus_hangouts enable row level security;
+alter table public.campus_hangout_rsvps enable row level security;
 
-create or replace function public.can_see_hangout(hid uuid)
+create or replace function public.can_see_campus_hangout(hid uuid)
 returns boolean language sql stable security definer set search_path = public
 as $$
   select exists (
-    select 1 from public.hangouts h
-    where h.id = hid and h.campus_key = public.my_campus_key() and public.is_group_member(h.group_id)
+    select 1 from public.campus_hangouts h
+    where h.id = hid and h.campus_key = public.my_campus_key() and (h.visibility = 'campus' or public.is_campus_group_member(h.group_id))
   )
 $$;
-revoke all on function public.can_see_hangout(uuid) from public;
-grant execute on function public.can_see_hangout(uuid) to authenticated;
+revoke all on function public.can_see_campus_hangout(uuid) from public;
+grant execute on function public.can_see_campus_hangout(uuid) to authenticated;
 
-drop policy if exists "hangouts read" on public.hangouts;
-create policy "hangouts read" on public.hangouts for select to authenticated
-using (campus_key = public.my_campus_key() and public.is_group_member(group_id));
-drop policy if exists "hangouts plan" on public.hangouts;
-create policy "hangouts plan" on public.hangouts for insert to authenticated
-with check (created_by = auth.uid() and campus_key = public.my_campus_key() and public.is_group_member(group_id));
+drop policy if exists "hangouts read" on public.campus_hangouts;
+create policy "hangouts read" on public.campus_hangouts for select to authenticated
+using (campus_key = public.my_campus_key() and (visibility = 'campus' or public.is_campus_group_member(group_id)));
+drop policy if exists "hangouts plan" on public.campus_hangouts;
+create policy "hangouts plan" on public.campus_hangouts for insert to authenticated
+with check (
+  created_by = auth.uid() and campus_key = public.my_campus_key()
+  and ((group_id is not null and public.is_campus_group_member(group_id)) or (group_id is null and visibility = 'campus'))
+);
 -- Only the organizer changes a hangout (cancelling sets canceled_at). Nothing is hard-deleted from the app, so a cancel can be undone.
-drop policy if exists "hangouts organizer update" on public.hangouts;
-create policy "hangouts organizer update" on public.hangouts for update to authenticated
+drop policy if exists "hangouts organizer update" on public.campus_hangouts;
+create policy "hangouts organizer update" on public.campus_hangouts for update to authenticated
 using (created_by = auth.uid())
-with check (created_by = auth.uid() and campus_key = public.my_campus_key() and public.is_group_member(group_id));
+with check (
+  created_by = auth.uid() and campus_key = public.my_campus_key()
+  and ((group_id is not null and public.is_campus_group_member(group_id)) or (group_id is null and visibility = 'campus'))
+);
 
-drop policy if exists "rsvps read" on public.hangout_rsvps;
-create policy "rsvps read" on public.hangout_rsvps for select to authenticated using (public.can_see_hangout(hangout_id));
-drop policy if exists "rsvps answer" on public.hangout_rsvps;
-create policy "rsvps answer" on public.hangout_rsvps for insert to authenticated with check (user_id = auth.uid() and public.can_see_hangout(hangout_id));
-drop policy if exists "rsvps change" on public.hangout_rsvps;
-create policy "rsvps change" on public.hangout_rsvps for update to authenticated
-using (user_id = auth.uid()) with check (user_id = auth.uid() and public.can_see_hangout(hangout_id));
-drop policy if exists "rsvps clear" on public.hangout_rsvps;
-create policy "rsvps clear" on public.hangout_rsvps for delete to authenticated using (user_id = auth.uid());
+drop policy if exists "rsvps read" on public.campus_hangout_rsvps;
+create policy "rsvps read" on public.campus_hangout_rsvps for select to authenticated using (public.can_see_campus_hangout(hangout_id));
+drop policy if exists "rsvps answer" on public.campus_hangout_rsvps;
+create policy "rsvps answer" on public.campus_hangout_rsvps for insert to authenticated with check (user_id = auth.uid() and public.can_see_campus_hangout(hangout_id));
+drop policy if exists "rsvps change" on public.campus_hangout_rsvps;
+create policy "rsvps change" on public.campus_hangout_rsvps for update to authenticated
+using (user_id = auth.uid()) with check (user_id = auth.uid() and public.can_see_campus_hangout(hangout_id));
+drop policy if exists "rsvps clear" on public.campus_hangout_rsvps;
+create policy "rsvps clear" on public.campus_hangout_rsvps for delete to authenticated using (user_id = auth.uid());
 
 -- Nobody can be in two places at once: planning something that overlaps a hangout you organize or said yes to is refused, in the database as well as in the app.
 create or replace function public.guard_new_hangout()
@@ -231,34 +241,34 @@ returns trigger language plpgsql security definer set search_path = public
 as $$
 begin
   if exists (
-    select 1 from public.hangouts h
+    select 1 from public.campus_hangouts h
     where h.canceled_at is null and h.id <> new.id
       and tstzrange(h.starts_at, h.starts_at + make_interval(mins => h.duration_minutes)) && tstzrange(new.starts_at, new.starts_at + make_interval(mins => new.duration_minutes))
-      and (h.created_by = new.created_by or exists (select 1 from public.hangout_rsvps r where r.hangout_id = h.id and r.user_id = new.created_by and r.answer = 'yes'))
+      and (h.created_by = new.created_by or exists (select 1 from public.campus_hangout_rsvps r where r.hangout_id = h.id and r.user_id = new.created_by and r.answer = 'yes'))
   ) then
     raise exception 'You already have plans then.' using errcode = 'P0001';
   end if;
   return new;
 end $$;
-drop trigger if exists guard_new_hangout on public.hangouts;
-create trigger guard_new_hangout before insert on public.hangouts for each row execute function public.guard_new_hangout();
+drop trigger if exists guard_new_hangout on public.campus_hangouts;
+create trigger guard_new_hangout before insert on public.campus_hangouts for each row execute function public.guard_new_hangout();
 
 -- The organizer is going, so they get a Yes automatically.
 create or replace function public.organizer_says_yes()
 returns trigger language plpgsql security definer set search_path = public
 as $$
 begin
-  insert into public.hangout_rsvps (hangout_id, user_id, answer) values (new.id, new.created_by, 'yes') on conflict do nothing;
+  insert into public.campus_hangout_rsvps (hangout_id, user_id, answer) values (new.id, new.created_by, 'yes') on conflict do nothing;
   return new;
 end $$;
-drop trigger if exists organizer_says_yes on public.hangouts;
-create trigger organizer_says_yes after insert on public.hangouts for each row execute function public.organizer_says_yes();
+drop trigger if exists organizer_says_yes on public.campus_hangouts;
+create trigger organizer_says_yes after insert on public.campus_hangouts for each row execute function public.organizer_says_yes();
 
 -- A hangout can appear in the group chat as a card.
-alter table public.group_messages add column if not exists hangout_id uuid references public.hangouts(id) on delete cascade;
+alter table public.group_messages add column if not exists hangout_id uuid references public.campus_hangouts(id) on delete cascade;
 
-do $$ begin alter publication supabase_realtime add table public.hangouts; exception when duplicate_object then null; end $$;
-do $$ begin alter publication supabase_realtime add table public.hangout_rsvps; exception when duplicate_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.campus_hangouts; exception when duplicate_object then null; end $$;
+do $$ begin alter publication supabase_realtime add table public.campus_hangout_rsvps; exception when duplicate_object then null; end $$;
 
 -- ---------------------------------------------------------------------------------------------
 -- 4. Reminders and pins: private to their owner

@@ -14,7 +14,7 @@ import { communityIcon } from "../lib/communityUi";
 import { usePins } from "../lib/pins";
 import { notice } from "../lib/notice";
 import HangoutCard from "../components/HangoutCard";
-import { useHang, YOU } from "../lib/hangouts";
+import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { progress, streakWeeks, useProgress } from "../lib/progress";
 import { undo } from "../lib/undo";
 
@@ -126,7 +126,7 @@ export default function Feed() {
   // Picking a day on the calendar shows that day's reminders and hangouts. It never hides posts from the feed.
   const shown = posts.filter((p) => filter === "All" || p.community === filter);
   const upcoming = hangouts
-    .filter((h) => !h.canceled && groups.some((g) => g.id === h.groupId) && new Date(h.when).getTime() > Date.now() - 3 * 3600000)
+    .filter((h) => isVisible(h, groups) && new Date(h.when).getTime() > Date.now() - 3 * 3600000)
     .sort((x, y) => x.when.localeCompare(y.when));
 
   const asking = upcoming.filter((h) => !h.rsvps[YOU]);

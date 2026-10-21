@@ -10,7 +10,7 @@ import { deviceSupported, disableDeviceAlerts, enableDeviceAlerts, useDeviceAler
 import { notice } from "../lib/notice";
 import { feedApi } from "../lib/feedData";
 import { resetCampus } from "../lib/campus";
-import { saveProfile, TENURE_YEARS, type Living, type Look, type Profile, type Tenure } from "../lib/profile";
+import { pushProfile, saveProfile, TENURE_YEARS, type Living, type Look, type Profile, type Tenure } from "../lib/profile";
 import { progress } from "../lib/progress";
 import { supabase } from "../lib/supabase";
 import { setThemePref, useThemePref } from "../lib/theme";
@@ -105,6 +105,7 @@ export default function Onboarding() {
       const profile: Profile = { name: name.trim(), campusName: uni.name.trim(), campusKey: key, campusDomain: uni.domain || undefined, tenure, living, interests, streaks, nudges, look, doneAt: new Date().toISOString() };
       await feedApi.join({ name: profile.campusName, key }, session!.user.id);
       if (supabase) await supabase.auth.updateUser({ data: { name: profile.name } }); else demoAuth.setName(session!.user.id, profile.name);
+      await pushProfile(session!.user.id, profile); // the membership above has to exist first
       saveProfile(session!.user.id, profile);
       setThemePref(look);
       progress.setEnabled(streaks);

@@ -1,4 +1,4 @@
-import { YOU, type Group, type Hangout } from "./hangouts";
+import { isVisible, YOU, type Group, type Hangout } from "./hangouts";
 import { fromYmd, type Reminder } from "./reminders";
 import type { Task } from "./roommates";
 
@@ -40,7 +40,7 @@ export function buildUpcoming(o: { now: Date; groups: Group[]; hangouts: Hangout
 
   for (const h of o.hangouts) {
     const when = new Date(h.when);
-    if (h.canceled || !o.groups.some((g) => g.id === h.groupId)) continue;
+    if (!isVisible(h, o.groups)) continue;
     if (when.getTime() < now.getTime() - 3 * HOUR || when.getTime() > now.getTime() + 30 * DAY) continue;
     const mine = h.rsvps[YOU];
     const untilMs = when.getTime() - now.getTime();

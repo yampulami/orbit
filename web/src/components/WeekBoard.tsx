@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useHang, YOU } from "../lib/hangouts";
+import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { fromYmd, useReminders } from "../lib/reminders";
 import { useSpace } from "../lib/roommates";
 
@@ -53,7 +53,7 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
     const raw = new Map<string, Omit<Block, "lane" | "lanes">[]>(), chips = new Map<string, Chip[]>();
     const put = <T,>(m: Map<string, T[]>, k: string, v: T) => m.set(k, [...(m.get(k) ?? []), v]);
     for (const h of hangouts) {
-      if (h.canceled || !groups.some((g) => g.id === h.groupId)) continue;
+      if (!isVisible(h, groups)) continue;
       const w = new Date(h.when);
       put(raw, w.toDateString(), { id: h.id, kind: "hangout", title: h.title, place: h.place, start: minutesOf(w), len: h.len ?? 90, mark: h.rsvps[YOU] ?? "pending", going: Object.entries(h.rsvps).filter(([, v]) => v === "yes").map(([n]) => n) });
     }

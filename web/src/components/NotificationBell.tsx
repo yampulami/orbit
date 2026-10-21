@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bell, CalendarClock, MapPinCheck, Users } from "lucide-react";
 import { useAuth } from "../lib/auth";
-import { useHang, YOU } from "../lib/hangouts";
+import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { useNudges } from "../lib/nudges";
 import { statusOf, useProposals } from "../lib/placeVotes";
 import { loadProfile } from "../lib/profile";
@@ -39,7 +39,7 @@ export default function NotificationBell() {
   const go = (to: string, state?: object) => () => { setOpen(false); nav(to, state ? { state } : undefined); };
 
   if (nudges.hangouts) {
-    const waiting = hangouts.filter((h) => !h.canceled && !h.rsvps[YOU] && new Date(h.when).getTime() > now.getTime() && groups.some((g) => g.id === h.groupId)).sort((a, b) => a.when.localeCompare(b.when));
+    const waiting = hangouts.filter((h) => isVisible(h, groups) && !h.rsvps[YOU] && new Date(h.when).getTime() > now.getTime()).sort((a, b) => a.when.localeCompare(b.when));
     for (const h of waiting.slice(0, 4)) rows.push({ id: `h-${h.id}`, icon: Users, title: h.title, sub: `Needs your answer · ${new Date(h.when).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}`, go: go("/app/plans", { day: new Date(h.when).toDateString() }) });
     if (waiting.length > 4) rows.push({ id: "h-more", icon: Users, title: `${waiting.length - 4} more hangouts`, sub: "Waiting for your answer", go: go("/app/feed") });
   }

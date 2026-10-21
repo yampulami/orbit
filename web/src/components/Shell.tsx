@@ -15,7 +15,7 @@ import ReminderAlerts from "./ReminderAlerts";
 import ComposeModal from "./ComposeModal";
 import GlobalSearch from "./GlobalSearch";
 import { setTheme, useTheme } from "../lib/theme";
-import { useHang, YOU } from "../lib/hangouts";
+import { isVisible, useHang, YOU } from "../lib/hangouts";
 
 const items = [
   { to: "/app/feed", label: "Feed", icon: HomeIcon },
@@ -34,7 +34,7 @@ export default function Shell() {
   const main = useRef<HTMLElement>(null);
   const { groups, hangouts } = useHang();
   // Upcoming hangouts the person has not answered yet. Shown as a small orange dot on Plans.
-  const waiting = hangouts.filter((h) => !h.canceled && !h.rsvps[YOU] && new Date(h.when).getTime() > Date.now() && groups.some((g) => g.id === h.groupId)).length;
+  const waiting = hangouts.filter((h) => isVisible(h, groups) && !h.rsvps[YOU] && new Date(h.when).getTime() > Date.now()).length;
 
   // Each page gets its own title, and focus moves to the content so keyboard and screen reader users start there.
   useEffect(() => {

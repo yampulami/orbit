@@ -2,7 +2,24 @@
 
 Today only the feed, the campus membership, group chat, profiles, follows, blocks and reports live in Supabase. Everything else is saved in each person's own browser, so it cannot be shared between students, cannot be seen by a server, and does not follow a student to another device. This plan moves it.
 
-The migration is `supabase/migrations/20261021120000_hangouts_reminders_places_push.sql`. **It has not been run against a database.** I wrote it against your existing migrations and helpers (`my_campus_key()`, `campus_groups`, `campus_group_memberships`, `group_messages`, `student_profiles`, `notifications`), but nothing here could be executed or tested in the session that wrote it, so read it, run it on a copy first, and use the checks below.
+The migration is `supabase/migrations/20261021120000_hangouts_reminders_places_push.sql`. Its tables are named `campus_hangouts` and `campus_hangout_rsvps` (not `hangouts`) because the project it is meant for already contains an older Orbit schema with its own `hangouts` table, which this must not touch. **It was applied on 2026-10-21 to the project in `web/.env.local` (`ywhoyolsbgjqgkfziyin`)**, first as a dry run inside `begin; … rollback;` (it succeeded and left nothing behind), then for real. After that, all 8 new tables had row-level security on, 25 policies, 6 triggers and 7 new profile columns existed, and the 6 existing users were untouched. Caldwell University and its 11 places were loaded as live. The checks below (two test users) have **not** been run yet, so the rules are applied but not yet proven.
+
+A second project (`smuilaiwgzbnqbkaawne`) holds an older schema (friend groups, spaces, tasks, expenses, with its own `hangouts` and `is_group_member`). Nothing in this plan touches it.
+
+## Status, as of 2026-10-21
+
+Applied to the project in `web/.env.local` (`ywhoyolsbgjqgkfziyin`), each first as a dry run inside `begin; … rollback;`:
+
+1. `20261021120000_hangouts_reminders_places_push.sql`: hangouts and answers, reminders, pins, map places and votes, onboarding columns, push subscriptions. Caldwell and its 11 places were loaded.
+2. `20261021180000_private_groups_invite_codes.sql`: groups are private and joined with an invite code.
+
+**Switched to the database, and tested end to end with two real guest accounts:**
+- Onboarding answers (`student_profiles`). Restored on a new device, and nudge changes in Profile reach the database.
+- Groups, group chat, hangouts and Yes/No answers. A made a group and got a code; B could see nothing until B entered the code, then saw the group, the message and the hangout, answered, and the database showed both answers. A message sent in one tab appeared in another without a reload.
+
+**Still saved only on the device:** reminders, pins, roommates (chores, groceries, expenses, notes), and the map's student-added places and votes. The checklist above (two-user policy checks) was exercised for groups, hangouts and profiles through the app, but not yet line by line.
+
+**How groups work now:** a student makes a group and gets a 10-character code (and a link, `/join/CODE`). Only members can see the group, its members and its code. Nobody can add themselves directly; they must know the code. The person who made the group can replace the code. Two groups may share a name.
 
 ## What gets stored
 
@@ -12,8 +29,8 @@ The migration is `supabase/migrations/20261021120000_hangouts_reminders_places_p
 | `campuses` | One row per university: name, map center, zoom, official map link, whether a person reviewed it | Your own campus. Changed only with the service role, by the import script. |
 | `campus_places` | Map places. `live` ones are on the map, `open` ones are student proposals waiting for votes | Your campus (not rejected ones) |
 | `place_votes` | One vote (+1 or -1) per student per place | Your campus |
-| `hangouts` | A plan inside a group: title, place, start, length, cancelled or not | **Only members of that group** |
-| `hangout_rsvps` | Each member's Yes or No | **Only members of that group** |
+| `campus_hangouts` | A plan: title, place, start, length, cancelled or not, and `visibility` | **Group members only** by default. A hangout marked `campus` (public, like an event) is visible and answerable by the whole campus and may have no group. |
+| `campus_hangout_rsvps` | Each person's Yes or No | Whoever can see the hangout |
 | `group_messages.hangout_id` (new column) | Lets a hangout appear as a card in the group chat | Group members (existing rule) |
 | `reminders` | A person's reminders | **Only the owner** |
 | `user_pins` | Up to 3 pins | **Only the owner** |
@@ -22,7 +39,7 @@ The migration is `supabase/migrations/20261021120000_hangouts_reminders_places_p
 
 ## Decisions I made, and why
 
-- **Hangouts are private to their group.** That matches how group chat already works, and it matches how the app behaves now. Your earlier "should it be the whole campus?" question was left open, so this is my default. Making hangouts campus-wide would be a small change to the `hangouts read` policy.
+- **Hangouts are private to their group, unless marked public.** That was your call. A public hangout (`visibility = 'campus'`) is open to the whole campus and can be planned without a group, like a small event. Answers on a public hangout are visible to the campus, so the app should show counts and the people the viewer follows, not an open list of everyone.
 - **The rules live in the database, not only in the app.** Anything a student's browser could skip is also enforced here:
   - a place goes live at 3 or more confirmations with at least 70% agreeing, and is dropped at 3 or more "not right" that lead,
   - you cannot vote on your own proposal, and only on open proposals in your own campus,

@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CalendarPlus, Plus, Send, UserPlus } from "lucide-react";
+import { CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus } from "lucide-react";
 import HangoutCard from "../components/HangoutCard";
-import { findConflict, hangActions, useHang, YOU } from "../lib/hangouts";
+import { findConflict, hangActions, hangLive, useHang, useHangStatus, YOU } from "../lib/hangouts";
 import { notice } from "../lib/notice";
 import { useMapPlaces } from "../lib/mapPlaces";
 import { enter, slide } from "../lib/motion";
 
 export default function Groups() {
   const { groups, hangouts } = useHang();
+  const status = useHangStatus();
   const loc = useLocation();
   const nav = useNavigate();
   const { live: campusPlaces } = useMapPlaces();
@@ -27,13 +28,16 @@ export default function Groups() {
   const [title, setTitle] = useState("");
   const [place, setPlace] = useState("");
   const [when, setWhen] = useState("");
+  const [openToCampus, setOpenToCampus] = useState(false);
   const [adding, setAdding] = useState(false);
   const [friends, setFriends] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState("");
 
   const scroller = useRef<HTMLDivElement>(null);
   const group = groups.find((g) => g.id === activeId) ?? groups[0];
-  const showCreate = creating || groups.length === 0;
+  const showCreate = creating || (groups.length === 0 && status !== "loading" && status !== "idle");
   const messageCount = group?.messages.length ?? 0;
   useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [group?.id, messageCount, showCreate]);
   // The native date picker needs a "now" in its own format so it can refuse past times.
@@ -46,6 +50,27 @@ export default function Groups() {
     const members = [...new Set(gMembers.split(",").map((m) => m.trim()).filter((m) => m && m !== YOU))];
     setActiveId(hangActions.createGroup(name, members));
     setGName(""); setGMembers(""); setCreating(false); setError("");
+    if (hangLive) { setAdding(true); setPlanning(false); } // show the invite code right away
+  }
+
+  const inviteLink = (code: string) => `${location.origin}/join/${code}`;
+  async function copy(text: string, what: string) {
+    try { await navigator.clipboard.writeText(text); notice.show({ icon: "pin", title: `${what} copied`, message: "Send it to the friends you want in this group.", ms: 3500 }); }
+    catch { notice.show({ icon: "alert", title: "Could not copy", message: "Select it and copy it by hand." }); }
+  }
+  async function joinWithCode(e: FormEvent) {
+    e.preventDefault();
+    const c = joinCode.trim();
+    if (!c) return;
+    const problem = await hangActions.joinWithCode(c);
+    if (problem) { notice.show({ icon: "alert", title: "That code did not work", message: problem }); return; }
+    setJoinCode(""); setJoining(false);
+    notice.show({ icon: "pin", title: "You are in", message: "The group is on your list.", ms: 3500 });
+  }
+  async function newCode() {
+    if (!group) return;
+    const problem = await hangActions.newCode(group.id);
+    notice.show(problem ? { icon: "alert", title: "Could not change the code", message: problem } : { icon: "pin", title: "New code made", message: "The old code no longer works.", ms: 3500 });
   }
 
   function send(e: FormEvent) {
@@ -81,8 +106,8 @@ export default function Groups() {
       });
       return;
     }
-    hangActions.createHangout(group.id, { title: title.trim(), place: place.trim(), when: new Date(when).toISOString() });
-    setTitle(""); setPlace(""); setWhen(""); setPlanning(false); setError("");
+    hangActions.createHangout(group.id, { title: title.trim(), place: place.trim(), when: new Date(when).toISOString(), visibility: openToCampus ? "campus" : "group" });
+    setTitle(""); setPlace(""); setWhen(""); setOpenToCampus(false); setPlanning(false); setError("");
   }
 
   return (
@@ -98,6 +123,15 @@ export default function Groups() {
             </button>
           ))}
           <button className="thread new" onClick={() => { setCreating(true); setError(""); }}><Plus size={16} /> New group</button>
+          {hangLive && (
+            joining ? (
+              <form className="join-code" onSubmit={joinWithCode}>
+                <label className="sr" htmlFor="join-code">Invite code</label>
+                <input id="join-code" autoFocus value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="Invite code" maxLength={20} autoComplete="off" spellCheck={false} />
+                <button className="btn primary" disabled={!joinCode.trim()}>Join</button>
+              </form>
+            ) : <button className="thread new" onClick={() => setJoining(true)}><KeyRound size={16} /> Join with a code</button>
+          )}
         </div>
 
         {showCreate ? (
@@ -105,7 +139,9 @@ export default function Groups() {
             <div style={{ display: "grid", gap: 12, alignContent: "start" }}>
               <h2 style={{ fontSize: "1.4rem" }}>Start a group</h2>
               <label className="field">Group name<input value={gName} onChange={(e) => setGName(e.target.value)} placeholder="e.g. Coffee crew" /></label>
-              <label className="field">Friends (names, separated by commas)<input value={gMembers} onChange={(e) => setGMembers(e.target.value)} placeholder="Maya, Jordan, Priya" /></label>
+              {hangLive
+                ? <p className="muted">When it is made you get a code. Friends who enter it join the group. Only members can see the group.</p>
+                : <label className="field">Friends (names, separated by commas)<input value={gMembers} onChange={(e) => setGMembers(e.target.value)} placeholder="Maya, Jordan, Priya" /></label>}
               {error && <p className="error" role="alert">{error}</p>}
             </div>
             <div className="composer-row">
@@ -118,11 +154,26 @@ export default function Groups() {
             <div className="convo-head">
               <div><h2>{group.name}</h2><p className="muted">{group.members.join(", ")}</p></div>
               <div className="convo-actions">
-                <button className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setError(""); }} aria-expanded={adding}><UserPlus size={18} /> Add friends</button>
+                <button className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setError(""); }} aria-expanded={adding}><UserPlus size={18} /> {hangLive ? "Invite friends" : "Add friends"}</button>
                 <button className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setError(""); }} aria-expanded={planning}><CalendarPlus size={18} /> Plan a hangout</button>
               </div>
             </div>
-            {adding && (
+            {adding && hangLive && (
+              <div className="plan-form invite">
+                <p className="muted">Friends who enter this code, or open the link, join {group.name}. Only members can see the group and its code.</p>
+                {group.code ? (
+                  <>
+                    <div className="invite-code" aria-label="Invite code">{group.code}</div>
+                    <div className="invite-actions">
+                      <button type="button" className="btn" onClick={() => copy(group.code!, "Code")}><Copy size={16} aria-hidden="true" /> Copy code</button>
+                      <button type="button" className="btn" onClick={() => copy(inviteLink(group.code!), "Link")}><Copy size={16} aria-hidden="true" /> Copy link</button>
+                      <button type="button" className="btn invite-new" onClick={newCode}>Make a new code</button>
+                    </div>
+                  </>
+                ) : <p className="muted" role="status">Making your code…</p>}
+              </div>
+            )}
+            {adding && !hangLive && (
               <form className="plan-form" onSubmit={addFriends}>
                 <label className="field">Friends (names, separated by commas)<input autoFocus value={friends} onChange={(e) => setFriends(e.target.value)} placeholder="Sam, Riley" /></label>
                 {error && <p className="error" role="alert">{error}</p>}
@@ -135,7 +186,15 @@ export default function Groups() {
                 <label className="field">Where<input list="campus-places" value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Pick a campus place or type your own" /><datalist id="campus-places">{campusPlaces.map((p) => <option key={p.id} value={p.name} />)}</datalist></label>
                 <label className="field">When<input type="datetime-local" min={nowLocal} value={when} onChange={(e) => setWhen(e.target.value)} /></label>
                 {error && <p className="error" role="alert">{error}</p>}
-                <button className="btn primary">Share with {group.name}</button>
+                <div className="field vis" role="radiogroup" aria-label="Who can see it">
+                  <span>Who can see it</span>
+                  <div className="segment">
+                    <button type="button" role="radio" aria-checked={!openToCampus} onClick={() => setOpenToCampus(false)}>Just {group.name}</button>
+                    <button type="button" role="radio" aria-checked={openToCampus} onClick={() => setOpenToCampus(true)}>Everyone on campus</button>
+                  </div>
+                  {openToCampus && <p className="vis-note">Anyone at your university will see it and can say yes.</p>}
+                </div>
+                <button className="btn primary">{openToCampus ? "Share with campus" : `Share with ${group.name}`}</button>
               </form>
             )}
             <div className="bubbles" ref={scroller}>

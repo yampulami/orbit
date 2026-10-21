@@ -1,16 +1,17 @@
 import { useSyncExternalStore } from "react";
 import { progress } from "./progress";
+import { supabase } from "./supabase";
+import { notice } from "./notice";
+import { buildState, loadRaw, watch } from "./hangoutsDb";
+import { YOU, type Group, type HangState, type Hangout, type Msg, type Rsvp } from "./hangTypes";
 
-/** Friend groups, group chat and hangout RSVPs. Saved on this device only until groups sync to the server. */
-export const YOU = "You";
+/** Friend groups, group chat and hangout answers. With a database they live there (private to each group, joined with an invite code, live for
+ *  everyone in the group). Without one (demo mode) they are saved on this device only. The screens cannot tell the difference. */
+export { YOU };
+export type { Group, Hangout, Msg, Rsvp };
+type State = HangState;
 
-export type Rsvp = "yes" | "no";
-export type Msg = { id: string; author: string; text?: string; hangoutId?: string; at: string };
-export type Group = { id: string; name: string; members: string[]; messages: Msg[] };
-export type Hangout = { id: string; groupId: string; title: string; place: string; when: string; by: string; rsvps: Record<string, Rsvp>; canceled?: boolean; /** Length in minutes, for the schedule board. Defaults to 90. */ len?: number };
-type State = { groups: Group[]; hangouts: Hangout[] };
-
-const KEY = "orbit-hangouts-v3";
+const KEY = "orbit-hangouts-v4";
 const ago = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 
 function seed(): State {
@@ -50,6 +51,7 @@ function seed(): State {
       { id: "h1", groupId: "g1", title: "Coffee break", place: "Visceglia Art Building / Student Center", when: at(4, 10, 0), by: "Maya", len: 90, rsvps: { Maya: "yes", Jordan: "yes", Priya: "no" } },
       { id: "h7", groupId: "g3", title: "Farmers market run", place: "George R. Newman Center", when: at(5, 14, 0), by: "Tess", len: 90, rsvps: { Tess: "yes", Dee: "yes" } },
       { id: "h8", groupId: "g1", title: "Game night", place: "Dominican Hall lounge", when: at(6, 20, 0), by: "Jordan", len: 120, rsvps: { Jordan: "yes", Maya: "yes", [YOU]: "yes" } },
+      { id: "h10", groupId: "", title: "Open mic night", place: "Alumni Theatre", when: at(2, 17, 0), by: "Tess", len: 120, visibility: "campus", rsvps: { Tess: "yes", Dee: "yes", Sam: "yes", Maya: "yes" } },
       { id: "h9", groupId: "g2", title: "Pizza and problem set", place: "Werner Hall / Academic Building", when: at(8, 17, 30), by: "Priya", len: 120, rsvps: { Priya: "yes", Leo: "yes" } },
     ],
   };
@@ -60,12 +62,65 @@ function load(): State {
   return seed();
 }
 
-let state: State = load();
+const live = !!supabase;
+let state: State = live ? { groups: [], hangouts: [] } : load();
+let status: "idle" | "loading" | "ready" | "error" = live ? "idle" : "ready";
 const subs = new Set<() => void>();
 function set(next: State) {
   state = next;
-  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ }
+  if (!live) { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ } }
   subs.forEach((f) => f());
+}
+
+/* ---------- database mode ---------- */
+let who: { id: string; name: string; campusKey: string } | null = null;
+let stopWatching: (() => void) | null = null;
+let loadId = 0;
+
+async function reload() {
+  if (!who) return;
+  const mine = ++loadId;
+  try {
+    const next = buildState(await loadRaw(who.id));
+    if (mine !== loadId || !who) return; // a newer load or a sign out came first
+    status = "ready";
+    set(next);
+  } catch (e) {
+    status = "error";
+    subs.forEach((f) => f());
+    notice.show({ icon: "wifi", title: "Groups and hangouts did not load", message: `${(e as Error).message || "Something went wrong."} Check your connection and try again.` });
+  }
+}
+
+/** Start using the database for this signed-in student. Call once the person and their campus are known. */
+export function bindHang(user: { id: string; name: string; campusKey: string }) {
+  if (!live) return;
+  if (who?.id === user.id) { who = user; return; }
+  unbindHang();
+  who = user;
+  status = "loading";
+  subs.forEach((f) => f());
+  void reload();
+  stopWatching = watch(user.id, () => void reload());
+}
+
+/** Stop, and forget everything, for example when someone signs out. The next person must never see this person's groups. */
+export function unbindHang() {
+  if (!live) return;
+  stopWatching?.(); stopWatching = null;
+  who = null; loadId++;
+  status = "idle";
+  set({ groups: [], hangouts: [] });
+}
+
+/** Run a database change; if it fails, say why in plain words and show what is really there. */
+function run(what: string, job: () => PromiseLike<{ error: { message: string } | null }>) {
+  Promise.resolve(job()).then(({ error }) => {
+    if (error) throw new Error(error.message);
+  }).catch((e: Error) => {
+    notice.show({ icon: "alert", title: `${what} did not work`, message: e.message || "Something went wrong. Try again." });
+    void reload();
+  });
 }
 const patchGroup = (id: string, fn: (g: Group) => Group) => set({ ...state, groups: state.groups.map((g) => (g.id === id ? fn(g) : g)) });
 
@@ -74,25 +129,45 @@ const HANG_LEN = 90;
 export function findConflict(when: string, len = HANG_LEN): Hangout | undefined {
   const a0 = new Date(when).getTime(), a1 = a0 + len * 60000;
   return state.hangouts.find((h) => {
-    if (h.canceled || !state.groups.some((g) => g.id === h.groupId)) return false;
+    if (!isVisible(h, state.groups)) return false;
     if (h.by !== YOU && h.rsvps[YOU] !== "yes") return false;
     const b0 = new Date(h.when).getTime(), b1 = b0 + (h.len ?? HANG_LEN) * 60000;
     return a0 < b1 && b0 < a1;
   });
 }
 
+/** Is this hangout something the person can see: one of their groups, or a public one open to the whole campus? Cancelled ones are never shown. */
+export const isVisible = (h: Hangout, groups: { id: string }[]) => !h.canceled && (h.visibility === "campus" || groups.some((g) => g.id === h.groupId));
+
 export const hangActions = {
   createGroup(name: string, members: string[]) {
     const id = crypto.randomUUID();
     set({ ...state, groups: [...state.groups, { id, name, members: [YOU, ...members], messages: [] }] });
+    if (live && who) {
+      // The database makes the group, adds you, and hands back the invite code that friends use to join.
+      supabase!.rpc("create_friend_group", { gid: id, gname: name }).then(({ data, error }) => {
+        if (error) throw new Error(error.message);
+        set({ ...state, groups: state.groups.map((g) => (g.id === id ? { ...g, code: String(data) } : g)) });
+      }).then(undefined, (e: Error) => { notice.show({ icon: "alert", title: "The group was not made", message: e.message }); void reload(); });
+    }
     progress.log("group");
     return id;
   },
   send(groupId: string, text: string) {
-    patchGroup(groupId, (g) => ({ ...g, messages: [...g.messages, { id: crypto.randomUUID(), author: YOU, text, at: new Date().toISOString() }] }));
+    const mid = crypto.randomUUID();
+    patchGroup(groupId, (g) => ({ ...g, messages: [...g.messages, { id: mid, author: YOU, text, at: new Date().toISOString() }] }));
+    if (live && who) run("Sending that message", () => supabase!.from("group_messages").insert({ id: mid, group_id: groupId, sender_id: who!.id, sender_name: who!.name, body: text }));
   },
-  createHangout(groupId: string, h: { title: string; place: string; when: string }) {
+  createHangout(groupId: string, h: { title: string; place: string; when: string; visibility?: "group" | "campus" }) {
     const id = crypto.randomUUID();
+    if (live && who) {
+      const w = who;
+      run("Planning that hangout", async () => {
+        const made = await supabase!.from("campus_hangouts").insert({ id, campus_key: w.campusKey, group_id: groupId, visibility: h.visibility ?? "group", created_by: w.id, title: h.title, place_name: h.place, starts_at: h.when, duration_minutes: 90 });
+        if (made.error) return made;
+        return supabase!.from("group_messages").insert({ id: crypto.randomUUID(), group_id: groupId, sender_id: w.id, sender_name: w.name, body: h.title, hangout_id: id });
+      });
+    }
     set({
       groups: state.groups.map((g) => (g.id === groupId ? { ...g, messages: [...g.messages, { id: crypto.randomUUID(), author: YOU, hangoutId: id, at: new Date().toISOString() }] } : g)),
       hangouts: [...state.hangouts, { id, groupId, ...h, by: YOU, rsvps: { [YOU]: "yes" } }],
@@ -102,11 +177,36 @@ export const hangActions = {
   /** Cancelling only hides a hangout, so it can be brought back with Undo. */
   setCanceled(hangoutId: string, canceled: boolean) {
     set({ ...state, hangouts: state.hangouts.map((h) => (h.id === hangoutId ? { ...h, canceled } : h)) });
+    if (live && who) run("Cancelling that hangout", () => supabase!.from("campus_hangouts").update({ canceled_at: canceled ? new Date().toISOString() : null }).eq("id", hangoutId));
   },
+  /** Demo mode only: people are typed names. With a database, friends join with the group's invite code instead. */
   addMembers(groupId: string, names: string[]) {
+    if (live) return;
     patchGroup(groupId, (g) => ({ ...g, members: [...g.members, ...names.filter((n) => !g.members.includes(n))] }));
   },
+  /** Join a group with an invite code (database mode). Resolves to an error message, or null on success. */
+  async joinWithCode(code: string): Promise<string | null> {
+    if (!live || !who) return "Joining with a code needs an account.";
+    const { error } = await supabase!.rpc("join_group_with_code", { invite: code.trim() });
+    if (error) return error.message;
+    await reload();
+    return null;
+  },
+  /** Replace a group's invite code (only the person who made the group can). */
+  async newCode(groupId: string): Promise<string | null> {
+    if (!live || !who) return "Not available here.";
+    const { data, error } = await supabase!.rpc("regenerate_group_code", { gid: groupId });
+    if (error) return error.message;
+    set({ ...state, groups: state.groups.map((g) => (g.id === groupId ? { ...g, code: String(data) } : g)) });
+    return null;
+  },
   setRsvp(hangoutId: string, answer: Rsvp | null) {
+    if (live && who) {
+      const w = who;
+      run("Saving your answer", () => (answer
+        ? supabase!.from("campus_hangout_rsvps").upsert({ hangout_id: hangoutId, user_id: w.id, answer, updated_at: new Date().toISOString() })
+        : supabase!.from("campus_hangout_rsvps").delete().eq("hangout_id", hangoutId).eq("user_id", w.id)));
+    }
     set({
       ...state,
       hangouts: state.hangouts.map((h) => {
@@ -119,5 +219,9 @@ export const hangActions = {
     if (answer) progress.log(answer === "yes" ? "rsvpYes" : "rsvpNo");
   },
 };
+
+/** "ready" once the groups and hangouts have loaded (always, in demo mode). */
+export const useHangStatus = () => useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => status);
+export const hangLive = live;
 
 export const useHang = () => useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => state);

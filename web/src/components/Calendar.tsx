@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { enter, exit } from "../lib/motion";
 import HangoutCard, { fmtWhen } from "./HangoutCard";
 import RemindersPanel from "./RemindersPanel";
-import { hangActions, useHang, YOU, type Hangout } from "../lib/hangouts";
+import { hangActions, isVisible, useHang, YOU, type Hangout } from "../lib/hangouts";
 import { fromYmd, useReminders } from "../lib/reminders";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
@@ -50,7 +50,7 @@ export default function Calendar({ posts, day, onDay, compact = false, details =
   // Hangouts by day. A past hangout nobody answered no longer asks for attention.
   const byDay = new Map<string, Hangout[]>();
   for (const h of hangouts) {
-    if (h.canceled || !groups.some((g) => g.id === h.groupId)) continue;
+    if (!isVisible(h, groups)) continue;
     if (!h.rsvps[YOU] && new Date(h.when).getTime() < Date.now()) continue;
     const k = new Date(h.when).toDateString();
     byDay.set(k, [...(byDay.get(k) ?? []), h]);

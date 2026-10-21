@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { MapPin, Users } from "lucide-react";
 import PinButton from "./PinButton";
 import RemindersPanel from "./RemindersPanel";
-import { hangActions, useHang, YOU } from "../lib/hangouts";
+import { hangActions, isVisible, useHang, YOU } from "../lib/hangouts";
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
@@ -12,7 +12,7 @@ export default function DayAgenda({ day }: { day: string }) {
   const d = new Date(day);
   const isToday = day === new Date().toDateString();
   const list = hangouts
-    .filter((h) => !h.canceled && groups.some((g) => g.id === h.groupId) && new Date(h.when).toDateString() === day)
+    .filter((h) => isVisible(h, groups) && new Date(h.when).toDateString() === day)
     .sort((a, b) => a.when.localeCompare(b.when));
   const asking = list.filter((h) => !h.rsvps[YOU]).length;
 
