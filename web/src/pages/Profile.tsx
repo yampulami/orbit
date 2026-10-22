@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Flame, LogOut, Pencil } from "lucide-react";
+import { Flame, LogOut, Pencil, Trash2 } from "lucide-react";
 import { NAME_MAX, renameMe, useDisplayName } from "../lib/displayName";
 import { pushSupported } from "../lib/push";
 import { disableDeviceAlerts, enableDeviceAlerts, useDeviceAlerts } from "../lib/deviceAlerts";
@@ -10,12 +10,16 @@ import { supabase } from "../lib/supabase";
 import BadgeIcon from "../components/BadgeIcon";
 import { ThemeSegment } from "../components/ThemeControls";
 import { useAuth } from "../lib/auth";
+import { isGuestEmail } from "../lib/demoAuth";
 import { badges, earnedIds, progress, streakWeeks, useProgress, type Area } from "../lib/progress";
 
 const AREAS: Area[] = ["Feed", "Groups", "Hangouts", "Everywhere"];
 
 export default function Profile() {
-  const { session, signOut, refresh } = useAuth();
+  const { session, signOut, deleteAccount, refresh } = useAuth();
+  const isGuest = !!(session?.user as { is_anonymous?: boolean } | undefined)?.is_anonymous || isGuestEmail(session?.user.email);
+  const [deleting, setDeleting] = useState<"idle" | "asking" | "working">("idle");
+  const [deleteError, setDeleteError] = useState("");
   const email = session?.user.email;
   const name = useDisplayName();
   const [editing, setEditing] = useState(false);
@@ -137,7 +141,29 @@ export default function Profile() {
       )}
 
       <section className="signout">
-        <button type="button" className="btn" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}><LogOut size={18} strokeWidth={1.9} aria-hidden="true" />Sign out</button>
+        <button type="button" className="btn" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}><LogOut size={18} strokeWidth={1.9} aria-hidden="true" />{isGuest ? "Sign out and delete this guest" : "Sign out"}</button>
+        {isGuest && <p className="muted">You are using a guest account. Guests cannot sign back in, so signing out removes it and everything you made.</p>}
+      </section>
+
+      <section className="danger-zone" aria-label="Delete account">
+        {deleting === "idle" ? (
+          <button type="button" className="btn danger" onClick={() => { setDeleting("asking"); setDeleteError(""); }}><Trash2 size={18} strokeWidth={1.9} aria-hidden="true" />Delete my account</button>
+        ) : (
+          <div className="danger-confirm" role="alertdialog" aria-labelledby="del-title" aria-describedby="del-text">
+            <h2 id="del-title">Delete your account?</h2>
+            <p id="del-text" className="muted">This removes your profile and everything you made: your messages, plans, chores and reminders. It cannot be undone. Groups you started stay with the friends who are still in them.</p>
+            {deleteError && <p className="error" role="alert">{deleteError}</p>}
+            <div className="danger-actions">
+              <button type="button" className="btn danger" disabled={deleting === "working"} onClick={async () => {
+                setDeleting("working");
+                const problem = await deleteAccount();
+                if (problem) { setDeleteError(problem); setDeleting("asking"); return; }
+                nav("/login", { replace: true });
+              }}>{deleting === "working" ? "Deleting…" : "Yes, delete everything"}</button>
+              <button type="button" className="btn" disabled={deleting === "working"} onClick={() => setDeleting("idle")}>Keep my account</button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );

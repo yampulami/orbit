@@ -128,3 +128,30 @@ The screens stay the same. Each store in `web/src/lib` swaps browser storage for
 5. Then the push sender (see `web/README.md`, Notifications): it can finally see what is due.
 
 Keep the demo mode working through all of this: when there is no Supabase project, the stores keep using browser storage, exactly as now.
+
+## Housekeeping: guest accounts and the "connections" number
+
+**What the connections number is.** The dashboard's "23 / 60 connections" counts open links between Supabase's own services and the Postgres database. It is not a count of users or sign-ins. A guest does not hold a connection; thousands of people share the same small pool, and the number follows how much work the servers are doing at once, not how many accounts exist. Most of the 23 is Supabase's own services (the data API, sign-in, realtime, storage) plus background workers: turning on `pg_cron` and `pg_net` each add one, and every open SQL editor tab adds one. To see exactly what holds them, run:
+
+```sql
+select coalesce(nullif(application_name, ''), '(none)') as who, state, count(*)
+from pg_stat_activity
+where datname = current_database()
+group by 1, 2
+order by 3 desc;
+```
+
+**What guests do cost.** Each guest is a row in `auth.users` plus whatever they made. That is storage clutter, and it counts toward the monthly active user limit while they are active, but it is not a connection. Anonymous sign-ins are also rate limited by Supabase (by default 30 per hour per IP address), which is the limit a lot of quick test sign-ins would actually hit.
+
+**What the app does about it now** (`20261022120000_delete_my_account.sql`, which has to be applied):
+- **Sign out as a guest deletes the guest.** A guest has no password and cannot come back to the account, so leaving removes it and everything it made.
+- **Profile has "Delete my account"** for everyone, with a confirmation. A group the person started stays with the friends still in it (it is handed to the longest-standing other member); everything else they made is removed.
+
+**Optional: clear out guests who just closed the tab.** Guests who never signed out are not removed by the above. This removes anonymous accounts that are over 3 days old. It is not switched on, because it permanently deletes accounts. Run it by hand when you want, or schedule it:
+
+```sql
+-- preview first
+select count(*) from auth.users where is_anonymous and created_at < now() - interval '3 days';
+-- then, when you are happy with the count
+delete from auth.users where is_anonymous and created_at < now() - interval '3 days';
+```

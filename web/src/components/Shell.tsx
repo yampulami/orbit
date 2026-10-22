@@ -10,7 +10,7 @@ import { enter, slide } from "../lib/motion";
 import BadgeToast from "./BadgeToast";
 import UndoToast from "./UndoToast";
 import NoticeHost from "./NoticeHost";
-import Arrival from "./Arrival";
+import { arrival } from "../lib/arrival";
 import NotificationBell from "./NotificationBell";
 import ReminderAlerts from "./ReminderAlerts";
 import ComposeModal from "./ComposeModal";
@@ -33,6 +33,7 @@ export default function Shell() {
   const { session, signOut } = useAuth();
   const dark = useTheme() === "dark";
   const main = useRef<HTMLElement>(null);
+  useEffect(() => { arrival.shellReady(); }, []); // the screen that follows onboarding fades once the app is up
   const { groups, hangouts } = useHang();
   // Upcoming hangouts the person has not answered yet. Shown as a small orange dot on Plans.
   const waiting = hangouts.filter((h) => isVisible(h, groups) && !h.rsvps[YOU] && new Date(h.when).getTime() > Date.now()).length;
@@ -89,7 +90,6 @@ export default function Shell() {
       <BadgeToast />
       <UndoToast />
       <NoticeHost />
-      <Arrival />
       <ReminderAlerts />
       <ComposeModal open={composing} onClose={() => setComposing(false)} />
     </div>

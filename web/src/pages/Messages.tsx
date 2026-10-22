@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
-import { Send } from "lucide-react";
+import { Plus, Send } from "lucide-react";
 import { enter, slide } from "../lib/motion";
+import { dmActions, dmLive, useDms } from "../lib/dms";
 
 type Msg = { mine: boolean; text: string };
 const seedThreads: Record<string, Msg[]> = {
@@ -10,8 +11,99 @@ const seedThreads: Record<string, Msg[]> = {
   "Hamilton Hall 3F": [{ mine: false, text: "Pizza in the lounge at 7!" }],
 };
 
-/** Demo-only conversations, stored in memory. The real version will use your DM tables. */
 export default function Messages() {
+  return dmLive ? <LiveMessages /> : <SampleMessages />;
+}
+
+const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+/** Direct messages with students on your campus. New messages show up on their own, without refreshing. */
+function LiveMessages() {
+  const { threads, people, status } = useDms();
+  const [active, setActive] = useState<string>("");
+  const [text, setText] = useState("");
+  const [picking, setPicking] = useState(false);
+  const [q, setQ] = useState("");
+  const scroller = useRef<HTMLDivElement>(null);
+  const current = threads.find((t) => t.id === active) ?? (picking ? undefined : threads[0]);
+  const shownId = current?.id ?? "";
+
+  // Keep the newest message in view, and mark what you are looking at as read.
+  useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [shownId, current?.messages.length]);
+  useEffect(() => { if (current && current.unread > 0 && document.visibilityState === "visible") dmActions.markRead(current.id); }, [current?.id, current?.unread]);
+
+  const matches = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return people.filter((p) => !needle || p.name.toLowerCase().includes(needle)).slice(0, 40);
+  }, [people, q]);
+
+  function send(e: FormEvent) {
+    e.preventDefault();
+    if (!current || !text.trim()) return;
+    dmActions.send(current.id, text);
+    setText("");
+  }
+
+  async function startWith(id: string) {
+    const made = await dmActions.start(id);
+    if (made) { setActive(made); setPicking(false); setQ(""); }
+  }
+
+  return (
+    <div className="page">
+      <h1 className="sr">Messages</h1>
+      <div className="chat">
+        <div className="threads" role="tablist" aria-label="Conversations">
+          <button type="button" className="thread new" onClick={() => { setPicking((v) => !v); setActive(""); }} aria-expanded={picking}><Plus size={16} aria-hidden="true" /><strong>New message</strong></button>
+          {threads.map((t) => (
+            <button key={t.id} role="tab" aria-selected={!picking && t.id === shownId} className={"thread" + (!picking && t.id === shownId ? " on" : "")} onClick={() => { setPicking(false); setActive(t.id); }}>
+              {!picking && t.id === shownId && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
+              <strong>{t.name}{t.unread > 0 && <span className="dm-unread" aria-label={`${t.unread} unread`}>{t.unread}</span>}</strong>
+              <span className="muted">{t.messages.length ? t.messages[t.messages.length - 1].text : "No messages yet"}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="convo card">
+          {picking ? (
+            <div className="dm-pick">
+              <div className="convo-head"><div><h2>New message</h2><p className="muted">Pick someone from your campus.</p></div></div>
+              <label className="field"><span className="sr">Search people</span><input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name" /></label>
+              {matches.length === 0 ? <p className="rm-empty">{people.length === 0 ? "Nobody else from your campus has joined yet." : "No one matches that."}</p> : (
+                <ul className="dm-people">
+                  {matches.map((p) => <li key={p.id}><button type="button" className="thread" onClick={() => void startWith(p.id)}><strong>{p.name}</strong></button></li>)}
+                </ul>
+              )}
+            </div>
+          ) : current ? (
+            <>
+              <div className="convo-head"><div><h2>{current.name}</h2><p className="muted">Direct message</p></div></div>
+              <div className="bubbles" ref={scroller} aria-live="polite">
+                {current.messages.length === 0 && <p className="rm-empty">Say hello to {current.name}.</p>}
+                {current.messages.map((m) => (
+                  <motion.p key={m.id} className={"bubble" + (m.mine ? " mine" : "")} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={enter} title={time(m.at)}>{m.text}</motion.p>
+                ))}
+              </div>
+              <form className="comment-form" onSubmit={send}>
+                <input aria-label="Message" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} placeholder={`Message ${current.name}…`} />
+                <button className="btn primary" aria-label="Send" disabled={!text.trim()}><Send size={16} /></button>
+              </form>
+            </>
+          ) : (
+            <div className="dm-empty">
+              <h2>{status === "loading" ? "Loading your messages…" : status === "error" ? "Messages did not load" : "No messages yet"}</h2>
+              <p className="muted">{status === "error" ? "Check your connection and reopen this page." : "Start a conversation with someone on your campus."}</p>
+              {status === "ready" && <button type="button" className="btn primary" onClick={() => setPicking(true)}><Plus size={16} aria-hidden="true" />New message</button>}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Demo-only conversations, stored in memory, for when there is no database. */
+function SampleMessages() {
   const [threads, setThreads] = useState(seedThreads);
   const [active, setActive] = useState("Maya");
   const [text, setText] = useState("");

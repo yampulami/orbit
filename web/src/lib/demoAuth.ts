@@ -77,6 +77,11 @@ export const demoAuth = {
   signOut() {
     try { localStorage.removeItem(SESSION); localStorage.removeItem(DEMO_CAMPUS); } catch { /* ignore */ }
   },
+  /** Delete an account from this device, with its saved answers. */
+  remove(id: string) {
+    write(read().filter((a) => a.id !== id));
+    try { localStorage.removeItem(`orbit-profile-v1:${id}`); localStorage.removeItem(SESSION); localStorage.removeItem(DEMO_CAMPUS); } catch { /* ignore */ }
+  },
   setName(id: string, name: string) {
     write(read().map((a) => (a.id === id ? { ...a, name } : a)));
   },

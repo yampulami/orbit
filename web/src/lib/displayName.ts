@@ -1,7 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { demoAuth } from "./demoAuth";
-import { loadProfile, saveProfile } from "./profile";
+import { ensureProfileRow, loadProfile, saveProfile } from "./profile";
 import { profileChanged, useProfileVersion } from "./nudges";
 import { setHangName } from "./hangouts";
 import { useAuth } from "./auth";
@@ -33,6 +33,7 @@ export async function renameMe(session: Session | null, raw: string): Promise<st
   if (name.length < NAME_MIN) return `Use at least ${NAME_MIN} characters.`;
 
   if (supabase) {
+    await ensureProfileRow(u.id, name).catch(() => undefined); // an older account may have no profile row yet, and the update below needs one
     const { error } = await supabase.from("student_profiles").update({ display_name: name, updated_at: new Date().toISOString() }).eq("user_id", u.id);
     if (error) return "We could not save that. Check your connection and try again.";
     await supabase.auth.updateUser({ data: { name } }).catch(() => undefined); // the profile above is what classmates see; this keeps the account in step

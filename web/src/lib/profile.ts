@@ -62,6 +62,20 @@ export async function pullProfile(userId: string): Promise<Profile | null> {
   };
 }
 
+/** Makes sure this student has a profile row, because that row is where classmates get their name from. Accounts made before profiles were kept in
+ *  the database have none, and everyone else then sees them as "Student". Uses the answers saved on this device if there are any, otherwise just a name. */
+export async function ensureProfileRow(userId: string, fallbackName: string): Promise<void> {
+  if (!supabase) return;
+  const have = await supabase.from("student_profiles").select("user_id").eq("user_id", userId).maybeSingle();
+  if (have.error || have.data) return;
+  const local = loadProfile(userId);
+  if (local) { await pushProfile(userId, local); return; }
+  const member = await supabase.from("campus_memberships").select("campus_key").eq("user_id", userId).maybeSingle();
+  if (member.error || !member.data) return; // not on a campus yet: onboarding will make the row
+  const name = fallbackName.replace(/\s+/g, " ").trim().slice(0, 100) || "Student";
+  await supabase.from("student_profiles").insert({ user_id: userId, campus_key: (member.data as { campus_key: string }).campus_key, display_name: name });
+}
+
 /** Saves only the nudge choices, for when they change in Profile. */
 export async function pushNudges(userId: string, nudges: Profile["nudges"]): Promise<void> {
   if (!supabase) return;

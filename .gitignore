@@ -19,3 +19,6 @@ expo-go-qr*.png
 .DS_Store
 Thumbs.db
 coverage/
+
+# Supabase CLI local state
+supabase/.temp/

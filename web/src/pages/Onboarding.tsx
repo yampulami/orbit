@@ -7,6 +7,7 @@ import OrbitArt from "../components/OrbitArt";
 import { useAuth } from "../lib/auth";
 import { demoAuth, isGuestEmail } from "../lib/demoAuth";
 import { pushSupported } from "../lib/push";
+import { arrival } from "../lib/arrival";
 import { deviceSupported, disableDeviceAlerts, enableDeviceAlerts, useDeviceAlerts } from "../lib/deviceAlerts";
 import { notice } from "../lib/notice";
 import { feedApi } from "../lib/feedData";
@@ -114,21 +115,22 @@ export default function Onboarding() {
       refresh();
       nav("/app", { replace: true });
     } catch (e) {
+      arrival.end();
       setWipe(null);
       setError((e as Error).message || "Something went wrong saving your answers. Try again.");
       setSaving(false);
     }
   }
 
-  /** Finishing: a violet circle grows from the button and covers the page, then the app opens and the circle shrinks away again. */
+  /** Finishing: a violet circle grows from the button and covers the page, then the arrival screen ("Your Orbit is loading") fades away into the app. */
   function enterApp() {
     if (saving) return;
     const r = nextRef.current?.getBoundingClientRect();
     const x = r ? r.left + r.width / 2 : window.innerWidth / 2, y = r ? r.top + r.height / 2 : window.innerHeight / 2;
-    if (reduce) { void finish(); return; }
-    try { sessionStorage.setItem("orbit-arrival", `${Math.round(x)},${Math.round(y)}`); } catch { /* ignore */ }
+    if (reduce) { arrival.start(); void finish(); return; }
     setWipe({ x, y });
-    setTimeout(() => { void finish(); }, 560);
+    // The arrival screen is already solid violet, so it takes over from the circle exactly as the circle finishes growing.
+    setTimeout(() => { arrival.start(); void finish(); }, 560);
   }
 
   async function toggleDevice() {

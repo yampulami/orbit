@@ -1,11 +1,13 @@
-import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "./lib/auth";
 import Shell from "./components/Shell";
 import Feed from "./pages/Feed";
 import { supabase } from "./lib/supabase";
 import { feedApi } from "./lib/feedData";
-import { loadProfile, pullProfile, saveProfile } from "./lib/profile";
+import { ensureProfileRow, loadProfile, pullProfile, saveProfile } from "./lib/profile";
+import { nameFor } from "./lib/displayName";
+import ArrivalScreen from "./components/ArrivalScreen";
 import { profileChanged } from "./lib/nudges";
 import { bindHang, hangActions, hangLive, unbindHang } from "./lib/hangouts";
 import { notice } from "./lib/notice";
@@ -13,11 +15,11 @@ import { bindReminders, unbindReminders } from "./lib/reminders";
 import { bindPins, unbindPins } from "./lib/pins";
 import { bindPlaces, unbindPlaces } from "./lib/placeVotes";
 import { bindRoommates, unbindRoommates } from "./lib/roommates";
+import { bindDms, unbindDms } from "./lib/dms";
 
 // Everything except the main feed loads when it is first opened, so the first download stays small.
 const Landing = lazy(() => import("./pages/Landing"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
-const Stub = lazy(() => import("./pages/Stub"));
 const Plans = lazy(() => import("./pages/Plans"));
 const Groups = lazy(() => import("./pages/Groups"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -33,9 +35,11 @@ function Protected({ children }: { children: ReactNode }) {
 }
 
 /** Has this person chosen their university yet? That is what finishing onboarding means, because everything in the app is limited to it. */
-function useOnboarded(userId: string | undefined) {
+function useOnboarded(userId: string | undefined, fallbackName = "Student") {
   const [state, setState] = useState<"checking" | "yes" | "no">("checking");
   const [campusKey, setCampusKey] = useState<string | undefined>();
+  const nameRef = useRef(fallbackName);
+  nameRef.current = fallbackName;
   useEffect(() => {
     let alive = true;
     setState("checking");
@@ -46,6 +50,8 @@ function useOnboarded(userId: string | undefined) {
           const p = await pullProfile(userId).catch(() => null);
           if (p) { saveProfile(userId, p); profileChanged(); }
         }
+        // Accounts from before profiles were kept in the database have no row, so classmates would see them as "Student". Make it.
+        if (c && userId && supabase) await ensureProfileRow(userId, nameRef.current).catch(() => undefined);
         if (alive) { setCampusKey(c?.key); setState(c ? "yes" : "no"); }
       })
       .catch(() => { if (alive) setState("yes"); });
@@ -58,7 +64,7 @@ function useOnboarded(userId: string | undefined) {
 function InApp({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const nav = useNavigate();
-  const { state: done, campusKey } = useOnboarded(session?.user.id);
+  const { state: done, campusKey } = useOnboarded(session?.user.id, nameFor(session));
   const uid = session?.user.id;
   // With a database, groups and hangouts load for this student once their campus is known, and are forgotten when they leave.
   useEffect(() => {
@@ -70,6 +76,7 @@ function InApp({ children }: { children: ReactNode }) {
     bindPins(uid);
     bindPlaces(uid);
     bindRoommates(uid);
+    bindDms(uid);
     // An invite link opened before signing in leaves its code here. Use it now that the person is in.
     let waiting: string | null = null;
     try { waiting = sessionStorage.getItem("orbit-join-code"); if (waiting) sessionStorage.removeItem("orbit-join-code"); } catch { /* ignore */ }
@@ -79,7 +86,7 @@ function InApp({ children }: { children: ReactNode }) {
         else { notice.show({ icon: "pin", title: "You joined the group", message: "It is on your Groups list.", ms: 4000 }); nav("/app/groups"); }
       });
     }
-    return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); };
+    return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); };
   }, [done, uid, campusKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (done === "checking") return <p className="muted" style={{ padding: 24 }} role="status">Loading…</p>;
   return done === "yes" ? <>{children}</> : <Navigate to="/onboarding" replace />;
@@ -112,7 +119,7 @@ export default function App() {
         <Route path="/app" element={<Protected><InApp><Shell /></InApp></Protected>}>
           <Route index element={<Navigate to="feed" replace />} />
           <Route path="feed" element={<Feed />} />
-          <Route path="messages" element={supabase ? <Stub title="Messages" note="Direct and group chat will live here (tables already exist in your migrations)." /> : <Messages />} />
+          <Route path="messages" element={<Messages />} />
           <Route path="groups" element={<Groups />} />
           <Route path="roommates" element={<Roommates />} />
           <Route path="plans" element={<Plans />} />
@@ -121,6 +128,7 @@ export default function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ArrivalScreen />
     </Suspense>
   );
 }
