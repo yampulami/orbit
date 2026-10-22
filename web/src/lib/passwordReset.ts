@@ -14,12 +14,19 @@ export function checkNewPassword(password: string, again: string): string | null
   return null;
 }
 
+/** Supabase waits at most 10 seconds for the mail server to take the message and answers "timed out" (504) if it is slower, but the message is still
+ *  sent. Gmail is often that slow. So a timeout means "probably sent", not "failed". Other errors (a refused message, a bad address) still count as failures. */
+export function timedOutButSent(error: { status?: number; code?: string; message?: string }): boolean {
+  return error.status === 504 || error.code === "request_timeout" || /request_timeout|deadline exceeded/i.test(error.message ?? "");
+}
+
 /** Email a reset code. It says the same thing whether or not that address has an account, so it cannot be used to find out who is on Orbit.
  *  Resolves to a message to show if it could not be sent, or null. */
 export async function sendResetCode(email: string): Promise<string | null> {
   if (!supabase) return "Resetting a password needs an account on the server.";
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
   if (!error) return null;
+  if (timedOutButSent(error)) return null;
   if (/rate|seconds|too many|limit/i.test(error.message)) return "Please wait a minute, then ask for another code.";
   return "We could not send that. Check the email address and try again.";
 }

@@ -37,7 +37,7 @@ export default function ForgotPassword() {
     setBusy(false);
     if (problem) { setError(problem); return; }
     setStep("code"); setWait(RESEND_SECONDS);
-    setInfo(`If ${email.trim()} has an Orbit account, we have emailed it a code. It can take a minute, so check your spam folder too.`);
+    setInfo(`If ${email.trim()} has an Orbit account, we have emailed it a code. It can take a minute, so check your spam folder too. If you asked more than once, use the code from the newest email.`);
   }
 
   async function reset(e: FormEvent) {
