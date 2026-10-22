@@ -11,8 +11,10 @@ export type Task = { id: string; title: string; assignee: string; points: Points
 export type Grocery = { id: string; name: string; category: string; bought: boolean };
 export type Expense = { id: string; item: string; cents: number; paidBy: string; split: string[]; at: string };
 export type Note = { id: string; title: string; body: string };
-export type Space = { name: string; members: string[]; groupId?: string; tasks: Task[]; groceries: Grocery[]; expenses: Expense[]; notes: Note[] };
-export type Kind = "tasks" | "groceries" | "expenses" | "notes";
+/** "Maya paid Jordan $10": money handed over outside Orbit (cash, Venmo...), recorded so it counts against what was owed. */
+export type Payment = { id: string; from: string; to: string; cents: number; at: string };
+export type Space = { name: string; members: string[]; groupId?: string; tasks: Task[]; groceries: Grocery[]; expenses: Expense[]; notes: Note[]; payments: Payment[] };
+export type Kind = "tasks" | "groceries" | "expenses" | "notes" | "payments";
 
 export const CATEGORIES = ["Produce", "Dairy", "Pantry", "Snacks", "Cleaning", "Other"] as const;
 export const POINTS: Points[] = [1, 2, 3, 5];
@@ -39,8 +41,9 @@ export function autoAssignee(members: string[], tasks: Task[]) {
   return [...members].sort((a, b) => (w[a].open - w[b].open) || (w[a].openCount - w[b].openCount) || (members.indexOf(a) - members.indexOf(b)))[0];
 }
 
-/** What each person is owed (positive) or owes (negative), in cents. Splits are equal and odd cents go to the first people in the split. */
-export function netBalances(members: string[], expenses: Expense[]) {
+/** What each person is owed (positive) or owes (negative), in cents. Splits are equal and odd cents go to the first people in the split.
+ *  A recorded payment counts for the person who paid (they owe less) and the person who got it (they are owed less). */
+export function netBalances(members: string[], expenses: Expense[], payments: Payment[] = []) {
   const net: Record<string, number> = {};
   members.forEach((m) => { net[m] = 0; });
   for (const e of expenses) {
@@ -49,6 +52,10 @@ export function netBalances(members: string[], expenses: Expense[]) {
     const extra = e.cents - base * split.length;
     split.forEach((m, i) => { net[m] = (net[m] ?? 0) - (base + (i < extra ? 1 : 0)); });
     net[e.paidBy] = (net[e.paidBy] ?? 0) + e.cents;
+  }
+  for (const p of payments) {
+    net[p.from] = (net[p.from] ?? 0) + p.cents;
+    net[p.to] = (net[p.to] ?? 0) - p.cents;
   }
   return net;
 }
@@ -88,7 +95,10 @@ type State = { space: Space | null };
 const KEY = "orbit-roommates-v1";
 
 function load(): State {
-  try { const s = localStorage.getItem(KEY); if (s) return JSON.parse(s) as State; } catch { /* storage unavailable */ }
+  try {
+    const s = localStorage.getItem(KEY);
+    if (s) { const st = JSON.parse(s) as State; if (st.space) st.space.payments ??= []; return st; } // households saved before payments existed have none
+  } catch { /* storage unavailable */ }
   return { space: null };
 }
 
@@ -142,7 +152,7 @@ const sync = (what: string, job: () => PromiseLike<{ error: { message: string } 
 const gid = () => state.space?.groupId ?? "";
 const userOf = (name: string) => (name === YOU ? who : ids[name]) ?? null;
 const table = (name: string) => supabase!.from(name);
-const TABLES: Record<Kind, string> = { tasks: "household_tasks", groceries: "household_groceries", expenses: "household_expenses", notes: "household_notes" };
+const TABLES: Record<Kind, string> = { tasks: "household_tasks", groceries: "household_groceries", expenses: "household_expenses", notes: "household_notes", payments: "household_payments" };
 const idList = (names: string[]) => names.map(userOf).filter((x): x is string => !!x);
 
 /** The database columns for something that was deleted and is being brought back by Undo. */
@@ -150,6 +160,7 @@ function restoreRow(kind: Kind, item: { id: string }): Record<string, unknown> {
   if (kind === "tasks") { const t = item as Task; return { title: t.title, assignee: userOf(t.assignee), points: t.points, done: t.done, done_at: t.doneAt ?? null, due_on: t.due ?? null, created_at: t.createdAt }; }
   if (kind === "groceries") { const g = item as Grocery; return { name: g.name, category: g.category, bought: g.bought }; }
   if (kind === "expenses") { const e = item as Expense; return { item: e.item, cents: e.cents, paid_by: userOf(e.paidBy), split: idList(e.split), created_at: e.at }; }
+  if (kind === "payments") { const p = item as Payment; return { from_user: userOf(p.from), to_user: userOf(p.to), cents: p.cents, created_at: p.at }; }
   const n = item as Note;
   return { title: n.title, body: n.body };
 }
@@ -159,7 +170,7 @@ export const roomActions = {
   createSpace(name: string, others: string[]) {
     const members = [YOU, ...(live ? [] : others.filter((m) => m && m !== YOU))];
     const groupId = hangActions.createGroup(name, members.slice(1), true);
-    set({ space: { name, members, groupId, tasks: [], groceries: [], expenses: [], notes: [] } });
+    set({ space: { name, members, groupId, tasks: [], groceries: [], expenses: [], notes: [], payments: [] } });
   },
   /** A filled-in household so the screens have something to show (demo mode only). */
   createSample() {
@@ -193,6 +204,7 @@ export const roomActions = {
           { id: uid(), title: "Quiet hours", body: "Quiet from 10pm to 8am on weeknights. Headphones after that." },
           { id: uid(), title: "Maintenance", body: "Hallway light is out. Request already sent to the front desk." },
         ],
+        payments: [],
       },
     });
   },
@@ -233,6 +245,15 @@ export const roomActions = {
     patch((sp) => ({ ...sp, expenses: [e, ...sp.expenses] }));
     sync("Adding that expense", () => table("household_expenses").insert({ id: e.id, group_id: gid(), item, cents, paid_by: userOf(paidBy), split: idList(e.split) }));
     say(`Added expense: ${item}, ${money(cents)} paid by ${paidBy === YOU ? "me" : paidBy}`);
+  },
+  /** Record that `from` paid `to` (cash, Venmo, however they did it). It counts against what was owed; no money moves through Orbit. */
+  settle(from: string, to: string, cents: number): string | null {
+    if (from === to || cents <= 0) return null;
+    const p: Payment = { id: uid(), from, to, cents, at: now() };
+    patch((sp) => ({ ...sp, payments: [p, ...sp.payments] }));
+    sync("Recording that payment", () => table("household_payments").insert({ id: p.id, group_id: gid(), from_user: userOf(from), to_user: userOf(to), cents }));
+    say(`${from === YOU ? "I" : from} paid ${to === YOU ? "me" : to} ${money(cents)}`);
+    return p.id;
   },
   addNote(title: string, body: string) {
     const n: Note = { id: uid(), title, body };

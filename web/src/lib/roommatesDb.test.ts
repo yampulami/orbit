@@ -9,6 +9,7 @@ const raw: RawHousehold = {
   groceries: [{ id: "g1", name: "Oat milk", category: "Dairy", bought: true }],
   expenses: [{ id: "e1", item: "Internet", cents: 6000, paid_by: ME, split: [ME, MAYA], created_at: "2026-10-21T11:00:00Z" }],
   notes: [{ id: "n1", title: "Quiet hours", body: "After 10pm" }],
+  payments: [],
   names: { [ME]: "Taylor", [MAYA]: "Maya" },
 };
 

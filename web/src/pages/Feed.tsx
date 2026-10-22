@@ -15,6 +15,8 @@ import { communityIcon } from "../lib/communityUi";
 import { usePins } from "../lib/pins";
 import { notice } from "../lib/notice";
 import HangoutCard from "../components/HangoutCard";
+import CommentThread from "../components/CommentThread";
+import PersonLink from "../components/PersonLink";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { progress, streakWeeks, useProgress } from "../lib/progress";
 import { undo } from "../lib/undo";
@@ -59,7 +61,6 @@ export default function Feed() {
   const [community, setCommunity] = useState<Community>("Everyone");
   const [posting, setPosting] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
   const [filter, setFilter] = useState<"All" | Community>("All");
   const [hangsOpen, setHangsOpen] = useState(() => { try { return localStorage.getItem("orbit-feed-hangs") !== "0"; } catch { return true; } });
   const toggleHangs = () => setHangsOpen((v) => { try { localStorage.setItem("orbit-feed-hangs", v ? "0" : "1"); } catch { /* ignore */ } return !v; });
@@ -109,7 +110,9 @@ export default function Feed() {
       commit: () => api.remove(p.id),
     });
   };
-  const sendComment = (p: Row) => { const t = draft.trim(); if (!t) return; setDraft(""); return run(async () => { await api.comment(p.id, me, name, t); progress.log("reply"); await load(); }); };
+  // A reply is a comment that points at the comment it answers; the person who wrote that comment is told.
+  const sendReply = (p: Row, parentId: string, text: string) => run(async () => { await api.comment(p.id, me, name, text, parentId); progress.log("reply"); await load(); });
+  const sendComment = (p: Row, text: string) => run(async () => { await api.comment(p.id, me, name, text); progress.log("reply"); await load(); });
 
   if (loading)
     return (
@@ -237,7 +240,7 @@ export default function Feed() {
               const people = [...new Set(p.post_comments.map((c) => c.author_name))].slice(0, 3);
               return (
                 <motion.article key={p.id} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: -14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
-                  <div className="meta"><span className="who"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span><span><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong> · {when(p.created_at)}</span></span><span className="chip">{p.community}</span></div>
+                  <div className="meta"><span className="who"><PersonLink id={p.author_id} className="who-link"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span></PersonLink><span><PersonLink id={p.author_id} className="who-link"><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong></PersonLink> · {when(p.created_at)}</span></span><span className="chip">{p.community}</span></div>
                   {p.payload.title && <h3>{p.payload.title}</h3>}
                   <p className="body" style={{ whiteSpace: "pre-wrap" }}>{p.payload.body ?? p.payload.text ?? ""}</p>
                   <div className="foot">
@@ -246,7 +249,7 @@ export default function Feed() {
                       <motion.button whileTap={{ scale: 0.88 }} className="iconbtn" aria-pressed={liked} aria-label={liked ? "Unlike" : "Like"} onClick={() => like(p)}>
                         <motion.span key={liked ? "on" : "off"} style={{ display: "inline-flex" }} initial={liked ? { scale: 0.7 } : false} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 600, damping: 22 }}><Heart size={16} fill={liked ? "currentColor" : "none"} /></motion.span>{p.post_likes.length}
                       </motion.button>
-                      <button className="iconbtn" aria-expanded={expanded} aria-label="Comments" onClick={() => { setOpen(expanded ? null : p.id); setDraft(""); }}>
+                      <button className="iconbtn" aria-expanded={expanded} aria-label="Comments" onClick={() => setOpen(expanded ? null : p.id)}>
                         <MessageCircle size={16} />{p.post_comments.length}
                       </button>
                       {p.author_id === me && <button className="iconbtn" aria-label="Delete post" onClick={() => remove(p)}><Trash2 size={16} /></button>}
@@ -256,13 +259,7 @@ export default function Feed() {
                     {expanded && (
                       <motion.div className="reveal" key="comments" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1, transition: enter }} exit={{ height: 0, opacity: 0, transition: exit }}>
                         <div className="comments">
-                          {p.post_comments.map((c) => (
-                            <p key={c.id}><strong>{c.author_name}</strong> <span style={{ opacity: 0.7 }}>{when(c.created_at)}</span><br />{c.body}</p>
-                          ))}
-                          <form className="comment-form" onSubmit={(e) => { e.preventDefault(); sendComment(p); }}>
-                            <input aria-label="Write a comment" maxLength={500} value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Write a comment…" />
-                            <button className="btn primary" disabled={!draft.trim()}>Reply</button>
-                          </form>
+                          <CommentThread comments={p.post_comments} onComment={(text) => sendComment(p, text)} onReply={(parentId, text) => sendReply(p, parentId, text)} />
                         </div>
                       </motion.div>
                     )}

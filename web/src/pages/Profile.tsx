@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Flame, LogOut, Pencil, Trash2 } from "lucide-react";
 import { NAME_MAX, renameMe, useDisplayName } from "../lib/displayName";
 import { pushSupported } from "../lib/push";
@@ -11,6 +11,7 @@ import BadgeIcon from "../components/BadgeIcon";
 import { ThemeSegment } from "../components/ThemeControls";
 import { useAuth } from "../lib/auth";
 import { isGuestEmail } from "../lib/demoAuth";
+import { checkUsername, normalizeUsername, saveUsername, suggestUsername, USERNAME_MAX } from "../lib/username";
 import { badges, earnedIds, progress, streakWeeks, useProgress, type Area } from "../lib/progress";
 
 const AREAS: Area[] = ["Feed", "Groups", "Hangouts", "Everywhere"];
@@ -20,6 +21,31 @@ export default function Profile() {
   const isGuest = !!(session?.user as { is_anonymous?: boolean } | undefined)?.is_anonymous || isGuestEmail(session?.user.email);
   const [deleting, setDeleting] = useState<"idle" | "asking" | "working">("idle");
   const [deleteError, setDeleteError] = useState("");
+
+  // Your username: how friends find you and add you to groups. Unique on your campus.
+  const [username, setUsernameValue] = useState<string | null | undefined>(undefined); // undefined while loading
+  const [editingUser, setEditingUser] = useState(false);
+  const [userDraft, setUserDraft] = useState("");
+  const [userError, setUserError] = useState("");
+  const [savingUser, setSavingUser] = useState(false);
+  useEffect(() => {
+    if (!supabase || !session) return;
+    let alive = true;
+    Promise.resolve(supabase.from("student_profiles").select("username").eq("user_id", session.user.id).maybeSingle()).then(({ data }) => { if (alive) setUsernameValue((data as { username: string | null } | null)?.username ?? null); }, () => { if (alive) setUsernameValue(null); });
+    return () => { alive = false; };
+  }, [session]);
+
+  async function submitUsername(e: FormEvent) {
+    e.preventDefault();
+    if (!session) return;
+    setSavingUser(true);
+    const problem = await saveUsername(session.user.id, userDraft);
+    setSavingUser(false);
+    if (problem) { setUserError(problem); return; }
+    setUsernameValue(normalizeUsername(userDraft));
+    setEditingUser(false); setUserError("");
+    notice.show({ icon: "pin", title: "Username saved", message: `Friends can find you as @${normalizeUsername(userDraft)}.`, ms: 3500 });
+  }
   const email = session?.user.email;
   const name = useDisplayName();
   const [editing, setEditing] = useState(false);
@@ -75,6 +101,28 @@ export default function Profile() {
           )}
         </div>
       </section>
+
+      {supabase && username !== undefined && (
+        <section className="track username-card" aria-label="Username">
+          <div>
+            <h2>Username</h2>
+            {editingUser ? (
+              <form className="name-edit" onSubmit={submitUsername}>
+                <label className="sr" htmlFor="username-edit">Username</label>
+                <span className="onb-at"><span aria-hidden="true">@</span><input id="username-edit" autoFocus value={userDraft} maxLength={USERNAME_MAX} autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={(e) => setUserDraft(normalizeUsername(e.target.value).replace(/[^a-z0-9_]/g, ""))} placeholder="username" /></span>
+                <button className="btn primary" disabled={savingUser || !!checkUsername(userDraft)}>{savingUser ? "Saving…" : "Save"}</button>
+                <button type="button" className="btn" onClick={() => { setEditingUser(false); setUserError(""); }}>Cancel</button>
+                <p className={userError || (userDraft && checkUsername(userDraft)) ? "error" : "muted"} role={userError ? "alert" : undefined}>{userError || (userDraft && checkUsername(userDraft)) || "Letters, numbers and underscores. Nobody else on your campus can have the same one."}</p>
+              </form>
+            ) : username ? (
+              <p className="muted">@{username}. Friends use this to find you and add you to groups.</p>
+            ) : (
+              <p className="muted">You have not chosen one yet. Friends use it to find you and add you to groups.</p>
+            )}
+          </div>
+          {!editingUser && <button type="button" className="btn" onClick={() => { setUserDraft(username ?? suggestUsername(name.split(" ")[0] ?? "")); setUserError(""); setEditingUser(true); }}><Pencil size={16} aria-hidden="true" />{username ? "Change" : "Choose username"}</button>}
+        </section>
+      )}
 
       <section className="track">
         <div>

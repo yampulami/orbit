@@ -155,3 +155,18 @@ select count(*) from auth.users where is_anonymous and created_at < now() - inte
 -- then, when you are happy with the count
 delete from auth.users where is_anonymous and created_at < now() - interval '3 days';
 ```
+
+
+## Friends, usernames, replies and payments (`20261023100000_friends_usernames_payments.sql`, applied 2026-10-22)
+
+**What it adds.** Usernames (`student_profiles.username`), friend requests and friendships, adding a friend to a group, and `household_payments`. The new notification kinds are `friend_request`, `friend_accept` and `group_add`. Replies to comments needed nothing new: `post_comments.parent_id` and the "replied to your comment" notification were already in the earlier migration; the app just never used them.
+
+**Rules, all enforced in the database.**
+- A username is lowercase letters, numbers and underscores, 3 to 20 long, and unique **within a campus** (the same one is allowed on another campus).
+- Friend requests and friendships are written only by the functions `send_friend_request`, `respond_friend_request`, `cancel_friend_request` and `remove_friend`. Nobody can insert into the tables directly. Same campus only, no asking yourself, no repeat requests, no blocked students. If they already asked you, asking back makes you friends.
+- `add_friend_to_group` lets a **member** add one of **their own friends**. Anyone else is refused ("send a friend request first"). The friend is notified once, however many times it is repeated, and a group holds at most 60.
+- A payment can only be recorded by a household member, and only between two household members.
+
+**Checked live on 2026-10-22** with separate test accounts (a duplicate username, a username on another campus, a bad username, asking yourself, asking another campus, a repeat request, direct inserts, a stranger answering someone else's request, adding a friend, adding a non-friend, a non-member adding people, adding twice, a three-level reply thread with the right people notified, replying to yourself not notifying you, payments by a member, an outsider and to a non-member). Every one gave the expected result.
+
+**Test accounts to remove.** The checks left accounts named "QA Dana", "QA Eli", "QA Fay" and "QA Other", plus a group "QA Study", a household "QA House" and a post. To list them: `select p.display_name, u.id from student_profiles p join auth.users u on u.id = p.user_id where p.display_name like 'QA %';`

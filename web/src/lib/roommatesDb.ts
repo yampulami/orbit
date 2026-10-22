@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Expense, Grocery, Note, Points, Space, Task } from "./roommates";
+import type { Expense, Grocery, Note, Payment, Points, Space, Task } from "./roommates";
 import { loadNames, makeLabeler, watchTables } from "./people";
 
 /** A household in the database. The rows become the same `Space` the roommate screens already use (people shown by display name, "You" for the
@@ -8,11 +8,12 @@ export type RawTask = { id: string; title: string; assignee: string | null; poin
 export type RawGrocery = { id: string; name: string; category: string; bought: boolean };
 export type RawExpense = { id: string; item: string; cents: number; paid_by: string | null; split: string[]; created_at: string };
 export type RawNote = { id: string; title: string; body: string };
+export type RawPayment = { id: string; from_user: string | null; to_user: string | null; cents: number; created_at: string };
 export type RawHousehold = {
   me: string;
   groupId: string; name: string;
   members: string[];
-  tasks: RawTask[]; groceries: RawGrocery[]; expenses: RawExpense[]; notes: RawNote[];
+  tasks: RawTask[]; groceries: RawGrocery[]; expenses: RawExpense[]; notes: RawNote[]; payments: RawPayment[];
   names: Record<string, string>;
 };
 
@@ -20,7 +21,7 @@ const POINTS = new Set([1, 2, 3, 5]);
 
 /** Pure: rows in, screen state out. `ids` maps each shown name back to its user id. */
 export function buildSpace(raw: RawHousehold): { space: Space; ids: Record<string, string> } {
-  const everyone = [...raw.members, ...raw.tasks.map((t) => t.assignee), ...raw.expenses.map((e) => e.paid_by), ...raw.expenses.flatMap((e) => e.split)].filter((x): x is string => !!x);
+  const everyone = [...raw.members, ...raw.tasks.map((t) => t.assignee), ...raw.expenses.map((e) => e.paid_by), ...raw.expenses.flatMap((e) => e.split), ...raw.payments.flatMap((p) => [p.from_user, p.to_user])].filter((x): x is string => !!x);
   const label = makeLabeler(raw.me, everyone, raw.names);
   const ids: Record<string, string> = {};
   for (const id of new Set(everyone)) ids[label(id)] = id;
@@ -37,7 +38,8 @@ export function buildSpace(raw: RawHousehold): { space: Space; ids: Record<strin
   const groceries: Grocery[] = raw.groceries.map((g) => ({ id: g.id, name: g.name, category: g.category, bought: g.bought }));
   const expenses: Expense[] = raw.expenses.map((e) => ({ id: e.id, item: e.item, cents: e.cents, paidBy: nameOf(e.paid_by), split: e.split.map(label), at: e.created_at }));
   const notes: Note[] = raw.notes.map((n) => ({ id: n.id, title: n.title, body: n.body }));
-  return { space: { name: raw.name, members, groupId: raw.groupId, tasks, groceries, expenses, notes }, ids: { ...ids, [you]: raw.me } };
+  const payments: Payment[] = raw.payments.map((p) => ({ id: p.id, from: nameOf(p.from_user), to: nameOf(p.to_user), cents: p.cents, at: p.created_at }));
+  return { space: { name: raw.name, members, groupId: raw.groupId, tasks, groceries, expenses, notes, payments }, ids: { ...ids, [you]: raw.me } };
 }
 
 /** Your household (the oldest one you are in), or null if you are not in one yet. */
@@ -51,13 +53,14 @@ export async function loadHousehold(me: string): Promise<RawHousehold | null> {
   if (!first) return null;
   const gid = first.group_id;
 
-  const [group, mem, tasks, groceries, expenses, notes] = await Promise.all([
+  const [group, mem, tasks, groceries, expenses, notes, pay] = await Promise.all([
     sb.from("campus_groups").select("id,name").eq("id", gid).limit(1),
     sb.from("campus_group_memberships").select("user_id").eq("group_id", gid),
     sb.from("household_tasks").select("id,title,assignee,points,done,done_at,due_on,created_at").eq("group_id", gid).order("created_at", { ascending: false }).limit(500),
     sb.from("household_groceries").select("id,name,category,bought").eq("group_id", gid).order("created_at", { ascending: true }).limit(500),
     sb.from("household_expenses").select("id,item,cents,paid_by,split,created_at").eq("group_id", gid).order("created_at", { ascending: false }).limit(500),
     sb.from("household_notes").select("id,title,body").eq("group_id", gid).order("created_at", { ascending: false }).limit(200),
+    sb.from("household_payments").select("id,from_user,to_user,cents,created_at").eq("group_id", gid).order("created_at", { ascending: false }).limit(500),
   ]);
   [group, mem, tasks, groceries, expenses, notes].forEach((r) => fail(r.error));
   const g = (group.data ?? [])[0] as { id: string; name: string } | undefined;
@@ -65,9 +68,11 @@ export async function loadHousehold(me: string): Promise<RawHousehold | null> {
 
   const members = ((mem.data ?? []) as { user_id: string }[]).map((m) => m.user_id);
   const t = (tasks.data ?? []) as RawTask[], e = (expenses.data ?? []) as RawExpense[];
-  const names = await loadNames([...members, ...t.map((x) => x.assignee), ...e.map((x) => x.paid_by), ...e.flatMap((x) => x.split)].filter((x): x is string => !!x));
-  return { me, groupId: g.id, name: g.name, members, tasks: t, groceries: (groceries.data ?? []) as RawGrocery[], expenses: e, notes: (notes.data ?? []) as RawNote[], names };
+  // Payments came later than the rest. If the table is not there yet, the household still loads, just without them.
+  const p = pay.error ? [] : ((pay.data ?? []) as RawPayment[]);
+  const names = await loadNames([...members, ...t.map((x) => x.assignee), ...e.map((x) => x.paid_by), ...e.flatMap((x) => x.split), ...p.flatMap((x) => [x.from_user, x.to_user])].filter((x): x is string => !!x));
+  return { me, groupId: g.id, name: g.name, members, tasks: t, groceries: (groceries.data ?? []) as RawGrocery[], expenses: e, notes: (notes.data ?? []) as RawNote[], payments: p, names };
 }
 
 export const watchHousehold = (me: string, onChange: () => void) =>
-  watchTables(`orbit-household-${me}`, ["households", "household_tasks", "household_groceries", "household_expenses", "household_notes", "campus_group_memberships"], onChange);
+  watchTables(`orbit-household-${me}`, ["households", "household_tasks", "household_groceries", "household_expenses", "household_notes", "household_payments", "campus_group_memberships"], onChange);

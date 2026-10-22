@@ -2,7 +2,8 @@ import { campusKey } from "../shared/campus";
 import { supabase } from "./supabase";
 import { samplePostsFor } from "./demoPosts";
 
-export type Comment = { id: string; user_id: string; author_name: string; body: string; created_at: string };
+/** `parent_id` is the comment this one answers, or null for a comment straight on the post. */
+export type Comment = { id: string; user_id: string; author_name: string; body: string; created_at: string; parent_id?: string | null };
 export type Row = {
   id: string; author_id: string; author_name: string; kind: string; community: string;
   payload: { body?: string; text?: string; title?: string };
@@ -19,7 +20,7 @@ export interface FeedApi {
   publish(p: NewPost): Promise<void>;
   like(postId: string, me: string, liked: boolean): Promise<void>;
   remove(id: string): Promise<void>;
-  comment(postId: string, me: string, author: string, body: string): Promise<void>;
+  comment(postId: string, me: string, author: string, body: string, parentId?: string): Promise<void>;
 }
 
 function fail(error: { message: string } | null) { if (error) throw new Error(error.message); }
@@ -34,7 +35,7 @@ const supaApi: FeedApi = {
   },
   async list() {
     const { data, error } = await supabase!.from("campus_posts")
-      .select("id,author_id,author_name,kind,community,payload,created_at,post_likes(user_id),post_comments(id,user_id,author_name,body,created_at)")
+      .select("id,author_id,author_name,kind,community,payload,created_at,post_likes(user_id),post_comments(id,user_id,author_name,body,created_at,parent_id)")
       .order("created_at", { ascending: false }).limit(50);
     fail(error);
     return ((data ?? []) as unknown as Row[]).map((r) => ({ ...r, post_comments: [...r.post_comments].sort((a, b) => a.created_at.localeCompare(b.created_at)) }));
@@ -46,8 +47,8 @@ const supaApi: FeedApi = {
     fail((liked ? await supabase!.from("post_likes").upsert({ post_id: postId, user_id: me }) : await supabase!.from("post_likes").delete().eq("post_id", postId).eq("user_id", me)).error);
   },
   async remove(id) { fail((await supabase!.from("campus_posts").delete().eq("id", id)).error); },
-  async comment(postId, me, author, body) {
-    fail((await supabase!.from("post_comments").insert({ id: crypto.randomUUID(), post_id: postId, user_id: me, author_name: author, body })).error);
+  async comment(postId, me, author, body, parentId) {
+    fail((await supabase!.from("post_comments").insert({ id: crypto.randomUUID(), post_id: postId, user_id: me, author_name: author, body, parent_id: parentId ?? null })).error);
   },
 };
 
@@ -113,8 +114,8 @@ const demoApi: FeedApi = {
     write(read().map((r) => r.id !== postId ? r : { ...r, post_likes: liked ? [...r.post_likes.filter((l) => l.user_id !== me), { user_id: me }] : r.post_likes.filter((l) => l.user_id !== me) }));
   },
   async remove(id) { write(read().filter((r) => r.id !== id)); },
-  async comment(postId, me, author, body) {
-    write(read().map((r) => r.id !== postId ? r : { ...r, post_comments: [...r.post_comments, { id: crypto.randomUUID(), user_id: me, author_name: author, body, created_at: new Date().toISOString() }] }));
+  async comment(postId, me, author, body, parentId) {
+    write(read().map((r) => r.id !== postId ? r : { ...r, post_comments: [...r.post_comments, { id: crypto.randomUUID(), user_id: me, author_name: author, body, created_at: new Date().toISOString(), parent_id: parentId ?? null }] }));
   },
 };
 

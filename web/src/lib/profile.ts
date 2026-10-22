@@ -8,6 +8,8 @@ export type Look = "light" | "dark" | "system";
 
 export type Profile = {
   name: string;
+  /** How friends find this student. Only set with a database; unique on their campus. */
+  username?: string;
   campusName: string;
   campusKey: string;
   campusDomain?: string;
@@ -37,11 +39,14 @@ export const TENURE_YEARS: Record<Tenure, number> = { "first-semester": 1, "firs
 /** Saves the onboarding answers on the student's profile row. The campus membership has to exist first, because the row is tied to the campus. */
 export async function pushProfile(userId: string, p: Profile): Promise<void> {
   if (!supabase) return;
-  const { error } = await supabase.from("student_profiles").upsert({
+  const row: Record<string, unknown> = {
     user_id: userId, campus_key: p.campusKey, display_name: p.name,
     tenure: p.tenure, living: p.living, interests: p.interests, streaks_enabled: p.streaks, nudges: p.nudges, theme_pref: p.look,
     onboarded_at: p.doneAt, updated_at: new Date().toISOString(),
-  });
+  };
+  let { error } = await supabase.from("student_profiles").upsert(p.username ? { ...row, username: p.username } : row);
+  // If the usernames column has not been added to this database yet, save everything else rather than failing sign up.
+  if (error && p.username && /column|schema cache/i.test(error.message) && !/duplicate|unique/i.test(error.message)) ({ error } = await supabase.from("student_profiles").upsert(row));
   if (error) throw new Error(error.message);
 }
 

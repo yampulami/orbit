@@ -1,27 +1,38 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, CalendarDays, Coffee, ListChecks, MessageSquare, Newspaper, NotebookText, Search, ShoppingBasket, Users, type LucideIcon } from "lucide-react";
+import { useAuth } from "../lib/auth";
 import { feedApi, type Row } from "../lib/feedData";
+import { friendsLive, useFriends } from "../lib/friends";
 import { useHang } from "../lib/hangouts";
+import { longEnough, parseQuery, searchPeople, type PersonHit } from "../lib/peopleSearch";
 import { fromYmd, useReminders } from "../lib/reminders";
 import { useSpace } from "../lib/roommates";
 
 type Hit = { id: string; kind: string; Icon: LucideIcon; title: string; sub: string; to: string; state?: Record<string, unknown> };
+/** One row in the list under the search box, whichever section it is in. */
+type Option = { section: "top" | "people"; id: string; go: () => void };
 const clip = (s: string, n = 70) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
+const TOP_MAX = 4;
 
-/** Search across posts, hangouts, chores, groceries, notes, reminders and groups. Ctrl or Cmd + K focuses it. */
+/** Search as you type. The first section is what matches in Orbit (posts, hangouts, chores, groups...), the second is people, found by name or by
+ *  username. Starting with @ looks only for usernames. Ctrl or Cmd + K focuses it. */
 export default function GlobalSearch() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const [posts, setPosts] = useState<Row[] | null>(null);
+  const [people, setPeople] = useState<PersonHit[]>([]);
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const listId = useId();
   const nav = useNavigate();
+  const { session } = useAuth();
+  const me = session?.user.id;
   const { groups, hangouts } = useHang();
   const space = useSpace();
   const reminders = useReminders();
+  const { friends, outgoing, incoming } = useFriends();
 
   // Posts load the first time the box is used.
   const loadPosts = () => { if (posts === null) { setPosts([]); feedApi.list().then(setPosts).catch(() => setPosts([])); } };
@@ -34,9 +45,18 @@ export default function GlobalSearch() {
     return () => { window.removeEventListener("keydown", onKey); document.removeEventListener("mousedown", away); };
   }, []);
 
-  const hits = useMemo<Hit[]>(() => {
-    const term = q.trim().toLowerCase();
-    if (term.length < 2) return [];
+  // People are looked up a moment after you stop typing, and only the answer to the latest letters is used.
+  useEffect(() => {
+    if (!friendsLive || !longEnough(q)) { setPeople([]); return; }
+    let current = true;
+    const t = setTimeout(() => { void searchPeople(q, me).then((r) => { if (current) setPeople(r); }); }, 160);
+    return () => { current = false; clearTimeout(t); };
+  }, [q, me]);
+
+  const { term, usernameOnly } = parseQuery(q);
+
+  const things = useMemo<Hit[]>(() => {
+    if (usernameOnly || term.length < 2) return [];
     const has = (...s: (string | undefined)[]) => s.some((x) => x?.toLowerCase().includes(term));
     const out: Hit[] = [];
     for (const h of hangouts) if (!h.canceled && has(h.title, h.place)) out.push({ id: `h${h.id}`, kind: "Hangout", Icon: Coffee, title: h.title, sub: `${new Date(h.when).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })} · ${h.place}`, to: "/app/plans", state: { day: new Date(h.when).toDateString() } });
@@ -49,38 +69,66 @@ export default function GlobalSearch() {
     }
     for (const g of groups) if (has(g.name, ...g.members)) out.push({ id: `grp${g.id}`, kind: "Group", Icon: Users, title: g.name, sub: g.members.join(", "), to: "/app/groups", state: { group: g.id } });
     for (const p of posts ?? []) if (has(p.payload.body, p.payload.text, p.payload.title, p.author_name)) out.push({ id: `p${p.id}`, kind: "Post", Icon: Newspaper, title: clip(p.payload.body ?? p.payload.text ?? p.payload.title ?? ""), sub: `${p.author_name} · ${p.community}`, to: "/app/feed" });
-    return out.slice(0, 8);
-  }, [q, hangouts, reminders, space, groups, posts]);
+    return out.slice(0, TOP_MAX);
+  }, [term, usernameOnly, hangouts, reminders, space, groups, posts]);
 
-  const go = (h: Hit) => { setOpen(false); setQ(""); nav(h.to, { state: h.state }); };
+  const close = () => { setOpen(false); setQ(""); };
+  const options: Option[] = [
+    ...things.map((h): Option => ({ section: "top", id: h.id, go: () => { close(); nav(h.to, { state: h.state }); } })),
+    ...people.map((p): Option => ({ section: "people", id: `person-${p.id}`, go: () => { close(); nav(`/app/people/${p.id}`); } })),
+  ];
+
+  /** How you stand with a person in the results, for the small label on the right. */
+  const relation = (id: string) =>
+    friends.some((f) => f.id === id) ? "Friend" : outgoing.some((r) => r.to.id === id) ? "Requested" : incoming.some((r) => r.from.id === id) ? "Wants to add you" : "Person";
 
   function key(e: KeyboardEvent) {
     if (e.key === "Escape") { setOpen(false); input.current?.blur(); return; }
-    if (!hits.length) return;
-    if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((a) => (a + 1) % hits.length); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => (a + hits.length - 1) % hits.length); }
-    else if (e.key === "Enter" && open) { e.preventDefault(); go(hits[Math.min(active, hits.length - 1)]); }
+    if (!options.length) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((a) => (a + 1) % options.length); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => (a + options.length - 1) % options.length); }
+    else if (e.key === "Enter" && open) { e.preventDefault(); options[Math.min(active, options.length - 1)].go(); }
   }
 
-  const showPanel = open && q.trim().length >= 2;
+  const showPanel = open && longEnough(q);
+  const idx = (section: Option["section"], id: string) => options.findIndex((o) => o.section === section && o.id === id);
 
   return (
     <div className="gsearch" ref={root} role="search" onKeyDown={key}>
       <Search size={18} aria-hidden="true" />
-      <input ref={input} type="search" value={q} placeholder="Search" aria-label="Search Orbit" role="combobox" aria-expanded={showPanel} aria-controls={listId} aria-autocomplete="list" aria-activedescendant={showPanel && hits.length ? `${listId}-${active}` : undefined}
+      <input ref={input} type="search" value={q} placeholder={friendsLive ? "Search, or @username" : "Search"} aria-label="Search Orbit" role="combobox" aria-expanded={showPanel} aria-controls={listId} aria-autocomplete="list" aria-activedescendant={showPanel && options.length ? `${listId}-${active}` : undefined}
         onChange={(e) => { setQ(e.target.value); setActive(0); setOpen(true); }} onFocus={() => { loadPosts(); setOpen(true); }} />
       <kbd aria-hidden="true">Ctrl K</kbd>
       {showPanel && (
         <ul id={listId} role="listbox" className="gs-panel" aria-label="Search results">
-          {hits.length === 0 ? (
+          {options.length === 0 ? (
             <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />Nothing found for “{q.trim()}”.</li>
-          ) : hits.map((h, i) => (
-            <li key={h.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onClick={() => go(h)}>
-              <span className="gs-ico"><h.Icon size={16} strokeWidth={1.9} aria-hidden="true" /></span>
-              <span className="gs-text"><strong>{h.title}</strong><span>{h.sub}</span></span>
-              <span className="gs-kind">{h.kind}</span>
-            </li>
-          ))}
+          ) : (
+            <>
+              {things.length > 0 && <li className="gs-head" role="presentation">Top results</li>}
+              {things.map((h) => {
+                const i = idx("top", h.id);
+                return (
+                  <li key={h.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onClick={() => options[i].go()}>
+                    <span className="gs-ico"><h.Icon size={16} strokeWidth={1.9} aria-hidden="true" /></span>
+                    <span className="gs-text"><strong>{h.title}</strong><span>{h.sub}</span></span>
+                    <span className="gs-kind">{h.kind}</span>
+                  </li>
+                );
+              })}
+              {people.length > 0 && <li className="gs-head" role="presentation">People</li>}
+              {people.map((p) => {
+                const i = idx("people", `person-${p.id}`);
+                return (
+                  <li key={p.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onClick={() => options[i].go()}>
+                    <span className="gs-ico gs-av" aria-hidden="true">{p.name.slice(0, 1).toUpperCase()}</span>
+                    <span className="gs-text"><strong>{p.name}</strong><span>{p.username ? `@${p.username}` : "No username yet"}</span></span>
+                    <span className="gs-kind">{relation(p.id)}</span>
+                  </li>
+                );
+              })}
+            </>
+          )}
         </ul>
       )}
     </div>

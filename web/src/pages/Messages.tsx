@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Send } from "lucide-react";
 import { enter, slide } from "../lib/motion";
@@ -25,6 +26,9 @@ function LiveMessages() {
   const [picking, setPicking] = useState(false);
   const [q, setQ] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
+  // Arriving from someone's profile ("Message") opens that conversation.
+  const asked = (useLocation().state as { thread?: string } | null)?.thread;
+  useEffect(() => { if (asked) { setActive(asked); setPicking(false); } }, [asked]);
   const current = threads.find((t) => t.id === active) ?? (picking ? undefined : threads[0]);
   const shownId = current?.id ?? "";
 
@@ -77,7 +81,7 @@ function LiveMessages() {
             </div>
           ) : current ? (
             <>
-              <div className="convo-head"><div><h2>{current.name}</h2><p className="muted">Direct message</p></div></div>
+              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link></h2><p className="muted">Direct message</p></div></div>
               <div className="bubbles" ref={scroller} aria-live="polite">
                 {current.messages.length === 0 && <p className="rm-empty">Say hello to {current.name}.</p>}
                 {current.messages.map((m) => (

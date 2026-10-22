@@ -8,6 +8,7 @@ import { useAuth } from "../lib/auth";
 import { demoAuth, isGuestEmail } from "../lib/demoAuth";
 import { pushSupported } from "../lib/push";
 import { arrival } from "../lib/arrival";
+import { checkUsername, normalizeUsername, suggestUsername } from "../lib/username";
 import { deviceSupported, disableDeviceAlerts, enableDeviceAlerts, useDeviceAlerts } from "../lib/deviceAlerts";
 import { notice } from "../lib/notice";
 import { feedApi } from "../lib/feedData";
@@ -56,6 +57,9 @@ export default function Onboarding() {
   const [dir, setDir] = useState(1);
   const [uni, setUni] = useState<University | null>(null);
   const [name, setName] = useState("");
+  // Usernames are how friends find you and add you to groups. They need a database, so demo mode skips them.
+  const [username, setUsername] = useState("");
+  const [userEdited, setUserEdited] = useState(false);
   const [tenure, setTenure] = useState<Tenure | null>(null);
   const [living, setLiving] = useState<Living | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
@@ -63,6 +67,7 @@ export default function Onboarding() {
   const [nudges, setNudges] = useState({ hangouts: true, reminders: true, places: true });
   const [look, setLook] = useState<Look>(themePref);
   const [saving, setSaving] = useState(false);
+  useEffect(() => { if (supabase && !userEdited) setUsername(suggestUsername(name.trim().split(" ")[0] ?? "")); }, [name, userEdited]);
   const [error, setError] = useState("");
   const [kick, setKick] = useState(0);
   const [burst, setBurst] = useState(0);
@@ -89,7 +94,7 @@ export default function Onboarding() {
 
   const step = STEPS[i];
   const years = tenure ? TENURE_YEARS[tenure] : 0;
-  const can: Record<Step, boolean> = { campus: !!uni && validCampus(uni.name), name: name.trim().length >= 1, tenure: !!tenure, living: !!living, interests: true, pace: streaks !== null, nudges: true, look: true, done: true };
+  const can: Record<Step, boolean> = { campus: !!uni && validCampus(uni.name), name: name.trim().length >= 1 && (!supabase || !checkUsername(username)), tenure: !!tenure, living: !!living, interests: true, pace: streaks !== null, nudges: true, look: true, done: true };
   const optional = step === "interests" || step === "nudges";
   const first = name.trim().split(" ")[0];
 
@@ -104,7 +109,7 @@ export default function Onboarding() {
     setSaving(true); setError("");
     try {
       const key = campusKey(uni.name);
-      const profile: Profile = { name: name.trim(), campusName: uni.name.trim(), campusKey: key, campusDomain: uni.domain || undefined, tenure, living, interests, streaks, nudges, look, doneAt: new Date().toISOString() };
+      const profile: Profile = { name: name.trim(), username: supabase ? normalizeUsername(username) : undefined, campusName: uni.name.trim(), campusKey: key, campusDomain: uni.domain || undefined, tenure, living, interests, streaks, nudges, look, doneAt: new Date().toISOString() };
       await feedApi.join({ name: profile.campusName, key }, session!.user.id);
       if (supabase) await supabase.auth.updateUser({ data: { name: profile.name } }); else demoAuth.setName(session!.user.id, profile.name);
       await pushProfile(session!.user.id, profile); // the membership above has to exist first
@@ -117,7 +122,9 @@ export default function Onboarding() {
     } catch (e) {
       arrival.end();
       setWipe(null);
-      setError((e as Error).message || "Something went wrong saving your answers. Try again.");
+      const message = (e as Error).message || "";
+      if (/username/i.test(message)) { setI(STEPS.indexOf("name")); setError("That username is taken on your campus. Pick another."); }
+      else setError(message || "Something went wrong saving your answers. Try again.");
       setSaving(false);
     }
   }
@@ -168,6 +175,12 @@ export default function Onboarding() {
     name: (
       <>
         <label className="field"><span className="sr">Your name</span><input className="onb-input" value={name} maxLength={40} autoFocus autoComplete="given-name" onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder="Your first name" /></label>
+        {supabase && (
+          <label className="field onb-username"><span className="onb-label">Your username</span>
+            <span className="onb-at"><span aria-hidden="true">@</span><input className="onb-input" value={username} maxLength={20} autoCapitalize="none" autoCorrect="off" spellCheck={false} aria-describedby="onb-username-help" onChange={(e) => { setUserEdited(true); setUsername(normalizeUsername(e.target.value).replace(/[^a-z0-9_]/g, "")); }} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder="username" /></span>
+            <small id="onb-username-help" className={username && checkUsername(username) ? "error" : "muted"}>{username && checkUsername(username) ? checkUsername(username) : "Friends find you and add you to groups with this. Letters, numbers and underscores."}</small>
+          </label>
+        )}
         <AnimatePresence>{first.length >= 2 && <motion.p key="hi" className="onb-hi" initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={soft}>Nice to meet you, <strong>{first}</strong>.</motion.p>}</AnimatePresence>
       </>
     ),

@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus } from "lucide-react";
+import { CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
 import HangoutCard from "../components/HangoutCard";
+import FriendsPanel from "../components/FriendsPanel";
+import GroupAddFriend from "../components/GroupAddFriend";
+import { useFriends } from "../lib/friends";
 import { findConflict, hangActions, hangLive, useHang, useHangStatus, YOU } from "../lib/hangouts";
 import { notice } from "../lib/notice";
 import { useMapPlaces } from "../lib/mapPlaces";
@@ -32,6 +35,8 @@ export default function Groups() {
   const [adding, setAdding] = useState(false);
   const [friends, setFriends] = useState("");
   const [joining, setJoining] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
+  const { incoming: friendRequests } = useFriends();
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState("");
 
@@ -116,13 +121,14 @@ export default function Groups() {
       <div className="chat">
         <div className="threads" aria-label="Your groups">
           {groups.map((g) => (
-            <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate ? " on" : "")} aria-current={g.id === group?.id && !showCreate} onClick={() => { setActiveId(g.id); setCreating(false); setPlanning(false); setAdding(false); setError(""); }}>
-              {g.id === group?.id && !showCreate && <motion.span layoutId="group-indicator" className="threadpill" transition={slide} />}
+            <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate && !friendsOpen ? " on" : "")} aria-current={g.id === group?.id && !showCreate && !friendsOpen} onClick={() => { setActiveId(g.id); setFriendsOpen(false); setCreating(false); setPlanning(false); setAdding(false); setError(""); }}>
+              {g.id === group?.id && !showCreate && !friendsOpen && <motion.span layoutId="group-indicator" className="threadpill" transition={slide} />}
               <strong>{g.name}</strong>
               <span className="muted">{g.members.length} people</span>
             </button>
           ))}
-          <button className="thread new" onClick={() => { setCreating(true); setError(""); }}><Plus size={16} /> New group</button>
+          <button className="thread new" onClick={() => { setCreating(true); setFriendsOpen(false); setError(""); }}><Plus size={16} /> New group</button>
+          {hangLive && <button className="thread new" onClick={() => { setFriendsOpen(true); setCreating(false); setError(""); }} aria-pressed={friendsOpen}><Users size={16} /> Friends{friendRequests.length > 0 && <span className="dm-unread" aria-label={`${friendRequests.length} friend requests`}>{friendRequests.length}</span>}</button>}
           {hangLive && (
             joining ? (
               <form className="join-code" onSubmit={joinWithCode}>
@@ -134,7 +140,9 @@ export default function Groups() {
           )}
         </div>
 
-        {showCreate ? (
+        {friendsOpen && hangLive ? (
+          <FriendsPanel />
+        ) : showCreate ? (
           <form className="convo card" onSubmit={createGroup}>
             <div style={{ display: "grid", gap: 12, alignContent: "start" }}>
               <h2 style={{ fontSize: "1.4rem" }}>Start a group</h2>
@@ -154,12 +162,15 @@ export default function Groups() {
             <div className="convo-head">
               <div><h2>{group.name}</h2><p className="muted">{group.members.join(", ")}</p></div>
               <div className="convo-actions">
-                <button className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setError(""); }} aria-expanded={adding}><UserPlus size={18} /> {hangLive ? "Invite friends" : "Add friends"}</button>
+                <button className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setError(""); }} aria-expanded={adding}><UserPlus size={18} /> {hangLive ? "Add people" : "Add friends"}</button>
                 <button className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setError(""); }} aria-expanded={planning}><CalendarPlus size={18} /> Plan a hangout</button>
               </div>
             </div>
             {adding && hangLive && (
               <div className="plan-form invite">
+                <h3>Add a friend</h3>
+                <GroupAddFriend groupId={group.id} groupName={group.name} memberNames={group.members} />
+                <h3>Or share the invite code</h3>
                 <p className="muted">Friends who enter this code, or open the link, join {group.name}. Only members can see the group and its code.</p>
                 {group.code ? (
                   <>

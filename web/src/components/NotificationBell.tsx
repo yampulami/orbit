@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, CalendarClock, MapPinCheck, Users } from "lucide-react";
+import { Bell, CalendarClock, Heart, MapPinCheck, MessageCircle, MessageSquare, UserCheck, UserPlus, Users } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { useNudges } from "../lib/nudges";
@@ -9,8 +9,16 @@ import { statusOf, useProposals } from "../lib/placeVotes";
 import { loadProfile } from "../lib/profile";
 import { dueAt, fromYmd, useReminders } from "../lib/reminders";
 import { enter, exit } from "../lib/motion";
+import { friendActions, useFriends } from "../lib/friends";
+import { notifActions, useNotifs } from "../lib/notifs";
 
-type Row = { id: string; icon: typeof Bell; title: string; sub: string; go: () => void };
+type Row = { id: string; icon: typeof Bell; title: string; sub: string; go: () => void; unread?: boolean; request?: { id: string } };
+
+const KIND_ICON: Record<string, typeof Bell> = { like: Heart, comment: MessageCircle, reply: MessageCircle, message: MessageSquare, friend_request: UserPlus, friend_accept: UserCheck, group_add: Users };
+const ago = (iso: string) => {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  return m < 1 ? "just now" : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+};
 
 /** What needs you, in one place: hangouts waiting on your answer, reminders that are due, and places on the map waiting for a vote.
  *  It is worked out from what is on the page, so it needs no server. Each kind can be turned off in Profile. */
@@ -21,6 +29,8 @@ export default function NotificationBell() {
   const { groups, hangouts } = useHang();
   const reminders = useReminders();
   const proposals = useProposals();
+  const notifs = useNotifs();
+  const friends = useFriends();
   const [open, setOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const root = useRef<HTMLDivElement>(null);
@@ -38,6 +48,15 @@ export default function NotificationBell() {
   const rows: Row[] = [];
   const go = (to: string, state?: object) => () => { setOpen(false); nav(to, state ? { state } : undefined); };
 
+  // From the database: replies, likes, messages, friend requests, being added to a group. Unread ones first, then a few recent ones you have seen.
+  const social: Row[] = [...notifs.filter((n) => n.unread), ...notifs.filter((n) => !n.unread).slice(0, 4)].slice(0, 12).map((n) => ({
+    id: `n-${n.id}`, icon: KIND_ICON[n.kind] ?? Bell, title: n.title, sub: n.sub ? `${n.sub} · ${ago(n.at)}` : ago(n.at), unread: n.unread,
+    go: () => { notifActions.markRead(n.id); go(n.to)(); },
+    request: n.kind === "friend_request" && n.actorId ? friends.incoming.find((r) => r.from.id === n.actorId) : undefined,
+  }));
+  rows.push(...social);
+  const unreadSocial = notifs.filter((n) => n.unread).length;
+
   if (nudges.hangouts) {
     const waiting = hangouts.filter((h) => isVisible(h, groups) && !h.rsvps[YOU] && new Date(h.when).getTime() > now.getTime()).sort((a, b) => a.when.localeCompare(b.when));
     for (const h of waiting.slice(0, 4)) rows.push({ id: `h-${h.id}`, icon: Users, title: h.title, sub: `Needs your answer · ${new Date(h.when).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}`, go: go("/app/plans", { day: new Date(h.when).toDateString() }) });
@@ -51,7 +70,7 @@ export default function NotificationBell() {
     const votes = proposals.filter((p) => p.campusKey === campusKey && statusOf(p) === "open" && p.by !== YOU && p.votes[YOU] === undefined);
     if (votes.length) rows.push({ id: "places", icon: MapPinCheck, title: `${votes.length} ${votes.length === 1 ? "place needs" : "places need"} your vote`, sub: "Students added them to the map", go: go("/app/map") });
   }
-  const count = rows.length;
+  const count = rows.length - social.filter((r) => !r.unread).length;
 
   return (
     <div className="bell-wrap" ref={root}>
@@ -67,15 +86,22 @@ export default function NotificationBell() {
             ) : (
               <ul>
                 {rows.map((r) => (
-                  <li key={r.id}>
+                  <li key={r.id} className={r.unread === false ? "seen" : undefined}>
                     <button type="button" onClick={r.go}>
                       <span className="bell-ico" aria-hidden="true"><r.icon size={16} strokeWidth={1.9} /></span>
                       <span className="bell-text"><strong>{r.title}</strong><em>{r.sub}</em></span>
                     </button>
+                    {r.request && (
+                      <div className="bell-actions">
+                        <button type="button" className="btn primary" onClick={async () => friendActions.tell(await friendActions.accept(r.request!.id), "Could not accept")}>Accept</button>
+                        <button type="button" className="btn" onClick={async () => friendActions.tell(await friendActions.ignore(r.request!.id), "Could not ignore")}>Ignore</button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
             )}
+            {unreadSocial > 0 && <button type="button" className="bell-settings" onClick={() => notifActions.markAllRead()}>Mark all as read</button>}
             <Link to="/app/profile" className="bell-settings" onClick={() => setOpen(false)}>Notification settings</Link>
           </motion.div>
         )}
