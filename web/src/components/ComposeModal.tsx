@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useDisplayName } from "../lib/displayName";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Trash2, X } from "lucide-react";
@@ -22,7 +23,7 @@ export default function ComposeModal({ open, onClose }: { open: boolean; onClose
   const { session } = useAuth();
   const nav = useNavigate();
   const me = session?.user.id ?? "";
-  const name = (session?.user.user_metadata?.name as string | undefined) || session?.user.email?.split("@")[0] || "Student";
+  const name = useDisplayName();
   const drafts = useDrafts();
   const [text, setText] = useState("");
   const [community, setCommunity] = useState<Community>("Everyone");

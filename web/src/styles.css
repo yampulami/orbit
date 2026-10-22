@@ -236,6 +236,10 @@ button.hang-went:hover{background:#fff}
 .me.big{width:72px;height:72px;font-size:1.6rem}
 .me-card{display:flex;align-items:center;gap:16px;margin-bottom:20px}
 .me-card h2{font-size:1.5rem}
+.me-info{display:grid;gap:8px;justify-items:start}
+.name-edit{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.name-edit input{min-width:200px;flex:1;min-height:44px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit}
+.name-edit .error{flex-basis:100%;margin:0}
 .track{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--panel);border-radius:28px;padding:20px 24px;margin-bottom:20px}
 .track h2{font-size:1.1rem;font-weight:500;margin-bottom:4px}
 .track p{font-size:.9rem;max-width:52ch}
@@ -1154,7 +1158,7 @@ a.up-more{display:inline-block}
 .map-note{font-size:.74rem;color:var(--ink-soft);line-height:1.4}
 .map-note a{text-decoration:underline;text-underline-offset:3px}
 .map-dot{flex:none;width:12px;height:12px;border-radius:50%}
-.map-stage{position:relative;min-height:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line)}
+.map-stage{position:relative;isolation:isolate;min-height:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line)}
 .map-box{position:absolute;inset:0;background:var(--panel)}
 .map-card{position:absolute;left:14px;right:14px;bottom:14px;max-width:420px;z-index:500;display:grid;gap:4px;padding:14px 16px;border-radius:18px;background:var(--surface);color:var(--ink);box-shadow:0 18px 36px -16px rgba(40,25,60,.5);border:1px solid var(--line)}
 .map-card strong{display:flex;align-items:center;gap:6px;font-family:var(--serif);font-size:1.15rem;font-weight:550}

@@ -104,6 +104,9 @@ export function bindHang(user: { id: string; name: string; campusKey: string }) 
   stopWatching = watch(user.id, () => void reload());
 }
 
+/** The signed-in student changed their name: new messages and plans carry it. */
+export function setHangName(name: string) { if (who) who = { ...who, name }; }
+
 /** Stop, and forget everything, for example when someone signs out. The next person must never see this person's groups. */
 export function unbindHang() {
   if (!live) return;

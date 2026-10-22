@@ -1,4 +1,6 @@
-import { Flame, LogOut } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { Flame, LogOut, Pencil } from "lucide-react";
+import { NAME_MAX, renameMe, useDisplayName } from "../lib/displayName";
 import { pushSupported } from "../lib/push";
 import { disableDeviceAlerts, enableDeviceAlerts, useDeviceAlerts } from "../lib/deviceAlerts";
 import { setNudge, useNudges } from "../lib/nudges";
@@ -13,9 +15,24 @@ import { badges, earnedIds, progress, streakWeeks, useProgress, type Area } from
 const AREAS: Area[] = ["Feed", "Groups", "Hangouts", "Everywhere"];
 
 export default function Profile() {
-  const { session, signOut } = useAuth();
+  const { session, signOut, refresh } = useAuth();
   const email = session?.user.email;
-  const name = (session?.user.user_metadata?.name as string | undefined) || email?.split("@")[0] || "Student";
+  const name = useDisplayName();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [nameError, setNameError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function saveName(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    const problem = await renameMe(session, draft);
+    setSaving(false);
+    if (problem) { setNameError(problem); return; }
+    refresh();
+    setEditing(false); setNameError("");
+    notice.show({ icon: "pin", title: "Name updated", message: "This is how you show up to everyone now.", ms: 3500 });
+  }
   const nav = useNavigate();
   const p = useProgress();
   const earned = earnedIds(p);
@@ -36,7 +53,23 @@ export default function Profile() {
       <h1 className="sr">Profile</h1>
       <section className="me-card">
         <span className="me big" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
-        <div><h2>{name}</h2>{email && <p className="muted">{email}</p>}</div>
+        <div className="me-info">
+          {editing ? (
+            <form className="name-edit" onSubmit={saveName}>
+              <label className="sr" htmlFor="name-edit">Your name</label>
+              <input id="name-edit" autoFocus value={draft} maxLength={NAME_MAX} onChange={(e) => setDraft(e.target.value)} placeholder="Your name" />
+              <button className="btn primary" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+              <button type="button" className="btn" onClick={() => { setEditing(false); setNameError(""); }}>Cancel</button>
+              {nameError && <p className="error" role="alert">{nameError}</p>}
+            </form>
+          ) : (
+            <>
+              <h2>{name}</h2>
+              {email && <p className="muted">{email}</p>}
+              <button type="button" className="btn" onClick={() => { setDraft(name); setEditing(true); }}><Pencil size={16} aria-hidden="true" />Edit name</button>
+            </>
+          )}
+        </div>
       </section>
 
       <section className="track">

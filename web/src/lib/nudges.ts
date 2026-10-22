@@ -30,7 +30,12 @@ export function profileChanged() {
   subs.forEach((f) => f());
 }
 
-export function useNudges(userId?: string): Nudges {
+/** Re-renders when the saved profile changes (nudges, name, ...). */
+export function useProfileVersion() {
   useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => version);
+}
+
+export function useNudges(userId?: string): Nudges {
+  useProfileVersion();
   return getNudges(userId);
 }

@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ComponentType } from "react";
 import { LogOut, Moon, SquarePen, Sun } from "lucide-react";
@@ -42,7 +43,7 @@ export default function Shell() {
     document.title = here ? `${here.label} · Orbit` : "Orbit";
     main.current?.focus({ preventScroll: true });
   }, [loc.pathname]);
-  const name = (session?.user.user_metadata?.name as string | undefined) || session?.user.email?.split("@")[0] || "Student";
+  const name = useDisplayName();
 
   const [composing, setComposing] = useState(false);
   const newPost = () => setComposing(true);

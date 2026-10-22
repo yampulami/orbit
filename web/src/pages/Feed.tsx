@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, Navigate } from "react-router-dom";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Flame, Pin, Heart, MessageCircle, Trash2 } from "lucide-react";
@@ -48,7 +49,7 @@ function useStickyRail(ref: React.RefObject<HTMLElement | null>, ready: boolean)
 export default function Feed() {
   const { session } = useAuth();
   const me = session?.user.id ?? "";
-  const name = (session?.user.user_metadata?.name as string | undefined) || session?.user.email?.split("@")[0] || "Student";
+  const name = useDisplayName();
 
   const [campus, setCampus] = useState<{ name: string; key: string } | null>(null);
   const [posts, setPosts] = useState<Row[]>([]);
