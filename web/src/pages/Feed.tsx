@@ -20,6 +20,9 @@ import PersonLink from "../components/PersonLink";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { progress, streakWeeks, useProgress } from "../lib/progress";
 import { undo } from "../lib/undo";
+import { supabase } from "../lib/supabase";
+import { watchTables } from "../lib/people";
+import { refreshOnReturn } from "../lib/privateDb";
 
 const MAX = 1000;
 const initials = (n: string) => n.trim().slice(0, 1).toUpperCase() || "?";
@@ -84,6 +87,16 @@ export default function Feed() {
   const run = async (fn: () => Promise<void>) => { setError(""); try { await fn(); } catch (e) { notice.show({ icon: "wifi", title: "That did not go through", message: `${(e as Error).message || "Something went wrong."} Check your connection and try again.` }); } };
   const load = () => run(async () => { const c = await api.campus(); setCampus(c); if (c) setPosts(await api.list()); setLoading(false); });
   useEffect(() => { load(); }, []);
+
+  // Posts, comments and likes from other students arrive on their own. Posts you have just deleted (and can still undo) stay out of the way.
+  const removing = useRef(new Set<string>());
+  useEffect(() => {
+    if (!supabase || !campus) return;
+    const refresh = () => { api.list().then((rows) => setPosts(rows.filter((r) => !removing.current.has(r.id)))).catch(() => undefined); };
+    const stopWatch = watchTables("orbit-feed", ["campus_posts", "post_likes", "post_comments"], refresh);
+    const stopReturn = refreshOnReturn(refresh);
+    return () => { stopWatch(); stopReturn(); };
+  }, [campus?.key]); // eslint-disable-line react-hooks/exhaustive-deps
   // A post made from the sidebar window appears here without a reload.
   useEffect(() => { const again = () => { load(); }; window.addEventListener("orbit-posts-changed", again); return () => window.removeEventListener("orbit-posts-changed", again); }, []);
 
@@ -104,10 +117,11 @@ export default function Feed() {
 
   // Deleting is undoable: the post leaves the feed now, and the real delete runs after the undo window.
   const remove = (p: Row) => {
+    removing.current.add(p.id);
     setPosts((ps) => ps.filter((x) => x.id !== p.id));
     undo.show("Post deleted", {
-      onUndo: () => setPosts((ps) => (ps.some((x) => x.id === p.id) ? ps : [...ps, p].sort((a, b) => b.created_at.localeCompare(a.created_at)))),
-      commit: () => api.remove(p.id),
+      onUndo: () => { removing.current.delete(p.id); setPosts((ps) => (ps.some((x) => x.id === p.id) ? ps : [...ps, p].sort((a, b) => b.created_at.localeCompare(a.created_at)))); },
+      commit: () => Promise.resolve(api.remove(p.id)).finally(() => { removing.current.delete(p.id); }),
     });
   };
   // A reply is a comment that points at the comment it answers; the person who wrote that comment is told.

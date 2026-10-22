@@ -22,6 +22,7 @@ import { bindNotifs, unbindNotifs } from "./lib/notifs";
 // Everything except the main feed loads when it is first opened, so the first download stays small.
 const Landing = lazy(() => import("./pages/Landing"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Plans = lazy(() => import("./pages/Plans"));
 const Groups = lazy(() => import("./pages/Groups"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -119,6 +120,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/signup" element={<AuthPage mode="signup" />} />
+        <Route path="/forgot" element={<ForgotPassword />} />
         <Route path="/join/:code" element={<JoinLink />} />
         <Route path="/onboarding" element={<Protected><OnboardingGate /></Protected>} />
         <Route path="/app" element={<Protected><InApp><Shell /></InApp></Protected>}>

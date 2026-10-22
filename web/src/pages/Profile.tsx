@@ -22,7 +22,7 @@ export default function Profile() {
   const [deleting, setDeleting] = useState<"idle" | "asking" | "working">("idle");
   const [deleteError, setDeleteError] = useState("");
 
-  // Your username: how friends find you and add you to groups. Unique on your campus.
+  // Your username: how friends find you, add you to groups, and how you can sign in. Unique across Orbit.
   const [username, setUsernameValue] = useState<string | null | undefined>(undefined); // undefined while loading
   const [editingUser, setEditingUser] = useState(false);
   const [userDraft, setUserDraft] = useState("");
@@ -112,7 +112,7 @@ export default function Profile() {
                 <span className="onb-at"><span aria-hidden="true">@</span><input id="username-edit" autoFocus value={userDraft} maxLength={USERNAME_MAX} autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={(e) => setUserDraft(normalizeUsername(e.target.value).replace(/[^a-z0-9_]/g, ""))} placeholder="username" /></span>
                 <button className="btn primary" disabled={savingUser || !!checkUsername(userDraft)}>{savingUser ? "Saving…" : "Save"}</button>
                 <button type="button" className="btn" onClick={() => { setEditingUser(false); setUserError(""); }}>Cancel</button>
-                <p className={userError || (userDraft && checkUsername(userDraft)) ? "error" : "muted"} role={userError ? "alert" : undefined}>{userError || (userDraft && checkUsername(userDraft)) || "Letters, numbers and underscores. Nobody else on your campus can have the same one."}</p>
+                <p className={userError || (userDraft && checkUsername(userDraft)) ? "error" : "muted"} role={userError ? "alert" : undefined}>{userError || (userDraft && checkUsername(userDraft)) || "Letters, numbers and underscores. Nobody else can have the same one. You can also sign in with it."}</p>
               </form>
             ) : username ? (
               <p className="muted">@{username}. Friends use this to find you and add you to groups.</p>

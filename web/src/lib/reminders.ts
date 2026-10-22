@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { undo } from "./undo";
 import { supabase } from "./supabase";
 import { dbRun, loadReminders, refreshOnReturn, toReminderRow } from "./privateDb";
+import { watchTables } from "./people";
 
 /** Reminders the person sets on the calendar. With a database they follow you between devices; without one they are saved on this device. */
 export type Reminder = { id: string; title: string; date: string; time?: string; done: boolean; /** Already shown as an alert, so it does not pop up twice. */ notified?: boolean };
@@ -74,7 +75,10 @@ export function bindReminders(userId: string) {
   unbindReminders();
   owner = userId;
   void reload();
-  stopRefresh = refreshOnReturn(() => void reload());
+  // A reminder made on another device shows up here too (and the check on return and the slow safety check cover a missed change).
+  const stopWatch = watchTables(`orbit-reminders-${userId}`, ["reminders"], () => void reload());
+  const stopReturn = refreshOnReturn(() => void reload());
+  stopRefresh = () => { stopWatch(); stopReturn(); };
 }
 export function unbindReminders() {
   if (!live) return;

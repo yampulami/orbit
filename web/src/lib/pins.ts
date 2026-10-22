@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { undo } from "./undo";
 import { supabase } from "./supabase";
 import { dbRun, loadPins, refreshOnReturn } from "./privateDb";
+import { watchTables } from "./people";
 
 /** Things you marked as very important: a few hangouts, reminders or chores, shown first on Home. With a database they follow you between devices; without one they are saved on this device. */
 export type PinKind = "hangout" | "reminder" | "chore";
@@ -38,7 +39,9 @@ export function bindPins(userId: string) {
   unbindPins();
   owner = userId;
   void reload();
-  stopRefresh = refreshOnReturn(() => void reload());
+  const stopWatch = watchTables(`orbit-pins-${userId}`, ["user_pins"], () => void reload());
+  const stopReturn = refreshOnReturn(() => void reload());
+  stopRefresh = () => { stopWatch(); stopReturn(); };
 }
 export function unbindPins() {
   if (!live) return;

@@ -22,13 +22,54 @@ export async function loadNames(userIds: string[]): Promise<Record<string, strin
   return out;
 }
 
-/** Call `onChange` (shortly after, and once for a burst) whenever any of these tables change. Returns a function that stops listening. */
+/** How often to look again when the live connection is down, and as a safety net when it seems fine. */
+export const POLL_DOWN_MS = 15000;
+export const POLL_SAFETY_MS = 120000;
+/** If the connection has not come up by now, treat it as down (for example a network that blocks live connections). */
+export const CONNECT_GRACE_MS = 8000;
+
+/** Call `onChange` whenever any of these tables change (shortly after, and once for a burst). Returns a function that stops listening.
+ *
+ *  It is built so a screen never gets stuck showing old things:
+ *  - if the live connection drops and comes back, it looks again at once, to catch up on what was missed;
+ *  - if the connection is down, or never comes up (some school networks block live connections), it looks again every 15 seconds;
+ *  - even when everything seems fine it looks again every two minutes, in case a change was missed;
+ *  - it looks again the moment the device comes back online. It only does any of this while the page is on screen. */
 export function watchTables(name: string, tables: string[], onChange: () => void): () => void {
   const sb = supabase!;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const soon = () => { clearTimeout(timer); timer = setTimeout(onChange, 250); };
+  let stopped = false, healthy = false, everUp = false;
+  const soon = () => { if (stopped) return; clearTimeout(timer); timer = setTimeout(onChange, 250); };
+  const visible = () => typeof document === "undefined" || document.visibilityState === "visible";
+
   const ch = sb.channel(`${name}-${Math.random().toString(36).slice(2, 8)}`);
   for (const table of tables) ch.on("postgres_changes", { event: "*", schema: "public", table }, soon);
-  ch.subscribe();
-  return () => { clearTimeout(timer); void sb.removeChannel(ch); };
+  ch.subscribe((status) => {
+    if (stopped) return;
+    if (status === "SUBSCRIBED") {
+      const catchUp = everUp && !healthy; // it was down and is back: what happened meanwhile was missed
+      healthy = true; everUp = true;
+      if (catchUp) soon();
+    } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+      healthy = false;
+    }
+  });
+
+  // One timer does both jobs: quick looks while the connection is down, slow ones as a safety net while it is up.
+  let sinceLook = 0;
+  const tick = setInterval(() => {
+    if (!visible()) return;
+    sinceLook += POLL_DOWN_MS;
+    if (!healthy || sinceLook >= POLL_SAFETY_MS) { sinceLook = 0; onChange(); }
+  }, POLL_DOWN_MS);
+  const grace = setTimeout(() => { if (!everUp && !stopped) onChange(); }, CONNECT_GRACE_MS); // never connected at all
+  const online = () => soon();
+  if (typeof window !== "undefined") window.addEventListener("online", online);
+
+  return () => {
+    stopped = true;
+    clearTimeout(timer); clearTimeout(grace); clearInterval(tick);
+    if (typeof window !== "undefined") window.removeEventListener("online", online);
+    void sb.removeChannel(ch);
+  };
 }

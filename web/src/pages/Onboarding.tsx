@@ -58,8 +58,10 @@ export default function Onboarding() {
   const [uni, setUni] = useState<University | null>(null);
   const [name, setName] = useState("");
   // Usernames are how friends find you and add you to groups. They need a database, so demo mode skips them.
-  const [username, setUsername] = useState("");
-  const [userEdited, setUserEdited] = useState(false);
+  // The username picked at sign up (kept with the account) is the starting point; guests and older accounts get one suggested from their name.
+  const chosenAtSignUp = (session?.user.user_metadata as { username?: string } | undefined)?.username ?? "";
+  const [username, setUsername] = useState(chosenAtSignUp);
+  const [userEdited, setUserEdited] = useState(!!chosenAtSignUp);
   const [tenure, setTenure] = useState<Tenure | null>(null);
   const [living, setLiving] = useState<Living | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
@@ -123,7 +125,7 @@ export default function Onboarding() {
       arrival.end();
       setWipe(null);
       const message = (e as Error).message || "";
-      if (/username/i.test(message)) { setI(STEPS.indexOf("name")); setError("That username is taken on your campus. Pick another."); }
+      if (/username/i.test(message)) { setI(STEPS.indexOf("name")); setError("That username is taken. Pick another."); }
       else setError(message || "Something went wrong saving your answers. Try again.");
       setSaving(false);
     }

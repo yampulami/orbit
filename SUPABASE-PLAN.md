@@ -170,3 +170,17 @@ delete from auth.users where is_anonymous and created_at < now() - interval '3 d
 **Checked live on 2026-10-22** with separate test accounts (a duplicate username, a username on another campus, a bad username, asking yourself, asking another campus, a repeat request, direct inserts, a stranger answering someone else's request, adding a friend, adding a non-friend, a non-member adding people, adding twice, a three-level reply thread with the right people notified, replying to yourself not notifying you, payments by a member, an outsider and to a non-member). Every one gave the expected result.
 
 **Test accounts to remove.** The checks left accounts named "QA Dana", "QA Eli", "QA Fay" and "QA Other", plus a group "QA Study", a household "QA House" and a post. To list them: `select p.display_name, u.id from student_profiles p join auth.users u on u.id = p.user_id where p.display_name like 'QA %';`
+
+
+## Live updates (checked 2026-10-22)
+
+**What was tested.** Two separate students on the real database: one makes a change, the other has the app open and must see it with no reload. Every one of these arrived: posts, comments, likes, group chat, direct messages, hangouts and answers, chores, groceries, expenses, house notes, payments, friend requests, notifications, and map places and votes.
+
+**What was wrong, and is fixed in the app.**
+- The Home feed (posts, comments, likes) did not listen at all, so other students' posts and comments only appeared after a reload. It now listens, and refreshes quietly. A post you have just deleted (and can still undo) stays out of the way.
+- Nothing caught up after a dropped connection (a phone asleep, Wi-Fi changing). `watchTables` in `web/src/lib/people.ts`, which every screen uses, now: looks again at once when the connection comes back; looks again every 15 seconds while it is down or never came up (some school networks block live connections); looks again every 2 minutes as a safety net; and looks again when the device comes back online. It only does this while the page is on screen.
+- Reminders and pins listen now too, but their tables were not switched on for live updates in the database, so they need `20261023130000_realtime_more_tables.sql` (reminders, pins and group invite codes). Until it is applied they refresh on the 2 minute safety check.
+
+**Load speed** was fine when measured: the feed in about 50 ms, groups and chat in about 200 to 350 ms, the household in about 300 ms, messages in about 150 to 550 ms.
+
+**More test accounts to remove.** This check left "RT Alice", "RT Bob" and "RT Carol", with a group "RT Group", a household "RT House" and a second group "RT second group", plus some posts and messages. They can be listed with `select p.display_name, u.id from student_profiles p join auth.users u on u.id = p.user_id where p.display_name like 'RT %';`.
