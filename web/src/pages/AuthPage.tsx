@@ -14,6 +14,7 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
   const [availability, setAvailability] = useState<Availability>("idle");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -47,6 +48,7 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError(""); setNotice("");
+    if (mode === "signup" && !agreed) { setError("Please agree to the Terms and Privacy Policy to make an account."); return; }
     if (needsUsername) {
       const bad = checkUsername(username);
       if (bad) { setError(bad); return; }
@@ -91,11 +93,18 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
           </span>
         </label>
         {mode === "login" && !demo && <p className="auth-forgot"><Link to="/forgot">Forgot password?</Link></p>}
+        {mode === "signup" && (
+          <label className="auth-agree">
+            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+            <span>I agree to the <Link to="/terms" target="_blank" rel="noreferrer">Terms</Link> and <Link to="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link>.</span>
+          </label>
+        )}
         {error && <p className="error" role="alert">{error}</p>}
         {notice && <p className="notice">{notice}</p>}
         <button className="btn primary" disabled={busy || (needsUsername && availability === "checking")}>{busy ? "Please wait…" : mode === "login" ? "Sign in" : "Sign up"}</button>
         <div className="auth-or" aria-hidden="true"><span>or</span></div>
         <button type="button" className="btn" onClick={asGuest} disabled={busy}>Continue as a guest</button>
+        <p className="muted auth-fine">By continuing you agree to the <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.</p>
         <p className="muted" style={{ fontSize: ".9rem" }}>
           {mode === "login" ? <>New here? <Link to="/signup" style={{ textDecoration: "underline" }}>Create an account</Link></> : <>Have an account? <Link to="/login" style={{ textDecoration: "underline" }}>Sign in</Link></>}
         </p>

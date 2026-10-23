@@ -22,6 +22,9 @@ export async function loadNames(userIds: string[]): Promise<Record<string, strin
   return out;
 }
 
+/** Ask every screen to look again now, for example after blocking someone, so what they made disappears without a reload. */
+export const refreshEverything = () => { if (typeof window !== "undefined") window.dispatchEvent(new Event("orbit-refresh")); };
+
 /** How often to look again when the live connection is down, and as a safety net when it seems fine. */
 export const POLL_DOWN_MS = 15000;
 export const POLL_SAFETY_MS = 120000;
@@ -64,12 +67,12 @@ export function watchTables(name: string, tables: string[], onChange: () => void
   }, POLL_DOWN_MS);
   const grace = setTimeout(() => { if (!everUp && !stopped) onChange(); }, CONNECT_GRACE_MS); // never connected at all
   const online = () => soon();
-  if (typeof window !== "undefined") window.addEventListener("online", online);
+  if (typeof window !== "undefined") { window.addEventListener("online", online); window.addEventListener("orbit-refresh", online); }
 
   return () => {
     stopped = true;
     clearTimeout(timer); clearTimeout(grace); clearInterval(tick);
-    if (typeof window !== "undefined") window.removeEventListener("online", online);
+    if (typeof window !== "undefined") { window.removeEventListener("online", online); window.removeEventListener("orbit-refresh", online); }
     void sb.removeChannel(ch);
   };
 }

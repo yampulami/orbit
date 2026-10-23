@@ -83,7 +83,7 @@ export default function Landing() {
         </section>
       </div>
       <footer className="footer">
-        <div className="container">Orbit — a senior capstone project. Email sign-up does not verify university enrollment.</div>
+        <div className="container">Orbit — a senior capstone project. Email sign-up does not verify university enrollment. <Link to="/terms">Terms</Link> · <Link to="/privacy">Privacy</Link></div>
       </footer>
     </>
   );

@@ -18,11 +18,13 @@ import { bindRoommates, unbindRoommates } from "./lib/roommates";
 import { bindDms, unbindDms } from "./lib/dms";
 import { bindFriends, unbindFriends } from "./lib/friends";
 import { bindNotifs, unbindNotifs } from "./lib/notifs";
+import { bindBlocks, unbindBlocks } from "./lib/safety";
 
 // Everything except the main feed loads when it is first opened, so the first download stays small.
 const Landing = lazy(() => import("./pages/Landing"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Legal = lazy(() => import("./pages/Legal"));
 const Plans = lazy(() => import("./pages/Plans"));
 const Groups = lazy(() => import("./pages/Groups"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -83,6 +85,7 @@ function InApp({ children }: { children: ReactNode }) {
     bindDms(uid);
     bindFriends(uid);
     bindNotifs(uid);
+    bindBlocks(uid);
     // An invite link opened before signing in leaves its code here. Use it now that the person is in.
     let waiting: string | null = null;
     try { waiting = sessionStorage.getItem("orbit-join-code"); if (waiting) sessionStorage.removeItem("orbit-join-code"); } catch { /* ignore */ }
@@ -92,7 +95,7 @@ function InApp({ children }: { children: ReactNode }) {
         else { notice.show({ icon: "pin", title: "You joined the group", message: "It is on your Groups list.", ms: 4000 }); nav("/app/groups"); }
       });
     }
-    return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); };
+    return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); };
   }, [done, uid, campusKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (done === "checking") return <p className="muted" style={{ padding: 24 }} role="status">Loading…</p>;
   return done === "yes" ? <>{children}</> : <Navigate to="/onboarding" replace />;
@@ -121,6 +124,8 @@ export default function App() {
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/signup" element={<AuthPage mode="signup" />} />
         <Route path="/forgot" element={<ForgotPassword />} />
+        <Route path="/terms" element={<Legal kind="terms" />} />
+        <Route path="/privacy" element={<Legal kind="privacy" />} />
         <Route path="/join/:code" element={<JoinLink />} />
         <Route path="/onboarding" element={<Protected><OnboardingGate /></Protected>} />
         <Route path="/app" element={<Protected><InApp><Shell /></InApp></Protected>}>

@@ -17,6 +17,7 @@ import { notice } from "../lib/notice";
 import HangoutCard from "../components/HangoutCard";
 import CommentThread from "../components/CommentThread";
 import PersonLink from "../components/PersonLink";
+import SafetyMenu from "../components/SafetyMenu";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { progress, streakWeeks, useProgress } from "../lib/progress";
 import { undo } from "../lib/undo";
@@ -254,7 +255,7 @@ export default function Feed() {
               const people = [...new Set(p.post_comments.map((c) => c.author_name))].slice(0, 3);
               return (
                 <motion.article key={p.id} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: -14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
-                  <div className="meta"><span className="who"><PersonLink id={p.author_id} className="who-link"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span></PersonLink><span><PersonLink id={p.author_id} className="who-link"><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong></PersonLink> · {when(p.created_at)}</span></span><span className="chip">{p.community}</span></div>
+                  <div className="meta"><span className="who"><PersonLink id={p.author_id} className="who-link"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span></PersonLink><span><PersonLink id={p.author_id} className="who-link"><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong></PersonLink> · {when(p.created_at)}</span></span><span className="meta-end"><span className="chip">{p.community}</span><SafetyMenu userId={p.author_id} name={p.author_name} postId={p.id} context="post" /></span></div>
                   {p.payload.title && <h3>{p.payload.title}</h3>}
                   <p className="body" style={{ whiteSpace: "pre-wrap" }}>{p.payload.body ?? p.payload.text ?? ""}</p>
                   <div className="foot">
@@ -273,7 +274,7 @@ export default function Feed() {
                     {expanded && (
                       <motion.div className="reveal" key="comments" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1, transition: enter }} exit={{ height: 0, opacity: 0, transition: exit }}>
                         <div className="comments">
-                          <CommentThread comments={p.post_comments} onComment={(text) => sendComment(p, text)} onReply={(parentId, text) => sendReply(p, parentId, text)} />
+                          <CommentThread postId={p.id} comments={p.post_comments} onComment={(text) => sendComment(p, text)} onReply={(parentId, text) => sendReply(p, parentId, text)} />
                         </div>
                       </motion.div>
                     )}

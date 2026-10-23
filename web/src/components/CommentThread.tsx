@@ -5,6 +5,7 @@ import { ancestorsOf, directReplies, replyCount, topLevel } from "../lib/comment
 import type { Comment } from "../lib/feedData";
 import { enter } from "../lib/motion";
 import PersonLink from "./PersonLink";
+import SafetyMenu from "./SafetyMenu";
 
 const ago = (iso: string) => {
   const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -16,6 +17,8 @@ const ago = (iso: string) => {
 const initial = (n: string) => n.trim().slice(0, 1).toUpperCase() || "?";
 
 type Props = {
+  /** The post these comments are on (so a report can point at it). */
+  postId: string;
   comments: Comment[];
   /** Post a comment straight on the post. */
   onComment: (text: string) => Promise<void> | void;
@@ -26,7 +29,7 @@ type Props = {
 /** The comments on a post, one level at a time, like Twitter or Instagram. Comments on the post are listed as cards; each has a reply icon with a
  *  count. Pressing it opens that comment's thread: the comment on top, a box to reply to it, and its replies as cards of their own, each with
  *  their own reply icon, so you can keep going down. Back goes up one level. */
-export default function CommentThread({ comments, onComment, onReply }: Props) {
+export default function CommentThread({ postId, comments, onComment, onReply }: Props) {
   const reduce = useReducedMotion();
   const [focusId, setFocusId] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -57,7 +60,8 @@ export default function CommentThread({ comments, onComment, onReply }: Props) {
       <article key={c.id} className={"cmt-card" + (kind === "focus" ? " focus" : kind === "context" ? " context" : "")}>
         <div className="cmt-head">
           <PersonLink id={c.user_id} className="who-link"><span className="who-av" aria-hidden="true">{initial(c.author_name)}</span></PersonLink>
-          <span><PersonLink id={c.user_id} className="who-link"><strong>{c.author_name}</strong></PersonLink> · <span className="cmt-when">{ago(c.created_at)}</span></span>
+          <span className="cmt-who"><PersonLink id={c.user_id} className="who-link"><strong>{c.author_name}</strong></PersonLink> · <span className="cmt-when">{ago(c.created_at)}</span></span>
+          <SafetyMenu userId={c.user_id} name={c.author_name} postId={postId} commentId={c.id} context="comment" />
         </div>
         <p className="cmt-body">{c.body}</p>
         {kind !== "focus" && (

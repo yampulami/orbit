@@ -184,3 +184,48 @@ delete from auth.users where is_anonymous and created_at < now() - interval '3 d
 **Load speed** was fine when measured: the feed in about 50 ms, groups and chat in about 200 to 350 ms, the household in about 300 ms, messages in about 150 to 550 ms.
 
 **More test accounts to remove.** This check left "RT Alice", "RT Bob" and "RT Carol", with a group "RT Group", a household "RT House" and a second group "RT second group", plus some posts and messages. They can be listed with `select p.display_name, u.id from student_profiles p join auth.users u on u.id = p.user_id where p.display_name like 'RT %';`.
+
+
+## Blocking, reporting, Terms and Privacy (built 2026-10-22)
+
+**In the app.** A "..." menu on another student's post, comment, direct message thread and profile has **Report** and **Block**. Reporting asks what is wrong (spam, harassment, unsafe, misleading, other) with an optional note. Blocking explains what happens first. Profile has a **Blocked people** list with Unblock. `/terms` and `/privacy` are public pages, linked from the landing page, with an agreement box at sign up and a line under "Continue as a guest". Both pages are plain-language **drafts** and should be read over by someone qualified before Orbit is opened to the public.
+
+**Apply `20261023140000_block_and_report.sql`** (it works without it, but is fuller with it). It makes a blocked person's comments and hangouts disappear too (posts, group messages and direct messages already did), ends any friendship and friend request when you block, lets the blocked list show names, lets a report point at a comment, and limits each student to 20 reports a day. Until it is applied, blocking still works but the list says "Someone", and a report notes the comment in its written part.
+
+**Reading reports.** Nobody has a screen for reports yet, so read them in the SQL editor:
+
+```sql
+select r.created_at, r.status, r.reason, r.context, r.detail,
+       rp.display_name as reported, rp.username as reported_username,
+       rr.display_name as reporter, r.post_id
+from content_reports r
+left join student_profiles rp on rp.user_id = r.reported_user_id
+left join student_profiles rr on rr.user_id = r.reporter_id
+order by (r.status = 'open') desc, r.created_at desc;
+```
+
+Mark one dealt with with `update content_reports set status = 'resolved' where id = '...';` (the other values are `reviewing` and `dismissed`).
+
+## Removing test accounts
+
+Test accounts are named "QA ...", "RT ...", "VZ ..." and "SF ...". First look at what would go (every row should be one of mine):
+
+```sql
+select p.display_name, u.id, u.created_at
+from student_profiles p join auth.users u on u.id = p.user_id
+where u.is_anonymous and p.display_name ~ '^(QA|RT|VZ|SF) '
+order by u.created_at;
+```
+
+Then delete them. Deleting an account removes what it made (posts, comments, messages, groups it started, households, reports about it). Map places only lose their author, so those are removed by name. The last line should show 0 test profiles left:
+
+```sql
+begin;
+delete from campus_places where name in ('RT cafe', 'Policy check cafe', 'Test coffee cart');
+delete from auth.users u using student_profiles p
+where p.user_id = u.id and u.is_anonymous and p.display_name ~ '^(QA|RT|VZ|SF) ';
+select (select count(*) from student_profiles where display_name ~ '^(QA|RT|VZ|SF) ') as test_profiles_left;
+commit;
+```
+
+Campus verification (requiring a school email to join a campus) is deliberately not built yet, so test accounts keep working. When it is built it will have an on/off switch.

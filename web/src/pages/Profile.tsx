@@ -11,6 +11,7 @@ import BadgeIcon from "../components/BadgeIcon";
 import { ThemeSegment } from "../components/ThemeControls";
 import { useAuth } from "../lib/auth";
 import { isGuestEmail } from "../lib/demoAuth";
+import { safetyActions, safetyLive, useBlocks } from "../lib/safety";
 import { checkUsername, normalizeUsername, saveUsername, suggestUsername, USERNAME_MAX } from "../lib/username";
 import { badges, earnedIds, progress, streakWeeks, useProgress, type Area } from "../lib/progress";
 
@@ -21,6 +22,7 @@ export default function Profile() {
   const isGuest = !!(session?.user as { is_anonymous?: boolean } | undefined)?.is_anonymous || isGuestEmail(session?.user.email);
   const [deleting, setDeleting] = useState<"idle" | "asking" | "working">("idle");
   const [deleteError, setDeleteError] = useState("");
+  const blocked = useBlocks();
 
   // Your username: how friends find you, add you to groups, and how you can sign in. Unique across Orbit.
   const [username, setUsernameValue] = useState<string | null | undefined>(undefined); // undefined while loading
@@ -192,6 +194,21 @@ export default function Profile() {
         <button type="button" className="btn" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}><LogOut size={18} strokeWidth={1.9} aria-hidden="true" />{isGuest ? "Sign out and delete this guest" : "Sign out"}</button>
         {isGuest && <p className="muted">You are using a guest account. Guests cannot sign back in, so signing out removes it and everything you made.</p>}
       </section>
+
+      {safetyLive && blocked.length > 0 && (
+        <section className="blocked-card" aria-label="Blocked people">
+          <h2>Blocked people</h2>
+          <p className="muted">You do not see each other's posts, comments, messages or plans.</p>
+          <ul className="friend-list">
+            {blocked.map((b) => (
+              <li key={b.id} className="friend-row">
+                <strong className="grow">{b.name}</strong>
+                <button type="button" className="btn" onClick={async () => { const problem = await safetyActions.unblock(b.id); if (problem) notice.show({ icon: "alert", title: "Could not unblock", message: problem }); else notice.show({ icon: "pin", title: `${b.name} is unblocked`, message: "You can see each other again.", ms: 4000 }); }}>Unblock</button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="danger-zone" aria-label="Delete account">
         {deleting === "idle" ? (

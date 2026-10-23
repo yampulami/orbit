@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Plus, Send } from "lucide-react";
 import { enter, slide } from "../lib/motion";
 import { dmActions, dmLive, useDms } from "../lib/dms";
+import SafetyMenu from "../components/SafetyMenu";
 
 type Msg = { mine: boolean; text: string };
 const seedThreads: Record<string, Msg[]> = {
@@ -81,7 +82,7 @@ function LiveMessages() {
             </div>
           ) : current ? (
             <>
-              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link></h2><p className="muted">Direct message</p></div></div>
+              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link></h2><p className="muted">Direct message</p></div><SafetyMenu userId={current.otherId} name={current.name} context="direct message" /></div>
               <div className="bubbles" ref={scroller} aria-live="polite">
                 {current.messages.length === 0 && <p className="rm-empty">Say hello to {current.name}.</p>}
                 {current.messages.map((m) => (

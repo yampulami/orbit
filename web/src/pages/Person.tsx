@@ -5,6 +5,7 @@ import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import { friendActions, useRelation } from "../lib/friends";
 import { dmActions } from "../lib/dms";
+import SafetyMenu from "../components/SafetyMenu";
 
 type Profile = { name: string; username: string | null; tenure: string | null; interests: string[]; bio: string };
 
@@ -54,7 +55,7 @@ export default function Person() {
       <section className="person-card me-card">
         <span className="me big" aria-hidden="true">{profile.name.slice(0, 1).toUpperCase()}</span>
         <div className="me-info">
-          <h2>{profile.name}</h2>
+          <div className="person-title"><h2>{profile.name}</h2><SafetyMenu userId={id} name={profile.name} context="profile" onBlocked={() => nav("/app/feed")} /></div>
           {profile.username && <p className="muted">@{profile.username}</p>}
           {profile.tenure && <p className="muted">{TENURE[profile.tenure] ?? profile.tenure}</p>}
           {profile.bio && <p>{profile.bio}</p>}
