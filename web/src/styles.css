@@ -1557,37 +1557,50 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
 .legal-draft{padding:10px 14px;border-radius:14px;background:var(--butter);color:var(--butter-ink);font-size:.88rem}
 .legal-foot{font-size:.88rem;margin-top:10px}
 
-/* collapsible sidebar (desktop): icons only, or icons with names. Everything animates between the two widths. */
-.side-toggle,.navtext{display:none}
+/* collapsible sidebar (desktop): icons only, or it opens over the page with names. Opening over the page (instead of pushing it)
+   means the page behind never has to re-layout, so the animation stays smooth. */
+.side-toggle,.navtext,.side-scrim{display:none}
 @media (min-width:901px){
-  .shell{--sw:96px;grid-template-columns:var(--sw) minmax(0,1fr);transition:grid-template-columns .38s var(--ease)}
-  .shell.wide{--sw:236px}
-  .side{--lw:52px;--cw:56px;--ww:204px;width:var(--sw);transition:padding .38s var(--ease)}
+  .side{--lw:52px;--cw:56px;--ww:204px;--sw:96px;width:var(--sw);justify-self:start;z-index:40;will-change:width;transition:width .42s cubic-bezier(.22,1,.36,1),box-shadow .42s}
+  .shell.wide .side{--sw:236px;box-shadow:0 30px 70px -20px rgba(20,10,60,.7)}
+  .side-scrim{display:block;position:fixed;inset:0;z-index:35;background:rgba(10,6,30,.38);opacity:0;pointer-events:none;transition:opacity .42s}
+  .shell.wide .side-scrim{opacity:1;pointer-events:auto}
   .side-top{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
-  .side-toggle{display:grid;place-items:center;width:var(--lw);height:var(--lw);border:0;border-radius:50%;background:transparent;color:#fff;cursor:pointer;transition:background .25s,width .38s var(--ease)}
+  .side-toggle{display:grid;place-items:center;width:var(--lw);height:var(--lw);border:0;border-radius:50%;background:transparent;color:#fff;cursor:pointer;transition:background .25s}
   .side-toggle:hover{background:rgba(255,255,255,.2)}
-  .side-toggle svg{transition:transform .38s var(--ease)}
-  .shell.wide .side-toggle svg{transform:rotate(90deg)}
+  .orbit-dots{fill:currentColor;overflow:visible}
+  .orbit-dots g{transform-origin:13px 13px}
+  .orbit-dots.go g{animation:orbit-spin .75s cubic-bezier(.65,0,.25,1)}
   .side .logo{margin-bottom:0;gap:12px}
-  .side .logo .navtext{display:block;color:#fff;font-size:1.25rem;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width .38s var(--ease),opacity .25s}
-  .shell.wide .side .logo .navtext{max-width:120px;opacity:1;transition-delay:0s,.12s}
+  .side .logo .navtext{display:block;color:#fff;font-size:1.25rem;white-space:nowrap;opacity:0;transition:opacity .2s}
+  .shell.wide .side .logo .navtext{opacity:1;transition-delay:.15s}
   .shell.wide .side-top{flex-direction:row;justify-content:flex-start;gap:6px;padding:0 14px}
   .shell.wide .side .logo{margin-left:4px}
 
   .navgroup{width:100%;align-items:center}
-  .navlink{display:flex;align-items:center;justify-content:flex-start;gap:0;width:var(--lw);overflow:hidden;transition:width .38s var(--ease),background .3s var(--ease),color .3s var(--ease),transform .3s var(--ease)}
+  .navlink{display:flex;align-items:center;justify-content:flex-start;gap:0;width:var(--lw);overflow:hidden;transition:width .42s cubic-bezier(.22,1,.36,1),background .3s var(--ease),color .3s var(--ease),transform .3s var(--ease)}
   .navlink>svg{flex:none;margin-left:calc((var(--lw) - 22px) / 2)}
-  .compose-btn.solo{display:flex;align-items:center;justify-content:flex-start;overflow:hidden;width:var(--cw);transition:width .38s var(--ease),border-radius .38s var(--ease),transform .2s var(--ease),box-shadow .2s}
+  .compose-btn.solo{display:flex;align-items:center;justify-content:flex-start;overflow:hidden;width:var(--cw);transition:width .42s cubic-bezier(.22,1,.36,1),transform .2s var(--ease),box-shadow .2s}
   .compose-btn.solo>svg{flex:none;margin-left:calc((var(--cw) - 24px) / 2)}
-  .navtext{display:block;max-width:0;opacity:0;overflow:hidden;white-space:nowrap;font-weight:600;font-size:.95rem;margin-left:0;transform:translateX(-6px);transition:max-width .38s var(--ease),opacity .2s,margin .38s var(--ease),transform .38s var(--ease)}
-  .navlink .navtext,.compose-btn .navtext{position:relative}
+  .navtext{display:block;white-space:nowrap;font-weight:600;font-size:.95rem;margin-left:14px;opacity:0;transform:translateX(-8px);transition:opacity .15s,transform .3s var(--ease)}
   .shell.wide .navlink,.shell.wide .compose-btn.solo{width:var(--ww)}
-  .shell.wide .navtext{max-width:140px;opacity:1;margin-left:14px;transform:none;transition-delay:0s,.14s,0s,.1s}
-  .shell.wide .side .logo .navtext{margin-left:0}
-  .shell.wide .compose-btn.solo{border-radius:28px}
+  .shell.wide .navtext{opacity:1;transform:none;transition:opacity .25s .14s,transform .35s var(--ease) .1s}
+  .shell.wide .side .logo .navtext{margin-left:0;transform:none}
+  .side .logo .navtext{margin-left:0}
   .shell.wide .nav-dot{right:auto;left:30px;top:9px}
-  .nav-dot{transition:left .38s var(--ease),right .38s var(--ease)}
 }
+@keyframes orbit-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @media (min-width:901px) and (max-height:860px){.side{--lw:46px;--cw:48px}}
 @media (min-width:901px) and (max-height:700px){.side{--lw:40px;--cw:42px}.navlink>svg{margin-left:calc((var(--lw) - 20px) / 2)}}
-@media (min-width:901px) and (prefers-reduced-motion:reduce){.shell,.side,.navlink,.navtext,.side-toggle svg,.compose-btn.solo{transition:none!important}}
+@media (min-width:901px) and (prefers-reduced-motion:reduce){.side,.navlink,.navtext,.side-scrim,.compose-btn.solo{transition:none!important}.orbit-dots.go g{animation:none}}
+
+/* phones: the menu sits at the bottom like a phone app, instead of a pill at the top that runs off the screen */
+@media (max-width:900px){
+  .shell{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  .shell .side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;width:auto;z-index:50;flex-direction:row;justify-content:center;border-radius:24px 24px 0 0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));gap:0;overflow:visible;box-shadow:0 -10px 30px -12px rgba(20,10,60,.55)}
+  .shell .side .side-top,.shell .side .compose-btn,.shell .side .extra,.shell .side .spacer,.shell .side .me{display:none}
+  .shell .navgroup{width:100%;margin:0;flex-direction:row;justify-content:space-around;gap:0}
+  .shell .navlink{width:48px;height:48px;border-radius:16px}
+  .shell .navpill{border-radius:16px}
+  .shell .nav-dot{top:7px;right:7px}
+}

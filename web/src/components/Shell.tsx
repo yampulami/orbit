@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { LogOut, Menu, Moon, SquarePen, Sun } from "lucide-react";
+import { LogOut, Moon, SquarePen, Sun } from "lucide-react";
 import { GroupsIcon, HomeIcon, MapIcon, MessagesIcon, PlansIcon, RoommatesIcon } from "./icons";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
@@ -46,9 +46,16 @@ export default function Shell() {
   }, [loc.pathname]);
   const name = useDisplayName();
 
-  // The sidebar is icons only, or icons with names (like YouTube). The choice is remembered on this device.
-  const [wide, setWide] = useState(() => { try { return localStorage.getItem("orbit-side-wide") === "1"; } catch { return false; } });
-  const toggleSide = () => setWide((w) => { try { localStorage.setItem("orbit-side-wide", w ? "0" : "1"); } catch { /* ignore */ } return !w; });
+  // The sidebar is icons only, or opens over the page with names (like YouTube). Clicking away or pressing Escape closes it.
+  const [wide, setWide] = useState(false);
+  const [spin, setSpin] = useState(0);
+  const toggleSide = () => { setSpin((n) => n + 1); setWide((w) => !w); };
+  useEffect(() => {
+    if (!wide) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setWide(false); };
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, [wide]);
 
   const [composing, setComposing] = useState(false);
   const newPost = () => setComposing(true);
@@ -56,9 +63,10 @@ export default function Shell() {
   return (
     <div className={"shell" + (wide ? " wide" : "")}>
       <a className="skip" href="#main">Skip to content</a>
-      <aside className="side">
+      <div className="side-scrim" aria-hidden="true" onClick={() => setWide(false)} />
+      <aside className="side" onClick={(e) => { if ((e.target as HTMLElement).closest("a")) setWide(false); }}>
         <div className="side-top">
-          <button type="button" className="side-toggle" aria-label={wide ? "Collapse menu" : "Expand menu"} aria-expanded={wide} onClick={toggleSide}><Menu size={22} strokeWidth={1.9} aria-hidden="true" /></button>
+          <button type="button" className="side-toggle" aria-label={wide ? "Collapse menu" : "Expand menu"} aria-expanded={wide} onClick={toggleSide}><svg key={spin} className={"orbit-dots" + (spin ? " go" : "")} width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><g><circle cx="13" cy="5" r="2.6" /><circle cx="19.9" cy="17" r="2.6" /><circle cx="6.1" cy="17" r="2.6" /></g></svg></button>
           <NavLink to="/app/feed" className="logo" aria-label="Orbit home"><i /><span className="navtext">Orbit</span></NavLink>
         </div>
         <nav className="navgroup" aria-label="Primary">
