@@ -1605,3 +1605,25 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
   .shell .navpill{border-radius:16px}
   .shell .nav-dot{top:7px;right:7px}
 }
+
+/* smoother open and close: names appear one after another, the page behind softly blurs, closing fades names first */
+@media (min-width:901px){
+  .side{transition:width .5s cubic-bezier(.32,.72,0,1),box-shadow .5s}
+  .navlink{transition:width .5s cubic-bezier(.32,.72,0,1),background .3s var(--ease),color .3s var(--ease),transform .3s var(--ease)}
+  .side-scrim{transition:opacity .5s,backdrop-filter .5s,-webkit-backdrop-filter .5s}
+  .shell.wide .side-scrim{backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+  .navtext{transform:translateX(-14px);transition:opacity .12s,transform .2s ease-in}
+  .shell.wide .navtext{transform:none;transition:opacity .3s ease-out,transform .5s cubic-bezier(.22,1,.36,1)}
+  .shell.wide .navgroup .navlink:nth-child(1) .navtext{transition-delay:.12s}
+  .shell.wide .navgroup .navlink:nth-child(2) .navtext{transition-delay:.17s}
+  .shell.wide .navgroup .navlink:nth-child(3) .navtext{transition-delay:.22s}
+  .shell.wide .navgroup .navlink:nth-child(4) .navtext{transition-delay:.27s}
+  .shell.wide .navgroup .navlink:nth-child(5) .navtext{transition-delay:.32s}
+  .shell.wide .navgroup .navlink:nth-child(6) .navtext{transition-delay:.37s}
+  .shell.wide .compose-btn.solo .navtext{transition-delay:.42s}
+  .shell.wide .side>.extra .navtext{transition-delay:.47s}
+  .logo-toggle i{transition:transform .6s cubic-bezier(.32,.72,0,1),box-shadow .3s}
+  .shell.wide .logo-toggle i{transform:rotate(360deg)}
+  .compose-btn.solo{transition:margin-left .5s cubic-bezier(.32,.72,0,1),transform .2s var(--ease),box-shadow .2s}
+}
+@media (min-width:901px) and (prefers-reduced-motion:reduce){.side,.navlink,.navtext,.side-scrim,.logo-toggle i{transition:none!important}}
