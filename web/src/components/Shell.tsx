@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { LogOut, Moon, SquarePen, Sun } from "lucide-react";
+import { LogOut, Menu, Moon, SquarePen, Sun } from "lucide-react";
 import { GroupsIcon, HomeIcon, MapIcon, MessagesIcon, PlansIcon, RoommatesIcon } from "./icons";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
@@ -46,14 +46,21 @@ export default function Shell() {
   }, [loc.pathname]);
   const name = useDisplayName();
 
+  // The sidebar is icons only, or icons with names (like YouTube). The choice is remembered on this device.
+  const [wide, setWide] = useState(() => { try { return localStorage.getItem("orbit-side-wide") === "1"; } catch { return false; } });
+  const toggleSide = () => setWide((w) => { try { localStorage.setItem("orbit-side-wide", w ? "0" : "1"); } catch { /* ignore */ } return !w; });
+
   const [composing, setComposing] = useState(false);
   const newPost = () => setComposing(true);
 
   return (
-    <div className="shell">
+    <div className={"shell" + (wide ? " wide" : "")}>
       <a className="skip" href="#main">Skip to content</a>
       <aside className="side">
-        <NavLink to="/app/feed" className="logo" aria-label="Orbit home"><i /></NavLink>
+        <div className="side-top">
+          <button type="button" className="side-toggle" aria-label={wide ? "Collapse menu" : "Expand menu"} aria-expanded={wide} onClick={toggleSide}><Menu size={22} strokeWidth={1.9} aria-hidden="true" /></button>
+          <NavLink to="/app/feed" className="logo" aria-label="Orbit home"><i /><span className="navtext">Orbit</span></NavLink>
+        </div>
         <nav className="navgroup" aria-label="Primary">
           {items.map((i) => (
             <NavLink key={i.to} to={i.to} title={i.label} aria-label={i.label} className={({ isActive }) => "navlink" + (isActive ? " active" : "")}>
@@ -61,19 +68,22 @@ export default function Shell() {
                 <>
                   {isActive && <motion.span layoutId="side-indicator" className="navpill" transition={slide} />}
                   <i.icon size={22} strokeWidth={1.75} />
+                  <span className="navtext">{i.label}</span>
                   {i.to === "/app/plans" && waiting > 0 && <span className="nav-dot" role="img" aria-label={waiting === 1 ? "1 hangout needs your answer" : `${waiting} hangouts need your answer`} />}
                 </>
               )}
             </NavLink>
           ))}
         </nav>
-        <button className="compose-btn solo" title="New post" aria-label="New post" onClick={newPost}><SquarePen size={24} strokeWidth={1.9} aria-hidden="true" /></button>
+        <button className="compose-btn solo" title="New post" aria-label="New post" onClick={newPost}><SquarePen size={24} strokeWidth={1.9} aria-hidden="true" /><span className="navtext">New post</span></button>
         <span className="spacer" />
         <button className="navlink extra" title={dark ? "Switch to light mode" : "Switch to dark mode"} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={dark} onClick={() => setTheme(dark ? "light" : "dark")}>
           {dark ? <Sun size={22} strokeWidth={1.75} /> : <Moon size={22} strokeWidth={1.75} />}
+          <span className="navtext">{dark ? "Light mode" : "Dark mode"}</span>
         </button>
         <button className="navlink extra" title="Sign out" aria-label="Sign out" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}>
           <LogOut size={22} strokeWidth={1.75} />
+          <span className="navtext">Sign out</span>
         </button>
         <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="me">{name.slice(0, 1).toUpperCase()}</NavLink>
       </aside>
