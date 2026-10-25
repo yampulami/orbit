@@ -48,8 +48,7 @@ export default function Shell() {
 
   // The sidebar is icons only, or opens over the page with names (like YouTube). Clicking away or pressing Escape closes it.
   const [wide, setWide] = useState(false);
-  const [spin, setSpin] = useState(0);
-  const toggleSide = () => { setSpin((n) => n + 1); setWide((w) => !w); };
+  const toggleSide = () => { setWide((w) => !w); };
   useEffect(() => {
     if (!wide) return;
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setWide(false); };
@@ -66,8 +65,7 @@ export default function Shell() {
       <div className="side-scrim" aria-hidden="true" onClick={() => setWide(false)} />
       <aside className="side" onClick={(e) => { if ((e.target as HTMLElement).closest("a")) setWide(false); }}>
         <div className="side-top">
-          <button type="button" className="side-toggle" aria-label={wide ? "Collapse menu" : "Expand menu"} aria-expanded={wide} onClick={toggleSide}><svg key={spin} className={"orbit-dots" + (spin ? " go" : "")} width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><g><circle cx="13" cy="5" r="2.6" /><circle cx="19.9" cy="17" r="2.6" /><circle cx="6.1" cy="17" r="2.6" /></g></svg></button>
-          <NavLink to="/app/feed" className="logo" aria-label="Orbit home"><i /><span className="navtext">Orbit</span></NavLink>
+          <button type="button" className="logo logo-toggle" aria-label={wide ? "Collapse menu" : "Expand menu"} aria-expanded={wide} onClick={toggleSide}><i /><span className="navtext">Orbit</span></button>
         </div>
         <nav className="navgroup" aria-label="Primary">
           {items.map((i) => (

@@ -1559,21 +1559,21 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
 
 /* collapsible sidebar (desktop): icons only, or it opens over the page with names. Opening over the page (instead of pushing it)
    means the page behind never has to re-layout, so the animation stays smooth. */
-.side-toggle,.navtext,.side-scrim{display:none}
+.navtext,.side-scrim{display:none}
 @media (min-width:901px){
   .side{--lw:52px;--cw:56px;--ww:204px;--sw:96px;width:var(--sw);justify-self:start;z-index:40;will-change:width;transition:width .42s cubic-bezier(.22,1,.36,1),box-shadow .42s}
   .shell.wide .side{--sw:236px;box-shadow:0 30px 70px -20px rgba(20,10,60,.7)}
   .side-scrim{display:block;position:fixed;inset:0;z-index:35;background:rgba(10,6,30,.38);opacity:0;pointer-events:none;transition:opacity .42s}
   .shell.wide .side-scrim{opacity:1;pointer-events:auto}
   .side-top{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
-  .side-toggle{display:grid;place-items:center;width:var(--lw);height:var(--lw);border:0;border-radius:50%;background:transparent;color:#fff;cursor:pointer;transition:background .25s}
-  .side-toggle:hover{background:rgba(255,255,255,.2)}
-  .orbit-dots{fill:currentColor;overflow:visible}
-  .orbit-dots g{transform-origin:13px 13px}
-  .orbit-dots.go g{animation:orbit-spin .75s cubic-bezier(.65,0,.25,1)}
-  .side .logo{margin-bottom:0;gap:12px}
-  .side .logo .navtext{display:block;color:#fff;font-size:1.25rem;white-space:nowrap;opacity:0;transition:opacity .2s}
-  .shell.wide .side .logo .navtext{opacity:1;transition-delay:.15s}
+  .logo-toggle{border:0;background:transparent;padding:0;cursor:pointer;font:inherit;color:#fff;text-align:left;border-radius:999px}
+  .logo-toggle i{transition:transform .5s cubic-bezier(.22,1,.36,1),box-shadow .3s}
+  .logo-toggle:hover i{transform:scale(1.08)}
+  .shell.wide .logo-toggle i{transform:rotate(180deg)}
+  .side .logo{margin-bottom:0;gap:0}
+  .shell.wide .side .logo{gap:12px}
+  .side .logo .navtext{display:block;color:#fff;font-size:1.25rem;white-space:nowrap;opacity:0;max-width:0;overflow:hidden;transition:opacity .2s,max-width .42s cubic-bezier(.22,1,.36,1)}
+  .shell.wide .side .logo .navtext{opacity:1;max-width:120px;transition-delay:.15s,0s}
   .shell.wide .side-top{flex-direction:row;justify-content:flex-start;gap:6px;padding:0 14px}
   .shell.wide .side .logo{margin-left:4px}
 
@@ -1589,10 +1589,9 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
   .side .logo .navtext{margin-left:0}
   .shell.wide .nav-dot{right:auto;left:30px;top:9px}
 }
-@keyframes orbit-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @media (min-width:901px) and (max-height:860px){.side{--lw:46px;--cw:48px}}
 @media (min-width:901px) and (max-height:700px){.side{--lw:40px;--cw:42px}.navlink>svg{margin-left:calc((var(--lw) - 20px) / 2)}}
-@media (min-width:901px) and (prefers-reduced-motion:reduce){.side,.navlink,.navtext,.side-scrim,.compose-btn.solo{transition:none!important}.orbit-dots.go g{animation:none}}
+@media (min-width:901px) and (prefers-reduced-motion:reduce){.side,.navlink,.navtext,.side-scrim,.compose-btn.solo{transition:none!important}}
 
 /* phones: the menu sits at the bottom like a phone app, instead of a pill at the top that runs off the screen */
 @media (max-width:900px){
