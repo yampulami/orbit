@@ -1661,3 +1661,15 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
   .drawer .spacer{flex:1}
 }
 @media (max-width:900px) and (prefers-reduced-motion:reduce){.drawer,.drawer-link,.drawer-scrim{transition:none!important}}
+
+/* phones: nothing may push the page wider than the screen, and small buttons get a bigger touch area */
+.plans-main{grid-template-columns:minmax(0,1fr)}
+.plans-main>*,.agenda,.agenda-hangs li{min-width:0}
+.agenda-hangs li{flex-wrap:wrap}
+@media (max-width:900px){
+  .pin-btn,.up .pin-btn,.cal-rem .check{position:relative}
+  .pin-btn::after,.up .pin-btn::after,.cal-rem .check::after,.leaflet-control-zoom a::after{content:"";position:absolute;inset:-8px}
+  .cal-hbtns button,.hang-btns button{min-height:40px}
+  .leaflet-bar a{position:relative;width:40px!important;height:40px!important;line-height:40px!important}
+}
+@media (max-width:900px){.rsvp button{min-height:38px}}
