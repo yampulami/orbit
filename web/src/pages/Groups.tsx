@@ -1,3 +1,4 @@
+import { siteUrl } from "../lib/siteUrl";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -58,7 +59,7 @@ export default function Groups() {
     if (hangLive) { setAdding(true); setPlanning(false); } // show the invite code right away
   }
 
-  const inviteLink = (code: string) => `${location.origin}/join/${code}`;
+  const inviteLink = (code: string) => `${siteUrl()}/join/${code}`;
   async function copy(text: string, what: string) {
     try { await navigator.clipboard.writeText(text); notice.show({ icon: "pin", title: `${what} copied`, message: "Send it to the friends you want in this group.", ms: 3500 }); }
     catch { notice.show({ icon: "alert", title: "Could not copy", message: "Select it and copy it by hand." }); }

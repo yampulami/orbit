@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../lib/auth";
+import { linkProblem } from "../lib/siteUrl";
 import { checkUsername, normalizeUsername, USERNAME_MAX, usernameIsFree } from "../lib/username";
 
 type Availability = "idle" | "checking" | "free" | "taken" | "bad" | "unknown";
@@ -16,7 +17,7 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
   const [show, setShow] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(mode === "login" ? linkProblem : "");
   const [notice, setNotice] = useState("");
 
   const needsUsername = mode === "signup" && !demo; // usernames need the database

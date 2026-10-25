@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { siteUrl } from "./siteUrl";
 import { demoAuth, demoSession, isGuestEmail } from "./demoAuth";
 import { looksLikeEmail } from "./username";
 
@@ -60,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string, username?: string) => {
     if (supabase) {
-      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${location.origin}/login`, data: username ? { username } : undefined } });
+      const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${siteUrl()}/login`, data: username ? { username } : undefined } });
       return error ? error.message : null;
     }
     const r = await demoAuth.signUp(email, password);

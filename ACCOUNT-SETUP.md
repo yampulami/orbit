@@ -56,3 +56,10 @@ Fix it with custom SMTP: Authentication, then **Emails**, then **SMTP Settings**
 - Forgot password takes an **email**, not a username. It says "if that address has an account, we have emailed it" whether or not it does, so nobody can use it to find out who is on Orbit.
 - Guests have no email or password, so none of this applies to them. A guest picks a username during onboarding.
 - Someone who signed up before this has no username until they choose one in Profile. They can still sign in with their email.
+
+## Confirmation links on any device
+
+The "Confirm your email" link must open on a phone as well as the computer that signed up. Two things make that work:
+
+1. In Supabase, **Authentication → URL Configuration**: set **Site URL** to `https://orbit-oncampus.vercel.app` and add `https://orbit-oncampus.vercel.app/**` under **Redirect URLs**. If the Site URL still says `localhost`, the button in the email opens a page that only exists on the developer's computer.
+2. The app now sends the live address in the link even when the account is made from `localhost`, and shows a plain message on the sign-in page if a link has expired or was already used.

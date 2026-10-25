@@ -1,3 +1,4 @@
+import "./siteUrl"; // reads any link problem from the address before the client tidies it away
 import { createClient } from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;

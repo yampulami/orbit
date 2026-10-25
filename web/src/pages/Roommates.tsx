@@ -1,3 +1,4 @@
+import { siteUrl } from "../lib/siteUrl";
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocation } from "react-router-dom";
 import { Receipt, Scale, ShoppingBasket, StickyNote, ListChecks, UserPlus, Copy, type LucideIcon } from "lucide-react";
@@ -119,7 +120,7 @@ export default function Roommates() {
                 <div className="invite-code" aria-label="Invite code">{code}</div>
                 <div className="invite-actions">
                   <button type="button" className="btn" onClick={() => copy(code, "Code")}><Copy size={16} aria-hidden="true" /> Copy code</button>
-                  <button type="button" className="btn" onClick={() => copy(`${location.origin}/join/${code}`, "Link")}><Copy size={16} aria-hidden="true" /> Copy link</button>
+                  <button type="button" className="btn" onClick={() => copy(`${siteUrl()}/join/${code}`, "Link")}><Copy size={16} aria-hidden="true" /> Copy link</button>
                 </div>
               </>
             ) : <p className="muted">Getting your invite code…</p>}
