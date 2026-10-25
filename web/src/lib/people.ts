@@ -15,12 +15,24 @@ export function makeLabeler(me: string, ids: Iterable<string>, names: Record<str
 export async function loadNames(userIds: string[]): Promise<Record<string, string>> {
   const ids = [...new Set(userIds)];
   if (!ids.length) return {};
-  const { data, error } = await supabase!.from("student_profiles").select("user_id,display_name").in("user_id", ids);
-  if (error) throw new Error(error.message);
   const out: Record<string, string> = {};
-  ((data ?? []) as { user_id: string; display_name: string }[]).forEach((p) => { out[p.user_id] = p.display_name; });
+  const now = Date.now();
+  const missing: string[] = [];
+  for (const id of ids) {
+    const hit = nameCache.get(id);
+    if (hit && now - hit.at < NAME_TTL_MS) out[id] = hit.name; else missing.push(id);
+  }
+  if (!missing.length) return out; // names rarely change, and every live update asks again: skip the trip when all are known
+  const { data, error } = await supabase!.from("student_profiles").select("user_id,display_name").in("user_id", missing);
+  if (error) throw new Error(error.message);
+  ((data ?? []) as { user_id: string; display_name: string }[]).forEach((p) => { out[p.user_id] = p.display_name; nameCache.set(p.user_id, { name: p.display_name, at: now }); });
   return out;
 }
+const NAME_TTL_MS = 30000;
+const nameCache = new Map<string, { name: string; at: number }>();
+/** Forget remembered names (after blocking, signing out, or a name change). */
+export const forgetNames = () => nameCache.clear();
+if (typeof window !== "undefined") window.addEventListener("orbit-refresh", forgetNames);
 
 /** Ask every screen to look again now, for example after blocking someone, so what they made disappears without a reload. */
 export const refreshEverything = () => { if (typeof window !== "undefined") window.dispatchEvent(new Event("orbit-refresh")); };
@@ -30,6 +42,8 @@ export const POLL_DOWN_MS = 15000;
 export const POLL_SAFETY_MS = 120000;
 /** If the connection has not come up by now, treat it as down (for example a network that blocks live connections). */
 export const CONNECT_GRACE_MS = 8000;
+/** After a look, changes arriving within this long are folded into one more look. */
+export const COALESCE_MS = 120;
 
 /** Call `onChange` whenever any of these tables change (shortly after, and once for a burst). Returns a function that stops listening.
  *
@@ -42,7 +56,18 @@ export function watchTables(name: string, tables: string[], onChange: () => void
   const sb = supabase!;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false, healthy = false, everUp = false;
-  const soon = () => { if (stopped) return; clearTimeout(timer); timer = setTimeout(onChange, 250); };
+  // The first change looks at once; changes that follow within a moment are folded into one more look right after.
+  let cooling = false, again = false;
+  const soon = () => {
+    if (stopped) return;
+    if (cooling) { again = true; return; }
+    cooling = true; again = false;
+    onChange();
+    timer = setTimeout(() => {
+      cooling = false;
+      if (again && !stopped) { again = false; soon(); }
+    }, COALESCE_MS);
+  };
   const visible = () => typeof document === "undefined" || document.visibilityState === "visible";
 
   const ch = sb.channel(`${name}-${Math.random().toString(36).slice(2, 8)}`);

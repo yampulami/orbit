@@ -20,7 +20,7 @@ vi.mock("./supabase", () => ({
   },
 }));
 
-import { CONNECT_GRACE_MS, POLL_DOWN_MS, POLL_SAFETY_MS, watchTables } from "./people";
+import { COALESCE_MS, CONNECT_GRACE_MS, POLL_DOWN_MS, POLL_SAFETY_MS, watchTables } from "./people";
 
 beforeEach(() => { vi.useFakeTimers(); live.onChange = []; live.status = undefined; live.removed = 0; });
 afterEach(() => { vi.useRealTimers(); });
@@ -28,15 +28,18 @@ afterEach(() => { vi.useRealTimers(); });
 const change = () => live.onChange.forEach((f) => f());
 
 describe("watchTables", () => {
-  it("looks again shortly after a change, once for a burst of them", () => {
+  it("looks at once on a change, and folds a burst that follows into one more look", () => {
     const seen = vi.fn();
     watchTables("t", ["a"], seen);
     live.status?.("SUBSCRIBED");
-    change(); change(); change();
-    vi.advanceTimersByTime(249);
-    expect(seen).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(2);
+    change();
     expect(seen).toHaveBeenCalledTimes(1);
+    change(); change();
+    expect(seen).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(COALESCE_MS + 1);
+    expect(seen).toHaveBeenCalledTimes(2);
+    vi.advanceTimersByTime(COALESCE_MS * 3);
+    expect(seen).toHaveBeenCalledTimes(2);
   });
 
   it("does nothing on its own while the connection is healthy, until the slow safety check", () => {
