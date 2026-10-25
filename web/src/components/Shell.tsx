@@ -46,15 +46,9 @@ export default function Shell() {
   }, [loc.pathname]);
   const name = useDisplayName();
 
-  // The sidebar is icons only, or opens over the page with names (like YouTube). Clicking away or pressing Escape closes it.
-  const [wide, setWide] = useState(false);
-  const toggleSide = () => { setWide((w) => !w); };
-  useEffect(() => {
-    if (!wide) return;
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setWide(false); };
-    document.addEventListener("keydown", esc);
-    return () => document.removeEventListener("keydown", esc);
-  }, [wide]);
+  // The sidebar is icons only, or icons with names (like YouTube); the page beside it makes room. The choice is remembered on this device.
+  const [wide, setWide] = useState(() => { try { return localStorage.getItem("orbit-side-wide") === "1"; } catch { return false; } });
+  const toggleSide = () => setWide((w) => { try { localStorage.setItem("orbit-side-wide", w ? "0" : "1"); } catch { /* ignore */ } return !w; });
 
   const [composing, setComposing] = useState(false);
   const newPost = () => setComposing(true);
@@ -62,8 +56,7 @@ export default function Shell() {
   return (
     <div className={"shell" + (wide ? " wide" : "")}>
       <a className="skip" href="#main">Skip to content</a>
-      <div className="side-scrim" aria-hidden="true" onClick={() => setWide(false)} />
-      <aside className="side" onClick={(e) => { if ((e.target as HTMLElement).closest("a")) setWide(false); }}>
+      <aside className="side">
         <div className="side-top">
           <button type="button" className="logo logo-toggle" aria-label={wide ? "Collapse menu" : "Expand menu"} aria-expanded={wide} onClick={toggleSide}><i /><span className="navtext">Orbit</span></button>
         </div>
