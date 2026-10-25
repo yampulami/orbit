@@ -1578,12 +1578,14 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
   .shell.wide .side .logo{margin-left:4px}
 
   .navgroup{width:100%;align-items:center}
-  .navlink{display:flex;align-items:center;justify-content:flex-start;gap:0;width:var(--lw);overflow:hidden;transition:width .42s cubic-bezier(.22,1,.36,1),background .3s var(--ease),color .3s var(--ease),transform .3s var(--ease)}
+  .navlink{display:flex;align-items:center;justify-content:flex-start;gap:0;width:var(--lw);transition:width .42s cubic-bezier(.22,1,.36,1),background .3s var(--ease),color .3s var(--ease),transform .3s var(--ease)}
   .navlink>svg{flex:none;margin-left:calc((var(--lw) - 22px) / 2)}
-  .compose-btn.solo{display:flex;align-items:center;justify-content:flex-start;overflow:hidden;width:var(--cw);transition:width .42s cubic-bezier(.22,1,.36,1),transform .2s var(--ease),box-shadow .2s}
-  .compose-btn.solo>svg{flex:none;margin-left:calc((var(--cw) - 24px) / 2)}
-  .navtext{display:block;white-space:nowrap;font-weight:600;font-size:.95rem;margin-left:14px;opacity:0;transform:translateX(-8px);transition:opacity .15s,transform .3s var(--ease)}
-  .shell.wide .navlink,.shell.wide .compose-btn.solo{width:var(--ww)}
+  .compose-btn.solo{position:relative;align-self:flex-start;margin-left:calc((96px - var(--cw)) / 2);transition:margin-left .42s cubic-bezier(.22,1,.36,1),transform .2s var(--ease),box-shadow .2s}
+  .shell.wide .compose-btn.solo{margin-left:calc((96px - var(--cw)) / 2 - 6px)}
+  .compose-btn.solo .navtext{position:absolute;left:calc(100% + 14px);top:50%;margin:0;color:#fff;transform:translate(-8px,-50%)}
+  .shell.wide .compose-btn.solo .navtext{transform:translate(0,-50%)}
+  .navtext{position:relative;display:block;white-space:nowrap;font-weight:600;font-size:.95rem;margin-left:14px;opacity:0;transform:translateX(-8px);transition:opacity .15s,transform .3s var(--ease)}
+  .shell.wide .navlink{width:var(--ww)}
   .shell.wide .navtext{opacity:1;transform:none;transition:opacity .25s .14s,transform .35s var(--ease) .1s}
   .shell.wide .side .logo .navtext{margin-left:0;transform:none}
   .side .logo .navtext{margin-left:0}
