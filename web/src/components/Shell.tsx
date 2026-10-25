@@ -50,6 +50,16 @@ export default function Shell() {
   const [wide, setWide] = useState(() => { try { return localStorage.getItem("orbit-side-wide") === "1"; } catch { return false; } });
   const toggleSide = () => setWide((w) => { try { localStorage.setItem("orbit-side-wide", w ? "0" : "1"); } catch { /* ignore */ } return !w; });
 
+  // On phones the same menu is a drawer that slides in from the left, opened by the Orbit circle at the top.
+  const [drawer, setDrawer] = useState(false);
+  useEffect(() => { setDrawer(false); }, [loc.pathname]);
+  useEffect(() => {
+    if (!drawer) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setDrawer(false); };
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, [drawer]);
+
   const [composing, setComposing] = useState(false);
   const newPost = () => setComposing(true);
 
@@ -88,6 +98,7 @@ export default function Shell() {
       </aside>
       <div className="content">
         <div className="topline">
+          <button type="button" className="logo logo-mobile" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><i /></button>
           <GlobalSearch />
           <NotificationBell />
           <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="me topme">{name.slice(0, 1).toUpperCase()}</NavLink>
@@ -96,6 +107,20 @@ export default function Shell() {
           <Outlet />
         </motion.main>
       </div>
+      <div className={"drawer-scrim" + (drawer ? " open" : "")} aria-hidden="true" onClick={() => setDrawer(false)} />
+      <nav className={"drawer" + (drawer ? " open" : "")} aria-label="Menu" aria-hidden={!drawer} inert={!drawer}>
+        <div className="drawer-head"><span className="logo"><i /><span>Orbit</span></span></div>
+        {items.map((i) => (
+          <NavLink key={i.to} to={i.to} className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}>
+            <i.icon size={22} strokeWidth={1.75} /><span>{i.label}</span>
+          </NavLink>
+        ))}
+        <NavLink to="/app/profile" className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}><span className="me">{name.slice(0, 1).toUpperCase()}</span><span>Profile</span></NavLink>
+        <button type="button" className="drawer-link" onClick={() => { setDrawer(false); newPost(); }}><SquarePen size={22} strokeWidth={1.75} /><span>New post</span></button>
+        <span className="spacer" />
+        <button type="button" className="drawer-link" onClick={() => setTheme(dark ? "light" : "dark")}>{dark ? <Sun size={22} strokeWidth={1.75} /> : <Moon size={22} strokeWidth={1.75} />}<span>{dark ? "Light mode" : "Dark mode"}</span></button>
+        <button type="button" className="drawer-link" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}><LogOut size={22} strokeWidth={1.75} /><span>Sign out</span></button>
+      </nav>
       <BadgeToast />
       <UndoToast />
       <NoticeHost />
