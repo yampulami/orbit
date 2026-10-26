@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { loadNames, makeLabeler } from "./people";
+import { loadNames, makeLabeler, type ChangeEvent } from "./people";
 
 /** Direct messages in the database: one conversation per pair of students on a campus, with its messages. The rows become threads for the screen. */
 export type RawConv = { id: string; user_low: string; user_high: string; updated_at: string };
@@ -25,6 +25,32 @@ export function buildThreads(raw: RawDms): DmThread[] {
       const unread = raw.messages.filter((m) => m.conversation_id === c.id && m.sender_id !== raw.me && !m.read_at).length;
       return { id: c.id, otherId, name: label(otherId), messages, unread, updatedAt: c.updated_at };
     });
+}
+
+/** Pure: one change from the database applied to the threads on screen. Returns null when it cannot be applied on its own
+ *  (a conversation that is not here yet), in which case the caller looks everything up again. */
+export function applyDmChange(threads: DmThread[], me: string, e: ChangeEvent): DmThread[] | null {
+  if (e.table === "direct_messages") {
+    if (e.type === "DELETE") {
+      const id = e.old.id as string | undefined;
+      return id ? threads.map((t) => (t.messages.some((m) => m.id === id) ? { ...t, messages: t.messages.filter((m) => m.id !== id) } : t)) : null;
+    }
+    const m = e.row as unknown as RawDm;
+    const t = threads.find((x) => x.id === m.conversation_id);
+    if (!t) return null;
+    if (e.type === "UPDATE") return threads; // read marks are kept on this device when you open a chat
+    if (t.messages.some((x) => x.id === m.id)) return threads; // your own message, already shown
+    const mine = m.sender_id === me;
+    const next = { ...t, messages: [...t.messages, { id: m.id, mine, text: m.body, at: m.created_at }], unread: t.unread + (!mine && !m.read_at ? 1 : 0), updatedAt: m.created_at > t.updatedAt ? m.created_at : t.updatedAt };
+    return threads.map((x) => (x.id === t.id ? next : x)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+  if (e.table === "direct_conversations" && e.type === "UPDATE") {
+    const c = e.row as unknown as RawConv;
+    const t = threads.find((x) => x.id === c.id);
+    if (!t) return null;
+    return threads.map((x) => (x.id === t.id && c.updated_at > x.updatedAt ? { ...x, updatedAt: c.updated_at } : x)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+  return null;
 }
 
 /** The ordering the database requires for a pair: the lower id is stored first. */

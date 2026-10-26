@@ -5,6 +5,7 @@ import { Receipt, Scale, ShoppingBasket, StickyNote, ListChecks, UserPlus, Copy,
 import { hangActions, hangLive, useHang, YOU } from "../lib/hangouts";
 import { notice } from "../lib/notice";
 import { roomActions, useSpace } from "../lib/roommates";
+import GroupAddFriend from "../components/GroupAddFriend";
 import { Avatar } from "./roommates/Avatar";
 import Tasks from "./roommates/Tasks";
 import Groceries from "./roommates/Groceries";
@@ -114,9 +115,11 @@ export default function Roommates() {
       {adding && (
         hangLive ? (
           <div className="plan-form invite">
+            <p className="muted">Add a roommate by their username:</p>
+            {space.groupId && <GroupAddFriend groupId={space.groupId} groupName={space.name} memberNames={space.members} />}
             {code ? (
               <>
-                <p className="muted">Send this code, or the link, to your roommates. They paste it under “Already have a code?” on this page, or open the link.</p>
+                <p className="muted">Or send this code, or the link, to your roommates. They paste it under “Already have a code?” on this page, or open the link.</p>
                 <div className="invite-code" aria-label="Invite code">{code}</div>
                 <div className="invite-actions">
                   <button type="button" className="btn" onClick={() => copy(code, "Code")}><Copy size={16} aria-hidden="true" /> Copy code</button>

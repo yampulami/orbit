@@ -2,7 +2,8 @@ import { useSyncExternalStore } from "react";
 import { progress } from "./progress";
 import { supabase } from "./supabase";
 import { notice } from "./notice";
-import { buildState, loadRaw, watch } from "./hangoutsDb";
+import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
+import { applyMessage, buildState, labelerFor, loadRaw, watch } from "./hangoutsDb";
 import { YOU, type Group, type HangState, type Hangout, type Msg, type Rsvp } from "./hangTypes";
 
 /** Friend groups, group chat and hangout answers. With a database they live there (private to each group, joined with an invite code, live for
@@ -76,20 +77,35 @@ function set(next: State) {
 let who: { id: string; name: string; campusKey: string } | null = null;
 let stopWatching: (() => void) | null = null;
 let loadId = 0;
+let nameOf: (id: string) => string | undefined = () => undefined;
+let epoch = 0; // counts changes applied straight from the live connection
 
 async function reload() {
   if (!who) return;
-  const mine = ++loadId;
+  const mine = ++loadId, e0 = epoch;
   try {
-    const next = buildState(await loadRaw(who.id));
+    const raw = await loadRaw(who.id);
+    const next = buildState(raw);
     if (mine !== loadId || !who) return; // a newer load or a sign out came first
+    if (epoch !== e0) { void reload(); return; } // a message arrived while this was loading: this answer may be older than it
+    nameOf = labelerFor(raw);
     status = "ready";
     set(next);
+    listenRooms("hangouts", next.groups.map((g) => g.id), onNudge);
   } catch (e) {
     status = "error";
     subs.forEach((f) => f());
     notice.show({ icon: "wifi", title: "Groups and hangouts did not load", message: `${(e as Error).message || "Something went wrong."} Check your connection and try again.` });
   }
+}
+
+/** Someone sent a chat message: show it now, ahead of the database's own change feed. */
+async function onNudge(n: Nudge) {
+  if (n.table !== "group_messages" || n.op !== "upsert") return;
+  const change = await fetchChange(n.table, n.id).catch(() => null);
+  if (!change) return;
+  const next = applyMessage(state, nameOf, change);
+  if (next) { epoch++; if (next !== state) set(next); } else void reload(); // an unknown group or person, or a message about a plan
 }
 
 /** Start using the database for this signed-in student. Call once the person and their campus are known. */
@@ -101,7 +117,14 @@ export function bindHang(user: { id: string; name: string; campusKey: string }) 
   status = "loading";
   subs.forEach((f) => f());
   void reload();
-  stopWatching = watch(user.id, () => void reload());
+  stopWatching = watch(user.id, () => void reload(), (e) => {
+    // A new chat message shows at once, without fetching groups, hangouts and answers all over again.
+    const next = applyMessage(state, nameOf, e);
+    if (!next) return false;
+    epoch++;
+    if (next !== state) set(next);
+    return true;
+  });
 }
 
 /** The signed-in student changed their name: new messages and plans carry it. */
@@ -111,15 +134,16 @@ export function setHangName(name: string) { if (who) who = { ...who, name }; }
 export function unbindHang() {
   if (!live) return;
   stopWatching?.(); stopWatching = null;
-  who = null; loadId++;
+  who = null; loadId++; nameOf = () => undefined; listenRooms("hangouts", [], onNudge);
   status = "idle";
   set({ groups: [], hangouts: [] });
 }
 
 /** Run a database change; if it fails, say why in plain words and show what is really there. */
-function run(what: string, job: () => PromiseLike<{ error: { message: string } | null }>) {
+function run(what: string, job: () => PromiseLike<{ error: { message: string } | null }>, afterSave?: () => void) {
   Promise.resolve(job()).then(({ error }) => {
     if (error) throw new Error(error.message);
+    afterSave?.();
   }).catch((e: Error) => {
     notice.show({ icon: "alert", title: `${what} did not work`, message: e.message || "Something went wrong. Try again." });
     void reload();
@@ -159,7 +183,7 @@ export const hangActions = {
   send(groupId: string, text: string) {
     const mid = crypto.randomUUID();
     patchGroup(groupId, (g) => ({ ...g, messages: [...g.messages, { id: mid, author: YOU, text, at: new Date().toISOString() }] }));
-    if (live && who) run("Sending that message", () => supabase!.from("group_messages").insert({ id: mid, group_id: groupId, sender_id: who!.id, sender_name: who!.name, body: text }));
+    if (live && who) run("Sending that message", () => supabase!.from("group_messages").insert({ id: mid, group_id: groupId, sender_id: who!.id, sender_name: who!.name, body: text }), () => sendNudge(groupId, { table: "group_messages", id: mid, op: "upsert" }));
   },
   createHangout(groupId: string, h: { title: string; place: string; when: string; visibility?: "group" | "campus" }) {
     const id = crypto.randomUUID();

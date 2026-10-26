@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
-import type { Expense, Grocery, Note, Payment, Points, Space, Task } from "./roommates";
-import { loadNames, makeLabeler, watchTables } from "./people";
+import type { Expense, Grocery, Kind, Note, Payment, Points, Space, Task } from "./roommates";
+import { loadNames, makeLabeler, watchTables, type ChangeEvent } from "./people";
 
 /** A household in the database. The rows become the same `Space` the roommate screens already use (people shown by display name, "You" for the
  *  signed-in student); `ids` remembers which name is which person so changes can be saved against the right user. */
@@ -19,6 +19,48 @@ export type RawHousehold = {
 
 const POINTS = new Set([1, 2, 3, 5]);
 
+const taskOf = (t: RawTask, nameOf: (id: string | null) => string): Task => ({
+  id: t.id, title: t.title, assignee: nameOf(t.assignee), points: (POINTS.has(t.points) ? t.points : 2) as Points, done: t.done,
+  createdAt: t.created_at, doneAt: t.done_at ?? undefined, due: t.due_on ?? undefined,
+});
+const groceryOf = (g: RawGrocery): Grocery => ({ id: g.id, name: g.name, category: g.category, bought: g.bought });
+const expenseOf = (e: RawExpense, nameOf: (id: string | null) => string, label: (id: string) => string): Expense => ({ id: e.id, item: e.item, cents: e.cents, paidBy: nameOf(e.paid_by), split: e.split.map(label), at: e.created_at });
+const noteOf = (n: RawNote): Note => ({ id: n.id, title: n.title, body: n.body });
+const paymentOf = (p: RawPayment, nameOf: (id: string | null) => string): Payment => ({ id: p.id, from: nameOf(p.from_user), to: nameOf(p.to_user), cents: p.cents, at: p.created_at });
+
+const KIND_OF: Record<string, Kind> = { household_tasks: "tasks", household_groceries: "groceries", household_expenses: "expenses", household_notes: "notes", household_payments: "payments" };
+
+/** Pure: one change from the database applied to what is on screen. `nameOf` gives the name shown for a user id, or undefined if that person is not known yet.
+ *  Returns the new screen state, or null when the change cannot be applied on its own (an unknown person, or not a chore/item/expense/note/payment),
+ *  in which case the caller looks everything up again. */
+export function applyChange(space: Space, nameOf: (id: string) => string | undefined, e: ChangeEvent): Space | null {
+  const kind = KIND_OF[e.table];
+  if (!kind) return null;
+  const list = space[kind] as { id: string }[];
+  if (e.type === "DELETE") {
+    const id = e.old.id as string | undefined;
+    return id ? { ...space, [kind]: list.filter((x) => x.id !== id) } : null;
+  }
+  const r = e.row as Record<string, unknown>;
+  if (r.group_id !== space.groupId) return space; // some other household
+  let unknown = false;
+  const known = (id: string | null) => { if (!id) return "Someone"; const n = nameOf(id); if (n === undefined) unknown = true; return n ?? "Someone"; };
+  const label = (id: string) => known(id);
+  let item: { id: string };
+  if (kind === "tasks") item = taskOf(r as unknown as RawTask, known);
+  else if (kind === "groceries") item = groceryOf(r as unknown as RawGrocery);
+  else if (kind === "expenses") item = expenseOf(r as unknown as RawExpense, known, label);
+  else if (kind === "notes") item = noteOf(r as unknown as RawNote);
+  else item = paymentOf(r as unknown as RawPayment, known);
+  if (unknown) return null;
+  const at = list.findIndex((x) => x.id === item.id);
+  const next = [...list];
+  if (at >= 0) next[at] = item;
+  else if (kind === "groceries") next.push(item);   // the shopping list reads oldest first
+  else next.unshift(item);                          // the rest read newest first
+  return { ...space, [kind]: next };
+}
+
 /** Pure: rows in, screen state out. `ids` maps each shown name back to its user id. */
 export function buildSpace(raw: RawHousehold): { space: Space; ids: Record<string, string> } {
   const everyone = [...raw.members, ...raw.tasks.map((t) => t.assignee), ...raw.expenses.map((e) => e.paid_by), ...raw.expenses.flatMap((e) => e.split), ...raw.payments.flatMap((p) => [p.from_user, p.to_user])].filter((x): x is string => !!x);
@@ -31,14 +73,11 @@ export function buildSpace(raw: RawHousehold): { space: Space; ids: Record<strin
   // You first, then the others in alphabetical order, so the order is the same for everybody on every load.
   const members = [...new Set(raw.members)].sort((a, b) => (a === raw.me ? -1 : b === raw.me ? 1 : label(a).localeCompare(label(b)))).map(label);
 
-  const tasks: Task[] = raw.tasks.map((t) => ({
-    id: t.id, title: t.title, assignee: nameOf(t.assignee), points: (POINTS.has(t.points) ? t.points : 2) as Points, done: t.done,
-    createdAt: t.created_at, doneAt: t.done_at ?? undefined, due: t.due_on ?? undefined,
-  }));
-  const groceries: Grocery[] = raw.groceries.map((g) => ({ id: g.id, name: g.name, category: g.category, bought: g.bought }));
-  const expenses: Expense[] = raw.expenses.map((e) => ({ id: e.id, item: e.item, cents: e.cents, paidBy: nameOf(e.paid_by), split: e.split.map(label), at: e.created_at }));
-  const notes: Note[] = raw.notes.map((n) => ({ id: n.id, title: n.title, body: n.body }));
-  const payments: Payment[] = raw.payments.map((p) => ({ id: p.id, from: nameOf(p.from_user), to: nameOf(p.to_user), cents: p.cents, at: p.created_at }));
+  const tasks = raw.tasks.map((t) => taskOf(t, nameOf));
+  const groceries = raw.groceries.map(groceryOf);
+  const expenses = raw.expenses.map((e) => expenseOf(e, nameOf, label));
+  const notes = raw.notes.map(noteOf);
+  const payments = raw.payments.map((p) => paymentOf(p, nameOf));
   return { space: { name: raw.name, members, groupId: raw.groupId, tasks, groceries, expenses, notes, payments }, ids: { ...ids, [you]: raw.me } };
 }
 
@@ -74,5 +113,5 @@ export async function loadHousehold(me: string): Promise<RawHousehold | null> {
   return { me, groupId: g.id, name: g.name, members, tasks: t, groceries: (groceries.data ?? []) as RawGrocery[], expenses: e, notes: (notes.data ?? []) as RawNote[], payments: p, names };
 }
 
-export const watchHousehold = (me: string, onChange: () => void) =>
-  watchTables(`orbit-household-${me}`, ["households", "household_tasks", "household_groceries", "household_expenses", "household_notes", "household_payments", "campus_group_memberships"], onChange);
+export const watchHousehold = (me: string, onChange: () => void, onEvent?: (e: ChangeEvent) => boolean) =>
+  watchTables(`orbit-household-${me}`, ["households", "household_tasks", "household_groceries", "household_expenses", "household_notes", "household_payments", "campus_group_memberships"], onChange, onEvent);

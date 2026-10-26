@@ -208,12 +208,12 @@ Mark one dealt with with `update content_reports set status = 'resolved' where i
 
 ## Removing test accounts
 
-Test accounts are named "QA ...", "RT ...", "VZ ..." and "SF ...". First look at what would go (every row should be one of mine):
+Test accounts are named "QA ...", "RT ...", "VZ ...", "SF ..." and "LT ...". First look at what would go (every row should be one of mine):
 
 ```sql
 select p.display_name, u.id, u.created_at
 from student_profiles p join auth.users u on u.id = p.user_id
-where u.is_anonymous and p.display_name ~ '^(QA|RT|VZ|SF) '
+where u.is_anonymous and p.display_name ~ '^(QA|RT|VZ|SF|LT) '
 order by u.created_at;
 ```
 
@@ -223,9 +223,19 @@ Then delete them. Deleting an account removes what it made (posts, comments, mes
 begin;
 delete from campus_places where name in ('RT cafe', 'Policy check cafe', 'Test coffee cart');
 delete from auth.users u using student_profiles p
-where p.user_id = u.id and u.is_anonymous and p.display_name ~ '^(QA|RT|VZ|SF) ';
-select (select count(*) from student_profiles where display_name ~ '^(QA|RT|VZ|SF) ') as test_profiles_left;
+where p.user_id = u.id and u.is_anonymous and p.display_name ~ '^(QA|RT|VZ|SF|LT) ';
+select (select count(*) from student_profiles where display_name ~ '^(QA|RT|VZ|SF|LT) ') as test_profiles_left;
 commit;
 ```
 
 Campus verification (requiring a school email to join a campus) is deliberately not built yet, so test accounts keep working. When it is built it will have an on/off switch.
+
+## How fast live changes arrive (2026-10-24)
+
+Receivers used to wait for the database's change feed (about 0.4 to 0.6 seconds, and it varies) and then fetch the whole household, chat or inbox again. Now:
+
+1. **A quick note.** When someone saves a chore, grocery, expense, note, payment, group message or direct message, their app also sends a tiny note (table and id only, no content) on a quick channel for that household, group or conversation (`web/src/lib/nudge.ts`). Other members' apps fetch that one row (the database rules still decide whether they may see it) and show it. Measured with a second account: about 0.13 to 0.2 seconds, down from 0.5 to 1 second.
+2. **Rows applied directly.** Changes arriving from the change feed carry their row, so they are applied to what is on screen without fetching everything again. Anything that cannot be applied alone (a person or conversation not known yet) falls back to a full look, so the screen never gets stuck.
+3. The slow paths are still there as a safety net: the change feed, a look when the connection drops and returns, and a look every two minutes.
+
+Nobody can use a note to show something that is not in the database: the note only says which row to fetch.

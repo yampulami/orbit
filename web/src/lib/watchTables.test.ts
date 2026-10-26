@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /** A stand-in for the live connection: the test decides when a change arrives and when the connection drops or comes back. */
 const live = vi.hoisted(() => ({
-  onChange: [] as (() => void)[],
+  onChange: [] as ((p?: unknown) => void)[],
   status: undefined as ((s: string) => void) | undefined,
   removed: 0,
 }));
@@ -11,7 +11,7 @@ vi.mock("./supabase", () => ({
   supabase: {
     channel: () => {
       const ch = {
-        on: (_type: string, _filter: unknown, cb: () => void) => { live.onChange.push(cb); return ch; },
+        on: (_type: string, _filter: unknown, cb: (p?: unknown) => void) => { live.onChange.push(cb); return ch; },
         subscribe: (cb: (s: string) => void) => { live.status = cb; return ch; },
       };
       return ch;
@@ -25,7 +25,7 @@ import { COALESCE_MS, CONNECT_GRACE_MS, POLL_DOWN_MS, POLL_SAFETY_MS, watchTable
 beforeEach(() => { vi.useFakeTimers(); live.onChange = []; live.status = undefined; live.removed = 0; });
 afterEach(() => { vi.useRealTimers(); });
 
-const change = () => live.onChange.forEach((f) => f());
+const change = (payload?: unknown) => live.onChange.forEach((f) => f(payload));
 
 describe("watchTables", () => {
   it("looks at once on a change, and folds a burst that follows into one more look", () => {
@@ -40,6 +40,19 @@ describe("watchTables", () => {
     expect(seen).toHaveBeenCalledTimes(2);
     vi.advanceTimersByTime(COALESCE_MS * 3);
     expect(seen).toHaveBeenCalledTimes(2);
+  });
+
+  it("applies a change that arrives with its row straight away, and falls back to looking again when it cannot", () => {
+    const seen = vi.fn();
+    const applied = vi.fn((e: { table: string }) => e.table === "a");
+    watchTables("t", ["a", "b"], seen, applied);
+    live.status?.("SUBSCRIBED");
+    change({ table: "a", eventType: "INSERT", new: { id: 1 }, old: {} });
+    expect(applied).toHaveBeenCalledWith({ table: "a", type: "INSERT", row: { id: 1 }, old: {} });
+    expect(seen).not.toHaveBeenCalled(); // handled, so no reload
+    vi.advanceTimersByTime(COALESCE_MS * 2);
+    change({ table: "b", eventType: "UPDATE", new: { id: 2 }, old: {} });
+    expect(seen).toHaveBeenCalledTimes(1); // not handled, so it looks again
   });
 
   it("does nothing on its own while the connection is healthy, until the slow safety check", () => {

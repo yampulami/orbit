@@ -31,8 +31,8 @@ export async function loadPins(): Promise<Pin[]> {
 }
 
 /** Run a change in the database. If it fails, say so in plain words and let the caller show what is really saved. */
-export function dbRun(what: string, job: () => PromiseLike<{ error: { message: string } | null }>, afterFail: () => void) {
-  Promise.resolve(job()).then(({ error }) => { if (error) throw new Error(error.message); }).catch((e: Error) => {
+export function dbRun(what: string, job: () => PromiseLike<{ error: { message: string } | null }>, afterFail: () => void, afterSave?: () => void) {
+  Promise.resolve(job()).then(({ error }) => { if (error) throw new Error(error.message); afterSave?.(); }).catch((e: Error) => {
     notice.show({ icon: "alert", title: `${what} did not work`, message: e.message || "Something went wrong. Try again." });
     afterFail();
   });

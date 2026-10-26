@@ -2,8 +2,9 @@ import { useSyncExternalStore } from "react";
 import { supabase } from "./supabase";
 import { dbRun, refreshOnReturn } from "./privateDb";
 import { watchTables } from "./people";
+import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
 import { notice } from "./notice";
-import { buildThreads, loadDms, loadPeople, pairOf, type DmThread, type Person } from "./dmDb";
+import { applyDmChange, buildThreads, loadDms, loadPeople, pairOf, type DmThread, type Person } from "./dmDb";
 
 /** Direct messages with students on your campus. With a database they arrive live; without one (demo mode) the Messages page shows a sample. */
 type State = { threads: DmThread[]; people: Person[]; status: "idle" | "loading" | "ready" | "error" };
@@ -18,17 +19,29 @@ let stop: (() => void) | null = null;
 let stopReturn: (() => void) | null = null;
 let loadId = 0;
 const reading = new Set<string>();
+let epoch = 0; // counts changes applied straight from the live connection
 
 async function reload() {
   if (!who) return;
-  const me = who, mine = ++loadId;
+  const me = who, mine = ++loadId, e0 = epoch;
   try {
     const threads = buildThreads(await loadDms(me));
     if (mine !== loadId || who !== me) return;
+    if (epoch !== e0) { void reload(); return; } // a message arrived while this was loading: this answer may be older than it
     set({ ...state, threads, status: "ready" });
+    listenRooms("dms", [...threads.map((t) => t.id), `inbox-${me}`], onNudge); // the inbox is how a brand new conversation reaches you
   } catch {
     if (mine === loadId && who === me) set({ ...state, status: "error" });
   }
+}
+
+/** The other person sent a message: show it now, ahead of the database's own change feed. */
+async function onNudge(n: Nudge) {
+  if (n.table !== "direct_messages" || n.op !== "upsert" || !who) return;
+  const change = await fetchChange(n.table, n.id).catch(() => null);
+  if (!change) return;
+  const next = applyDmChange(state.threads, who, change);
+  if (next) { epoch++; if (next !== state.threads) set({ ...state, threads: next }); } else void reload();
 }
 
 export function bindDms(userId: string) {
@@ -38,13 +51,20 @@ export function bindDms(userId: string) {
   set({ threads: [], people: [], status: "loading" });
   void reload();
   loadPeople(userId).then((people) => { if (who === userId) set({ ...state, people }); }).catch(() => undefined);
-  stop = watchTables(`orbit-dm-${userId}`, ["direct_messages", "direct_conversations"], () => void reload());
+  stop = watchTables(`orbit-dm-${userId}`, ["direct_messages", "direct_conversations"], () => void reload(), (e) => {
+    // A new message shows at once, without fetching every conversation again.
+    const next = applyDmChange(state.threads, userId, e);
+    if (!next) return false;
+    epoch++;
+    if (next !== state.threads) set({ ...state, threads: next });
+    return true;
+  });
   stopReturn = refreshOnReturn(() => void reload());
 }
 export function unbindDms() {
   if (!dmLive) return;
   stop?.(); stop = null; stopReturn?.(); stopReturn = null;
-  who = null; loadId++; reading.clear();
+  who = null; loadId++; reading.clear(); listenRooms("dms", [], onNudge);
   set({ threads: [], people: [], status: "idle" });
 }
 
@@ -57,7 +77,12 @@ export const dmActions = {
     if (!body || !who) return;
     const me = who, id = crypto.randomUUID(), at = new Date().toISOString();
     patchThread(threadId, (t) => ({ ...t, messages: [...t.messages, { id, mine: true, text: body, at }], updatedAt: at }));
-    dbRun("Sending that message", () => supabase!.from("direct_messages").insert({ id, conversation_id: threadId, sender_id: me, body }), () => void reload());
+    dbRun("Sending that message", () => supabase!.from("direct_messages").insert({ id, conversation_id: threadId, sender_id: me, body }), () => void reload(), () => {
+      const note = { table: "direct_messages", id, op: "upsert" } as const;
+      sendNudge(threadId, note);
+      const other = state.threads.find((t) => t.id === threadId)?.otherId;
+      if (other) sendNudge(`inbox-${other}`, note);
+    });
   },
 
   /** Open the conversation with this person, making it if it does not exist yet. Resolves to its id, or null if it could not be made. */

@@ -45,6 +45,9 @@ export const CONNECT_GRACE_MS = 8000;
 /** After a look, changes arriving within this long are folded into one more look. */
 export const COALESCE_MS = 120;
 
+/** One change from the database, with the row as it is now (and, for a delete, the id of the row that went). */
+export type ChangeEvent = { table: string; type: "INSERT" | "UPDATE" | "DELETE"; row: Record<string, unknown>; old: Record<string, unknown> };
+
 /** Call `onChange` whenever any of these tables change (shortly after, and once for a burst). Returns a function that stops listening.
  *
  *  It is built so a screen never gets stuck showing old things:
@@ -52,7 +55,7 @@ export const COALESCE_MS = 120;
  *  - if the connection is down, or never comes up (some school networks block live connections), it looks again every 15 seconds;
  *  - even when everything seems fine it looks again every two minutes, in case a change was missed;
  *  - it looks again the moment the device comes back online. It only does any of this while the page is on screen. */
-export function watchTables(name: string, tables: string[], onChange: () => void): () => void {
+export function watchTables(name: string, tables: string[], onChange: () => void, onEvent?: (e: ChangeEvent) => boolean): () => void {
   const sb = supabase!;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false, healthy = false, everUp = false;
@@ -71,7 +74,16 @@ export function watchTables(name: string, tables: string[], onChange: () => void
   const visible = () => typeof document === "undefined" || document.visibilityState === "visible";
 
   const ch = sb.channel(`${name}-${Math.random().toString(36).slice(2, 8)}`);
-  for (const table of tables) ch.on("postgres_changes", { event: "*", schema: "public", table }, soon);
+  // A change that arrives with its row can be applied straight away (return true) instead of fetching everything again.
+  const arrived = (p?: { table?: string; eventType?: ChangeEvent["type"]; new?: Record<string, unknown>; old?: Record<string, unknown> }) => {
+    if (onEvent && p?.table && p.eventType) {
+      let handled = false;
+      try { handled = onEvent({ table: p.table, type: p.eventType, row: p.new ?? {}, old: p.old ?? {} }); } catch { handled = false; }
+      if (handled) return;
+    }
+    soon();
+  };
+  for (const table of tables) ch.on("postgres_changes", { event: "*", schema: "public", table }, arrived);
   ch.subscribe((status) => {
     if (stopped) return;
     if (status === "SUBSCRIBED") {

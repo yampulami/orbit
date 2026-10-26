@@ -3,7 +3,8 @@ import { hangActions, YOU } from "./hangouts";
 import { undo } from "./undo";
 import { supabase } from "./supabase";
 import { dbRun, refreshOnReturn } from "./privateDb";
-import { buildSpace, loadHousehold, watchHousehold } from "./roommatesDb";
+import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
+import { applyChange, buildSpace, loadHousehold, watchHousehold } from "./roommatesDb";
 
 /** One shared household: chores, groceries, expenses and notes. */
 export type Points = 1 | 2 | 3 | 5;
@@ -122,33 +123,56 @@ let ids: Record<string, string> = {};
 let stop: (() => void) | null = null;
 let stopReturn: (() => void) | null = null;
 let loadId = 0;
+let byId: Record<string, string> = {}; // user id to the name shown for them
+let epoch = 0; // counts changes applied straight from the live connection
 async function reload() {
   if (!who) return;
-  const me = who, mine = ++loadId;
+  const me = who, mine = ++loadId, e0 = epoch;
   try {
     const raw = await loadHousehold(me);
     if (mine !== loadId || who !== me) return;
-    if (!raw) { ids = {}; set({ space: null }); return; }
+    if (epoch !== e0) { void reload(); return; } // something arrived while this was loading: this answer may be older than it
+    if (!raw) { ids = {}; byId = {}; set({ space: null }); return; }
     const built = buildSpace(raw);
     ids = built.ids;
+    byId = Object.fromEntries(Object.entries(built.ids).map(([name, id]) => [id, name]));
     set({ space: built.space });
+    listenRooms("roommates", [built.space.groupId ?? ""].filter(Boolean), onNudge);
   } catch { /* keep what is on screen */ }
+}
+/** A roommate saved something: show that one row (or its removal) now, ahead of the database's own change feed. */
+async function onNudge(n: Nudge) {
+  if (n.op === "delete") { onLive({ table: n.table, type: "DELETE", row: {}, old: { id: n.id } }); return; }
+  const change = await fetchChange(n.table, n.id).catch(() => null);
+  if (change) onLive(change);
+}
+/** A change that came over the live connection with its row: show it at once, with no trip to the database. */
+function onLive(e: Parameters<typeof applyChange>[2]) {
+  if (!state.space) return false;
+  const next = applyChange(state.space, (id) => byId[id], e);
+  if (!next) return false;
+  epoch++;
+  if (next !== state.space) set({ space: next });
+  return true;
 }
 export function bindRoommates(userId: string) {
   if (!live || who === userId) return;
   unbindRoommates();
   who = userId;
   void reload();
-  stop = watchHousehold(userId, () => void reload());
+  stop = watchHousehold(userId, () => void reload(), onLive);
   stopReturn = refreshOnReturn(() => void reload());
 }
 export function unbindRoommates() {
   if (!live) return;
   stop?.(); stop = null; stopReturn?.(); stopReturn = null;
-  who = null; ids = {}; loadId++;
+  who = null; ids = {}; byId = {}; loadId++; listenRooms("roommates", [], onNudge);
   set({ space: null });
 }
-const sync = (what: string, job: () => PromiseLike<{ error: { message: string } | null }>) => { if (live && who) dbRun(what, job, () => void reload()); };
+/** Save a change in the background. `nudge` tells the other roommates, right after it is saved, which row to look at. */
+const sync = (what: string, job: () => PromiseLike<{ error: { message: string } | null }>, nudge?: Nudge) => {
+  if (live && who) dbRun(what, job, () => void reload(), nudge ? () => sendNudge(gid(), nudge) : undefined);
+};
 const gid = () => state.space?.groupId ?? "";
 const userOf = (name: string) => (name === YOU ? who : ids[name]) ?? null;
 const table = (name: string) => supabase!.from(name);
@@ -218,32 +242,32 @@ export const roomActions = {
     const who = assignee === "auto" ? autoAssignee(s.members, s.tasks) : assignee;
     const task: Task = { id: uid(), title, assignee: who, points, done: false, createdAt: now(), due: due || undefined };
     patch((sp) => ({ ...sp, tasks: [task, ...sp.tasks] }));
-    sync("Adding that chore", () => table("household_tasks").insert({ id: task.id, group_id: gid(), title, assignee: userOf(who), points, due_on: task.due ?? null }));
+    sync("Adding that chore", () => table("household_tasks").insert({ id: task.id, group_id: gid(), title, assignee: userOf(who), points, due_on: task.due ?? null }), { table: "household_tasks", id: task.id, op: "upsert" });
     say(`New chore: ${title}, assigned to ${who === YOU ? "me" : who} (${points} pt${points === 1 ? "" : "s"})${due ? `, due ${due}` : ""}`);
   },
   setTaskDone(id: string, done: boolean) {
     const at = done ? now() : undefined;
     patch((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === id ? { ...t, done, doneAt: at } : t)) }));
-    sync("Saving that chore", () => table("household_tasks").update({ done, done_at: at ?? null }).eq("id", id));
+    sync("Saving that chore", () => table("household_tasks").update({ done, done_at: at ?? null }).eq("id", id), { table: "household_tasks", id, op: "upsert" });
   },
   reassign(id: string, assignee: string) {
     patch((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === id ? { ...t, assignee } : t)) }));
-    sync("Reassigning that chore", () => table("household_tasks").update({ assignee: userOf(assignee) }).eq("id", id));
+    sync("Reassigning that chore", () => table("household_tasks").update({ assignee: userOf(assignee) }).eq("id", id), { table: "household_tasks", id, op: "upsert" });
   },
   addGrocery(name: string, category: string) {
     const item: Grocery = { id: uid(), name, category, bought: false };
     patch((s) => ({ ...s, groceries: [...s.groceries, item] }));
-    sync("Adding that item", () => table("household_groceries").insert({ id: item.id, group_id: gid(), name, category }));
+    sync("Adding that item", () => table("household_groceries").insert({ id: item.id, group_id: gid(), name, category }), { table: "household_groceries", id: item.id, op: "upsert" });
   },
   setBought(id: string, bought: boolean) {
     patch((s) => ({ ...s, groceries: s.groceries.map((g) => (g.id === id ? { ...g, bought } : g)) }));
-    sync("Saving that item", () => table("household_groceries").update({ bought }).eq("id", id));
+    sync("Saving that item", () => table("household_groceries").update({ bought }).eq("id", id), { table: "household_groceries", id, op: "upsert" });
   },
   addExpense(item: string, cents: number, paidBy: string) {
     const s = state.space; if (!s) return;
     const e: Expense = { id: uid(), item, cents, paidBy, split: s.members, at: now() };
     patch((sp) => ({ ...sp, expenses: [e, ...sp.expenses] }));
-    sync("Adding that expense", () => table("household_expenses").insert({ id: e.id, group_id: gid(), item, cents, paid_by: userOf(paidBy), split: idList(e.split) }));
+    sync("Adding that expense", () => table("household_expenses").insert({ id: e.id, group_id: gid(), item, cents, paid_by: userOf(paidBy), split: idList(e.split) }), { table: "household_expenses", id: e.id, op: "upsert" });
     say(`Added expense: ${item}, ${money(cents)} paid by ${paidBy === YOU ? "me" : paidBy}`);
   },
   /** Record that `from` paid `to` (cash, Venmo, however they did it). It counts against what was owed; no money moves through Orbit. */
@@ -251,14 +275,14 @@ export const roomActions = {
     if (from === to || cents <= 0) return null;
     const p: Payment = { id: uid(), from, to, cents, at: now() };
     patch((sp) => ({ ...sp, payments: [p, ...sp.payments] }));
-    sync("Recording that payment", () => table("household_payments").insert({ id: p.id, group_id: gid(), from_user: userOf(from), to_user: userOf(to), cents }));
+    sync("Recording that payment", () => table("household_payments").insert({ id: p.id, group_id: gid(), from_user: userOf(from), to_user: userOf(to), cents }), { table: "household_payments", id: p.id, op: "upsert" });
     say(`${from === YOU ? "I" : from} paid ${to === YOU ? "me" : to} ${money(cents)}`);
     return p.id;
   },
   addNote(title: string, body: string) {
     const n: Note = { id: uid(), title, body };
     patch((s) => ({ ...s, notes: [n, ...s.notes] }));
-    sync("Adding that note", () => table("household_notes").insert({ id: n.id, group_id: gid(), title, body }));
+    sync("Adding that note", () => table("household_notes").insert({ id: n.id, group_id: gid(), title, body }), { table: "household_notes", id: n.id, op: "upsert" });
   },
   /** Removing returns what was removed and where it was, so Undo can put it back in the same spot. */
   remove(kind: Kind, id: string) {
@@ -268,7 +292,7 @@ export const roomActions = {
     if (index < 0) return null;
     const item = list[index];
     patch((sp) => ({ ...sp, [kind]: (sp[kind] as { id: string }[]).filter((x) => x.id !== id) }));
-    sync("Deleting that", () => table(TABLES[kind]).delete().eq("id", id));
+    sync("Deleting that", () => table(TABLES[kind]).delete().eq("id", id), { table: TABLES[kind], id, op: "delete" });
     return { item, index };
   },
   restore(kind: Kind, item: { id: string }, index: number) {
@@ -278,7 +302,7 @@ export const roomActions = {
       list.splice(Math.min(index, list.length), 0, item);
       return { ...s, [kind]: list };
     });
-    sync("Bringing that back", () => table(TABLES[kind]).upsert({ ...restoreRow(kind, item), id: item.id, group_id: gid() }));
+    sync("Bringing that back", () => table(TABLES[kind]).upsert({ ...restoreRow(kind, item), id: item.id, group_id: gid() }), { table: TABLES[kind], id: item.id, op: "upsert" });
   },
   /** Leaving only clears this device's view in demo mode. With a database you stay in the group until you leave it there. */
   leave() { if (!live) set({ space: null }); },
