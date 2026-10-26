@@ -145,11 +145,11 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
                   {isToday && nowTop > 0 && <i className="wb-past" style={{ height: Math.min(nowTop, hours.length * ROW) }} aria-hidden="true" />}
                   {(blocks.get(k) ?? []).map((b) => {
                     const top = ((b.start - FIRST * 60) / 60) * ROW + 2;
-                    const h = Math.max(30, (b.len / 60) * ROW - 4);
-                    const compact = h < 50;
+                    const h = Math.max(44, (b.len / 60) * ROW - 4);
+                    const compact = h < 56;
                     return (
                       <button key={b.id} type="button" className={`wb-ev ${b.kind}` + (b.mark ? ` m-${b.mark}` : "") + (b.done ? " done" : "") + (compact ? " compact" : "")}
-                        style={{ top, height: h, left: `calc(${(b.lane / b.lanes) * 100}% + 3px)`, width: `calc(${100 / b.lanes}% - 6px)` }}
+                        style={{ top, height: h, ["--h" as string]: `${h}px`, left: `calc(${(b.lane / b.lanes) * 100}% + 3px)`, width: `calc(${100 / b.lanes}% - 6px)` }}
                         onClick={() => onDay(k)}
                         title={`${b.title}, ${clock(b.start)}${b.place ? `, ${b.place}` : ""}`}>
                         <strong>{b.title}</strong>

@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { supabase } from "./supabase";
 import { dbRun, refreshOnReturn } from "./privateDb";
 import { staleLimiter, watchTables } from "./people";
+import { readCache, writeCache } from "./localCache";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
 import { notice } from "./notice";
 import { applyDmChange, buildThreads, loadDms, loadPeople, pairOf, type DmThread, type Person } from "./dmDb";
@@ -12,7 +13,11 @@ export const dmLive = !!supabase;
 
 let state: State = { threads: [], people: [], status: "idle" };
 const subs = new Set<() => void>();
-function set(next: State) { state = next; subs.forEach((f) => f()); }
+function set(next: State) {
+  state = next;
+  if (who && next.status === "ready") writeCache("dms", who, next.threads);
+  subs.forEach((f) => f());
+}
 
 let who: string | null = null;
 let stop: (() => void) | null = null;
@@ -49,7 +54,8 @@ export function bindDms(userId: string) {
   if (!dmLive || who === userId) return;
   unbindDms();
   who = userId;
-  set({ threads: [], people: [], status: "loading" });
+  const kept = readCache<DmThread[]>("dms", userId);
+  set(kept ? { threads: kept, people: [], status: "ready" } : { threads: [], people: [], status: "loading" }); // last time's chats show straight away
   void reload();
   loadPeople(userId).then((people) => { if (who === userId) set({ ...state, people }); }).catch(() => undefined);
   stop = watchTables(`orbit-dm-${userId}`, ["direct_messages", "direct_conversations"], () => void reload(), (e) => {

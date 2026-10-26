@@ -3,6 +3,7 @@ import { undo } from "./undo";
 import { supabase } from "./supabase";
 import { dbRun, loadReminders, refreshOnReturn, toReminderRow } from "./privateDb";
 import { watchTables } from "./people";
+import { readCache, writeCache } from "./localCache";
 
 /** Reminders the person sets on the calendar. With a database they follow you between devices; without one they are saved on this device. */
 export type Reminder = { id: string; title: string; date: string; time?: string; done: boolean; /** Already shown as an alert, so it does not pop up twice. */ notified?: boolean };
@@ -59,6 +60,7 @@ const subs = new Set<() => void>();
 function set(next: Reminder[]) {
   state = next;
   if (!live) { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ } }
+  else if (owner) writeCache("reminders", owner, state);
   subs.forEach((f) => f());
 }
 
@@ -74,6 +76,8 @@ export function bindReminders(userId: string) {
   if (!live || owner === userId) return;
   unbindReminders();
   owner = userId;
+  const kept = readCache<Reminder[]>("reminders", userId);
+  if (kept) set(kept); // what was there last time shows straight away
   void reload();
   // A reminder made on another device shows up here too (and the check on return and the slow safety check cover a missed change).
   const stopWatch = watchTables(`orbit-reminders-${userId}`, ["reminders"], () => void reload());

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("./supabase", () => ({ supabase: null }));
 
 import { applyChange } from "./roommatesDb";
-import { applyMessage } from "./hangoutsDb";
+import { applyHangChange as applyMessage } from "./hangoutsDb";
 import { applyDmChange, type DmThread } from "./dmDb";
 import type { Space } from "./roommates";
 import type { ChangeEvent } from "./people";
@@ -63,10 +63,41 @@ describe("chat messages applied straight from the live connection", () => {
     const s = state();
     expect(applyMessage(s, nameOf, msg({ id: "m0", sender_id: "me" }))).toBe(s);
   });
-  it("asks for a full look for an unknown group or person, or a message about a plan", () => {
+  it("asks for a full look for an unknown group or person", () => {
     expect(applyMessage(state(), nameOf, msg({ group_id: "nope" }))).toBeNull();
     expect(applyMessage(state(), nameOf, msg({ sender_id: "stranger" }))).toBeNull();
-    expect(applyMessage(state(), nameOf, msg({ hangout_id: "h1" }))).toBeNull();
+  });
+  it("shows a message about a plan as a plan card", () => {
+    const next = applyMessage(state(), nameOf, msg({ hangout_id: "h1" }))!;
+    expect(next.groups[0].messages[1]).toMatchObject({ id: "m1", author: "Maya", hangoutId: "h1" });
+  });
+});
+
+describe("hangouts and answers applied straight from the live connection", () => {
+  const base = (): HangState => ({ groups: [{ id: "g1", name: "G", members: ["You", "Maya"], messages: [] }], hangouts: [
+    { id: "h2", groupId: "g1", title: "Later", place: "Lib", when: "2026-10-30T10:00:00Z", by: "You", rsvps: { You: "yes" }, visibility: "group", len: 90 },
+  ] });
+  const hang = (o: Record<string, unknown> = {}) => ev("campus_hangouts", "INSERT", { id: "h1", group_id: "g1", visibility: "group", created_by: "u2", title: "Coffee", place_name: "Cafe", starts_at: "2026-10-28T10:00:00Z", duration_minutes: 60, canceled_at: null, ...o });
+
+  it("adds a new hangout in time order", () => {
+    const next = applyMessage(base(), nameOf, hang())!;
+    expect(next.hangouts.map((h) => h.id)).toEqual(["h1", "h2"]);
+    expect(next.hangouts[0]).toMatchObject({ title: "Coffee", place: "Cafe", by: "Maya", len: 60, canceled: false, rsvps: {} });
+  });
+  it("updates a hangout in place and keeps the answers, and hides a cancelled one", () => {
+    const once = applyMessage(base(), nameOf, hang({ id: "h2", title: "Later (moved)", canceled_at: "2026-10-24T00:00:00Z" }))!;
+    expect(once.hangouts).toHaveLength(1);
+    expect(once.hangouts[0]).toMatchObject({ title: "Later (moved)", canceled: true, rsvps: { You: "yes" } });
+  });
+  it("shows someone's answer, and takes it away again", () => {
+    const yes = applyMessage(base(), nameOf, ev("campus_hangout_rsvps", "INSERT", { hangout_id: "h2", user_id: "u2", answer: "no" }))!;
+    expect(yes.hangouts[0].rsvps).toEqual({ You: "yes", Maya: "no" });
+    const gone = applyMessage(yes, nameOf, ev("campus_hangout_rsvps", "DELETE", {}, { hangout_id: "h2", user_id: "u2" }))!;
+    expect(gone.hangouts[0].rsvps).toEqual({ You: "yes" });
+  });
+  it("asks for a full look for a hangout or person it does not know", () => {
+    expect(applyMessage(base(), nameOf, ev("campus_hangout_rsvps", "INSERT", { hangout_id: "nope", user_id: "u2", answer: "yes" }))).toBeNull();
+    expect(applyMessage(base(), nameOf, hang({ created_by: "stranger" }))).toBeNull();
   });
 });
 

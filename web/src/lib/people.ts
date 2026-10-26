@@ -59,20 +59,20 @@ export function staleLimiter(max = 3) {
   };
 }
 
-/** When a phone wakes up or the tab comes back, the live connection may be asleep: make sure it is open again and have every screen look again. */
-let lastWake = 0;
+/** When a phone wakes up or the tab comes back after a while, the live connection may be asleep: make sure it is open again and have every screen
+ *  look again. A quick flick away and back does not count. */
+let hiddenAt = 0;
 function wake() {
-  if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
-  const now = Date.now();
-  if (now - lastWake < 1500) return;
-  lastWake = now;
   try { if (supabase && !supabase.realtime.isConnected()) supabase.realtime.connect(); } catch { /* the slower checks still run */ }
   refreshEverything();
 }
 if (typeof window !== "undefined" && supabase) {
-  document.addEventListener("visibilitychange", wake);
-  window.addEventListener("pageshow", wake);
-  window.addEventListener("focus", wake);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > 3000) wake();
+    hiddenAt = 0;
+  });
+  window.addEventListener("pageshow", (e) => { if ((e as PageTransitionEvent).persisted) wake(); }); // restored from the back/forward cache
 }
 
 /** One change from the database, with the row as it is now (and, for a delete, the id of the row that went). */

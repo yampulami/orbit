@@ -71,3 +71,14 @@ describe("nudges", () => {
     expect(await fetchChange("group_messages", "x1")).toEqual({ table: "group_messages", type: "INSERT", row: { id: "x1", body: "hi" }, old: {} });
   });
 });
+
+describe("nudges that name a row by more than one field", () => {
+  it("accepts a hangout answer note and ignores one with unexpected fields", () => {
+    const got = vi.fn();
+    listenRooms("a", ["r9"], got);
+    deliver("r9", { table: "campus_hangout_rsvps", id: "h1", op: "upsert", by: { hangout_id: "h1", user_id: "u1" } });
+    deliver("r9", { table: "campus_hangout_rsvps", id: "h1", op: "upsert", by: { password: "x" } });
+    deliver("r9", { table: "campus_hangout_rsvps", id: "h1", op: "upsert", by: "oops" });
+    expect(got).toHaveBeenCalledTimes(1);
+  });
+});

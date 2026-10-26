@@ -3,6 +3,7 @@ import { hangActions, YOU } from "./hangouts";
 import { undo } from "./undo";
 import { supabase } from "./supabase";
 import { dbRun, refreshOnReturn } from "./privateDb";
+import { readCache, writeCache } from "./localCache";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
 import { applyChange, buildSpace, loadHousehold, watchHousehold } from "./roommatesDb";
 
@@ -110,6 +111,7 @@ const subs = new Set<() => void>();
 function set(next: State) {
   state = next;
   if (!live) { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ } }
+  else if (who && state.space) writeCache("household", who, { space: state.space, ids });
   subs.forEach((f) => f());
 }
 const patch = (fn: (s: Space) => Space) => { if (state.space) set({ space: fn(state.space) }); };
@@ -159,6 +161,8 @@ export function bindRoommates(userId: string) {
   if (!live || who === userId) return;
   unbindRoommates();
   who = userId;
+  const kept = readCache<{ space: Space; ids: Record<string, string> }>("household", userId);
+  if (kept?.space) { ids = kept.ids ?? {}; byId = Object.fromEntries(Object.entries(ids).map(([name, id]) => [id, name])); set({ space: kept.space }); } // shown straight away
   void reload();
   stop = watchHousehold(userId, () => void reload(), onLive);
   stopReturn = refreshOnReturn(() => void reload());

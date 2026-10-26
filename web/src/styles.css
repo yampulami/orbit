@@ -1673,3 +1673,11 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
   .leaflet-bar a{position:relative;width:40px!important;height:40px!important;line-height:40px!important}
 }
 @media (max-width:900px){.rsvp button{min-height:38px}}
+
+/* calendar events: names wrap instead of being cut off, and hovering or focusing one opens it up to show everything */
+.wb-ev strong{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;line-height:1.2}
+.wb-ev span{white-space:normal;overflow-wrap:anywhere;line-height:1.2}
+.wb-ev.compact{display:grid;grid-template-columns:1fr;align-content:center;row-gap:1px;padding:4px 8px}
+.wb-ev.compact span{text-align:left}
+.wb-ev:hover,.wb-ev:focus-visible{height:auto!important;min-height:var(--h);z-index:6;overflow:visible;box-shadow:0 14px 28px -12px rgba(40,30,90,.6)}
+.wb-ev:hover strong,.wb-ev:focus-visible strong{-webkit-line-clamp:unset;display:block}

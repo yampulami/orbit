@@ -2,9 +2,10 @@ import { useSyncExternalStore } from "react";
 import { progress } from "./progress";
 import { supabase } from "./supabase";
 import { notice } from "./notice";
-import { staleLimiter } from "./people";
+import { staleLimiter, type ChangeEvent } from "./people";
+import { readCache, writeCache } from "./localCache";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
-import { applyMessage, buildState, labelerFor, loadRaw, watch } from "./hangoutsDb";
+import { applyHangChange, buildState, labelerFor, loadRaw, watch } from "./hangoutsDb";
 import { YOU, type Group, type HangState, type Hangout, type Msg, type Rsvp } from "./hangTypes";
 
 /** Friend groups, group chat and hangout answers. With a database they live there (private to each group, joined with an invite code, live for
@@ -71,6 +72,7 @@ const subs = new Set<() => void>();
 function set(next: State) {
   state = next;
   if (!live) { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* ignore */ } }
+  else if (who && status === "ready") writeCache("hang", who.id, state);
   subs.forEach((f) => f());
 }
 
@@ -101,13 +103,14 @@ async function reload() {
   }
 }
 
-/** Someone sent a chat message: show it now, ahead of the database's own change feed. */
+/** Someone saved something in a group (a message, a hangout, an answer): show it now, ahead of the database's own change feed. */
 async function onNudge(n: Nudge) {
-  if (n.table !== "group_messages" || n.op !== "upsert") return;
-  const change = await fetchChange(n.table, n.id).catch(() => null);
+  let change: ChangeEvent | null;
+  if (n.op === "delete") change = { table: n.table, type: "DELETE", row: {}, old: n.by ?? { id: n.id } };
+  else change = await fetchChange(n.table, n.id, n.by).catch(() => null);
   if (!change) return;
-  const next = applyMessage(state, nameOf, change);
-  if (next) { epoch++; if (next !== state) set(next); } else void reload(); // an unknown group or person, or a message about a plan
+  const next = applyHangChange(state, nameOf, change);
+  if (next) { epoch++; if (next !== state) set(next); } else void reload(); // an unknown group, hangout or person
 }
 
 /** Start using the database for this signed-in student. Call once the person and their campus are known. */
@@ -116,12 +119,14 @@ export function bindHang(user: { id: string; name: string; campusKey: string }) 
   if (who?.id === user.id) { who = user; return; }
   unbindHang();
   who = user;
-  status = "loading";
+  // What was on screen last time shows straight away, then the database's answer replaces it.
+  const kept = readCache<State>("hang", user.id);
+  if (kept) { state = kept; status = "ready"; } else status = "loading";
   subs.forEach((f) => f());
   void reload();
   stopWatching = watch(user.id, () => void reload(), (e) => {
     // A new chat message shows at once, without fetching groups, hangouts and answers all over again.
-    const next = applyMessage(state, nameOf, e);
+    const next = applyHangChange(state, nameOf, e);
     if (!next) return false;
     epoch++;
     if (next !== state) set(next);
@@ -199,7 +204,10 @@ export const hangActions = {
       run("Planning that hangout", async () => {
         const made = await supabase!.from("campus_hangouts").insert({ id, campus_key: w.campusKey, group_id: groupId, visibility: h.visibility ?? "group", created_by: w.id, title: h.title, place_name: h.place, starts_at: h.when, duration_minutes: 90 });
         if (made.error) return made;
-        return supabase!.from("group_messages").insert({ id: crypto.randomUUID(), group_id: groupId, sender_id: w.id, sender_name: w.name, body: h.title, hangout_id: id });
+        const mid = crypto.randomUUID();
+        const said = await supabase!.from("group_messages").insert({ id: mid, group_id: groupId, sender_id: w.id, sender_name: w.name, body: h.title, hangout_id: id });
+        if (!said.error) { sendNudge(groupId, { table: "campus_hangouts", id, op: "upsert" }); sendNudge(groupId, { table: "group_messages", id: mid, op: "upsert" }); }
+        return said;
       });
     }
     set({
@@ -211,7 +219,7 @@ export const hangActions = {
   /** Cancelling only hides a hangout, so it can be brought back with Undo. */
   setCanceled(hangoutId: string, canceled: boolean) {
     set({ ...state, hangouts: state.hangouts.map((h) => (h.id === hangoutId ? { ...h, canceled } : h)) });
-    if (live && who) run("Cancelling that hangout", () => supabase!.from("campus_hangouts").update({ canceled_at: canceled ? new Date().toISOString() : null }).eq("id", hangoutId));
+    if (live && who) run("Cancelling that hangout", () => supabase!.from("campus_hangouts").update({ canceled_at: canceled ? new Date().toISOString() : null }).eq("id", hangoutId), () => sendNudge(state.hangouts.find((h) => h.id === hangoutId)?.groupId, { table: "campus_hangouts", id: hangoutId, op: "upsert" }));
   },
   /** Demo mode only: people are typed names. With a database, friends join with the group's invite code instead. */
   addMembers(groupId: string, names: string[]) {
@@ -239,7 +247,8 @@ export const hangActions = {
       const w = who;
       run("Saving your answer", () => (answer
         ? supabase!.from("campus_hangout_rsvps").upsert({ hangout_id: hangoutId, user_id: w.id, answer, updated_at: new Date().toISOString() })
-        : supabase!.from("campus_hangout_rsvps").delete().eq("hangout_id", hangoutId).eq("user_id", w.id)));
+        : supabase!.from("campus_hangout_rsvps").delete().eq("hangout_id", hangoutId).eq("user_id", w.id)),
+      () => sendNudge(state.hangouts.find((h) => h.id === hangoutId)?.groupId, { table: "campus_hangout_rsvps", id: hangoutId, op: answer ? "upsert" : "delete", by: { hangout_id: hangoutId, user_id: w.id } }));
     }
     set({
       ...state,

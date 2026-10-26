@@ -239,3 +239,7 @@ Receivers used to wait for the database's change feed (about 0.4 to 0.6 seconds,
 3. The slow paths are still there as a safety net: the change feed, a look when the connection drops and returns, and a look every two minutes.
 
 Nobody can use a note to show something that is not in the database: the note only says which row to fetch.
+
+**Hangouts and answers (2026-10-26).** Plans now take the same quick route: a new or changed hangout, a cancel, or someone's yes/no reaches the others in about 0.15 seconds (measured with a second account) and is applied to the screen without reloading groups, chat and hangouts. Public hangouts, which have no private room, arrive through the database's own change feed, also applied directly.
+
+**First paint from the last visit.** Groups, chat and hangouts, reminders, the household and direct messages are kept on the device (`web/src/lib/localCache.ts`) and shown at once on the next visit while the database's answer loads. It is kept per person and wiped on sign out and when an account is deleted.

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { siteUrl } from "./siteUrl";
+import { clearCaches } from "./localCache";
 import { demoAuth, demoSession, isGuestEmail } from "./demoAuth";
 import { looksLikeEmail } from "./username";
 
@@ -92,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    clearCaches(); // nothing kept on this device for the last person
     if (supabase) {
       // A guest cannot sign back in, so leaving would only strand an account on the server. Remove it (best effort: leaving always works).
       const { data } = await supabase.auth.getSession();
@@ -112,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) return /function|schema cache|could not find/i.test(error.message) ? "Deleting accounts is not switched on for this project yet." : error.message;
       await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
       try { localStorage.removeItem(`orbit-profile-v1:${id}`); } catch { /* ignore */ }
+      clearCaches();
     } else {
       demoAuth.remove(id);
     }

@@ -86,18 +86,47 @@ export async function loadRaw(me: string): Promise<Raw> {
   return { me, groups: (groups.data ?? []) as RawGroup[], members, codes: (codes.data ?? []) as RawCode[], messages: msgs, hangouts: hangs, rsvps, names };
 }
 
-/** Pure: one new chat message applied to what is on screen. Returns null when it cannot be shown on its own (a group or person not known yet,
- *  or a message about a plan, which needs the plan too), in which case the caller looks everything up again. */
-export function applyMessage(state: HangState, nameOf: (id: string) => string | undefined, e: ChangeEvent): HangState | null {
-  if (e.table !== "group_messages" || e.type !== "INSERT") return null;
-  const m = e.row as unknown as RawMessage;
-  if (m.hangout_id || !m.id || !m.group_id) return null;
-  const g = state.groups.find((x) => x.id === m.group_id);
-  const author = nameOf(m.sender_id);
-  if (!g || author === undefined) return null;
-  if (g.messages.some((x) => x.id === m.id)) return state; // already there: it is your own message, shown the moment you sent it
-  const message = { id: m.id, author, text: m.body, at: m.created_at };
-  return { ...state, groups: state.groups.map((x) => (x.id === g.id ? { ...x, messages: [...x.messages, message] } : x)) };
+/** Pure: one change from the database applied to what is on screen: a new chat message, a hangout made or changed or removed, or someone's answer.
+ *  Returns the new state, or null when it cannot be shown on its own (a group, hangout or person not known yet), in which case the caller looks
+ *  everything up again. */
+export function applyHangChange(state: HangState, nameOf: (id: string) => string | undefined, e: ChangeEvent): HangState | null {
+  if (e.table === "group_messages") {
+    if (e.type !== "INSERT") return null;
+    const m = e.row as unknown as RawMessage;
+    if (!m.id || !m.group_id) return null;
+    const g = state.groups.find((x) => x.id === m.group_id);
+    const author = nameOf(m.sender_id);
+    if (!g || author === undefined) return null;
+    if (g.messages.some((x) => x.id === m.id)) return state; // already there: it is your own message, shown the moment you sent it
+    const message = m.hangout_id ? { id: m.id, author, hangoutId: m.hangout_id, at: m.created_at } : { id: m.id, author, text: m.body, at: m.created_at };
+    return { ...state, groups: state.groups.map((x) => (x.id === g.id ? { ...x, messages: [...x.messages, message] } : x)) };
+  }
+
+  if (e.table === "campus_hangouts") {
+    if (e.type === "DELETE") {
+      const id = e.old.id as string | undefined;
+      return id ? { ...state, hangouts: state.hangouts.filter((h) => h.id !== id) } : null;
+    }
+    const r = e.row as unknown as RawHangout;
+    const by = nameOf(r.created_by);
+    if (!r.id || by === undefined) return null;
+    const before = state.hangouts.find((h) => h.id === r.id);
+    const next = { id: r.id, groupId: r.group_id ?? "", title: r.title, place: r.place_name, when: r.starts_at, by, rsvps: before?.rsvps ?? {}, canceled: !!r.canceled_at, visibility: r.visibility, len: r.duration_minutes };
+    const list = before ? state.hangouts.map((h) => (h.id === r.id ? next : h)) : [...state.hangouts, next];
+    return { ...state, hangouts: list.sort((a, b) => a.when.localeCompare(b.when)) };
+  }
+
+  if (e.table === "campus_hangout_rsvps") {
+    const r = (e.type === "DELETE" ? e.old : e.row) as { hangout_id?: string; user_id?: string; answer?: Rsvp };
+    if (!r.hangout_id || !r.user_id) return null;
+    const h = state.hangouts.find((x) => x.id === r.hangout_id);
+    const who = nameOf(r.user_id);
+    if (!h || who === undefined) return null;
+    const rsvps = { ...h.rsvps };
+    if (e.type === "DELETE") delete rsvps[who]; else if (r.answer) rsvps[who] = r.answer; else return null;
+    return { ...state, hangouts: state.hangouts.map((x) => (x.id === h.id ? { ...x, rsvps } : x)) };
+  }
+  return null;
 }
 
 /** Reload whenever anything relevant changes. The data is small, so reloading is simpler and safer than patching it piece by piece. */

@@ -7,9 +7,11 @@ import type { ChangeEvent } from "./people";
  *  The database's own change feed is reliable but can take half a second. When someone saves something, their app also sends a tiny note over a
  *  quick channel for that room: just the table and the id, never the content. The other people's apps then fetch that one row (the database rules
  *  still decide whether they may see it) and show it. Nobody can use the note to show something that is not really in the database. */
-export type Nudge = { table: string; id: string; op: "upsert" | "delete" };
+/** `by` names the row when it has no single id (a hangout answer is found by the hangout and the person). */
+export type Nudge = { table: string; id: string; op: "upsert" | "delete"; by?: Record<string, string> };
 
-const ALLOWED = new Set(["household_tasks", "household_groceries", "household_expenses", "household_notes", "household_payments", "group_messages", "direct_messages"]);
+const ALLOWED = new Set(["household_tasks", "household_groceries", "household_expenses", "household_notes", "household_payments", "group_messages", "direct_messages", "campus_hangouts", "campus_hangout_rsvps"]);
+const BY_KEYS = new Set(["hangout_id", "user_id"]);
 
 type Room = { ch: RealtimeChannel; listeners: Map<string, (n: Nudge) => void> };
 const rooms = new Map<string, Room>();
@@ -23,6 +25,10 @@ function room(id: string): Room {
     ch.on("broadcast", { event: "n" }, (m: { payload?: unknown }) => {
       const n = m.payload as Partial<Nudge> | undefined;
       if (!n || typeof n.id !== "string" || typeof n.table !== "string" || !ALLOWED.has(n.table) || (n.op !== "upsert" && n.op !== "delete")) return;
+      if (n.by !== undefined) {
+        const by = n.by as unknown;
+        if (typeof by !== "object" || by === null || Object.entries(by).some(([k, v]) => !BY_KEYS.has(k) || typeof v !== "string")) return;
+      }
       listeners.forEach((f) => f(n as Nudge));
     });
     ch.subscribe();
@@ -59,8 +65,10 @@ export function sendNudge(roomId: string | null | undefined, n: Nudge) {
 }
 
 /** The row a note points at, as a change event ready to be applied; null if it is gone or this person may not see it. */
-export async function fetchChange(table: string, id: string): Promise<ChangeEvent | null> {
-  const { data, error } = await supabase!.from(table).select("*").eq("id", id).maybeSingle();
+export async function fetchChange(table: string, id: string, by?: Record<string, string>): Promise<ChangeEvent | null> {
+  let q = supabase!.from(table).select("*");
+  q = by ? Object.entries(by).reduce((acc, [k, v]) => acc.eq(k, v), q) : q.eq("id", id);
+  const { data, error } = await q.maybeSingle();
   if (error || !data) return null;
   return { table, type: "INSERT", row: data as Record<string, unknown>, old: {} };
 }
