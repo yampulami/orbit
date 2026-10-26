@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Bell, Check, Plus, Trash2 } from "lucide-react";
 import { QUICK_TIMES, fromYmd, reminderActions, useReminders, ymd } from "../lib/reminders";
 import PinButton from "./PinButton";
@@ -13,6 +13,16 @@ export default function RemindersPanel({ day }: { day: string }) {
   const [title, setTitle] = useState("");
   const [pick, setPick] = useState<string>(""); // "" = any time, "custom", or a quick time value
   const [custom, setCustom] = useState("");
+  // The time choices stay open once you start (not only while a field has focus: tapping a menu item moves focus away, which used to close
+  // everything before the tap landed). They close when you tap outside with nothing typed or chosen.
+  const [started, setStarted] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
+  useEffect(() => {
+    if (!started) return;
+    const away = (e: PointerEvent) => { if (!form.current?.contains(e.target as Node) && !title.trim() && pick === "") setStarted(false); };
+    document.addEventListener("pointerdown", away);
+    return () => document.removeEventListener("pointerdown", away);
+  }, [started, title, pick]);
 
   const mine = all.filter((r) => fromYmd(r.date).toDateString() === day).sort((a, b) => Number(a.done) - Number(b.done) || (a.time ?? "").localeCompare(b.time ?? ""));
   const open = mine.filter((r) => !r.done).length;
@@ -29,7 +39,7 @@ export default function RemindersPanel({ day }: { day: string }) {
     }
     if (time && new Date(`${date}T${time}`).getTime() < Date.now()) notice.show({ icon: "calendar", title: "That time has passed", message: "I saved it, but it will not alert you because the time is already behind us.", ms: 5000 });
     reminderActions.add(title.trim(), date, time || undefined);
-    setTitle(""); setPick(""); setCustom("");
+    setTitle(""); setPick(""); setCustom(""); setStarted(false);
   }
 
   return (
@@ -52,7 +62,7 @@ export default function RemindersPanel({ day }: { day: string }) {
         </ul>
       )}
 
-      <form onSubmit={add} className={title.trim() ? "has-text" : undefined}>
+      <form ref={form} onSubmit={add} onFocus={() => setStarted(true)} onPointerDown={() => setStarted(true)} className={title.trim() || started || pick !== "" ? "has-text" : undefined}>
         <div className="rem-row">
           <label className="field"><span className="sr">Reminder</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Remind me to…" maxLength={80} /></label>
           <button className="btn primary" disabled={!title.trim()}><Plus size={16} aria-hidden="true" />Add</button>

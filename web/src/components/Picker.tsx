@@ -31,6 +31,12 @@ export default function Picker<T extends string>({ value, options, onChange, lab
     return () => document.removeEventListener("mousedown", away);
   }, [open]);
 
+  // A long list (like 60 minutes) opens and moves with the chosen row in view.
+  useEffect(() => {
+    if (!open) return;
+    document.getElementById(`${listId}-${active}`)?.scrollIntoView({ block: "nearest" });
+  }, [open, active, listId]);
+
   const toggle = () => { setActive(Math.max(0, options.findIndex((o) => o.value === value))); setOpen((o) => !o); };
   const pick = (v: T) => { onChange(v); setOpen(false); button.current?.focus(); };
 

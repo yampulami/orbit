@@ -1,12 +1,12 @@
 import Picker from "./Picker";
 
 const HOURS = Array.from({ length: 12 }, (_, i) => { const h = String(i + 1); return { value: h, label: h }; });
-const MINUTES = Array.from({ length: 12 }, (_, i) => { const m = String(i * 5).padStart(2, "0"); return { value: m, label: m }; });
+const MINUTES = Array.from({ length: 60 }, (_, i) => { const m = String(i).padStart(2, "0"); return { value: m, label: m }; }); // every minute
 
 /** "15:30" to the parts people read: 3, 30, PM. */
 export function parts(value: string) {
   const [h, m] = (value || "09:00").split(":").map(Number);
-  return { hour: String(h % 12 === 0 ? 12 : h % 12), minute: String(m - (m % 5)).padStart(2, "0"), pm: h >= 12 };
+  return { hour: String(h % 12 === 0 ? 12 : h % 12), minute: String(m).padStart(2, "0"), pm: h >= 12 };
 }
 
 /** Back to the 24 hour "HH:MM" that reminders store. */
