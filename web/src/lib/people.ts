@@ -44,6 +44,36 @@ export const POLL_SAFETY_MS = 120000;
 export const CONNECT_GRACE_MS = 8000;
 /** After a look, changes arriving within this long are folded into one more look. */
 export const COALESCE_MS = 120;
+/** How often a screen that must feel instant (chat) quietly asks "is there anything newer than what I show?" while the page is on screen. It covers a phone
+ *  whose live connection went to sleep without telling anyone. */
+export const PROBE_MS = 4000;
+
+/** For a probe: say "out of date" for the same newest thing at most a few times, so something that can never be shown (it is hidden from this
+ *  person, say) cannot make a screen reload every few seconds forever. */
+export function staleLimiter(max = 3) {
+  let last = "", tries = 0;
+  return (id: string, stale: boolean) => {
+    if (!stale) return false;
+    if (id !== last) { last = id; tries = 0; }
+    return ++tries <= max;
+  };
+}
+
+/** When a phone wakes up or the tab comes back, the live connection may be asleep: make sure it is open again and have every screen look again. */
+let lastWake = 0;
+function wake() {
+  if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+  const now = Date.now();
+  if (now - lastWake < 1500) return;
+  lastWake = now;
+  try { if (supabase && !supabase.realtime.isConnected()) supabase.realtime.connect(); } catch { /* the slower checks still run */ }
+  refreshEverything();
+}
+if (typeof window !== "undefined" && supabase) {
+  document.addEventListener("visibilitychange", wake);
+  window.addEventListener("pageshow", wake);
+  window.addEventListener("focus", wake);
+}
 
 /** One change from the database, with the row as it is now (and, for a delete, the id of the row that went). */
 export type ChangeEvent = { table: string; type: "INSERT" | "UPDATE" | "DELETE"; row: Record<string, unknown>; old: Record<string, unknown> };
@@ -55,7 +85,7 @@ export type ChangeEvent = { table: string; type: "INSERT" | "UPDATE" | "DELETE";
  *  - if the connection is down, or never comes up (some school networks block live connections), it looks again every 15 seconds;
  *  - even when everything seems fine it looks again every two minutes, in case a change was missed;
  *  - it looks again the moment the device comes back online. It only does any of this while the page is on screen. */
-export function watchTables(name: string, tables: string[], onChange: () => void, onEvent?: (e: ChangeEvent) => boolean): () => void {
+export function watchTables(name: string, tables: string[], onChange: () => void, onEvent?: (e: ChangeEvent) => boolean, probe?: () => Promise<boolean>): () => void {
   const sb = supabase!;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let stopped = false, healthy = false, everUp = false;
@@ -102,13 +132,21 @@ export function watchTables(name: string, tables: string[], onChange: () => void
     sinceLook += POLL_DOWN_MS;
     if (!healthy || sinceLook >= POLL_SAFETY_MS) { sinceLook = 0; onChange(); }
   }, POLL_DOWN_MS);
+  // A cheap question every few seconds: "is what I show out of date?". Much lighter than looking at everything again, and only a "yes" does that.
+  let probing = false;
+  const askProbe = async () => {
+    if (!probe || probing || stopped || !visible()) return;
+    probing = true;
+    try { if (await probe()) soon(); } catch { /* try again next time */ } finally { probing = false; }
+  };
+  const probeTick = probe ? setInterval(() => void askProbe(), PROBE_MS) : undefined;
   const grace = setTimeout(() => { if (!everUp && !stopped) onChange(); }, CONNECT_GRACE_MS); // never connected at all
   const online = () => soon();
   if (typeof window !== "undefined") { window.addEventListener("online", online); window.addEventListener("orbit-refresh", online); }
 
   return () => {
     stopped = true;
-    clearTimeout(timer); clearTimeout(grace); clearInterval(tick);
+    clearTimeout(timer); clearTimeout(grace); clearInterval(tick); if (probeTick) clearInterval(probeTick);
     if (typeof window !== "undefined") { window.removeEventListener("online", online); window.removeEventListener("orbit-refresh", online); }
     void sb.removeChannel(ch);
   };

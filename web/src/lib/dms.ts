@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { supabase } from "./supabase";
 import { dbRun, refreshOnReturn } from "./privateDb";
-import { watchTables } from "./people";
+import { staleLimiter, watchTables } from "./people";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
 import { notice } from "./notice";
 import { applyDmChange, buildThreads, loadDms, loadPeople, pairOf, type DmThread, type Person } from "./dmDb";
@@ -19,6 +19,7 @@ let stop: (() => void) | null = null;
 let stopReturn: (() => void) | null = null;
 let loadId = 0;
 const reading = new Set<string>();
+const limit = staleLimiter();
 let epoch = 0; // counts changes applied straight from the live connection
 
 async function reload() {
@@ -58,6 +59,11 @@ export function bindDms(userId: string) {
     epoch++;
     if (next !== state.threads) set({ ...state, threads: next });
     return true;
+  }, async () => {
+    // Is the newest message in the database one we already show? If not, something was missed (for example the phone slept).
+    const { data, error } = await supabase!.from("direct_messages").select("id").order("created_at", { ascending: false }).limit(1);
+    const id = (data?.[0] as { id: string } | undefined)?.id;
+    return !error && !!id && limit(id, !state.threads.some((t) => t.messages.some((m) => m.id === id)));
   });
   stopReturn = refreshOnReturn(() => void reload());
 }

@@ -20,7 +20,7 @@ vi.mock("./supabase", () => ({
   },
 }));
 
-import { COALESCE_MS, CONNECT_GRACE_MS, POLL_DOWN_MS, POLL_SAFETY_MS, watchTables } from "./people";
+import { COALESCE_MS, CONNECT_GRACE_MS, POLL_DOWN_MS, POLL_SAFETY_MS, PROBE_MS, staleLimiter, watchTables } from "./people";
 
 beforeEach(() => { vi.useFakeTimers(); live.onChange = []; live.status = undefined; live.removed = 0; });
 afterEach(() => { vi.useRealTimers(); });
@@ -53,6 +53,20 @@ describe("watchTables", () => {
     vi.advanceTimersByTime(COALESCE_MS * 2);
     change({ table: "b", eventType: "UPDATE", new: { id: 2 }, old: {} });
     expect(seen).toHaveBeenCalledTimes(1); // not handled, so it looks again
+  });
+
+  it("asks a cheap question every few seconds and only looks again when the answer is yes", async () => {
+    const seen = vi.fn();
+    let stale = false;
+    const probe = vi.fn(async () => stale);
+    watchTables("t", ["a"], seen, undefined, probe);
+    live.status?.("SUBSCRIBED");
+    await vi.advanceTimersByTimeAsync(PROBE_MS * 2 + 10);
+    expect(probe).toHaveBeenCalledTimes(2);
+    expect(seen).not.toHaveBeenCalled();
+    stale = true;
+    await vi.advanceTimersByTimeAsync(PROBE_MS);
+    expect(seen).toHaveBeenCalledTimes(1);
   });
 
   it("does nothing on its own while the connection is healthy, until the slow safety check", () => {
@@ -98,5 +112,14 @@ describe("watchTables", () => {
     vi.advanceTimersByTime(POLL_SAFETY_MS * 2);
     expect(seen).not.toHaveBeenCalled();
     expect(live.removed).toBe(1);
+  });
+});
+
+describe("staleLimiter", () => {
+  it("says out of date only a few times for the same newest thing", () => {
+    const limit = staleLimiter(2);
+    expect([limit("a", true), limit("a", true), limit("a", true)]).toEqual([true, true, false]);
+    expect(limit("b", true)).toBe(true); // something newer: counted afresh
+    expect(limit("b", false)).toBe(false);
   });
 });

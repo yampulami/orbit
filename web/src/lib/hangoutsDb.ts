@@ -101,4 +101,4 @@ export function applyMessage(state: HangState, nameOf: (id: string) => string | 
 }
 
 /** Reload whenever anything relevant changes. The data is small, so reloading is simpler and safer than patching it piece by piece. */
-export const watch = (me: string, onChange: () => void, onEvent?: (e: ChangeEvent) => boolean) => watchTables(`orbit-hang-${me}`, ["group_messages", "campus_hangouts", "campus_hangout_rsvps", "campus_group_memberships"], onChange, onEvent);
+export const watch = (me: string, onChange: () => void, onEvent?: (e: ChangeEvent) => boolean, probe?: () => Promise<boolean>) => watchTables(`orbit-hang-${me}`, ["group_messages", "campus_hangouts", "campus_hangout_rsvps", "campus_group_memberships"], onChange, onEvent, probe);

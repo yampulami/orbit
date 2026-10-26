@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { progress } from "./progress";
 import { supabase } from "./supabase";
 import { notice } from "./notice";
+import { staleLimiter } from "./people";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
 import { applyMessage, buildState, labelerFor, loadRaw, watch } from "./hangoutsDb";
 import { YOU, type Group, type HangState, type Hangout, type Msg, type Rsvp } from "./hangTypes";
@@ -78,6 +79,7 @@ let who: { id: string; name: string; campusKey: string } | null = null;
 let stopWatching: (() => void) | null = null;
 let loadId = 0;
 let nameOf: (id: string) => string | undefined = () => undefined;
+const limit = staleLimiter();
 let epoch = 0; // counts changes applied straight from the live connection
 
 async function reload() {
@@ -124,6 +126,11 @@ export function bindHang(user: { id: string; name: string; campusKey: string }) 
     epoch++;
     if (next !== state) set(next);
     return true;
+  }, async () => {
+    // Is the newest chat message in the database one we already show? If not, something was missed (for example the phone slept).
+    const { data, error } = await supabase!.from("group_messages").select("id").order("created_at", { ascending: false }).limit(1);
+    const id = (data?.[0] as { id: string } | undefined)?.id;
+    return !error && !!id && limit(id, !state.groups.some((g) => g.messages.some((m) => m.id === id)));
   });
 }
 
