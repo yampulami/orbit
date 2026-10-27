@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, Send } from "lucide-react";
+import { MessageCircle, Plus, Send } from "lucide-react";
+import EmptyState from "../components/EmptyState";
 import { enter, slide } from "../lib/motion";
 import { dmActions, dmLive, useDms } from "../lib/dms";
 import SafetyMenu from "../components/SafetyMenu";
@@ -121,11 +122,14 @@ function LiveMessages() {
               </form>
             </>
           ) : (
-            <div className="dm-empty">
-              <h2>{status === "loading" ? "Loading your messages…" : status === "error" ? "Messages did not load" : "No messages yet"}</h2>
-              <p className="muted">{status === "error" ? "Check your connection and reopen this page." : "Start a conversation with someone on your campus."}</p>
-              {status === "ready" && <button type="button" className="btn primary" onClick={() => setPicking(true)}><Plus size={16} aria-hidden="true" />New message</button>}
-            </div>
+            status === "loading" ? (
+              <div className="dm-empty" aria-busy="true" aria-label="Loading your messages"><div className="skeleton sk-line" /><div className="skeleton sk-line short" /><div className="skeleton sk-tile" /></div>
+            ) : (
+              <EmptyState icon={MessageCircle} title={status === "error" ? "Messages did not load" : "No messages yet"}
+                action={status === "ready" ? <button type="button" className="btn primary" onClick={() => setPicking(true)}><Plus size={16} aria-hidden="true" />New message</button> : undefined}>
+                {status === "error" ? "Check your connection and reopen this page." : "Start a conversation with someone on your campus."}
+              </EmptyState>
+            )
           )}
         </div>
       </div>

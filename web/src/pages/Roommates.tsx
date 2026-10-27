@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 import { Receipt, Scale, ShoppingBasket, StickyNote, ListChecks, UserPlus, Copy, type LucideIcon } from "lucide-react";
 import { hangActions, hangLive, useHang, YOU } from "../lib/hangouts";
 import { notice } from "../lib/notice";
-import { roomActions, useSpace } from "../lib/roommates";
+import { roomActions, useSpace, useSpaceReady } from "../lib/roommates";
 import GroupAddFriend from "../components/GroupAddFriend";
 import { Avatar } from "./roommates/Avatar";
 import Tasks from "./roommates/Tasks";
@@ -26,6 +26,7 @@ const names = (s: string) => [...new Set(s.split(",").map((m) => m.trim()).filte
 
 export default function Roommates() {
   const space = useSpace();
+  const ready = useSpaceReady();
   const { groups } = useHang();
   const code = groups.find((g) => g.id === space?.groupId)?.code;
   const [joinCode, setJoinCode] = useState("");
@@ -70,6 +71,16 @@ export default function Roommates() {
     roomActions.addMembers(list);
     if (space?.groupId) hangActions.addMembers(space.groupId, list);
     setMore(""); setAdding(false); setError("");
+  }
+
+  if (!space && !ready) {
+    return (
+      <div className="page" aria-busy="true" aria-label="Loading your household">
+        <div className="skeleton sk-card" />
+        <div className="skeleton sk-tile" />
+        <div className="skeleton sk-tile" />
+      </div>
+    );
   }
 
   if (!space) {

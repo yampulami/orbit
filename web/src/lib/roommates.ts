@@ -107,6 +107,7 @@ function load(): State {
 /** With a database the household is shared with the people in it; without one (demo mode) it is saved on this device. */
 const live = !!supabase;
 let state: State = live ? { space: null } : load();
+let ready = !live; // false until the first answer from the database (or last visit's copy) is in
 const subs = new Set<() => void>();
 function set(next: State) {
   state = next;
@@ -134,10 +135,11 @@ async function reload() {
     const raw = await loadHousehold(me);
     if (mine !== loadId || who !== me) return;
     if (epoch !== e0) { void reload(); return; } // something arrived while this was loading: this answer may be older than it
-    if (!raw) { ids = {}; byId = {}; set({ space: null }); return; }
+    if (!raw) { ids = {}; byId = {}; ready = true; set({ space: null }); return; }
     const built = buildSpace(raw);
     ids = built.ids;
     byId = Object.fromEntries(Object.entries(built.ids).map(([name, id]) => [id, name]));
+    ready = true;
     set({ space: built.space });
     listenRooms("roommates", [built.space.groupId ?? ""].filter(Boolean), onNudge);
   } catch { /* keep what is on screen */ }
@@ -162,7 +164,7 @@ export function bindRoommates(userId: string) {
   unbindRoommates();
   who = userId;
   const kept = readCache<{ space: Space; ids: Record<string, string> }>("household", userId);
-  if (kept?.space) { ids = kept.ids ?? {}; byId = Object.fromEntries(Object.entries(ids).map(([name, id]) => [id, name])); set({ space: kept.space }); } // shown straight away
+  if (kept?.space) { ids = kept.ids ?? {}; byId = Object.fromEntries(Object.entries(ids).map(([name, id]) => [id, name])); ready = true; set({ space: kept.space }); } // shown straight away
   void reload();
   stop = watchHousehold(userId, () => void reload(), onLive);
   stopReturn = refreshOnReturn(() => void reload());
@@ -170,7 +172,7 @@ export function bindRoommates(userId: string) {
 export function unbindRoommates() {
   if (!live) return;
   stop?.(); stop = null; stopReturn?.(); stopReturn = null;
-  who = null; ids = {}; byId = {}; loadId++; listenRooms("roommates", [], onNudge);
+  who = null; ids = {}; byId = {}; loadId++; ready = !live; listenRooms("roommates", [], onNudge);
   set({ space: null });
 }
 /** Save a change in the background. `nudge` tells the other roommates, right after it is saved, which row to look at. */
@@ -312,6 +314,8 @@ export const roomActions = {
   leave() { if (!live) set({ space: null }); },
 };
 
+/** False while a signed-in student's household is still on its way. */
+export const useSpaceReady = () => useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => ready);
 export const useSpace = () => useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => state.space);
 
 /** Deletes something from the household and offers Undo for a few seconds. */
