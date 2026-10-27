@@ -15,6 +15,9 @@ export function JoinButton({ org }: { org: Org }) {
   if (org.status !== "active" || org.myJoin === "officer") return null;
   if (org.myJoin === "member") return <div className="join-row"><span className="ebadge student"><Check size={12} aria-hidden="true" /> You are in this club</span><button type="button" className="link-btn" onClick={() => void orgActions.leaveClub(org.id)}>Leave</button></div>;
   if (org.myJoin === "pending") return <div className="join-row"><span className="ebadge wait"><Clock size={12} aria-hidden="true" /> Waiting for an officer to answer</span><button type="button" className="link-btn" onClick={() => void orgActions.leaveClub(org.id)}>Take back</button></div>;
+  if (org.kind === "circle") {
+    return <div className="join-row"><button type="button" className="btn primary" onClick={async () => { const r = await orgActions.requestJoin(org.id, ""); if (!r) notice.show({ icon: "calendar", title: `You joined ${org.name}`, message: "It is a casual circle, so you are in right away.", ms: 3500 }); }}><UserPlus size={16} aria-hidden="true" /> Join circle</button></div>;
+  }
   if (asking) {
     return (
       <form className="join-ask" onSubmit={async (e) => { e.preventDefault(); const r = await orgActions.requestJoin(org.id, msg); if (!r) { notice.show({ icon: "calendar", title: "Request sent", message: `${org.name}'s officers will look at it and you will get a notification.`, ms: 4500 }); setAsking(false); setMsg(""); } }}>

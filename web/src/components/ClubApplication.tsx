@@ -2,7 +2,8 @@ import { useState, type FormEvent } from "react";
 import { CATEGORIES, EMPTY_APP, orgActions, type Application, type OrgKind } from "../lib/campusOrgs";
 
 /** The form for asking for a new club. Students send an application a coordinator reads in full; a coordinator or staff member sets one up directly. */
-export default function ClubApplication({ reviewer, onSent, onCancel }: { reviewer: boolean; onSent: (r: { id?: string; status?: string }) => void; onCancel: () => void }) {
+export default function ClubApplication({ reviewer, mode = "club", onSent, onCancel }: { reviewer: boolean; mode?: "club" | "circle"; onSent: (r: { id?: string; status?: string }) => void; onCancel: () => void }) {
+  const circle = mode === "circle";
   const [name, setName] = useState("");
   const [about, setAbout] = useState("");
   const [office, setOffice] = useState(false);
@@ -14,7 +15,7 @@ export default function ClubApplication({ reviewer, onSent, onCancel }: { review
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const kind: OrgKind = reviewer && office ? "official" : "student";
+    const kind: OrgKind = circle ? "circle" : reviewer && office ? "official" : "student";
     const r = await orgActions.request({ name, description: about, reviewer, kind, application: app });
     setBusy(false);
     if (r.error) { setError(r.error); return; }
@@ -23,12 +24,13 @@ export default function ClubApplication({ reviewer, onSent, onCancel }: { review
 
   return (
     <form className="htools-form club-create club-apply" onSubmit={submit}>
-      <h3>{reviewer ? "Set up a club or office" : "Apply to start a club"}</h3>
-      <p className="muted">{reviewer ? "It is active as soon as you save it." : "A coordinator reads your application and decides. You will get a notification either way. Fill in as much as you can, it helps them say yes."}</p>
-      <label className="field">Club name<input autoFocus value={name} maxLength={80} placeholder="e.g. Chess Club" onChange={(e) => { setName(e.target.value); setError(""); }} /></label>
+      <h3>{circle ? "Start a student circle" : reviewer ? "Set up a club or office" : "Apply to start a club"}</h3>
+      <p className="muted">{circle ? "A circle is a casual group for a shared interest. It starts right away, anyone can join, and it has its own feed and polls. It is not an official club, so it cannot post campus events." : reviewer ? "It is active as soon as you save it." : "A coordinator reads your application and decides. You will get a notification either way. Fill in as much as you can, it helps them say yes."}</p>
+      <label className="field">{circle ? "Circle name" : "Club name"}<input autoFocus value={name} maxLength={80} placeholder="e.g. Chess Club" onChange={(e) => { setName(e.target.value); setError(""); }} /></label>
       <label className="field">One line for the club page<input value={about} maxLength={300} placeholder="Weekly games and tournaments for all levels." onChange={(e) => setAbout(e.target.value)} /></label>
-      {reviewer && <label className="check-line"><input type="checkbox" checked={office} onChange={(e) => setOffice(e.target.checked)} /> This is a staff-run office (its events are Official)</label>}
-      {!reviewer && (
+      {circle && <label className="field">Category<select value={app.category} onChange={(e) => up("category", e.target.value)}><option value="">Choose one</option>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select></label>}
+      {reviewer && !circle && <label className="check-line"><input type="checkbox" checked={office} onChange={(e) => setOffice(e.target.checked)} /> This is a staff-run office (its events are Official)</label>}
+      {!reviewer && !circle && (
         <>
           <label className="field">What is the club for, and who is it for?
             <textarea rows={3} value={app.purpose} maxLength={600} placeholder="A couple of sentences: what you do, who can join, why the campus needs it." onChange={(e) => up("purpose", e.target.value)} />
@@ -49,7 +51,7 @@ export default function ClubApplication({ reviewer, onSent, onCancel }: { review
         </>
       )}
       {error && <p className="error" role="alert">{error}</p>}
-      <div className="about-actions"><button className="btn primary" disabled={busy}>{busy ? "Sending…" : reviewer ? "Create" : "Send application"}</button><button type="button" className="btn" onClick={onCancel}>Cancel</button></div>
+      <div className="about-actions"><button className="btn primary" disabled={busy}>{busy ? "Sending…" : circle ? "Start circle" : reviewer ? "Create" : "Send application"}</button><button type="button" className="btn" onClick={onCancel}>Cancel</button></div>
     </form>
   );
 }

@@ -30,6 +30,14 @@ The club's officers see their club's waiting events; everyone else sees only liv
 - **Coordinators get a live board** (Campus, Review, Club applications): Waiting, Approved and Declined, with the full application on each card. New applications appear as they are sent, and coordinators are also notified in the bell.
 - **Joining a club needs an officer.** A student taps "Ask to join" (with an optional line), the club's officers see it under "Join requests" and let them in or decline, and the student is notified. Coordinators can answer too. Members are listed to the campus; waiting and declined requests are private to the student, the officers and coordinators.
 
+## Roles, the club feed and Student Circles (migration 20261028100000_club_roles_feed.sql)
+
+- **Roles with titles.** The president (owner) makes roles such as Treasurer or Event lead and ticks what each can do: post announcements, create events, run polls, manage members, manage roles, moderate (tasks are reserved for later). Only the president can hand out "manage roles". A role can also be title-only. Officers from before roles existed keep announcements, events and polls. Deleting a role needs its people moved first. The database enforces all of this (functions `org_perms` and `has_org_perm`), not just the buttons.
+- **The club feed.** Announcements are public to the campus and notify the club. Discussion posts, polls and replies are for the club's own people. Votes are anonymous (you can read only your own vote; totals come from `club_poll_results`). Officers with the right role can pin and remove posts.
+- **Student Circles.** A casual, unofficial group anyone can start. It is active at once, has no verified badge, anyone can join without approval, it has its own feed, polls and roles, and it cannot post campus events (the database refuses). Clubs and offices keep the application and approval path.
+- **Activity.** A badge says Active, Steady, Quiet or New from real activity: upcoming or recent events and the latest post, not from popularity.
+- **Next phases (not built yet).** Club chat channels, co-hosted events between clubs, tasks and polls dashboards for officers, QR check-in and pods.
+
 ## Moderation
 
 - **Report.** Any student can report an event ("Report" on the card, with an optional reason). Coordinators are told the first time, and see it under "Reported events".

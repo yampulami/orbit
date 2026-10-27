@@ -4,6 +4,7 @@ import { BadgeCheck, CalendarDays, ChevronDown, Info, Megaphone, Plus, UserRound
 import { eventActions, isOpen, setDemoRole, useCampusEvents, type Role } from "../lib/campusEvents";
 import { useCampusOrgs, type Org } from "../lib/campusOrgs";
 import { dayLabel, hueFor } from "../lib/look";
+import { activityOf } from "../lib/activity";
 import { supabase } from "../lib/supabase";
 import { notice } from "../lib/notice";
 import EventCard, { EventBadge } from "../components/EventCard";
@@ -115,17 +116,21 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
 function ClubCard({ o }: { o: Org }) {
   const { events } = useCampusEvents();
   const now = new Date();
-  const soon = events.find((e) => e.orgId === o.id && e.status === "published" && !e.canceled && isOpen(e, now));
+  const mine = events.filter((e) => e.orgId === o.id);
+  const soon = mine.find((e) => e.status === "published" && !e.canceled && isOpen(e, now));
+  const act = activityOf(mine, undefined, now, o.createdAt || undefined);
+  const circle = o.kind === "circle";
   return (
     <li>
       <Link className="club-card" style={{ ["--h" as string]: hueFor(o.name) }} to={`/app/campus/clubs/${o.id}`}>
         <span className="club-mark" aria-hidden="true">{o.name.slice(0, 1).toUpperCase()}</span>
         <span className="club-text">
-          <strong><RichText text={o.name} />{o.status === "active" && <VerifiedBadge label={o.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</strong>
-          <span className="club-sub">{o.description || (o.kind === "official" ? "Official office" : "Student club")}</span>
+          <strong><RichText text={o.name} />{o.status === "active" && !circle && <VerifiedBadge label={o.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</strong>
+          <span className="club-sub">{o.description || (o.kind === "official" ? "Official office" : circle ? "Student circle" : "Student club")}</span>
           {soon && <span className="club-soon"><CalendarDays size={12} aria-hidden="true" /> {dayLabel(soon.startsAt, now)}: {soon.title}</span>}
         </span>
         <span className="club-tags">
+          {o.status === "active" && <span className={"act " + act.level} title={act.line || undefined}><i aria-hidden="true" />{act.label}</span>}
           {o.status === "active" && <span className="muted club-count"><Users size={12} aria-hidden="true" /> {o.memberCount + o.members.length}</span>}
           {o.status !== "active" && <span className={"ebadge " + (o.status === "paused" ? "no" : "wait")}>{o.status === "pending" ? "Waiting for approval" : o.status === "paused" ? "Paused" : "Not approved"}</span>}
         </span>
@@ -136,34 +141,45 @@ function ClubCard({ o }: { o: Org }) {
 
 function ClubsView({ mine, all, reviewer }: { mine: Org[]; all: Org[]; reviewer: boolean }) {
   const nav = useNavigate();
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState<"club" | "circle" | null>(null);
   const mineIds = new Set(mine.map((o) => o.id));
   const others = all.filter((o) => !mineIds.has(o.id) && o.status === "active");
+  const clubs = others.filter((o) => o.kind !== "circle");
+  const circles = others.filter((o) => o.kind === "circle");
 
   return (
     <section className="clubs" aria-label="Clubs">
       {creating ? (
-        <ClubApplication reviewer={reviewer} onCancel={() => setCreating(false)} onSent={(r) => {
-          notice.show(r.status === "pending"
-            ? { icon: "calendar", title: "Application sent", message: "The coordinators have it now. You will get a notification when they decide. You can add officers while you wait.", ms: 6500 }
-            : { icon: "calendar", title: "Created", message: "You can post events from inside it now.", ms: 4000 });
-          setCreating(false);
+        <ClubApplication reviewer={reviewer} mode={creating} onCancel={() => setCreating(null)} onSent={(r) => {
+          notice.show(creating === "circle"
+            ? { icon: "calendar", title: "Your circle is live", message: "Anyone can join it now. Share it, post to its feed, and give people roles.", ms: 5000 }
+            : r.status === "pending"
+              ? { icon: "calendar", title: "Application sent", message: "The coordinators have it now. You will get a notification when they decide. You can add people to the team while you wait.", ms: 6500 }
+              : { icon: "calendar", title: "Created", message: "You can post events from inside it now.", ms: 4000 });
+          setCreating(null);
           if (r.id) nav(`/app/campus/clubs/${r.id}`);
         }} />
       ) : (
-        <button type="button" className="btn primary create-club" onClick={() => setCreating(true)}><Plus size={16} aria-hidden="true" /> {reviewer ? "Set up a club" : "Apply to start a club"}</button>
+        <div className="clubs-create">
+          <button type="button" className="btn primary create-club" onClick={() => setCreating("club")}><Plus size={16} aria-hidden="true" /> {reviewer ? "Set up a club" : "Apply to start a club"}</button>
+          <button type="button" className="btn create-club" onClick={() => setCreating("circle")}><Plus size={16} aria-hidden="true" /> Start a circle</button>
+        </div>
       )}
 
       {mine.length > 0 && (
         <>
-          <h3 className="clubs-h">Your clubs</h3>
+          <h3 className="clubs-h">Yours</h3>
           <ul className="club-list">{mine.map((o) => <ClubCard key={o.id} o={o} />)}</ul>
         </>
       )}
-      <h3 className="clubs-h">Clubs and offices on your campus</h3>
-      {others.length === 0
+      <h3 className="clubs-h">Clubs and offices</h3>
+      {clubs.length === 0
         ? <EmptyState icon={Users} title={mine.length ? "No other clubs yet" : "No clubs yet"}>Apply to start the first one. Once a coordinator approves it, you can post its events to the whole campus.</EmptyState>
-        : <ul className="club-list">{others.map((o) => <ClubCard key={o.id} o={o} />)}</ul>}
+        : <ul className="club-list">{clubs.map((o) => <ClubCard key={o.id} o={o} />)}</ul>}
+      <h3 className="clubs-h">Student circles</h3>
+      {circles.length === 0
+        ? <p className="muted">Circles are casual groups anyone can start and join, like a study group or a weekly run. Nobody has started one yet.</p>
+        : <ul className="club-list">{circles.map((o) => <ClubCard key={o.id} o={o} />)}</ul>}
     </section>
   );
 }

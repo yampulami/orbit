@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, CalendarDays, Check, Clock, MapPin, Pause, Play, Plus, ShieldCheck, UserPlus, UserRound, Users, X } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CalendarDays, Check, Clock, MapPin, Megaphone, Pause, Play, Plus, ShieldCheck, UserPlus, UserRound, Users, X } from "lucide-react";
 import { isOpen, useCampusEvents } from "../lib/campusEvents";
-import { orgActions, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
+import { canHostEvents, orgActions, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
+import { useClubFeed, lastPostAt } from "../lib/clubFeed";
+import { activityOf } from "../lib/activity";
 import { dayLabel, hueFor } from "../lib/look";
 import { notice } from "../lib/notice";
 import EventCard from "../components/EventCard";
@@ -12,17 +14,20 @@ import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
 import ApplicationDetails from "../components/ApplicationDetails";
 import { JoinButton, JoinRequests } from "../components/JoinPanel";
+import ClubFeed from "../components/ClubFeed";
+import RolesPanel from "../components/RolesPanel";
 
-type Tab = "events" | "people" | "about";
+type Tab = "feed" | "events" | "people" | "about";
 const initials = (n: string) => n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
 
-/** One club or office: a header in the club's own colour, then Events, People and About one tap apart so nothing needs a long scroll. */
+/** One club, office or circle: a header in its own colour, then Feed, Events, People and About one tap apart so nothing needs a long scroll. */
 export default function Club() {
   const { id } = useParams();
   const nav = useNavigate();
   const { orgs, ready } = useCampusOrgs();
   const { events, canReview: reviewer } = useCampusEvents();
-  const [tab, setTab] = useState<Tab>("events");
+  const [tab, setTab] = useState<Tab>("feed");
+  const [roleFor, setRoleFor] = useState("");
   const [posting, setPosting] = useState(false);
   const [past, setPast] = useState(false);
   const [username, setUsername] = useState("");
@@ -30,6 +35,7 @@ export default function Club() {
   const [declining, setDeclining] = useState(false);
   const [reason, setReason] = useState("");
   const org = orgs.find((o) => o.id === id);
+  const feed = useClubFeed(org?.id ?? "", !!org && (org.status === "active" || org.mine || reviewer));
 
   if (!org) {
     return (
@@ -48,18 +54,22 @@ export default function Club() {
   const rest = upcoming.filter((e) => e !== next);
   const groups: [string, typeof rest][] = [];
   for (const e of rest) { const k = dayLabel(e.startsAt, now); const g = groups.find((x) => x[0] === k); if (g) g[1].push(e); else groups.push([k, [e]]); }
-  const canPost = org.mine && org.status === "active";
+  const canPost = org.mine && org.status === "active" && canHostEvents(org) && org.myPerms.includes("events");
+  const circle = org.kind === "circle";
+  const act = activityOf(events.filter((e) => e.orgId === org.id), lastPostAt(feed.posts), now, org.createdAt || undefined);
+  const canRoles = org.owner || org.myPerms.includes("roles");
+  const canMembers = org.myPerms.includes("members") || reviewer;
   const waits = eventsNeedApproval(org);
   const people = org.memberCount + org.members.length;
-  const requests = (org.mine || reviewer) ? org.requests.length : 0;
+  const requests = canMembers ? org.requests.length : 0;
   const seesApplication = (reviewer || org.mine) && (org.status !== "active" || !!org.application.advisorName);
 
   async function addOfficer(e: FormEvent) {
     e.preventDefault();
-    const r = await orgActions.addMember(org!.id, username);
+    const r = await orgActions.addMember(org!.id, username, roleFor || undefined);
     if (r) { setError(r); return; }
     setUsername("");
-    notice.show({ icon: "calendar", title: "Officer added", message: "They can post events for this club now.", ms: 3500 });
+    notice.show({ icon: "calendar", title: "Added to the team", message: roleFor ? "They have the role you picked." : "They can help run the club now.", ms: 3500 });
   }
 
   return (
@@ -70,9 +80,10 @@ export default function Club() {
         <div className="club-orbits" aria-hidden="true"><i /><i /><i /></div>
         <span className="club-planet" aria-hidden="true">{org.name.slice(0, 1).toUpperCase()}<span className="club-moon" /></span>
         <div className="club-hero-text">
-          <h1><RichText text={org.name} />{org.status === "active" && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
+          <h1><RichText text={org.name} />{org.status === "active" && !circle && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
           <div className="club-tags">
-            <span className={"ebadge " + (org.kind === "official" ? "official" : "student")}>{org.kind === "official" ? <><BadgeCheck size={12} aria-hidden="true" /> Official</> : <><UserRound size={12} aria-hidden="true" /> Student club</>}</span>
+            <span className={"ebadge " + (org.kind === "official" ? "official" : circle ? "group" : "student")}>{org.kind === "official" ? <><BadgeCheck size={12} aria-hidden="true" /> Official</> : circle ? <><Users size={12} aria-hidden="true" /> Student circle</> : <><UserRound size={12} aria-hidden="true" /> Student club</>}</span>
+            {org.status === "active" && <span className={"act " + act.level} title={act.line || undefined}><i aria-hidden="true" />{act.label}</span>}
             {org.status === "pending" && <span className="ebadge wait"><Clock size={12} aria-hidden="true" /> Waiting for approval</span>}
             {org.status === "paused" && <span className="ebadge no">Paused</span>}
             {org.status === "rejected" && <span className="ebadge no"><X size={12} aria-hidden="true" /> Not approved</span>}
@@ -96,13 +107,19 @@ export default function Club() {
       {org.status === "rejected" && <p className="cevent-note" role="status">Not approved{org.note ? `: ${org.note}` : "."}</p>}
       {org.status === "paused" && <p className="cevent-note" role="status">A coordinator paused this club. It cannot post new events for now.</p>}
 
+      {circle && org.status === "active" && <p className="muted club-circle-note">A student circle is a casual, unofficial group. It is not an approved club, so it cannot post campus events.</p>}
+      {act.line && org.status === "active" && <p className="muted club-act-line">{act.label}: {act.line}</p>}
+
       <div className="segment club-seg" role="tablist" aria-label="Club sections">
-        <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}><CalendarDays size={15} aria-hidden="true" /> Events{upcoming.length > 0 && <span className="rem-count">{upcoming.length}</span>}</button>
+        <button type="button" role="tab" aria-selected={tab === "feed"} onClick={() => setTab("feed")}><Megaphone size={15} aria-hidden="true" /> Feed</button>
+        {!circle && <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}><CalendarDays size={15} aria-hidden="true" /> Events{upcoming.length > 0 && <span className="rem-count">{upcoming.length}</span>}</button>}
         <button type="button" role="tab" aria-selected={tab === "people"} onClick={() => setTab("people")}><Users size={15} aria-hidden="true" /> People{requests > 0 && <span className="rem-count">{requests}</span>}</button>
         <button type="button" role="tab" aria-selected={tab === "about"} onClick={() => setTab("about")}>About</button>
       </div>
 
-      {tab === "events" && (
+      {tab === "feed" && <ClubFeed org={org} reviewer={reviewer} feed={feed} />}
+
+      {tab === "events" && !circle && (
         <section className="club-section" aria-label="Events">
           {canPost && waits && !posting && <p className="muted">New events from this club wait for a coordinator before everyone sees them.</p>}
           {posting && canPost && <EventForm org={org} onDone={() => setPosting(false)} />}
@@ -126,29 +143,39 @@ export default function Club() {
       )}
 
       {tab === "people" && (
-        <section className="club-section" aria-label="People">
-          {(org.mine || reviewer) && <JoinRequests org={org} />}
-          <h2>Officers</h2>
-          <ul className="club-people">
-            {org.members.map((m) => (
-              <li key={m.id}>
-                <i className="club-av" aria-hidden="true">{initials(m.name)}</i>
-                <span className="club-member-name">{m.name}</span><span className="muted">{m.role === "owner" ? "Owner" : "Officer"}</span>
-                {org.owner && m.role !== "owner" && <button type="button" className="link-btn" onClick={() => void orgActions.removeMember(org.id, m.id)}>Remove</button>}
-                {m.name === "You" && m.role !== "owner" && <button type="button" className="link-btn" onClick={async () => { await orgActions.removeMember(org.id, m.id); nav("/app/campus"); }}>Leave</button>}
-              </li>
-            ))}
-          </ul>
-          {org.memberCount > 0 && <p className="muted">{org.memberCount} {org.memberCount === 1 ? "member" : "members"} besides the officers.</p>}
-          {org.owner && (
-            <form className="club-add" onSubmit={addOfficer}>
-              <label className="sr" htmlFor="club-add-user">Username of the new officer</label>
-              <input id="club-add-user" value={username} maxLength={40} placeholder="Add an officer by username" onChange={(e) => { setUsername(e.target.value); setError(""); }} />
-              <button className="btn" disabled={!username.trim()}><UserPlus size={15} aria-hidden="true" /> Add</button>
-            </form>
-          )}
-          {error && <p className="error" role="alert">{error}</p>}
-        </section>
+        <>
+          <section className="club-section" aria-label="People">
+            {canMembers && <JoinRequests org={org} />}
+            <h2>Team</h2>
+            <ul className="club-people">
+              {org.members.map((m) => (
+                <li key={m.id}>
+                  <i className="club-av" aria-hidden="true">{initials(m.name)}</i>
+                  <span className="club-member-name">{m.name}</span>
+                  {m.title ? <span className="cf-title-chip">{m.title}</span> : <span className="muted">{m.role === "owner" ? "President" : "Officer"}</span>}
+                  {canRoles && m.role !== "owner" && org.roles.length > 0 && (
+                    <select className="role-pick" aria-label={`Role for ${m.name}`} value={m.roleId ?? ""} onChange={(e) => e.target.value && void orgActions.setMemberRole(org.id, m.id, e.target.value)}>
+                      <option value="">{m.roleId ? "" : "Choose role"}</option>{org.roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                    </select>
+                  )}
+                  {(org.owner || org.myPerms.includes("roles")) && m.role !== "owner" && <button type="button" className="link-btn" onClick={() => void orgActions.removeMember(org.id, m.id)}>Remove</button>}
+                  {m.name === "You" && m.role !== "owner" && <button type="button" className="link-btn" onClick={async () => { await orgActions.removeMember(org.id, m.id); nav("/app/campus"); }}>Leave</button>}
+                </li>
+              ))}
+            </ul>
+            {org.memberCount > 0 && <p className="muted">{org.memberCount} {org.memberCount === 1 ? "member" : "members"} besides the team.</p>}
+            {canRoles && (
+              <form className="club-add" onSubmit={addOfficer}>
+                <label className="sr" htmlFor="club-add-user">Username of the person to add</label>
+                <input id="club-add-user" value={username} maxLength={40} placeholder="Add to the team by username" onChange={(e) => { setUsername(e.target.value); setError(""); }} />
+                {org.roles.length > 0 && <select className="role-pick" aria-label="Role" value={roleFor} onChange={(e) => setRoleFor(e.target.value)}><option value="">No role</option>{org.roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>}
+                <button className="btn" disabled={!username.trim()}><UserPlus size={15} aria-hidden="true" /> Add</button>
+              </form>
+            )}
+            {error && <p className="error" role="alert">{error}</p>}
+          </section>
+          {canRoles && org.status === "active" && <RolesPanel org={org} />}
+        </>
       )}
 
       {tab === "about" && (

@@ -24,7 +24,7 @@ export default function EventForm({ org, hostLabel, role, onDone }: { org?: Org;
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const r = await eventActions.create({ title, description, place, startsAt, endsAt: endsAt || undefined, orgId: org?.id, orgName: org?.name, orgKind: org?.kind, orgTrusted: org?.trusted });
+    const r = await eventActions.create({ title, description, place, startsAt, endsAt: endsAt || undefined, orgId: org?.id, orgName: org?.name, orgKind: org?.kind === "official" ? "official" : "student", orgTrusted: org?.trusted });
     setBusy(false);
     if (r.error) { setError(r.error); return; }
     notice.show(r.status === "pending"
