@@ -10,7 +10,7 @@ import RichText from "../components/RichText";
 import { enter, slide } from "../lib/motion";
 import { dmActions, dmLive, useDms } from "../lib/dms";
 import SafetyMenu from "../components/SafetyMenu";
-import { ensureRoom, onTyping, sendTyping } from "../lib/nudge";
+import { ensureRoom, onTyping, sendTyping, watchHere } from "../lib/nudge";
 import { useAuth } from "../lib/auth";
 
 type Msg = { mine: boolean; text: string };
@@ -56,7 +56,7 @@ function LiveMessages() {
   useEffect(() => {
     setTypingAt(0);
     if (!current) return;
-    return onTyping(current.id, (uid) => { if (uid === current.otherId) setTypingAt(Date.now()); });
+    return onTyping(current.id, (uid, stopped) => { if (uid === current.otherId) setTypingAt(stopped ? 0 : Date.now()); });
   }, [current?.id, current?.otherId]); // eslint-disable-line react-hooks/exhaustive-deps
   // While a chat is open, keep its quick channel joined (a phone that slept can wake with it closed), so "typing" and new messages arrive.
   useEffect(() => {
@@ -71,10 +71,17 @@ function LiveMessages() {
   }, [current?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!typingAt) return;
-    const t = setTimeout(() => tick((n) => n + 1), 4200);
+    const t = setTimeout(() => tick((n) => n + 1), 5200);
     return () => clearTimeout(t);
   }, [typingAt]);
-  const typing = typingAt > 0 && Date.now() - typingAt < 4000;
+  const typing = typingAt > 0 && Date.now() - typingAt < 5000;
+  // Whether the other person has this conversation open right now.
+  const [here, setHere] = useState(false);
+  useEffect(() => {
+    setHere(false);
+    if (!current || !session) return;
+    return watchHere(current.id, session.user.id, (others) => setHere(others.has(current.otherId)));
+  }, [current?.id, current?.otherId, session?.user.id]); // eslint-disable-line react-hooks/exhaustive-deps
   // A new message ends the "typing" note, and keeps the newest thing in view.
   useEffect(() => { setTypingAt(0); }, [current?.messages.length]);
   useEffect(() => { const el = scroller.current; if (el && typing) el.scrollTop = el.scrollHeight; }, [typing]);
@@ -89,6 +96,7 @@ function LiveMessages() {
     e.preventDefault();
     if (!current || !text.trim()) return;
     dmActions.send(current.id, text);
+    if (session) sendTyping(current.id, session.user.id, true);
     setText("");
   }
 
@@ -126,7 +134,7 @@ function LiveMessages() {
             </div>
           ) : current ? (
             <>
-              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link></h2><p className="muted">Direct message</p></div><SafetyMenu userId={current.otherId} name={current.name} context="direct message" /></div>
+              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link></h2><p className="muted">{here ? <span className="here"><i aria-hidden="true" /> Here now</span> : "Direct message"}</p></div><SafetyMenu userId={current.otherId} name={current.name} context="direct message" /></div>
               <div className="bubbles" ref={scroller} aria-live="polite">
                 {current.messages.length === 0 && <p className="rm-empty">Say hello to {current.name}.</p>}
                 {current.messages.map((m) => (
@@ -135,10 +143,15 @@ function LiveMessages() {
                     {m === lastMine && <span className="bubble-meta">{m.seenAt ? `Seen ${time(m.seenAt)}` : time(m.at)}</span>}
                   </motion.div>
                 ))}
-                {typing && <div className="bubble-row typing-row" aria-live="polite"><Orb size={24} variant="violet" mood="loading" poke={false} className="typing-orb" /><p className="bubble typing" aria-label={`${current.name} is typing`}><i /><i /><i /></p></div>}
+                {typing && (
+                  <div className="bubble-row typing-row" role="status" aria-label={`${current.name} is typing`}>
+                    <Orb size={38} variant="violet" mood="loading" poke={false} className="typing-orb" />
+                    <span className="thought" aria-hidden="true"><i className="t1" /><i className="t2" /><span className="cloud"><i /><i /><i /></span></span>
+                  </div>
+                )}
               </div>
               <form className="comment-form" onSubmit={send}>
-                <input ref={dmInput} aria-label="Message" value={text} onChange={(e) => { setText(e.target.value); if (e.target.value && session) sendTyping(current.id, session.user.id); }} maxLength={2000} placeholder={`Message ${current.name}…`} />
+                <input ref={dmInput} aria-label="Message" value={text} onChange={(e) => { setText(e.target.value); if (session) sendTyping(current.id, session.user.id, !e.target.value); }} maxLength={2000} placeholder={`Message ${current.name}…`} />
                 <EmojiButton value={text} onChange={setText} inputRef={dmInput} max={2000} />
                 <button className="btn primary" aria-label="Send" disabled={!text.trim()}><Send size={16} /></button>
               </form>

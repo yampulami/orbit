@@ -14,6 +14,9 @@ vi.mock("./supabase", () => ({
         name,
         on: (_t: string, _f: unknown, cb: (m: { payload?: unknown }) => void) => { c.handlers.push(cb); return ch; },
         subscribe: () => ch,
+        presenceState: () => ({}),
+        track: async () => "ok",
+        untrack: async () => "ok",
         send: async (m: { payload: unknown }) => { c.sent.push(m.payload); return "ok"; },
       };
       return ch;
