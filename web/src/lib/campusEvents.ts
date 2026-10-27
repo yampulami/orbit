@@ -141,7 +141,8 @@ export function bindCampusEvents(userId: string) {
   unbindCampusEvents();
   who = userId;
   const kept = readCache<Store>("campus-events", userId);
-  if (kept) state = { ...kept, ready: true };
+  // A copy saved by an older version may lack lists added since: fill them in rather than crash.
+  if (kept) state = { events: [], answers: [], reports: [], hostLabel: null, role: null, ...kept, ready: true };
   void reload();
   stop = watchTables(`orbit-events-${userId}`, ["campus_events", "campus_event_responses", "campus_event_reports"], () => void reload(), (e) => {
     const next = applyEventChange(state, e);
