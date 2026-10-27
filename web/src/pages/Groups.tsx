@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
+import EmojiButton from "../components/EmojiButton";
 import HangoutCard from "../components/HangoutCard";
 import FriendsPanel from "../components/FriendsPanel";
 import GroupAddFriend from "../components/GroupAddFriend";
@@ -25,6 +26,7 @@ export default function Groups() {
   const [activeId, setActiveId] = useState(asked && groups.some((g) => g.id === asked) ? asked : groups[0]?.id ?? "");
   useEffect(() => { if (asked && groups.some((g) => g.id === asked)) { setActiveId(asked); setCreating(false); } }, [asked, loc.key]);
   const [text, setText] = useState("");
+  const chatInput = useRef<HTMLInputElement>(null);
   const [creating, setCreating] = useState(false);
   const [gName, setGName] = useState("");
   const [gMembers, setGMembers] = useState("");
@@ -226,7 +228,8 @@ export default function Groups() {
               })}
             </div>
             <form className="comment-form" onSubmit={send}>
-              <input aria-label="Message" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Message ${group.name}…`} />
+              <input ref={chatInput} aria-label="Message" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Message ${group.name}…`} />
+              <EmojiButton value={text} onChange={setText} inputRef={chatInput} />
               <button className="btn primary" aria-label="Send" disabled={!text.trim()}><Send size={16} /></button>
             </form>
           </div>

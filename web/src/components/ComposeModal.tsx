@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import EmojiButton from "./EmojiButton";
 import { useDisplayName } from "../lib/displayName";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -132,6 +133,7 @@ export default function ComposeModal({ open, onClose }: { open: boolean; onClose
                 {error && <p className="error" role="alert">{error}</p>}
                 <div className="compose-foot">
                   <div className="compose-to"><span id="compose-to">Post to</span><CommunityPicker value={community} onChange={setCommunity} labelledBy="compose-to" id="compose-community" /></div>
+                  <EmojiButton value={text} onChange={setText} inputRef={area} max={MAX} />
                   <span className={"count" + (text.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{text.length}/{MAX}</span>
                   <button className="btn primary" disabled={busy || !text.trim() || campus === undefined}>{busy ? "Posting…" : "Post"}</button>
                 </div>

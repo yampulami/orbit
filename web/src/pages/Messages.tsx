@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MessageCircle, Plus, Send } from "lucide-react";
 import EmptyState from "../components/EmptyState";
+import EmojiButton from "../components/EmojiButton";
 import { enter, slide } from "../lib/motion";
 import { dmActions, dmLive, useDms } from "../lib/dms";
 import SafetyMenu from "../components/SafetyMenu";
@@ -30,6 +31,7 @@ function LiveMessages() {
   const [picking, setPicking] = useState(false);
   const [q, setQ] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
+  const dmInput = useRef<HTMLInputElement>(null);
   const { session } = useAuth();
   const [typingAt, setTypingAt] = useState(0);
   const [, tick] = useState(0);
@@ -117,7 +119,8 @@ function LiveMessages() {
                 {typing && <div className="bubble-row" aria-live="polite"><p className="bubble typing" aria-label={`${current.name} is typing`}><i /><i /><i /></p></div>}
               </div>
               <form className="comment-form" onSubmit={send}>
-                <input aria-label="Message" value={text} onChange={(e) => { setText(e.target.value); if (e.target.value && session) sendTyping(current.id, session.user.id); }} maxLength={2000} placeholder={`Message ${current.name}…`} />
+                <input ref={dmInput} aria-label="Message" value={text} onChange={(e) => { setText(e.target.value); if (e.target.value && session) sendTyping(current.id, session.user.id); }} maxLength={2000} placeholder={`Message ${current.name}…`} />
+                <EmojiButton value={text} onChange={setText} inputRef={dmInput} max={2000} />
                 <button className="btn primary" aria-label="Send" disabled={!text.trim()}><Send size={16} /></button>
               </form>
             </>

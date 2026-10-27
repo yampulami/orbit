@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, CalendarClock, Heart, MapPinCheck, MessageCircle, MessageSquare, UserCheck, UserPlus, Users } from "lucide-react";
+import { Bell, CalendarClock, GraduationCap, Heart, MapPinCheck, MessageCircle, MessageSquare, UserCheck, UserPlus, Users } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { useNudges } from "../lib/nudges";
@@ -11,6 +11,7 @@ import { dueAt, fromYmd, useReminders } from "../lib/reminders";
 import { enter, exit } from "../lib/motion";
 import { friendActions, useFriends } from "../lib/friends";
 import { notifActions, useNotifs } from "../lib/notifs";
+import { classesSoon, clockLabel, useClasses } from "../lib/classes";
 
 type Row = { id: string; icon: typeof Bell; title: string; sub: string; go: () => void; unread?: boolean; request?: { id: string } };
 
@@ -31,6 +32,7 @@ export default function NotificationBell() {
   const proposals = useProposals();
   const notifs = useNotifs();
   const friends = useFriends();
+  const classes = useClasses();
   const [open, setOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const root = useRef<HTMLDivElement>(null);
@@ -65,6 +67,12 @@ export default function NotificationBell() {
   if (nudges.reminders) {
     const due = reminders.filter((r) => !r.done && dueAt(r).getTime() <= now.getTime()).sort((a, b) => dueAt(a).getTime() - dueAt(b).getTime());
     for (const r of due.slice(0, 4)) rows.push({ id: `r-${r.id}`, icon: CalendarClock, title: r.title, sub: `Reminder · ${fromYmd(r.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}${r.time ? `, ${r.time}` : ""}`, go: go("/app/plans", { day: fromYmd(r.date).toDateString() }) });
+  }
+  if (nudges.reminders) {
+    // A class within the next hour (or just started).
+    for (const c of classesSoon(classes, now).slice(0, 2)) {
+      rows.push({ id: `c-${c.key}`, icon: GraduationCap, title: `${c.slot.name} ${c.minutes <= 0 ? "is starting" : c.minutes >= 55 ? "starts in about an hour" : `starts in ${c.minutes} min`}`, sub: `${clockLabel(c.slot.start)}${c.slot.place ? ` · ${c.slot.place}` : ""}`, go: go("/app/plans", { day: c.starts.toDateString() }) });
+    }
   }
   if (nudges.places && campusKey) {
     const votes = proposals.filter((p) => p.campusKey === campusKey && statusOf(p) === "open" && p.by !== YOU && p.votes[YOU] === undefined);

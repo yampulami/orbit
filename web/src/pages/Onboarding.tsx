@@ -15,6 +15,8 @@ import { feedApi } from "../lib/feedData";
 import { resetCampus } from "../lib/campus";
 import { pushProfile, saveProfile, TENURE_YEARS, type Living, type Look, type Profile, type Tenure } from "../lib/profile";
 import { progress } from "../lib/progress";
+import { BIO_MAX, HOBBY_IDEAS, HOBBY_LEN, HOBBY_MAX, bioLength, cleanHobbies, saveAbout } from "../lib/about";
+import EmojiButton from "../components/EmojiButton";
 import { supabase } from "../lib/supabase";
 import { setThemePref, useThemePref } from "../lib/theme";
 import { campusKey, validCampus } from "../shared/campus";
@@ -42,8 +44,8 @@ const LIVING: { id: Living; label: string; hint: string; icon: typeof Home }[] =
 const INTERESTS = ["Events", "Meeting people", "Finding roommates", "Buying and selling", "Study groups", "Campus help"];
 const LOOKS: { id: Look; label: string; icon: typeof Sun }[] = [{ id: "light", label: "Light", icon: Sun }, { id: "dark", label: "Dark", icon: Moon }, { id: "system", label: "Match my device", icon: Monitor }];
 
-type Step = "campus" | "name" | "tenure" | "living" | "interests" | "pace" | "nudges" | "look" | "done";
-const STEPS: Step[] = ["campus", "name", "tenure", "living", "interests", "pace", "nudges", "look", "done"];
+type Step = "campus" | "name" | "tenure" | "living" | "interests" | "about" | "pace" | "nudges" | "look" | "done";
+const STEPS: Step[] = ["campus", "name", "tenure", "living", "interests", "about", "pace", "nudges", "look", "done"];
 
 /** The first-time setup: its own full-screen page between signing in and the app. It asks for the university first, because everything else
  *  (the feed, events and map) is limited to that university. Everything you touch answers back: buttons press and lift, the selection glides
@@ -65,6 +67,10 @@ export default function Onboarding() {
   const [tenure, setTenure] = useState<Tenure | null>(null);
   const [living, setLiving] = useState<Living | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
+  const [bio, setBio] = useState("");
+  const [hobbies, setHobbies] = useState<string[]>([]);
+  const [hobbyText, setHobbyText] = useState("");
+  const bioRef = useRef<HTMLTextAreaElement>(null);
   const [streaks, setStreaks] = useState<boolean | null>(null);
   const [nudges, setNudges] = useState({ hangouts: true, reminders: true, places: true });
   const [look, setLook] = useState<Look>(themePref);
@@ -96,8 +102,9 @@ export default function Onboarding() {
 
   const step = STEPS[i];
   const years = tenure ? TENURE_YEARS[tenure] : 0;
-  const can: Record<Step, boolean> = { campus: !!uni && validCampus(uni.name), name: name.trim().length >= 1 && (!supabase || !checkUsername(username)), tenure: !!tenure, living: !!living, interests: true, pace: streaks !== null, nudges: true, look: true, done: true };
-  const optional = step === "interests" || step === "nudges";
+  const can: Record<Step, boolean> = { campus: !!uni && validCampus(uni.name), name: name.trim().length >= 1 && (!supabase || !checkUsername(username)), tenure: !!tenure, living: !!living, interests: true, about: true, pace: streaks !== null, nudges: true, look: true, done: true };
+  const optional = step === "interests" || step === "about" || step === "nudges";
+  const aboutEmpty = !bio.trim() && hobbies.length === 0;
   const first = name.trim().split(" ")[0];
 
   const go = (n: number) => { setDir(n > i ? 1 : -1); setI(n); setError(""); };
@@ -116,6 +123,8 @@ export default function Onboarding() {
       if (supabase) await supabase.auth.updateUser({ data: { name: profile.name } }); else demoAuth.setName(session!.user.id, profile.name);
       await pushProfile(session!.user.id, profile); // the membership above has to exist first
       saveProfile(session!.user.id, profile);
+      // Optional: a failure here never blocks getting into the app; it can be added later in Profile.
+      if (!aboutEmpty) await saveAbout(session!.user.id, { bio, hobbies }).catch(() => undefined);
       setThemePref(look);
       progress.setEnabled(streaks);
       resetCampus();
@@ -154,7 +163,7 @@ export default function Onboarding() {
 
   const title: Record<Step, string> = {
     campus: "Which campus is yours?", name: "What should we call you?", tenure: "How long have you been on campus?", living: "Where do you live?",
-    interests: "What are you here for?", pace: "Want streaks and badges?", nudges: "How can Orbit nudge you?", look: "Pick a look", done: `You are in${first ? `, ${first}` : ""}.`,
+    interests: "What are you here for?", about: "Tell us about you", pace: "Want streaks and badges?", nudges: "How can Orbit nudge you?", look: "Pick a look", done: `You are in${first ? `, ${first}` : ""}.`,
   };
   const sub: Record<Step, string> = {
     campus: "Your feed, events and map are just for your university. Start typing its name.",
@@ -162,6 +171,7 @@ export default function Onboarding() {
     tenure: "It helps us show you the right things, and it is never shown to anyone else.",
     living: "So we can point you to the right groups and places.",
     interests: "Pick any that fit, or skip this one.",
+    about: "A short bio and what you do in your free time. Everyone on your campus sees it on your profile. Totally optional: skip it and add it later in Profile.",
     pace: "A friendly show-up streak and small badges. Optional, low pressure, and you can change your mind any time.",
     nudges: pushSupported() ? "A bell in the top bar collects what needs you. You can also get alerts on this device, even when Orbit is closed." : "A bell in the top bar collects what needs you. Orbit is a website, so alerts reach your device only while it is open in a tab.",
     look: "You can switch any time from the sidebar.",
@@ -199,6 +209,31 @@ export default function Onboarding() {
             </motion.button>
           );
         })}
+      </div>
+    ),
+    about: (
+      <div className="onb-about">
+        <div className="field">
+          <label className="onb-label" htmlFor="onb-bio">A little about you</label>
+          <div className="about-box">
+            <textarea id="onb-bio" ref={bioRef} className="onb-input" rows={3} value={bio} placeholder="e.g. Second-year bio major. Coffee, climbing and bad puns." onChange={(e) => { if (bioLength(e.target.value) <= BIO_MAX) { setBio(e.target.value); setKick((k) => k + 1); } }} />
+            <div className="about-tools">
+              <EmojiButton value={bio} onChange={(v) => { if (bioLength(v) <= BIO_MAX) setBio(v); }} inputRef={bioRef} max={BIO_MAX} />
+              <span className={"count" + (bioLength(bio) > BIO_MAX * 0.9 ? " warn" : "")} aria-live="polite">{bioLength(bio)}/{BIO_MAX}</span>
+            </div>
+          </div>
+        </div>
+        <div className="field">
+          <span className="onb-label" id="onb-free">What do you do in your free time?</span>
+          <div className="onb-chips" role="group" aria-labelledby="onb-free">
+            {[...HOBBY_IDEAS, ...hobbies.filter((h) => !HOBBY_IDEAS.some((i) => i.toLowerCase() === h.toLowerCase()))].map((t) => {
+              const on = hobbies.some((x) => x.toLowerCase() === t.toLowerCase());
+              return <button key={t} type="button" aria-pressed={on} onClick={() => { setHobbies((l) => (on ? l.filter((x) => x.toLowerCase() !== t.toLowerCase()) : cleanHobbies([...l, t]))); setKick((k) => k + 1); }}>{on && <Check size={14} aria-hidden="true" />}{t}</button>;
+            })}
+          </div>
+          <input className="onb-input" aria-label="Add your own" value={hobbyText} maxLength={HOBBY_LEN} disabled={hobbies.length >= HOBBY_MAX} placeholder={hobbies.length >= HOBBY_MAX ? `Up to ${HOBBY_MAX}` : "Something else? Type it and press Enter"}
+            onChange={(e) => setHobbyText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && hobbyText.trim()) { e.preventDefault(); setHobbies((l) => cleanHobbies([...l, hobbyText])); setHobbyText(""); } }} />
+        </div>
       </div>
     ),
     pace: <div className="onb-choices two" role="radiogroup" aria-label="Streaks and badges">
@@ -240,7 +275,7 @@ export default function Onboarding() {
                 <span className="onb-next-wrap">
                   <motion.button ref={nextRef} type="button" className="btn primary onb-next" disabled={step === "done" ? saving : !can[step]} onClick={step === "done" ? enterApp : next}
                     initial="rest" whileHover={reduce ? undefined : "hover"} whileTap={reduce ? undefined : { scale: 0.94 }} animate={can[step] && !reduce ? { scale: [1, 1.07, 1] } : { scale: 1 }} transition={{ duration: 0.35 }}>
-                    <span>{step === "done" ? (saving ? "Setting up…" : "Take me in") : optional && step === "interests" && interests.length === 0 ? "Skip" : "Continue"}</span>
+                    <span>{step === "done" ? (saving ? "Setting up…" : "Take me in") : optional && ((step === "interests" && interests.length === 0) || (step === "about" && aboutEmpty)) ? "Skip" : "Continue"}</span>
                     <motion.span className="onb-arrow" variants={{ rest: { x: 0 }, hover: { x: 5 } }} transition={spring}><ArrowRight size={18} aria-hidden="true" /></motion.span>
                   </motion.button>
                   <Burst n={burst} reduce={!!reduce} />

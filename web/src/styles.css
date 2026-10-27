@@ -1771,3 +1771,49 @@ kbd{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 
   .check::after,.pin-btn::after,.ghost-btn::after,.rem-alert-x::after{content:"";position:absolute;inset:-9px}
 }
 @media (pointer:coarse),(max-width:900px){.hangs .rsvp button{min-height:38px;padding:0 14px}}
+
+/* emoji picker, and the bio */
+.emoji-wrap{position:relative;display:inline-flex}
+.emoji-btn{width:36px;height:36px;border-radius:50%;border:0;background:none;color:var(--ink-soft);display:grid;place-items:center;cursor:pointer;transition:background .2s,color .2s,transform .18s var(--ease)}
+.emoji-btn:hover,.emoji-btn[aria-expanded=true]{background:var(--panel);color:var(--ink)}
+.emoji-btn:active{transform:scale(.9)}
+.emoji-pop{position:absolute;z-index:75;bottom:calc(100% + 8px);right:0;width:min(332px,calc(100vw - 32px));max-height:min(380px,60vh);display:flex;flex-direction:column;gap:8px;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 50px -18px rgba(30,20,60,.5);animation:emoji-in .18s var(--ease)}
+@keyframes emoji-in{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+.emoji-search{width:100%;min-height:38px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:.9rem}
+.emoji-tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.emoji-tabs button{flex:none;width:36px;height:34px;border:0;border-radius:10px;background:none;font-size:1.15rem;cursor:pointer;filter:grayscale(.6);opacity:.75}
+.emoji-tabs button[aria-selected=true]{background:var(--panel);filter:none;opacity:1}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;overflow-y:auto;overscroll-behavior:contain;min-height:0}
+.emoji-grid button{height:38px;border:0;border-radius:10px;background:none;font-size:1.35rem;line-height:1;cursor:pointer;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
+.emoji-grid button:hover,.emoji-grid button:focus-visible{background:var(--panel);transform:scale(1.15)}
+.emoji-h,.emoji-none{grid-column:1/-1;margin:4px 4px 0;font-size:.72rem;font-weight:600;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.emoji-pop{animation:none}.emoji-grid button:hover{transform:none}}
+/* emoji look the same everywhere they are typed */
+textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
+.bubble,.post p.body,.about-bio,.cmt-body{font-family:var(--sans,inherit),"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji"}
+
+.about-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:18px 20px 20px;display:grid;gap:14px}
+.about-card header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.about-card h2{font-family:var(--serif);font-weight:500;font-size:1.2rem}
+.about-bio{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45}
+.about-form{display:grid;gap:16px}
+.about-box{position:relative;display:grid}
+.about-box textarea{width:100%;resize:vertical;min-height:96px;padding:12px 14px 40px;border-radius:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;line-height:1.4}
+.about-tools{position:absolute;left:8px;right:12px;bottom:6px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.about-tools>*{pointer-events:auto}
+.about-chips{margin:6px 0}
+.about-chips button,.onb-about .onb-chips button{min-height:36px}
+.about-chips button[aria-pressed=true]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.about-add{display:flex;gap:8px}
+.about-add input{flex:1;min-height:42px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.about-actions{display:flex;gap:8px}
+.person-tags.removable li{display:inline-flex;align-items:center;gap:4px}
+.person-tags.removable button{border:0;background:none;color:inherit;display:grid;place-items:center;cursor:pointer;padding:2px}
+.person-sub{margin-top:10px;font-size:.74rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.onb-about{display:grid;gap:18px}
+.onb-about .onb-input{width:100%}
+.onb-about .about-box textarea{min-height:88px}
+
+/* class alerts sit above reminder alerts */
+.class-alerts{bottom:auto;top:auto}
+.rem-alert-ico.class{background:color-mix(in srgb,var(--violet) 18%,var(--surface));color:var(--violet-deep)}

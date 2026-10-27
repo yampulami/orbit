@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import EmojiButton from "./EmojiButton";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { ancestorsOf, directReplies, replyCount, topLevel } from "../lib/commentThread";
@@ -33,6 +34,7 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
   const reduce = useReducedMotion();
   const [focusId, setFocusId] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const commentInput = useRef<HTMLInputElement>(null);
   const [sending, setSending] = useState(false);
 
   const focus = focusId ? comments.find((c) => c.id === focusId) : undefined;
@@ -80,7 +82,8 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
 
   const composer = (
     <form className="comment-form" onSubmit={submit}>
-      <input aria-label={focus ? `Reply to ${focus.author_name}` : "Write a comment"} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} placeholder={focus ? `Reply to ${focus.author_name}…` : "Write a comment…"} />
+      <input ref={commentInput} aria-label={focus ? `Reply to ${focus.author_name}` : "Write a comment"} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} placeholder={focus ? `Reply to ${focus.author_name}…` : "Write a comment…"} />
+      <EmojiButton value={text} onChange={setText} inputRef={commentInput} max={500} />
       <button className="btn primary" disabled={!text.trim() || sending}>{focus ? "Reply" : "Comment"}</button>
     </form>
   );

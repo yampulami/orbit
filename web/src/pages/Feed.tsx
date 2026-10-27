@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import EmojiButton from "../components/EmojiButton";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, Navigate } from "react-router-dom";
@@ -62,6 +63,7 @@ export default function Feed() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const [community, setCommunity] = useState<Community>("Everyone");
   const [posting, setPosting] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
@@ -223,13 +225,14 @@ export default function Feed() {
         <form className={"card post composer" + (body ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
             <span className="sr">Write a post</span>
-            <textarea id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder="What’s happening on campus?" />
+            <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder="What’s happening on campus?" />
           </label>
           <div className="composer-row">
             <div className="field" style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span id="post-to">Post to</span>
               <CommunityPicker value={community} onChange={setCommunity} labelledBy="post-to" />
             </div>
+            <EmojiButton value={body} onChange={setBody} inputRef={composerRef} max={MAX} />
             <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span>
             <button className="btn primary" disabled={posting || !body.trim()}>{posting ? "Posting…" : "Post"}</button>
           </div>

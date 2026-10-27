@@ -13,6 +13,7 @@ import NoticeHost from "./NoticeHost";
 import { arrival } from "../lib/arrival";
 import NotificationBell from "./NotificationBell";
 import ReminderAlerts from "./ReminderAlerts";
+import ClassAlerts from "./ClassAlerts";
 import ComposeModal from "./ComposeModal";
 import GlobalSearch from "./GlobalSearch";
 import { setTheme, useTheme } from "../lib/theme";
@@ -135,6 +136,7 @@ export default function Shell() {
       <UndoToast />
       <NoticeHost />
       <ReminderAlerts />
+      <ClassAlerts />
       <ComposeModal open={composing} onClose={() => setComposing(false)} />
     </div>
   );

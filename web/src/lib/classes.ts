@@ -40,6 +40,29 @@ export function nextClass(slots: ClassSlot[], now: Date): { slot: ClassSlot; sta
   return best;
 }
 
+/** The next few times a class starts from `now`, soonest first, within `horizonMs` (default two days). A class that began up to 10 minutes ago still counts. */
+export function upcomingClasses(slots: ClassSlot[], now: Date, count = 3, horizonMs = 2 * 86400000): { slot: ClassSlot; starts: Date }[] {
+  const out: { slot: ClassSlot; starts: Date }[] = [];
+  for (let i = 0; i < 4; i++) {
+    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    for (const slot of classesOn(slots, day)) {
+      const m = toMinutes(slot.start);
+      const starts = new Date(day.getFullYear(), day.getMonth(), day.getDate(), Math.floor(m / 60), m % 60);
+      if (starts.getTime() < now.getTime() - 10 * 60000 || starts.getTime() - now.getTime() > horizonMs) continue;
+      out.push({ slot, starts });
+    }
+  }
+  return out.sort((a, b) => a.starts.getTime() - b.starts.getTime()).slice(0, count);
+}
+
+/** Classes that start within the next hour (or began in the last few minutes), each with a key that is the same for that one class meeting, so an alert is shown once. */
+export const ALERT_LEAD_MS = 60 * 60000;
+export function classesSoon(slots: ClassSlot[], now: Date): { key: string; slot: ClassSlot; starts: Date; minutes: number }[] {
+  return upcomingClasses(slots, now, 10, ALERT_LEAD_MS)
+    .map(({ slot, starts }) => ({ key: `${slot.id}@${starts.getFullYear()}-${starts.getMonth() + 1}-${starts.getDate()}`, slot, starts, minutes: Math.round((starts.getTime() - now.getTime()) / 60000) }))
+    .filter((c) => c.minutes >= -5);
+}
+
 /* ---------- store ---------- */
 const KEY = "orbit-classes-v1:";
 let owner: string | null = null;

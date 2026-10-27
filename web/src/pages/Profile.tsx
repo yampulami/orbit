@@ -4,6 +4,7 @@ import { NAME_MAX, renameMe, useDisplayName } from "../lib/displayName";
 import { pushSupported } from "../lib/push";
 import { haptic, setHaptics, useHaptics } from "../lib/haptics";
 import { install, useInstall } from "../lib/install";
+import AboutEditor from "../components/AboutEditor";
 import { disableDeviceAlerts, enableDeviceAlerts, notifyDevice, useDeviceAlerts } from "../lib/deviceAlerts";
 import { setNudge, useNudges } from "../lib/nudges";
 import { notice } from "../lib/notice";
@@ -136,6 +137,8 @@ export default function Profile() {
           {!editingUser && <button type="button" className="btn" onClick={() => { setUserDraft(username ?? suggestUsername(name.split(" ")[0] ?? "")); setUserError(""); setEditingUser(true); }}><Pencil size={16} aria-hidden="true" />{username ? "Change" : "Choose username"}</button>}
         </section>
       )}
+
+      {session && <AboutEditor userId={session.user.id} />}
 
       <section className="track">
         <div>

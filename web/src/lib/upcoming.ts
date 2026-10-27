@@ -1,7 +1,7 @@
 import { isVisible, YOU, type Group, type Hangout } from "./hangouts";
 import { fromYmd, type Reminder } from "./reminders";
 import type { Task } from "./roommates";
-import { clockLabel, nextClass, type ClassSlot } from "./classes";
+import { clockLabel, upcomingClasses, type ClassSlot } from "./classes";
 
 export type UpKind = "hangout" | "chore" | "reminder" | "class";
 export type UpTag = "answer" | "overdue" | "today" | "soon" | "tomorrow";
@@ -73,11 +73,10 @@ export function buildUpcoming(o: { now: Date; groups: Group[]; hangouts: Hangout
     items.push({ id: `r-${r.id}`, kind: "reminder", title: r.title, sub: `${dayLabel(day, now)}${r.time ? `, ${timeLabel(when)}` : ""}`, when, tag: overdue ? "overdue" : sameDay ? "today" : undefined, to: "/app/plans", state: { day: day.toDateString() }, reminderId: r.id });
   }
 
-  // The next class, if it is today or tomorrow.
-  const next = nextClass(o.classes ?? [], now);
-  if (next && next.starts.getTime() - now.getTime() < 2 * DAY) {
+  // The next few classes, today and tomorrow.
+  for (const next of upcomingClasses(o.classes ?? [], now, 3)) {
     const untilMs = next.starts.getTime() - now.getTime();
-    items.push({ id: `c-${next.slot.id}`, kind: "class", title: next.slot.name, sub: `${dayLabel(next.starts, now)}, ${clockLabel(next.slot.start)}${next.slot.place ? ` · ${next.slot.place}` : ""}`, when: next.starts, tag: untilMs <= 3 * HOUR ? "soon" : startOfDay(next.starts).getTime() === startOfDay(now).getTime() ? "today" : undefined, to: "/app/plans", state: { day: next.starts.toDateString() } });
+    items.push({ id: `c-${next.slot.id}-${next.starts.getTime()}`, kind: "class", title: next.slot.name, sub: `${dayLabel(next.starts, now)}, ${clockLabel(next.slot.start)}${next.slot.place ? ` · ${next.slot.place}` : ""}`, when: next.starts, tag: untilMs <= 3 * HOUR ? "soon" : startOfDay(next.starts).getTime() === startOfDay(now).getTime() ? "today" : undefined, to: "/app/plans", state: { day: next.starts.toDateString() } });
   }
 
   items.sort((a, b) => (a.when && b.when ? a.when.getTime() - b.when.getTime() : a.when ? -1 : b.when ? 1 : 0));
