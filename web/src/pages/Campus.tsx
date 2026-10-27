@@ -11,6 +11,7 @@ import EventCard, { EventBadge } from "../components/EventCard";
 import EventForm from "../components/EventForm";
 import ReviewPanel from "../components/ReviewPanel";
 import ClubApplication from "../components/ClubApplication";
+import CohostInvites from "../components/CohostInvites";
 import EmptyState from "../components/EmptyState";
 import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
@@ -95,6 +96,7 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
         {isHost && <button type="button" className="btn" aria-expanded={form} onClick={() => setForm((v) => !v)}><Plus size={16} aria-hidden="true" />Post an event{hostLabel ? ` as ${hostLabel}` : ""}</button>}
       </div>
       {form && isHost && <EventForm hostLabel={hostLabel} role={role} onDone={() => setForm(false)} />}
+      <CohostInvites />
 
       {!ready ? (
         <div aria-busy="true" aria-label="Loading campus events"><div className="skeleton sk-tile" /></div>

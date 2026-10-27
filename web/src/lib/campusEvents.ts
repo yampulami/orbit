@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 import { watchTables, type ChangeEvent } from "./people";
 import { readCache, writeCache } from "./localCache";
 import { notice } from "./notice";
-import { useMyOrgIds } from "./campusOrgs";
+import { useCampusOrgs, useMyOrgIds } from "./campusOrgs";
 
 /** Campus events: the big public ones put on by a host (a department, club, instructor or staff member) and shown to everyone on the campus.
  *  Groups stay for small private hangouts. Only people in the `campus_hosts` list can post; everyone can say going or interested. */
@@ -14,17 +14,21 @@ export type Status = "pending" | "published" | "rejected" | "removed";
 export type RawEvent = { id: string; org_id?: string | null; host_id: string; host_label: string; kind: Kind; status: Status; title: string; description: string; place_name: string; starts_at: string; ends_at: string | null; canceled_at: string | null; review_note?: string | null };
 export type RawAnswer = { event_id: string; user_id: string; answer: Answer };
 export type RawReport = { event_id: string; reporter_id: string; reason: string };
+export type CohostStatus = "pending" | "accepted" | "declined";
+export type RawCohost = { event_id: string; org_id: string; status: CohostStatus };
 export type CampusEvent = {
   id: string; orgId?: string; hostId: string; host: string; title: string; description: string; place: string;
   startsAt: string; endsAt?: string; canceled: boolean; going: number; interested: number; mine?: Answer; mineHost: boolean;
   /** "official" is posted by staff; "student" is posted by a student host and needs a staff member to approve it. */
   kind: Kind; status: Status; note?: string;
+  /** Other clubs invited to co-host this event, and whether they said yes. */
+  cohosts: { orgId: string; name: string; status: CohostStatus }[];
 };
 
 const HOUR = 3600000;
 
 /** Pure: rows in, what the screen shows. Soonest first; cancelled events stay in the list (marked) so people who planned around them see it. */
-export function buildEvents(events: RawEvent[], answers: RawAnswer[], me: string): CampusEvent[] {
+export function buildEvents(events: RawEvent[], answers: RawAnswer[], me: string, cohosts: RawCohost[] = [], names: Record<string, string> = {}): CampusEvent[] {
   return [...events]
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
     .map((e) => {
@@ -35,6 +39,7 @@ export function buildEvents(events: RawEvent[], answers: RawAnswer[], me: string
         startsAt: e.starts_at, endsAt: e.ends_at ?? undefined, canceled: !!e.canceled_at,
         going: of.filter((a) => a.answer === "going").length, interested: of.filter((a) => a.answer === "interested").length,
         mine, mineHost: e.host_id === me, kind: e.kind ?? "official", status: e.status ?? "published", note: e.review_note ?? undefined,
+        cohosts: cohosts.filter((c) => c.event_id === e.id).map((c) => ({ orgId: c.org_id, name: names[c.org_id] ?? "A club", status: c.status })),
       };
     });
 }
@@ -56,12 +61,16 @@ export const outcomeFor = (role: Role): { kind: Kind; status: Status } => (role 
 export const canReview = (role: Role | null) => role === "coordinator" || role === "staff";
 
 /** Waiting and declined events are for their host and for reviewers only; everyone else sees published ones. */
-export const visibleEvents = (list: CampusEvent[], reviewer: boolean, myOrgs: Set<string> = new Set()) => list.filter((e) => e.status === "published" || e.mineHost || reviewer || (!!e.orgId && myOrgs.has(e.orgId)));
+export const visibleEvents = (list: CampusEvent[], reviewer: boolean, myOrgs: Set<string> = new Set()) =>
+  list.filter((e) => e.status === "published" || e.mineHost || reviewer || (!!e.orgId && myOrgs.has(e.orgId)) || e.cohosts.some((c) => c.status !== "declined" && myOrgs.has(c.orgId)));
+
+/** Who put an event on, in words: the host, then the clubs that said yes. */
+export const hostedBy = (e: Pick<CampusEvent, "host" | "cohosts">) => [e.host, ...e.cohosts.filter((c) => c.status === "accepted").map((c) => c.name)].join(" and ");
 
 /** What a host sees on an event they cannot see live, in words. */
 export const statusNote = (s: Status) => (s === "pending" ? "Waiting for approval" : s === "rejected" ? "Not approved" : s === "removed" ? "Removed by a coordinator" : "");
 
-type Store = { events: RawEvent[]; answers: RawAnswer[]; reports: RawReport[]; hostLabel: string | null; role: Role | null; ready: boolean };
+type Store = { events: RawEvent[]; answers: RawAnswer[]; reports: RawReport[]; cohosts: RawCohost[]; hostLabel: string | null; role: Role | null; ready: boolean };
 
 /** Pure: one change from the database applied to the lists. Returns null when it should simply be looked up again. */
 export function applyEventChange(s: Pick<Store, "events" | "answers">, e: ChangeEvent): Pick<Store, "events" | "answers"> | null {
@@ -97,12 +106,14 @@ const demoSamples = (): Store => {
       mk("ce1", "University Library", "Study skills workshop", "Time management and note-taking for midterms. Bring a laptop. Snacks provided.", "Library, room 2B", 1, 16, 0, 60),
       mk("ce2", "Career Services", "Spring career fair", "Over 40 employers. Dress business casual and bring printed resumes.", "Main gym", 3, 10, 0, 300),
       { ...student(mk("ce3", "Robotics Club", "Open build night", "No experience needed. Come and build with us. Snacks provided.", "Engineering lab", 2, 19, 30, 120)), org_id: "o1" },
+      { ...mk("ce5", "Student Life", "Campus hack night", "A shared night of building and demos. Pizza on us. Teams of any size.", "Innovation hub", 5, 18, 0, 180), org_id: "o2", host_id: "demo-staff" },
       { ...student(mk("ce4", "Film Society", "Outdoor movie screening", "Bring a blanket. Free popcorn.", "North lawn", 4, 20, 0, 150)), status: "pending", org_id: "o3" },
     ],
     answers: [], reports: [], hostLabel: "Orbit demo", role: "coordinator", ready: true,
+    cohosts: [{ event_id: "ce3", org_id: "o2", status: "accepted" }, { event_id: "ce5", org_id: "o1", status: "pending" }],
   };
 };
-let state: Store = live ? { events: [], answers: [], reports: [], hostLabel: null, role: null, ready: false } : (() => { try { const s = localStorage.getItem(DEMO_KEY); if (s) { const saved = JSON.parse(s) as Store; return { ...saved, reports: saved.reports ?? [], role: demoRole() }; } } catch { /* none saved */ } return { ...demoSamples(), role: demoRole() }; })();
+let state: Store = live ? { events: [], answers: [], reports: [], cohosts: [], hostLabel: null, role: null, ready: false } : (() => { try { const s = localStorage.getItem(DEMO_KEY); if (s) { const saved = JSON.parse(s) as Store; return { ...saved, reports: saved.reports ?? [], cohosts: saved.cohosts ?? [], role: demoRole() }; } } catch { /* none saved */ } return { ...demoSamples(), role: demoRole() }; })();
 let who: string | null = null;
 let stop: (() => void) | null = null;
 let loadId = 0;
@@ -125,14 +136,16 @@ async function reload() {
       supabase!.from("campus_hosts").select("label,role").eq("user_id", me).maybeSingle(),
     ]);
     // Before the campus events migration is applied the tables are missing: show an empty list, never an error.
-    if (ev.error) { if (mine === loadId && who === me) set({ ...state, events: [], answers: [], ready: true }); return; }
+    if (ev.error) { if (mine === loadId && who === me) set({ ...state, events: [], answers: [], cohosts: [], ready: true }); return; }
     const events = (ev.data ?? []) as RawEvent[];
     const ans = events.length ? await supabase!.from("campus_event_responses").select("event_id,user_id,answer").in("event_id", events.map((e) => e.id)).limit(5000) : { data: [] as RawAnswer[], error: null };
     if (mine !== loadId || who !== me) return;
     const h = host.data as { label: string; role: Role } | null;
     // Only reviewers can read reports; for everyone else this simply comes back empty.
+    // Before the co-host migration is applied this table is missing: events still show, without co-hosts.
+    const co = events.length ? await supabase!.from("campus_event_cohosts").select("event_id,org_id,status").in("event_id", events.map((e) => e.id)).limit(2000) : { data: [] as RawCohost[], error: null };
     const rep = canReview(h?.role ?? null) ? await supabase!.from("campus_event_reports").select("event_id,reporter_id,reason").limit(1000) : { data: [] as RawReport[], error: null };
-    set({ events, answers: (ans.data ?? []) as RawAnswer[], reports: rep.error ? [] : ((rep.data ?? []) as RawReport[]), hostLabel: h?.label ?? null, role: h?.role ?? null, ready: true });
+    set({ events, answers: (ans.data ?? []) as RawAnswer[], reports: rep.error ? [] : ((rep.data ?? []) as RawReport[]), cohosts: co.error ? [] : ((co.data ?? []) as RawCohost[]), hostLabel: h?.label ?? null, role: h?.role ?? null, ready: true });
   } catch { /* keep what is on screen */ }
 }
 
@@ -142,9 +155,9 @@ export function bindCampusEvents(userId: string) {
   who = userId;
   const kept = readCache<Store>("campus-events", userId);
   // A copy saved by an older version may lack lists added since: fill them in rather than crash.
-  if (kept) state = { ...kept, events: kept.events ?? [], answers: kept.answers ?? [], reports: kept.reports ?? [], ready: true };
+  if (kept) state = { ...kept, events: kept.events ?? [], answers: kept.answers ?? [], reports: kept.reports ?? [], cohosts: kept.cohosts ?? [], ready: true };
   void reload();
-  stop = watchTables(`orbit-events-${userId}`, ["campus_events", "campus_event_responses", "campus_event_reports"], () => void reload(), (e) => {
+  stop = watchTables(`orbit-events-${userId}`, ["campus_events", "campus_event_responses", "campus_event_reports", "campus_event_cohosts"], () => void reload(), (e) => {
     const next = applyEventChange(state, e);
     if (!next) return false;
     set({ ...state, ...next });
@@ -154,14 +167,14 @@ export function bindCampusEvents(userId: string) {
 export function unbindCampusEvents() {
   if (!live) return;
   stop?.(); stop = null; who = null; loadId++;
-  state = { events: [], answers: [], reports: [], hostLabel: null, role: null, ready: false };
+  state = { events: [], answers: [], reports: [], cohosts: [], hostLabel: null, role: null, ready: false };
   subs.forEach((f) => f());
 }
 
 export const eventActions = {
   /** Post an event (hosts only). Staff and coordinators publish at once; a student host's event waits for approval. Resolves to a message if it
    *  did not work, or null, plus the outcome so the screen can say which. */
-  async create(d: { title: string; description: string; place: string; startsAt: string; endsAt?: string; orgId?: string; orgName?: string; orgKind?: Kind; orgTrusted?: boolean }): Promise<{ error: string | null; status?: Status }> {
+  async create(d: { title: string; description: string; place: string; startsAt: string; endsAt?: string; orgId?: string; orgName?: string; orgKind?: Kind; orgTrusted?: boolean; cohosts?: string[] }): Promise<{ error: string | null; status?: Status }> {
     const bad = problemWithEvent(d);
     if (bad) return { error: bad };
     const row = { title: d.title.trim().slice(0, 120), description: d.description.trim().slice(0, 1000), place_name: d.place.trim().slice(0, 120), starts_at: new Date(d.startsAt).toISOString(), ends_at: d.endsAt ? new Date(d.endsAt).toISOString() : null };
@@ -170,15 +183,52 @@ export const eventActions = {
       const e: RawEvent = d.orgId
         ? { id: crypto.randomUUID(), org_id: d.orgId, host_id: DEMO_ME, host_label: d.orgName ?? "Organization", canceled_at: null, kind: d.orgKind ?? "student", status: d.orgKind === "official" || d.orgTrusted ? "published" : "pending", ...row }
         : { id: crypto.randomUUID(), host_id: DEMO_ME, host_label: state.hostLabel ?? "Orbit demo", canceled_at: null, ...outcomeFor(role), ...row };
-      set({ ...state, events: [...state.events, e] });
+      set({ ...state, events: [...state.events, e], cohosts: [...state.cohosts, ...(d.cohosts ?? []).map((org_id) => ({ event_id: e.id, org_id, status: "pending" as const }))] });
       return { error: null, status: e.status };
     }
     if (!who) return { error: "Sign in first." };
     const { data: member } = await supabase!.from("campus_memberships").select("campus_key").eq("user_id", who).maybeSingle();
     // The database decides the kind and the status from the host's role; none is sent from here.
-    const { data, error } = await supabase!.from("campus_events").insert({ ...row, host_id: who, campus_key: (member as { campus_key: string } | null)?.campus_key, host_label: d.orgName ?? state.hostLabel ?? "Host", org_id: d.orgId ?? null }).select("status").single();
+    const { data, error } = await supabase!.from("campus_events").insert({ ...row, host_id: who, campus_key: (member as { campus_key: string } | null)?.campus_key, host_label: d.orgName ?? state.hostLabel ?? "Host", org_id: d.orgId ?? null }).select("id,status").single();
     if (error) return { error: /row-level|42501|only campus hosts/i.test(error.message) ? "Your account is not set up to post campus events yet." : error.message };
-    return { error: null, status: (data as { status: Status } | null)?.status ?? outcomeFor(role).status };
+    const made = data as { id: string; status: Status } | null;
+    if (made && d.cohosts?.length) await eventActions.inviteCohosts(made.id, d.cohosts);
+    return { error: null, status: made?.status ?? outcomeFor(role).status };
+  },
+  /** Invite other clubs to co-host an event. Each club's team is told and can accept or decline. */
+  async inviteCohosts(eventId: string, orgIds: string[]): Promise<string | null> {
+    if (!orgIds.length) return null;
+    if (!live) {
+      const have = new Set(state.cohosts.filter((c) => c.event_id === eventId).map((c) => c.org_id));
+      set({ ...state, cohosts: [...state.cohosts, ...orgIds.filter((o) => !have.has(o)).map((org_id) => ({ event_id: eventId, org_id, status: "pending" as const }))] });
+      return null;
+    }
+    let bad: string | null = null;
+    for (const org of orgIds) {
+      const { error } = await supabase!.rpc("invite_cohost", { event: eventId, org });
+      if (error) bad = error.message;
+    }
+    if (bad) notice.show({ icon: "alert", title: "A co-host invitation did not go out", message: bad });
+    void reload();
+    return bad;
+  },
+  /** A club's team says yes or no to co-hosting. */
+  async answerCohost(eventId: string, orgId: string, accept: boolean): Promise<string | null> {
+    const before = state;
+    set({ ...state, cohosts: state.cohosts.map((c) => (c.event_id === eventId && c.org_id === orgId ? { ...c, status: accept ? "accepted" as const : "declined" as const } : c)) });
+    if (!live) return null;
+    const { error } = await supabase!.rpc("answer_cohost", { event: eventId, org: orgId, accept });
+    if (error) { set(before); notice.show({ icon: "alert", title: "That did not save", message: error.message }); return error.message; }
+    return null;
+  },
+  /** Take a co-host off an event (the host, or the co-host club itself). */
+  async removeCohost(eventId: string, orgId: string): Promise<string | null> {
+    const before = state;
+    set({ ...state, cohosts: state.cohosts.filter((c) => !(c.event_id === eventId && c.org_id === orgId)) });
+    if (!live) return null;
+    const { error } = await supabase!.rpc("remove_cohost", { event: eventId, org: orgId });
+    if (error) { set(before); notice.show({ icon: "alert", title: "That did not work", message: error.message }); return error.message; }
+    return null;
   },
   async cancel(id: string): Promise<string | null> {
     const at = new Date().toISOString();
@@ -245,7 +295,9 @@ export function useCampusEvents() {
   const me = live ? who ?? "" : DEMO_ME;
   const reviewer = canReview(s.role);
   const myOrgs = useMyOrgIds();
-  const all = buildEvents(s.events, s.answers, me);
+  const { orgs } = useCampusOrgs();
+  const names = Object.fromEntries(orgs.map((o) => [o.id, o.name]));
+  const all = buildEvents(s.events, s.answers, me, s.cohosts, names);
   const events = visibleEvents(all, reviewer, myOrgs);
   return {
     events,
@@ -253,6 +305,8 @@ export function useCampusEvents() {
     pending: reviewer ? events.filter((e) => e.status === "pending" && !e.canceled) : [],
     /** Events people have reported, with the reasons (reviewers only). */
     reported: reviewer ? events.filter((e) => e.status === "published" && s.reports.some((r) => r.event_id === e.id)).map((e) => ({ event: e, reasons: s.reports.filter((r) => r.event_id === e.id).map((r) => r.reason).filter(Boolean) })) : [],
+    /** Co-host invitations waiting for a club I can answer for (my role there includes creating events). */
+    invites: events.flatMap((e) => (e.canceled || !isOpen(e, new Date()) ? [] : e.cohosts.filter((c) => c.status === "pending" && orgs.find((o) => o.id === c.orgId)?.myPerms.includes("events")).map((c) => ({ event: e, org: { id: c.orgId, name: c.name } })))),
     isHost: live ? !!s.role : s.role !== "student", role: s.role, canReview: reviewer, hostLabel: s.hostLabel, ready: s.ready,
   };
 }

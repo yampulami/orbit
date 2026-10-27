@@ -2397,3 +2397,17 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .club-people li{flex-wrap:wrap}
 .club-people .club-member-name{flex:1 1 90px}
 @media (max-width:700px){.role-pick{max-width:100%}.club-add input{flex-basis:100%}}
+
+/* Co-hosting */
+.cohost-pick{display:grid;gap:8px;border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:0}
+.cohost-pick legend{font-weight:600;padding:0 6px}
+.cohost-pick p{margin:0;font-size:.85rem}
+.cohost-chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip-btn{min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.86rem;font-weight:600;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.chip-btn[aria-pressed=true]{background:var(--violet);color:#fff;border-color:var(--violet)}
+.chip-btn:disabled{opacity:.5;cursor:not-allowed}
+.cohost-invites{display:grid;gap:10px;padding:14px;border-radius:20px;background:var(--panel)}
+.cohost-invites h3{display:flex;align-items:center;gap:6px;font-size:.95rem}
+.cohost-invites ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cohost-invites li{display:grid;gap:8px;padding:12px;border-radius:16px;background:var(--surface)}
+.ev-cohost-note{margin:0;font-size:.82rem}

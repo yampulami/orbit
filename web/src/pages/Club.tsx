@@ -16,6 +16,7 @@ import ApplicationDetails from "../components/ApplicationDetails";
 import { JoinButton, JoinRequests } from "../components/JoinPanel";
 import ClubFeed from "../components/ClubFeed";
 import RolesPanel from "../components/RolesPanel";
+import CohostInvites from "../components/CohostInvites";
 
 type Tab = "feed" | "events" | "people" | "about";
 const initials = (n: string) => n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
@@ -47,7 +48,8 @@ export default function Club() {
   }
 
   const now = new Date();
-  const all = events.filter((e) => e.orgId === org.id).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  // Its own events, and events other clubs asked it to co-host and it accepted.
+  const all = events.filter((e) => e.orgId === org.id || e.cohosts.some((c) => c.orgId === org.id && c.status === "accepted")).sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const upcoming = all.filter((e) => isOpen(e, now) && e.status !== "rejected" && e.status !== "removed");
   const gone = all.filter((e) => !upcoming.includes(e));
   const next = upcoming.find((e) => e.status === "published" && !e.canceled);
@@ -123,6 +125,7 @@ export default function Club() {
         <section className="club-section" aria-label="Events">
           {canPost && waits && !posting && <p className="muted">New events from this club wait for a coordinator before everyone sees them.</p>}
           {posting && canPost && <EventForm org={org} onDone={() => setPosting(false)} />}
+          <CohostInvites orgId={org.id} />
           {upcoming.length === 0
             ? <EmptyState icon={CalendarDays} title="Nothing coming up">{canPost ? "Post the first event. It shows to the whole campus once it is live." : org.status === "active" ? "When this club posts one, it shows here." : "Events can be posted once a coordinator approves the club."}</EmptyState>
             : (

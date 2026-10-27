@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./supabase", () => ({ supabase: null }));
 
-import { applyEventChange, buildEvents, canReview, isOpen, outcomeFor, problemWithEvent, statusNote, visibleEvents, type RawAnswer, type RawEvent } from "./campusEvents";
+import { applyEventChange, buildEvents, canReview, hostedBy, isOpen, outcomeFor, problemWithEvent, statusNote, visibleEvents, type RawAnswer, type RawEvent } from "./campusEvents";
 
 const ev = (id: string, starts: string, extra: Partial<RawEvent> = {}): RawEvent => ({ id, host_id: "h1", host_label: "Library", title: "Workshop " + id, description: "", place_name: "Room 2", starts_at: starts, ends_at: null, canceled_at: null, kind: "official", status: "published", ...extra });
 const ans = (event_id: string, user_id: string, answer: RawAnswer["answer"]): RawAnswer => ({ event_id, user_id, answer });
@@ -105,5 +105,22 @@ describe("removed events and organizations", () => {
   it("carries the organization an event was posted as", () => {
     const [e] = buildEvents([ev("a", "2026-10-28T10:00:00Z", { org_id: "org1", host_label: "Robotics Club", kind: "student" })], [], "me");
     expect(e).toMatchObject({ orgId: "org1", host: "Robotics Club", kind: "student" });
+  });
+});
+
+describe("co-hosted events", () => {
+  const raw = [ev("e1", "2026-10-28T19:00:00Z", { org_id: "oA", status: "pending", host_label: "Coding Club" })];
+  const co = [{ event_id: "e1", org_id: "oB", status: "accepted" as const }, { event_id: "e1", org_id: "oC", status: "pending" as const }, { event_id: "e1", org_id: "oD", status: "declined" as const }];
+  const names = { oB: "Design Club", oC: "Film Society", oD: "Chess Club" };
+  it("lists the co-hosts with their answers and names the clubs that said yes", () => {
+    const [e] = buildEvents(raw, [], "me", co, names);
+    expect(e.cohosts.map((c) => [c.name, c.status])).toEqual([["Design Club", "accepted"], ["Film Society", "pending"], ["Chess Club", "declined"]]);
+    expect(hostedBy(e)).toBe("Coding Club and Design Club");
+  });
+  it("shows a waiting event to a club that was invited, unless it said no", () => {
+    const list = buildEvents(raw, [], "me", co, names);
+    expect(visibleEvents(list, false, new Set(["oC"]))).toHaveLength(1);
+    expect(visibleEvents(list, false, new Set(["oD"]))).toHaveLength(0);
+    expect(visibleEvents(list, false, new Set())).toHaveLength(0);
   });
 });

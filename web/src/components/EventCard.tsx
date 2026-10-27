@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { BadgeCheck, Check, Clock, Flag, Gamepad2, Hammer, MapPin, Mic, PartyPopper, Star, Store, Trophy, UserRound, Users, Utensils, X } from "lucide-react";
-import { eventActions, type CampusEvent } from "../lib/campusEvents";
+import { eventActions, hostedBy, type CampusEvent } from "../lib/campusEvents";
 import { countdown, eventFlavor, hueFor, type FlavorKey } from "../lib/look";
 import { notice } from "../lib/notice";
 import RichText from "./RichText";
@@ -62,8 +62,12 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
           {when && when.tone !== "past" && <span className={"ev-count " + when.tone}>{when.tone === "live" && <i className="live-dot" aria-hidden="true" />}{when.text}</span>}
         </div>
         <strong className="ev-title"><RichText text={e.title} /></strong>
-        <span className="ev-host">by {e.host}{live && (e.kind === "official" || !!e.orgId) && <VerifiedBadge label={e.kind === "official" ? "Verified: official campus office" : "Verified: club approved by a coordinator"} />}</span>
+        <span className="ev-host">by {hostedBy(e)}{live && (e.kind === "official" || !!e.orgId) && <VerifiedBadge label={e.kind === "official" ? "Verified: official campus office" : "Verified: club approved by a coordinator"} />}</span>
         <p className="ev-meta">{eventWhen(e)}{e.place && <><span aria-hidden="true"> · </span><MapPin size={12} aria-hidden="true" /> {e.place}</>}</p>
+        {e.cohosts.some((c) => c.status === "pending") && e.mineHost && (
+          <p className="ev-cohost-note muted">{e.cohosts.filter((c) => c.status === "pending").map((c) => c.name).join(", ")} {e.cohosts.filter((c) => c.status === "pending").length === 1 ? "has" : "have"} been asked to co-host.
+            {" "}{e.cohosts.filter((c) => c.status === "pending").map((c) => <button key={c.orgId} type="button" className="link-btn" aria-label={`Withdraw the invitation to ${c.name}`} onClick={() => void eventActions.removeCohost(e.id, c.orgId)}>Withdraw {c.name}</button>)}</p>
+        )}
         {e.canceled && <p className="cevent-cancel" role="status">Cancelled</p>}
         {e.status === "pending" && <p className="cevent-note" role="status">A coordinator needs to approve this before other students can see it.</p>}
         {e.status === "rejected" && <p className="cevent-note" role="status">Not approved{e.note ? `: ${e.note}` : "."} You can post it again with changes.</p>}

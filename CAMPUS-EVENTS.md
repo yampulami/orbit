@@ -36,7 +36,8 @@ The club's officers see their club's waiting events; everyone else sees only liv
 - **The club feed.** Announcements are public to the campus and notify the club. Discussion posts, polls and replies are for the club's own people. Votes are anonymous (you can read only your own vote; totals come from `club_poll_results`). Officers with the right role can pin and remove posts.
 - **Student Circles.** A casual, unofficial group anyone can start. It is active at once, has no verified badge, anyone can join without approval, it has its own feed, polls and roles, and it cannot post campus events (the database refuses). Clubs and offices keep the application and approval path.
 - **Activity.** A badge says Active, Steady, Quiet or New from real activity: upcoming or recent events and the latest post, not from popularity.
-- **Next phases (not built yet).** Club chat channels, co-hosted events between clubs, tasks and polls dashboards for officers, QR check-in and pods.
+- **Co-hosted events (migration 20261028140000_event_cohosts.sql).** When posting an event, the host picks up to three other clubs (not circles) to co-host. Each club's team (people whose role includes creating events) is notified and accepts or declines from a "Co-host invitations" box on Campus and on their club page. Once accepted, the event reads "by A and B" and shows on both club pages, and both memberships see it. The host can withdraw an invitation; a co-host club can step away. Approval and removal stay with the one shared event, and a club that was invited can see the event even while it waits for approval.
+- **Next phases (not built yet).** Club chat channels, tasks and officer dashboards, QR check-in and pods.
 
 ## Moderation
 

@@ -1,7 +1,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import { BadgeCheck, UserRound } from "lucide-react";
 import { eventActions, type Role } from "../lib/campusEvents";
-import { eventsNeedApproval, type Org } from "../lib/campusOrgs";
+import { eventsNeedApproval, useCampusOrgs, type Org } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
 import EmojiButton from "./EmojiButton";
 import DateTimeField from "./DateTimeField";
@@ -16,6 +16,10 @@ export default function EventForm({ org, hostLabel, role, onDone }: { org?: Org;
   const [endsAt, setEndsAt] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [co, setCo] = useState<string[]>([]);
+  const { orgs } = useCampusOrgs();
+  // Clubs and offices that can be asked to co-host: running, not a circle, and not this club.
+  const candidates = orgs.filter((o) => o.status === "active" && o.kind !== "circle" && o.id !== org?.id);
   const area = useRef<HTMLTextAreaElement>(null);
   const nowLocal = (() => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); })();
   const waits = org ? eventsNeedApproval(org) : role === "student";
@@ -24,7 +28,7 @@ export default function EventForm({ org, hostLabel, role, onDone }: { org?: Org;
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const r = await eventActions.create({ title, description, place, startsAt, endsAt: endsAt || undefined, orgId: org?.id, orgName: org?.name, orgKind: org?.kind === "official" ? "official" : "student", orgTrusted: org?.trusted });
+    const r = await eventActions.create({ title, description, place, startsAt, endsAt: endsAt || undefined, orgId: org?.id, orgName: org?.name, orgKind: org?.kind === "official" ? "official" : "student", orgTrusted: org?.trusted, cohosts: co });
     setBusy(false);
     if (r.error) { setError(r.error); return; }
     notice.show(r.status === "pending"
@@ -53,6 +57,17 @@ export default function EventForm({ org, hostLabel, role, onDone }: { org?: Org;
           <div className="about-tools"><EmojiButton value={description} onChange={setDescription} inputRef={area} max={1000} /><span className="count">{description.length}/1000</span></div>
         </div>
       </div>
+      {candidates.length > 0 && (
+        <fieldset className="cohost-pick">
+          <legend>Co-host with other clubs <span className="muted">(optional)</span></legend>
+          <p className="muted">They are asked first. Once a club says yes, the event shows under both clubs and both memberships see it.</p>
+          <div className="cohost-chips">
+            {candidates.map((o) => (
+              <button key={o.id} type="button" className="chip-btn" aria-pressed={co.includes(o.id)} disabled={!co.includes(o.id) && co.length >= 3} onClick={() => setCo((l) => (l.includes(o.id) ? l.filter((x) => x !== o.id) : [...l, o.id]))}>{o.name}</button>
+            ))}
+          </div>
+        </fieldset>
+      )}
       {error && <p className="error" role="alert">{error}</p>}
       <div className="about-actions"><button className="btn primary" disabled={busy}>{busy ? "Posting…" : waits ? "Send for approval" : "Post event"}</button><button type="button" className="btn" onClick={onDone}>Cancel</button></div>
     </form>
