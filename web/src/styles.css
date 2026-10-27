@@ -2172,7 +2172,7 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .club-orbits i:nth-child(1){inset:0}
 .club-orbits i:nth-child(2){inset:48px;animation:orbit-spin 60s linear infinite;border-style:dashed}
 .club-orbits i:nth-child(3){inset:96px}
-.club-planet{position:relative;flex:none;display:grid;place-items:center;width:76px;height:76px;border-radius:50%;background:var(--solid);color:#fff;font-family:Fraunces,Georgia,serif;font-size:2.1rem;font-weight:600;box-shadow:0 14px 26px -12px var(--solid)}
+.club-planet{position:relative;flex:none;display:grid;place-items:center;width:76px;height:76px;border-radius:50%;background:var(--solid);color:#fff;font-family:var(--serif);font-size:2.1rem;font-weight:600;box-shadow:0 14px 26px -12px var(--solid)}
 .club-moon{position:absolute;inset:-13px;animation:orbit-spin 9s linear infinite}
 .club-moon::before{content:"";position:absolute;top:0;left:50%;width:13px;height:13px;margin-left:-6px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px var(--surface)}
 @keyframes orbit-spin{to{transform:rotate(360deg)}}
@@ -2201,7 +2201,7 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .ev.waiting{opacity:.92;border-style:dashed}
 .ev.canceled .ev-title{text-decoration:line-through;opacity:.6}
 .ev-stub{position:relative;display:grid;place-content:center;justify-items:center;gap:1px;padding:12px 6px;background:var(--tint);color:var(--tint-ink);text-align:center;transition:background .35s var(--ease),color .35s}
-.ev-stub b{font-family:Fraunces,Georgia,serif;font-size:1.7rem;line-height:1}
+.ev-stub b{font-family:var(--serif);font-size:1.7rem;line-height:1}
 .ev-mon,.ev-dow{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .ev-dow{opacity:.75}
 .ev-ico{margin-top:8px;opacity:.85}
