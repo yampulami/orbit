@@ -10,7 +10,8 @@ import RichText from "../components/RichText";
 import { enter, slide } from "../lib/motion";
 import { dmActions, dmLive, useDms } from "../lib/dms";
 import SafetyMenu from "../components/SafetyMenu";
-import { ensureRoom, onTyping, sendTyping, watchHere } from "../lib/nudge";
+import { ensureRoom, onTyping, sendTyping } from "../lib/nudge";
+import { useActiveUsers } from "../lib/active";
 import { useAuth } from "../lib/auth";
 
 type Msg = { mine: boolean; text: string };
@@ -75,13 +76,8 @@ function LiveMessages() {
     return () => clearTimeout(t);
   }, [typingAt]);
   const typing = typingAt > 0 && Date.now() - typingAt < 5000;
-  // Whether the other person has this conversation open right now.
-  const [here, setHere] = useState(false);
-  useEffect(() => {
-    setHere(false);
-    if (!current || !session) return;
-    return watchHere(current.id, session.user.id, (others) => setHere(others.has(current.otherId)));
-  }, [current?.id, current?.otherId, session?.user.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // People from your conversations who have Orbit open right now.
+  const onlineNow = useActiveUsers();
   // A new message ends the "typing" note, and keeps the newest thing in view.
   useEffect(() => { setTypingAt(0); }, [current?.messages.length]);
   useEffect(() => { const el = scroller.current; if (el && typing) el.scrollTop = el.scrollHeight; }, [typing]);
@@ -115,7 +111,7 @@ function LiveMessages() {
           {threads.map((t) => (
             <button key={t.id} role="tab" aria-selected={!picking && t.id === shownId} className={"thread" + (!picking && t.id === shownId ? " on" : "")} onClick={() => { setPicking(false); setActive(t.id); setChatOpen(true); }}>
               {!picking && t.id === shownId && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
-              <strong>{t.name}{t.unread > 0 && <span className="dm-unread" aria-label={`${t.unread} unread`}>{t.unread}</span>}</strong>
+              <strong>{t.name}{onlineNow.has(t.otherId) && <Orb size={14} variant="green" poke={false} className="active-orb" />}{t.unread > 0 && <span className="dm-unread" aria-label={`${t.unread} unread`}>{t.unread}</span>}</strong>
               <span className="muted">{t.messages.length ? t.messages[t.messages.length - 1].text : "No messages yet"}</span>
             </button>
           ))}
@@ -134,7 +130,7 @@ function LiveMessages() {
             </div>
           ) : current ? (
             <>
-              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link></h2><p className="muted">{here ? <span className="here"><i aria-hidden="true" /> Here now</span> : "Direct message"}</p></div><SafetyMenu userId={current.otherId} name={current.name} context="direct message" /></div>
+              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link>{onlineNow.has(current.otherId) && <Orb size={16} variant="green" poke={false} className="active-orb" />}</h2><p className="muted">{onlineNow.has(current.otherId) ? "Active now" : "Direct message"}</p></div><SafetyMenu userId={current.otherId} name={current.name} context="direct message" /></div>
               <div className="bubbles" ref={scroller} aria-live="polite">
                 {current.messages.length === 0 && <p className="rm-empty">Say hello to {current.name}.</p>}
                 {current.messages.map((m) => (

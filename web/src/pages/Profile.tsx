@@ -3,6 +3,7 @@ import { Flame, LogOut, Pencil, Trash2 } from "lucide-react";
 import { NAME_MAX, renameMe, useDisplayName } from "../lib/displayName";
 import { pushSupported } from "../lib/push";
 import { haptic, setHaptics, useHaptics } from "../lib/haptics";
+import { setShowActive, useShowActive } from "../lib/active";
 import { install, useInstall } from "../lib/install";
 import AboutEditor from "../components/AboutEditor";
 import { disableDeviceAlerts, enableDeviceAlerts, notifyDevice, useDeviceAlerts } from "../lib/deviceAlerts";
@@ -75,6 +76,7 @@ export default function Profile() {
   const nudges = useNudges(session?.user.id);
   const device = useDeviceAlerts();
   const feel = useHaptics();
+  const showingActive = useShowActive();
   const installable = useInstall();
   const uid = session?.user.id;
 
@@ -157,6 +159,17 @@ export default function Profile() {
           {installable === "can-install" && <div className="notif-row"><span>Open Orbit like an app</span><button type="button" className="btn primary" onClick={() => void install()}>Install</button></div>}
         </section>
       )}
+
+      <section className="notif-card" aria-label="Active status">
+        <div>
+          <h2>Active status</h2>
+          <p className="muted">People you message see a small green orb next to your name while you have Orbit open. If you turn this off, they will not see it, and you will not see theirs.</p>
+        </div>
+        <div className="notif-row">
+          <span id="n-active">Show when I am active</span>
+          <button type="button" role="switch" aria-checked={showingActive} aria-labelledby="n-active" className="switch" onClick={() => { setShowActive(!showingActive); haptic("select"); }}><span /></button>
+        </div>
+      </section>
 
       <section className="notif-card" aria-label="Touch feedback">
         <div>

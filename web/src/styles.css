@@ -2328,3 +2328,9 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .land-inside h3{font-size:1.05rem;margin:0 0 6px}
 .land-inside p{margin:0;max-width:32ch}
 .orb-gl .orb-gl-fallback{width:94%!important;height:94%!important}
+
+/* Active status: a small green orb beside a name */
+.active-orb{width:14px;height:14px;margin-left:7px;vertical-align:-1px}
+.convo-head h2 .active-orb{width:16px;height:16px;vertical-align:2px}
+.orb[data-variant=green]{--body:#2fc16a;--eye:#06210f}
+.orb[data-variant=green] .orb-body{box-shadow:0 0 0 2px color-mix(in srgb,#2fc16a 28%,transparent)}

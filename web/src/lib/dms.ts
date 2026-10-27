@@ -5,6 +5,7 @@ import { staleLimiter, watchTables } from "./people";
 import { readCache, writeCache } from "./localCache";
 import { haptic } from "./haptics";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
+import { syncActive } from "./active";
 import { notice } from "./notice";
 import { applyDmChange, buildThreads, loadDms, loadPeople, pairOf, type DmThread, type Person } from "./dmDb";
 
@@ -40,6 +41,7 @@ async function reload() {
     if (epoch !== e0) { void reload(); return; } // a message arrived while this was loading: this answer may be older than it
     set({ ...state, threads, status: "ready" });
     listenRooms("dms", [...threads.map((t) => t.id), `inbox-${me}`], onNudge); // the inbox is how a brand new conversation reaches you
+    syncActive(me, threads.map((t) => t.id));
   } catch {
     if (mine === loadId && who === me) set({ ...state, status: "error" });
   }
@@ -80,7 +82,7 @@ export function bindDms(userId: string) {
 export function unbindDms() {
   if (!dmLive) return;
   stop?.(); stop = null; stopReturn?.(); stopReturn = null;
-  who = null; loadId++; reading.clear(); listenRooms("dms", [], onNudge);
+  who = null; loadId++; reading.clear(); listenRooms("dms", [], onNudge); syncActive(null, []);
   set({ threads: [], people: [], status: "idle" });
 }
 

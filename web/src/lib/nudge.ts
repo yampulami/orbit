@@ -14,7 +14,25 @@ const ALLOWED = new Set(["household_tasks", "household_groceries", "household_ex
 const BY_KEYS = new Set(["hangout_id", "user_id"]);
 
 type TypingCb = (userId: string, stopped: boolean) => void;
-type Room = { ch: RealtimeChannel; listeners: Map<string, (n: Nudge) => void>; typing: Set<TypingCb>; here: Set<(others: Set<string>) => void> };
+type Room = { ch: RealtimeChannel; listeners: Map<string, (n: Nudge) => void>; typing: Set<TypingCb> };
+
+/* Who is active. Each person tells the rooms of their conversations that they have Orbit open (just their id, never kept). Room ids are random, so only the
+   people in a conversation can listen in. */
+let announceMe: string | null = null;
+let announceSet = new Set<string>();
+const byRoom = new Map<string, Set<string>>();
+let activeIds = new Set<string>();
+const activeSubs = new Set<() => void>();
+function refreshActive() {
+  const next = new Set<string>();
+  byRoom.forEach((ids) => ids.forEach((u) => next.add(u)));
+  if (next.size === activeIds.size && [...next].every((u) => activeIds.has(u))) return;
+  activeIds = next;
+  activeSubs.forEach((f) => f());
+}
+function trackIn(id: string, ch: RealtimeChannel) {
+  if (announceMe && announceSet.has(id)) void Promise.resolve(ch.track({ u: announceMe })).catch(() => undefined);
+}
 const rooms = new Map<string, Room>();
 const listening = new Map<string, Set<string>>(); // who (a store) to the rooms it listens in
 
@@ -23,7 +41,6 @@ function room(id: string): Room {
   if (!r) {
     const listeners = new Map<string, (n: Nudge) => void>();
     const typing = new Set<TypingCb>();
-    const here = new Set<(others: Set<string>) => void>();
     const ch = supabase!.channel(`nudge-${id}`, { config: { broadcast: { self: false } } });
     ch.on("broadcast", { event: "n" }, (m: { payload?: unknown }) => {
       const n = m.payload as Partial<Nudge> | undefined;
@@ -38,14 +55,14 @@ function room(id: string): Room {
       const p = m.payload as { u?: unknown; s?: unknown } | undefined;
       if (typeof p?.u === "string") typing.forEach((f) => f(p.u as string, p.s === true));
     });
-    // Who has this conversation open right now (only while a chat is open on their screen).
     ch.on("presence", { event: "sync" }, () => {
       const ids = new Set<string>();
-      for (const list of Object.values(ch.presenceState() as Record<string, { u?: unknown }[]>)) for (const p of list) if (typeof p.u === "string") ids.add(p.u);
-      here.forEach((f) => f(ids));
+      for (const list of Object.values(ch.presenceState() as Record<string, { u?: unknown }[]>)) for (const p of list) if (typeof p.u === "string" && p.u !== announceMe) ids.add(p.u);
+      byRoom.set(id, ids);
+      refreshActive();
     });
-    ch.subscribe();
-    r = { ch, listeners, typing, here };
+    ch.subscribe((status) => { if (status === "SUBSCRIBED") trackIn(id, ch); });
+    r = { ch, listeners, typing };
     rooms.set(id, r);
   }
   return r;
@@ -61,7 +78,7 @@ export function listenRooms(who: string, ids: string[], onNudge: (n: Nudge) => v
     const r = rooms.get(id);
     r?.listeners.delete(who);
     // A room someone is watching for typing stays open even when nothing else listens in it.
-    if (r && r.listeners.size === 0 && r.typing.size === 0) { void supabase.removeChannel(r.ch); rooms.delete(id); }
+    if (r && r.listeners.size === 0 && r.typing.size === 0) { void supabase.removeChannel(r.ch); rooms.delete(id); byRoom.delete(id); refreshActive(); }
   }
   for (const id of next) room(id).listeners.set(who, onNudge);
   if (next.size) listening.set(who, next); else listening.delete(who);
@@ -112,20 +129,18 @@ export function onTyping(roomId: string, cb: TypingCb): () => void {
   return () => { r.typing.delete(cb); };
 }
 
-/** Say "I have this conversation open" and be told whether the other person does too. Only while this is called and not stopped; it is never stored.
- *  `onChange` gets the ids of everyone else who is here. Returns the function that stops. */
-export function watchHere(roomId: string, me: string, onChange: (others: Set<string>) => void): () => void {
-  if (!supabase) return () => undefined;
-  const r = room(roomId);
-  const cb = (ids: Set<string>) => { const others = new Set(ids); others.delete(me); onChange(others); };
-  r.here.add(cb);
-  let stopped = false;
-  let tries = 0;
-  const join = () => {
-    if (stopped) return;
-    if ((r.ch as { state?: string }).state === "joined") { void Promise.resolve(r.ch.track({ u: me })).catch(() => undefined); return; }
-    if (++tries < 12) window.setTimeout(join, 700);
-  };
-  join();
-  return () => { stopped = true; r.here.delete(cb); try { void Promise.resolve(r.ch.untrack()).catch(() => undefined); } catch { /* closing anyway */ } };
+/** Tell these conversations' rooms that `me` has Orbit open (and stop for any room no longer listed). Pass null to go quiet. */
+export function announceActive(me: string | null, roomIds: string[]) {
+  if (!supabase) return;
+  announceMe = me;
+  announceSet = new Set(me ? roomIds : []);
+  rooms.forEach((r, id) => {
+    if (announceSet.has(id)) { if ((r.ch as { state?: string }).state === "joined") trackIn(id, r.ch); }
+    else { try { void Promise.resolve(r.ch.untrack()).catch(() => undefined); } catch { /* closing anyway */ } }
+  });
+  if (!me) { byRoom.clear(); refreshActive(); }
 }
+
+/** The ids of people (from your conversations) who have Orbit open right now. */
+export const getActiveIds = () => activeIds;
+export function subscribeActive(cb: () => void) { activeSubs.add(cb); return () => { activeSubs.delete(cb); }; }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { attachOrb, type OrbMood } from "../lib/orbGaze";
 
-export type OrbVariant = "violet" | "light" | "auto" | "wash";
+export type OrbVariant = "violet" | "light" | "auto" | "wash" | "green";
 
 /** Orbit's little round character. Its eyes follow the pointer, look toward the field you are typing in, glance around when nothing is happening, and blink.
  *  `mood` changes how it behaves (happy hops, excited bounces, sleepy droops, loading floats and looks about). Tap it and it giggles. */
