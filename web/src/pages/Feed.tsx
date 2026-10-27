@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import EmojiButton from "../components/EmojiButton";
 import RichText from "../components/RichText";
+import CampusEventsStrip from "../components/CampusEventsStrip";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, Navigate } from "react-router-dom";
@@ -290,6 +291,7 @@ export default function Feed() {
         </div>
       </div>
       <aside className="rail" ref={rail} aria-label="Your campus summary">
+        <CampusEventsStrip />
         <section className="cal-fold">
           <button type="button" className="cal-toggle" aria-expanded={calOpen} onClick={toggleCal}>
             <span className="cal-ico"><CalendarDays size={18} strokeWidth={1.75} /></span>
