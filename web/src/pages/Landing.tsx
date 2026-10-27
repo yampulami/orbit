@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Users, MessageCircle, CalendarDays, ShieldCheck } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { ThemeToggleButton } from "../components/ThemeControls";
+import OrbGL from "../components/OrbGL";
 
 const features = [
   { icon: Users, title: "Your campus feed", body: "Posts, events, and marketplace listings — scoped to your university only." },
@@ -46,6 +47,7 @@ export default function Landing() {
           </div>
           {/* A picture of the app, with made-up sample content. Decorative only. */}
           <motion.div className="hero-art" aria-hidden="true" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.15 }}>
+            <OrbGL size={190} className="hero-orb" />
             <article className="hang" data-tone="1">
               <div className="hang-top"><span className="chip">Coffee crew</span><span className="hang-when">Sat, Oct 24 · 10:00 AM</span></div>
               <h3>Coffee break</h3>

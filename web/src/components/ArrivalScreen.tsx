@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { arrival, useArrival } from "../lib/arrival";
 import { hangLive, useHangStatus } from "../lib/hangouts";
+import Orb from "./Orb";
 
 const MIN_MS = 3200;   // long enough to enjoy the animation and read the lines, short enough not to drag
 /** The lines change as it goes, so a longer wait still feels like something is happening. It stops on the last one if loading takes longer. */
@@ -49,10 +50,6 @@ export default function ArrivalScreen() {
               <circle cx="120" cy="120" r="80" fill="none" stroke="#fff" strokeOpacity="0.26" strokeWidth="2" />
               <circle cx="120" cy="120" r="106" fill="none" stroke="#fff" strokeOpacity="0.14" strokeWidth="2" />
               {/* the campus at the centre, breathing gently */}
-              <motion.g style={{ transformOrigin: "120px 120px" }} animate={reduce ? undefined : { scale: [1, 1.08, 1] }} transition={{ repeat: Infinity, ease: "easeInOut", duration: 2.2 }}>
-                <circle cx="120" cy="120" r="30" fill="#fff" />
-                <circle cx="129" cy="112" r="7" fill="var(--violet)" />
-              </motion.g>
               {/* one dot on each ring, starting in different places, at different speeds; the middle one goes the other way. Fixed bright colours so they show on violet in light and dark mode. */}
               <motion.g style={{ transformOrigin: "120px 120px" }} animate={reduce ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, ease: "linear", duration: 2.2 }}>
                 <circle cx="120" cy="66" r="9" fill="#ffb8d9" />
@@ -64,6 +61,7 @@ export default function ArrivalScreen() {
                 <circle cx="14" cy="120" r="5.5" fill="#a9ecd0" />
               </motion.g>
             </svg>
+            <Orb size={56} variant="light" mood="loading" className="arrival-orb" poke={false} />
           </motion.div>
           <div className="arrival-text-wrap" aria-hidden="true">
             <AnimatePresence mode="wait">

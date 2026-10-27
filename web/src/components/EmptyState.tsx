@@ -1,11 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import Orb from "./Orb";
+import type { OrbMood } from "../lib/orbGaze";
 
-/** The friendly "nothing here yet" screen: a soft floating icon, a line that says what this place is for, and the one thing to do next. */
-export default function EmptyState({ icon: Icon, title, children, action }: { icon: LucideIcon; title: string; children?: ReactNode; action?: ReactNode }) {
+/** The friendly "nothing here yet" screen: Orbit's orb looking around, a line that says what this place is for, and the one thing to do next. */
+export default function EmptyState({ title, children, action, mood = "idle" }: { icon?: LucideIcon; title: string; children?: ReactNode; action?: ReactNode; mood?: OrbMood }) {
   return (
     <div className="empty-state" role="status">
-      <span className="empty-ico" aria-hidden="true"><Icon size={26} strokeWidth={1.7} /></span>
+      <Orb size={76} variant="violet" mood={mood} className="empty-orb" />
       <h2>{title}</h2>
       {children && <p className="muted">{children}</p>}
       {action}

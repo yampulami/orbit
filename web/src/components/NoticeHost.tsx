@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CalendarX2, CircleAlert, Pin, WifiOff, X, type LucideIcon } from "lucide-react";
 import { notice, useNotices, type NoticeIcon } from "../lib/notice";
 import { enter, exit } from "../lib/motion";
+import Orb from "./Orb";
 
 const ICONS: Record<NoticeIcon, LucideIcon> = { pin: Pin, calendar: CalendarX2, alert: CircleAlert, wifi: WifiOff };
 
@@ -15,7 +16,7 @@ export default function NoticeHost() {
           const Icon = ICONS[n.icon];
           return (
             <motion.div key={n.id} className="notice" layout initial={{ opacity: 0, y: -16, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, y: -10, transition: exit }}>
-              <span className="notice-ico" aria-hidden="true"><Icon size={18} strokeWidth={2} /></span>
+              {n.icon === "alert" || n.icon === "wifi" ? <span className="notice-ico" aria-hidden="true"><Icon size={18} strokeWidth={2} /></span> : <Orb variant="violet" mood="happy" poke={false} />}
               <div className="notice-text">
                 <strong>{n.title}</strong>
                 <p>{n.message}</p>

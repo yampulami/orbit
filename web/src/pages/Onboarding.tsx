@@ -1,3 +1,4 @@
+import Orb from "../components/Orb";
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
@@ -264,6 +265,7 @@ export default function Onboarding() {
           <OrbitArt step={step} rings={years} planets={planets} initial={name.trim().slice(0, 1) || "?"} campus={uni?.name} living={living} done={step === "done"} kick={kick} />
         </motion.div>
         <div className="onb-panel">
+          <Orb size={64} variant="violet" className="onb-orb" mood={step === "done" ? "excited" : "idle"} />
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={step} className="onb-step" {...slide}>
               <h1 aria-label={title[step]}><Words text={title[step]} reduce={!!reduce} /></h1>
