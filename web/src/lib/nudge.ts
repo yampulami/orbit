@@ -13,7 +13,7 @@ export type Nudge = { table: string; id: string; op: "upsert" | "delete"; by?: R
 const ALLOWED = new Set(["household_tasks", "household_groceries", "household_expenses", "household_notes", "household_payments", "group_messages", "direct_messages", "campus_hangouts", "campus_hangout_rsvps"]);
 const BY_KEYS = new Set(["hangout_id", "user_id"]);
 
-type Room = { ch: RealtimeChannel; listeners: Map<string, (n: Nudge) => void> };
+type Room = { ch: RealtimeChannel; listeners: Map<string, (n: Nudge) => void>; typing: Set<(userId: string) => void> };
 const rooms = new Map<string, Room>();
 const listening = new Map<string, Set<string>>(); // who (a store) to the rooms it listens in
 
@@ -21,6 +21,7 @@ function room(id: string): Room {
   let r = rooms.get(id);
   if (!r) {
     const listeners = new Map<string, (n: Nudge) => void>();
+    const typing = new Set<(userId: string) => void>();
     const ch = supabase!.channel(`nudge-${id}`, { config: { broadcast: { self: false } } });
     ch.on("broadcast", { event: "n" }, (m: { payload?: unknown }) => {
       const n = m.payload as Partial<Nudge> | undefined;
@@ -31,8 +32,12 @@ function room(id: string): Room {
       }
       listeners.forEach((f) => f(n as Nudge));
     });
+    ch.on("broadcast", { event: "t" }, (m: { payload?: unknown }) => {
+      const u = (m.payload as { u?: unknown } | undefined)?.u;
+      if (typeof u === "string") typing.forEach((f) => f(u));
+    });
     ch.subscribe();
-    r = { ch, listeners };
+    r = { ch, listeners, typing };
     rooms.set(id, r);
   }
   return r;
@@ -71,4 +76,20 @@ export async function fetchChange(table: string, id: string, by?: Record<string,
   const { data, error } = await q.maybeSingle();
   if (error || !data) return null;
   return { table, type: "INSERT", row: data as Record<string, unknown>, old: {} };
+}
+
+/** "Someone is typing" in a room. It carries only who, and is never kept. Call `sendTyping` as you type (it is sent at most every couple of seconds). */
+let lastTyping = 0;
+export function sendTyping(roomId: string | null | undefined, userId: string) {
+  if (!supabase || !roomId || Date.now() - lastTyping < 2500) return;
+  lastTyping = Date.now();
+  try { void Promise.resolve(room(roomId).ch.send({ type: "broadcast", event: "t", payload: { u: userId } })).catch(() => undefined); } catch { /* it is only a nicety */ }
+}
+
+/** Be told when someone types in this room. Returns a function that stops listening. */
+export function onTyping(roomId: string, cb: (userId: string) => void): () => void {
+  if (!supabase) return () => undefined;
+  const r = room(roomId);
+  r.typing.add(cb);
+  return () => { r.typing.delete(cb); };
 }

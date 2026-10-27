@@ -6,7 +6,7 @@ export type RawConv = { id: string; user_low: string; user_high: string; updated
 export type RawDm = { id: string; conversation_id: string; sender_id: string; body: string; read_at: string | null; created_at: string };
 export type RawDms = { me: string; conversations: RawConv[]; messages: RawDm[]; names: Record<string, string> };
 
-export type DmMessage = { id: string; mine: boolean; text: string; at: string };
+export type DmMessage = { id: string; mine: boolean; text: string; at: string; /** When the other person opened it (only set for your own messages). */ seenAt?: string };
 export type DmThread = { id: string; otherId: string; name: string; messages: DmMessage[]; unread: number; updatedAt: string };
 export type Person = { id: string; name: string };
 
@@ -21,7 +21,7 @@ export function buildThreads(raw: RawDms): DmThread[] {
       const messages = raw.messages
         .filter((m) => m.conversation_id === c.id)
         .sort((a, b) => a.created_at.localeCompare(b.created_at))
-        .map((m) => ({ id: m.id, mine: m.sender_id === raw.me, text: m.body, at: m.created_at }));
+        .map((m) => ({ id: m.id, mine: m.sender_id === raw.me, text: m.body, at: m.created_at, ...(m.sender_id === raw.me && m.read_at ? { seenAt: m.read_at } : {}) }));
       const unread = raw.messages.filter((m) => m.conversation_id === c.id && m.sender_id !== raw.me && !m.read_at).length;
       return { id: c.id, otherId, name: label(otherId), messages, unread, updatedAt: c.updated_at };
     });
@@ -38,10 +38,14 @@ export function applyDmChange(threads: DmThread[], me: string, e: ChangeEvent): 
     const m = e.row as unknown as RawDm;
     const t = threads.find((x) => x.id === m.conversation_id);
     if (!t) return null;
-    if (e.type === "UPDATE") return threads; // read marks are kept on this device when you open a chat
+    if (e.type === "UPDATE") {
+      // The other person opened your message: it now says Seen. (Your own read marks are kept on this device when you open a chat.)
+      if (m.sender_id !== me || !m.read_at) return threads;
+      return threads.map((x) => (x.id === t.id ? { ...x, messages: x.messages.map((y) => (y.id === m.id && !y.seenAt ? { ...y, seenAt: m.read_at as string } : y)) } : x));
+    }
     if (t.messages.some((x) => x.id === m.id)) return threads; // your own message, already shown
     const mine = m.sender_id === me;
-    const next = { ...t, messages: [...t.messages, { id: m.id, mine, text: m.body, at: m.created_at }], unread: t.unread + (!mine && !m.read_at ? 1 : 0), updatedAt: m.created_at > t.updatedAt ? m.created_at : t.updatedAt };
+    const next = { ...t, messages: [...t.messages, { id: m.id, mine, text: m.body, at: m.created_at, ...(mine && m.read_at ? { seenAt: m.read_at } : {}) }], unread: t.unread + (!mine && !m.read_at ? 1 : 0), updatedAt: m.created_at > t.updatedAt ? m.created_at : t.updatedAt };
     return threads.map((x) => (x.id === t.id ? next : x)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
   if (e.table === "direct_conversations" && e.type === "UPDATE") {

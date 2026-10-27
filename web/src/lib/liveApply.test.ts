@@ -119,6 +119,14 @@ describe("direct messages applied straight from the live connection", () => {
     expect(once[0].unread).toBe(0);
     expect(applyDmChange(once, "me", dm({ sender_id: "me" }))![0].messages).toHaveLength(1);
   });
+  it("marks your message Seen when the other person opens it, and ignores their own read marks", () => {
+    const sent = applyDmChange(threads(), "me", dm({ sender_id: "me" }))!;
+    const seen = applyDmChange(sent, "me", ev("direct_messages", "UPDATE", { id: "d1", conversation_id: "c1", sender_id: "me", body: "hey", read_at: "2026-10-24T10:05:00Z", created_at: "2026-10-24T10:00:00Z" }))!;
+    expect(seen[0].messages[0].seenAt).toBe("2026-10-24T10:05:00Z");
+    const theirs = applyDmChange(threads(), "me", dm())!;
+    const same = applyDmChange(theirs, "me", ev("direct_messages", "UPDATE", { id: "d1", conversation_id: "c1", sender_id: "u2", body: "hey", read_at: "2026-10-24T10:05:00Z", created_at: "2026-10-24T10:00:00Z" }))!;
+    expect(same[0].messages[0].seenAt).toBeUndefined();
+  });
   it("asks for a full look for a conversation it does not have", () => {
     expect(applyDmChange(threads(), "me", dm({ conversation_id: "nope" }))).toBeNull();
     expect(applyDmChange(threads(), "me", ev("direct_conversations", "INSERT", { id: "c9" }))).toBeNull();

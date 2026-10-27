@@ -5,6 +5,8 @@ import { Plus, Send } from "lucide-react";
 import { enter, slide } from "../lib/motion";
 import { dmActions, dmLive, useDms } from "../lib/dms";
 import SafetyMenu from "../components/SafetyMenu";
+import { onTyping, sendTyping } from "../lib/nudge";
+import { useAuth } from "../lib/auth";
 
 type Msg = { mine: boolean; text: string };
 const seedThreads: Record<string, Msg[]> = {
@@ -27,6 +29,9 @@ function LiveMessages() {
   const [picking, setPicking] = useState(false);
   const [q, setQ] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
+  const { session } = useAuth();
+  const [typingAt, setTypingAt] = useState(0);
+  const [, tick] = useState(0);
   // Arriving from someone's profile ("Message") opens that conversation.
   const asked = (useLocation().state as { thread?: string } | null)?.thread;
   useEffect(() => { if (asked) { setActive(asked); setPicking(false); } }, [asked]);
@@ -36,6 +41,23 @@ function LiveMessages() {
   // Keep the newest message in view, and mark what you are looking at as read.
   useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [shownId, current?.messages.length]);
   useEffect(() => { if (current && current.unread > 0 && document.visibilityState === "visible") dmActions.markRead(current.id); }, [current?.id, current?.unread]);
+
+  // "typing…" while the other person is typing in this chat (a quiet note that fades after a few seconds).
+  useEffect(() => {
+    setTypingAt(0);
+    if (!current) return;
+    return onTyping(current.id, (uid) => { if (uid === current.otherId) setTypingAt(Date.now()); });
+  }, [current?.id, current?.otherId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!typingAt) return;
+    const t = setTimeout(() => tick((n) => n + 1), 4200);
+    return () => clearTimeout(t);
+  }, [typingAt]);
+  const typing = typingAt > 0 && Date.now() - typingAt < 4000;
+  // A new message ends the "typing" note, and keeps the newest thing in view.
+  useEffect(() => { setTypingAt(0); }, [current?.messages.length]);
+  useEffect(() => { const el = scroller.current; if (el && typing) el.scrollTop = el.scrollHeight; }, [typing]);
+  const lastMine = current ? [...current.messages].reverse().find((m) => m.mine) : undefined;
 
   const matches = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -86,11 +108,15 @@ function LiveMessages() {
               <div className="bubbles" ref={scroller} aria-live="polite">
                 {current.messages.length === 0 && <p className="rm-empty">Say hello to {current.name}.</p>}
                 {current.messages.map((m) => (
-                  <motion.p key={m.id} className={"bubble" + (m.mine ? " mine" : "")} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={enter} title={time(m.at)}>{m.text}</motion.p>
+                  <motion.div key={m.id} className={"bubble-row" + (m.mine ? " mine" : "")} initial={{ opacity: 0, y: 10, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={enter}>
+                    <p className={"bubble" + (m.mine ? " mine" : "")} title={time(m.at)}>{m.text}</p>
+                    {m === lastMine && <span className="bubble-meta">{m.seenAt ? `Seen ${time(m.seenAt)}` : time(m.at)}</span>}
+                  </motion.div>
                 ))}
+                {typing && <div className="bubble-row" aria-live="polite"><p className="bubble typing" aria-label={`${current.name} is typing`}><i /><i /><i /></p></div>}
               </div>
               <form className="comment-form" onSubmit={send}>
-                <input aria-label="Message" value={text} onChange={(e) => setText(e.target.value)} maxLength={2000} placeholder={`Message ${current.name}…`} />
+                <input aria-label="Message" value={text} onChange={(e) => { setText(e.target.value); if (e.target.value && session) sendTyping(current.id, session.user.id); }} maxLength={2000} placeholder={`Message ${current.name}…`} />
                 <button className="btn primary" aria-label="Send" disabled={!text.trim()}><Send size={16} /></button>
               </form>
             </>

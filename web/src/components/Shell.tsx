@@ -17,6 +17,8 @@ import ComposeModal from "./ComposeModal";
 import GlobalSearch from "./GlobalSearch";
 import { setTheme, useTheme } from "../lib/theme";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
+import { unreadDms, useDms } from "../lib/dms";
+import OfflineBanner from "./OfflineBanner";
 
 const items = [
   { to: "/app/feed", label: "Feed", icon: HomeIcon },
@@ -35,15 +37,16 @@ export default function Shell() {
   const main = useRef<HTMLElement>(null);
   useEffect(() => { arrival.shellReady(); }, []); // the screen that follows onboarding fades once the app is up
   const { groups, hangouts } = useHang();
+  const unread = unreadDms(useDms().threads); // messages you have not opened yet
   // Upcoming hangouts the person has not answered yet. Shown as a small orange dot on Plans.
   const waiting = hangouts.filter((h) => isVisible(h, groups) && !h.rsvps[YOU] && new Date(h.when).getTime() > Date.now()).length;
 
   // Each page gets its own title, and focus moves to the content so keyboard and screen reader users start there.
   useEffect(() => {
     const here = [...items, { to: "/app/profile", label: "Profile" }].find((i) => loc.pathname.startsWith(i.to));
-    document.title = here ? `${here.label} · Orbit` : "Orbit";
-    main.current?.focus({ preventScroll: true });
-  }, [loc.pathname]);
+    document.title = (unread > 0 ? `(${unread > 9 ? "9+" : unread}) ` : "") + (here ? `${here.label} · Orbit` : "Orbit");
+  }, [loc.pathname, unread]);
+  useEffect(() => { main.current?.focus({ preventScroll: true }); }, [loc.pathname]);
   const name = useDisplayName();
 
   // The sidebar is icons only, or icons with names (like YouTube); the page beside it makes room. The choice is remembered on this device.
@@ -78,6 +81,7 @@ export default function Shell() {
                   {isActive && <motion.span layoutId="side-indicator" className="navpill" transition={slide} />}
                   <i.icon size={22} strokeWidth={1.75} />
                   <span className="navtext">{i.label}</span>
+                  {i.to === "/app/messages" && unread > 0 && <span className="nav-count" role="img" aria-label={`${unread} unread ${unread === 1 ? "message" : "messages"}`}>{unread > 9 ? "9+" : unread}</span>}
                   {i.to === "/app/plans" && waiting > 0 && <span className="nav-dot" role="img" aria-label={waiting === 1 ? "1 hangout needs your answer" : `${waiting} hangouts need your answer`} />}
                 </>
               )}
@@ -113,6 +117,7 @@ export default function Shell() {
         {items.map((i) => (
           <NavLink key={i.to} to={i.to} className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}>
             <i.icon size={22} strokeWidth={1.75} /><span>{i.label}</span>
+            {i.to === "/app/messages" && unread > 0 && <b className="drawer-count">{unread > 9 ? "9+" : unread}</b>}
           </NavLink>
         ))}
         <NavLink to="/app/profile" className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}><span className="me">{name.slice(0, 1).toUpperCase()}</span><span>Profile</span></NavLink>
@@ -121,6 +126,7 @@ export default function Shell() {
         <button type="button" className="drawer-link" onClick={() => setTheme(dark ? "light" : "dark")}>{dark ? <Sun size={22} strokeWidth={1.75} /> : <Moon size={22} strokeWidth={1.75} />}<span>{dark ? "Light mode" : "Dark mode"}</span></button>
         <button type="button" className="drawer-link" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}><LogOut size={22} strokeWidth={1.75} /><span>Sign out</span></button>
       </nav>
+      <OfflineBanner />
       <BadgeToast />
       <UndoToast />
       <NoticeHost />
