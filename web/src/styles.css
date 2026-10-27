@@ -2537,3 +2537,18 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .pod-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pod-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
 @media (max-width:700px){.cc-group{display:none}}
+
+/* Pod meetups */
+.pod-meets{display:grid;gap:8px}
+.meet-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.meet{display:grid;grid-template-columns:52px minmax(0,1fr);gap:10px;padding:10px;border-radius:14px;background:var(--panel)}
+.meet-stub{display:grid;place-content:center;justify-items:center;border-radius:12px;background:var(--tint);color:var(--tint-ink);line-height:1.1}
+.meet-stub span{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.meet-stub b{font-family:var(--serif);font-size:1.3rem}
+.meet-body{display:grid;gap:3px;min-width:0}
+.meet-body strong{overflow-wrap:anywhere}
+.meet-body .muted{font-size:.84rem}
+.meet-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.meet-actions .btn{min-height:38px;padding:0 14px;font-size:.86rem}
+.meet-actions .btn[aria-pressed=true]{background:var(--solid);color:#fff;border-color:var(--solid)}
+.meet-form{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--panel)}

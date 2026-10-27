@@ -174,3 +174,29 @@ describe("pods", () => {
     expect(problemWithPod("Landscape", ["Film"])).toBeNull();
   });
 });
+
+import { buildMeetups, problemWithMeetup } from "./clubPods";
+describe("pod meetups", () => {
+  const now = new Date(2026, 9, 27, 12, 0);
+  const at = (h: number) => new Date(now.getTime() + h * 3600000).toISOString();
+  const raw = [
+    { id: "a", pod_id: "p", title: "Later", details: "", place: "", starts_at: at(48), canceled_at: null, created_by: "u1" },
+    { id: "b", pod_id: "p", title: "Sooner", details: "", place: "Quad", starts_at: at(5), canceled_at: null, created_by: "u2" },
+    { id: "c", pod_id: "p", title: "Cancelled", details: "", place: "", starts_at: at(6), canceled_at: at(0), created_by: "u2" },
+    { id: "d", pod_id: "p", title: "Over", details: "", place: "", starts_at: at(-5), canceled_at: null, created_by: "u2" },
+    { id: "e", pod_id: "p", title: "Just started", details: "", place: "", starts_at: at(-2), canceled_at: null, created_by: "u2" },
+    { id: "f", pod_id: "other", title: "Elsewhere", details: "", place: "", starts_at: at(3), canceled_at: null, created_by: "u2" },
+  ];
+  it("shows the pod's meetups that are on or coming, soonest first, with who is in", () => {
+    const list = buildMeetups(raw, [{ meetup_id: "b", user_id: "u1" }, { meetup_id: "b", user_id: "u2" }], "p", { u2: "Sam" }, "u1", now);
+    expect(list.map((m) => m.title)).toEqual(["Just started", "Sooner", "Later"]);
+    expect(list[1]).toMatchObject({ going: true, goingCount: 2, host: "Sam", planned: false });
+    expect(list[2]).toMatchObject({ planned: true, host: "You", going: false });
+  });
+  it("checks a new meetup", () => {
+    expect(problemWithMeetup({ title: " ", startsAt: at(2) }, now)).toMatch(/title/);
+    expect(problemWithMeetup({ title: "Walk", startsAt: "" }, now)).toMatch(/when/);
+    expect(problemWithMeetup({ title: "Walk", startsAt: at(-3) }, now)).toMatch(/passed/);
+    expect(problemWithMeetup({ title: "Walk", startsAt: at(3) }, now)).toBeNull();
+  });
+});
