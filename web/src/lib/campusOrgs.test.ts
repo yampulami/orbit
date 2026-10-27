@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./supabase", () => ({ supabase: null }));
 
-import { buildOrgs, eventsNeedApproval, postableOrgs, problemWithOrg, type RawMember, type RawOrg } from "./campusOrgs";
+import { buildOrgs, EMPTY_APP, eventsNeedApproval, postableOrgs, problemWithOrg, type RawMember, type RawOrg } from "./campusOrgs";
 
 const org = (id: string, name: string, status: RawOrg["status"] = "active", kind: RawOrg["kind"] = "student"): RawOrg => ({ id, name, description: "", kind, status, created_by: "u1" });
 const mem = (org_id: string, user_id: string, role: RawMember["role"] = "officer"): RawMember => ({ org_id, user_id, role });
@@ -38,5 +38,25 @@ describe("eventsNeedApproval", () => {
     expect(eventsNeedApproval({ kind: "student", trusted: false })).toBe(true);
     expect(eventsNeedApproval({ kind: "student", trusted: true })).toBe(false);
     expect(eventsNeedApproval({ kind: "official", trusted: false })).toBe(false);
+  });
+});
+
+describe("club applications and joining", () => {
+  const full = { ...EMPTY_APP, purpose: "A weekly chess night open to every student on campus.", advisorName: "Dr. Lee", advisorEmail: "lee@uni.edu", meeting: "Thursdays 6 PM", contact: "me@uni.edu" };
+  it("needs the details a coordinator reads", () => {
+    expect(problemWithOrg({ name: "Chess", description: "" }, EMPTY_APP)).toMatch(/what the club is for/);
+    expect(problemWithOrg({ name: "Chess", description: "" }, { ...full, advisorEmail: "nope" })).toMatch(/adviser/);
+    expect(problemWithOrg({ name: "Chess", description: "" }, full)).toBeNull();
+  });
+  it("shows requests to officers and my own place in a club", () => {
+    const org: RawOrg = { id: "o", name: "Chess", description: "", kind: "student", status: "active", created_by: "a" };
+    const members: RawMember[] = [{ org_id: "o", user_id: "a", role: "owner" }];
+    const club = [{ org_id: "o", user_id: "b", status: "pending" as const, message: "hi" }, { org_id: "o", user_id: "c", status: "member" as const }];
+    const asOfficer = buildOrgs([org], members, "a", { b: "Bea" }, club)[0];
+    expect(asOfficer.requests.map((r) => r.name)).toEqual(["Bea"]);
+    expect(asOfficer.memberCount).toBe(1);
+    expect(asOfficer.myJoin).toBe("officer");
+    expect(buildOrgs([org], members, "b", {}, club)[0].myJoin).toBe("pending");
+    expect(buildOrgs([org], members, "z", {}, club)[0].myJoin).toBe("none");
   });
 });

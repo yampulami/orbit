@@ -9,6 +9,8 @@ import EventForm from "../components/EventForm";
 import EmptyState from "../components/EmptyState";
 import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
+import ApplicationDetails from "../components/ApplicationDetails";
+import { JoinButton, JoinRequests } from "../components/JoinPanel";
 
 /** One club or office: who runs it, its events, and (for its officers) the button that posts a new event. */
 export default function Club() {
@@ -56,11 +58,14 @@ export default function Club() {
             {org.status === "pending" && <span className="ebadge wait"><Clock size={12} aria-hidden="true" /> Waiting for approval</span>}
             {org.status === "paused" && <span className="ebadge no">Paused</span>}
             {org.status === "rejected" && <span className="ebadge no"><X size={12} aria-hidden="true" /> Not approved</span>}
+            {org.status === "active" && <span className="muted">{org.memberCount + org.members.length} {org.memberCount + org.members.length === 1 ? "person" : "people"}</span>}
           </div>
         </div>
       </header>
       {org.description && <p className="club-about"><RichText text={org.description} /></p>}
 
+      <JoinButton org={org} />
+      {(reviewer || org.mine) && org.status !== "active" && <ApplicationDetails org={org} />}
       {org.status === "pending" && <p className="cevent-note" role="status">A coordinator needs to approve this club before it can post events. You can add officers while you wait.</p>}
       {org.status === "rejected" && <p className="cevent-note" role="status">Not approved{org.note ? `: ${org.note}` : "."}</p>}
       {org.status === "paused" && <p className="cevent-note" role="status">A coordinator paused this club. It cannot post new events for now.</p>}
@@ -95,6 +100,8 @@ export default function Club() {
           ? <EmptyState icon={CalendarDays} title="No events yet">{canPost ? "Post the first one. It shows to the whole campus once it is live." : org.status === "active" ? "When this club posts one, it shows here." : "Events can be posted once a coordinator approves the club."}</EmptyState>
           : <ul className="cevent-list">{mineEvents.map((e) => <EventCard key={e.id} e={e} reviewer={reviewer} />)}</ul>}
       </section>
+
+      {(org.mine || reviewer) && <JoinRequests org={org} />}
 
       <section className="club-section" aria-label="Officers">
         <h2>Officers</h2>

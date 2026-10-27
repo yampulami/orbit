@@ -24,6 +24,12 @@ Events and clubs live in their own **Campus** tab (not in Plans), with three sec
 
 The club's officers see their club's waiting events; everyone else sees only live ones. Migration `20261027180000_org_trust.sql` adds the `trusted` switch and the matching database rules.
 
+## Applications and joining (migration 20261027200000_club_applications.sql)
+
+- **Starting a club is an application.** Students fill in what the club is for, category, a faculty or staff adviser (name and email), where and when it meets, expected size, a first event idea and a contact. The database refuses an application without the required parts. Coordinators and staff set clubs up directly.
+- **Coordinators get a live board** (Campus, Review, Club applications): Waiting, Approved and Declined, with the full application on each card. New applications appear as they are sent, and coordinators are also notified in the bell.
+- **Joining a club needs an officer.** A student taps "Ask to join" (with an optional line), the club's officers see it under "Join requests" and let them in or decline, and the student is notified. Coordinators can answer too. Members are listed to the campus; waiting and declined requests are private to the student, the officers and coordinators.
+
 ## Moderation
 
 - **Report.** Any student can report an event ("Report" on the card, with an optional reason). Coordinators are told the first time, and see it under "Reported events".

@@ -6,44 +6,19 @@ import { orgActions, useCampusOrgs } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
 import RichText from "./RichText";
 import { eventWhen } from "./EventCard";
+import ApplicationsBoard from "./ApplicationsBoard";
 
 /** For coordinators and staff: what is waiting for a decision (new clubs, new events from clubs that are not trusted yet), the events people have reported,
  *  and the list of clubs with pause and trust switches. */
 export default function ReviewPanel() {
   const { pending, reported } = useCampusEvents();
   const { orgs } = useCampusOrgs();
-  const waitingOrgs = orgs.filter((o) => o.status === "pending" && !o.mine);
   const [declining, setDeclining] = useState<string | null>(null);
   const [reason, setReason] = useState("");
-  const nothing = pending.length === 0 && waitingOrgs.length === 0 && reported.length === 0;
 
   return (
     <div className="review" role="region" aria-label="Review">
-      {nothing && <p className="review-clear"><Check size={18} aria-hidden="true" /> You are all caught up. Nothing is waiting for you.</p>}
-
-      {waitingOrgs.length > 0 && (
-        <section className="htools-block" aria-label="Clubs waiting for approval">
-          <h3><Clock size={15} aria-hidden="true" /> Clubs waiting for approval <span className="rem-count">{waitingOrgs.length}</span></h3>
-          <ul>
-            {waitingOrgs.map((o) => (
-              <li key={o.id}>
-                <div className="htools-main"><strong><RichText text={o.name} /></strong>{o.description && <span className="muted"><RichText text={o.description} /></span>}<span className="muted">Asked by {o.members.find((m) => m.role === "owner")?.name ?? "a student"}</span></div>
-                {declining === `o-${o.id}` ? (
-                  <form className="htools-row" onSubmit={(e) => { e.preventDefault(); void orgActions.decline(o.id, reason); setDeclining(null); setReason(""); }}>
-                    <input aria-label="Reason (optional)" autoFocus value={reason} maxLength={200} placeholder="Reason (optional)" onChange={(x) => setReason(x.target.value)} />
-                    <button className="btn danger">Decline</button><button type="button" className="btn" onClick={() => setDeclining(null)}>Back</button>
-                  </form>
-                ) : (
-                  <div className="htools-row">
-                    <button type="button" className="btn primary" onClick={() => { void orgActions.approve(o.id); notice.show({ icon: "calendar", title: `${o.name} approved`, message: "Its officers can post events now. Each new event waits for you until you trust the club.", ms: 4500 }); }}><Check size={15} aria-hidden="true" /> Approve</button>
-                    <button type="button" className="btn" onClick={() => { setDeclining(`o-${o.id}`); setReason(""); }}>Decline</button>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <ApplicationsBoard />
 
       {pending.length > 0 && (
         <section className="htools-block" aria-label="Events waiting for approval">

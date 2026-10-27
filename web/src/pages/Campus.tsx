@@ -1,13 +1,14 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BadgeCheck, CalendarDays, ChevronDown, Info, Megaphone, Plus, UserRound, Users } from "lucide-react";
 import { eventActions, isOpen, setDemoRole, useCampusEvents, type Role } from "../lib/campusEvents";
-import { orgActions, useCampusOrgs, type Org } from "../lib/campusOrgs";
+import { useCampusOrgs, type Org } from "../lib/campusOrgs";
 import { supabase } from "../lib/supabase";
 import { notice } from "../lib/notice";
 import EventCard, { EventBadge } from "../components/EventCard";
 import EventForm from "../components/EventForm";
 import ReviewPanel from "../components/ReviewPanel";
+import ClubApplication from "../components/ClubApplication";
 import EmptyState from "../components/EmptyState";
 import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
@@ -20,7 +21,7 @@ export default function Campus() {
   const { events, pending, reported, isHost, role, canReview: reviewer, hostLabel, ready } = useCampusEvents();
   const { orgs, mine } = useCampusOrgs();
   const [tab, setTab] = useState<Tab>("events");
-  const waitingOrgs = orgs.filter((o) => o.status === "pending" && !o.mine);
+  const waitingOrgs = orgs.filter((o) => o.status === "pending");
   const reviewCount = reviewer ? pending.length + reported.length + waitingOrgs.length : 0;
   const current: Tab = tab === "review" && !reviewer ? "events" : tab;
 
@@ -122,41 +123,21 @@ function ClubCard({ o }: { o: Org }) {
 function ClubsView({ mine, all, reviewer }: { mine: Org[]; all: Org[]; reviewer: boolean }) {
   const nav = useNavigate();
   const [creating, setCreating] = useState(false);
-  const [name, setName] = useState("");
-  const [about, setAbout] = useState("");
-  const [office, setOffice] = useState(false);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
   const mineIds = new Set(mine.map((o) => o.id));
   const others = all.filter((o) => !mineIds.has(o.id) && o.status === "active");
-
-  async function create(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    const r = await orgActions.request({ name, description: about, reviewer, kind: reviewer && office ? "official" : "student" });
-    setBusy(false);
-    if (r.error) { setError(r.error); return; }
-    notice.show(r.status === "pending"
-      ? { icon: "calendar", title: "Club created", message: "A coordinator needs to approve it before it can post events. You can set it up and add officers now.", ms: 6000 }
-      : { icon: "calendar", title: "Created", message: "You can post events from inside it now.", ms: 4000 });
-    setCreating(false); setName(""); setAbout("");
-    if (r.id) nav(`/app/campus/clubs/${r.id}`);
-  }
 
   return (
     <section className="clubs" aria-label="Clubs">
       {creating ? (
-        <form className="htools-form club-create" onSubmit={create}>
-          <h3>Create a club</h3>
-          <p className="muted">Set the club up first. A coordinator approves it, and then you post its events from inside the club.</p>
-          <label className="field">Name<input autoFocus value={name} maxLength={80} placeholder="e.g. Chess Club" onChange={(e) => { setName(e.target.value); setError(""); }} /></label>
-          <label className="field">What is it? (a line or two)<textarea rows={2} value={about} maxLength={300} placeholder="Who it is for and what you do." onChange={(e) => setAbout(e.target.value)} /></label>
-          {reviewer && <label className="check-line"><input type="checkbox" checked={office} onChange={(e) => setOffice(e.target.checked)} /> This is a staff-run office (its events are Official)</label>}
-          {error && <p className="error" role="alert">{error}</p>}
-          <div className="about-actions"><button className="btn primary" disabled={busy}>{busy ? "Creating…" : "Create club"}</button><button type="button" className="btn" onClick={() => setCreating(false)}>Cancel</button></div>
-        </form>
+        <ClubApplication reviewer={reviewer} onCancel={() => setCreating(false)} onSent={(r) => {
+          notice.show(r.status === "pending"
+            ? { icon: "calendar", title: "Application sent", message: "The coordinators have it now. You will get a notification when they decide. You can add officers while you wait.", ms: 6500 }
+            : { icon: "calendar", title: "Created", message: "You can post events from inside it now.", ms: 4000 });
+          setCreating(false);
+          if (r.id) nav(`/app/campus/clubs/${r.id}`);
+        }} />
       ) : (
-        <button type="button" className="btn primary create-club" onClick={() => setCreating(true)}><Plus size={16} aria-hidden="true" /> Create a club</button>
+        <button type="button" className="btn primary create-club" onClick={() => setCreating(true)}><Plus size={16} aria-hidden="true" /> {reviewer ? "Set up a club" : "Apply to start a club"}</button>
       )}
 
       {mine.length > 0 && (
@@ -167,7 +148,7 @@ function ClubsView({ mine, all, reviewer }: { mine: Org[]; all: Org[]; reviewer:
       )}
       <h3 className="clubs-h">Clubs and offices on your campus</h3>
       {others.length === 0
-        ? <EmptyState icon={Users} title={mine.length ? "No other clubs yet" : "No clubs yet"}>Start the first one. Once a coordinator approves it, you can post its events to the whole campus.</EmptyState>
+        ? <EmptyState icon={Users} title={mine.length ? "No other clubs yet" : "No clubs yet"}>Apply to start the first one. Once a coordinator approves it, you can post its events to the whole campus.</EmptyState>
         : <ul className="club-list">{others.map((o) => <ClubCard key={o.id} o={o} />)}</ul>}
     </section>
   );

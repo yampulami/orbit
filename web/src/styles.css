@@ -2127,3 +2127,32 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .invite-more summary{cursor:pointer;color:var(--ink-soft);font-size:.84rem;width:fit-content;padding:4px 0}
 .invite-more[open] summary{margin-bottom:6px}
 .invite-code-inline{font-family:ui-monospace,monospace;font-size:.78rem;color:var(--ink-soft);margin-left:4px}
+
+.club-apply{max-height:none}
+.club-apply select{min-height:44px;padding:0 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.club-apply input{min-height:44px}
+.app-details{display:grid;gap:8px;margin:0;padding:14px;border-radius:16px;background:var(--panel)}
+.app-details div{display:grid;gap:1px}
+.app-details dt{font-size:.74rem;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-soft)}
+.app-details dd{margin:0;font-size:.92rem;overflow-wrap:anywhere}
+.join-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.join-ask{display:flex;gap:8px;flex-wrap:wrap}
+.join-ask input{flex:1;min-width:200px;min-height:42px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.club-members li.join-req{display:grid;gap:8px}
+.join-req-main{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.join-req-msg{flex-basis:100%;font-size:.88rem;color:var(--ink-soft)}
+
+.apps{display:grid;gap:12px}
+.apps-head{display:flex;align-items:center;justify-content:space-between}
+.apps-head h3{display:flex;align-items:center;gap:6px;font-size:.95rem}
+.live-pill{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;font-weight:600;color:var(--ink-soft)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#3ab76b;animation:livepulse 2s ease-in-out infinite}
+@keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+.app-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.app-card{display:grid;gap:10px;padding:14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
+.app-card.fresh{animation:appin .9s var(--ease) both}
+@keyframes appin{0%{opacity:0;transform:translateY(-10px);box-shadow:0 0 0 3px color-mix(in srgb,var(--violet) 45%,transparent)}60%{box-shadow:0 0 0 3px color-mix(in srgb,var(--violet) 30%,transparent)}100%{opacity:1;transform:none;box-shadow:0 0 0 0 transparent}}
+.app-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.app-card-head strong{font-size:1.02rem}
+.app-card .app-details{background:var(--panel)}
+@media (prefers-reduced-motion:reduce){.live-dot,.app-card.fresh{animation:none}}
