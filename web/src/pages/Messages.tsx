@@ -1,3 +1,4 @@
+import Orb from "../components/Orb";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -123,7 +124,7 @@ function LiveMessages() {
                     {m === lastMine && <span className="bubble-meta">{m.seenAt ? `Seen ${time(m.seenAt)}` : time(m.at)}</span>}
                   </motion.div>
                 ))}
-                {typing && <div className="bubble-row" aria-live="polite"><p className="bubble typing" aria-label={`${current.name} is typing`}><i /><i /><i /></p></div>}
+                {typing && <div className="bubble-row" aria-live="polite"><Orb size={24} variant="violet" mood="loading" poke={false} className="typing-orb" /><p className="bubble typing" aria-label={`${current.name} is typing`}><i /><i /><i /></p></div>}
               </div>
               <form className="comment-form" onSubmit={send}>
                 <input ref={dmInput} aria-label="Message" value={text} onChange={(e) => { setText(e.target.value); if (e.target.value && session) sendTyping(current.id, session.user.id); }} maxLength={2000} placeholder={`Message ${current.name}…`} />

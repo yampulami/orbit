@@ -2294,3 +2294,12 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 @media (max-width:700px){.hero-orb{display:none}}
 .orb-gl-fallback{position:absolute;inset:0;margin:auto}
 .hero-art{position:relative}
+
+/* Orb extras: cheer bubble, pull-to-refresh, typing buddy */
+.cheer-wrap{position:fixed;left:0;right:0;bottom:28px;z-index:80;display:grid;justify-items:center;pointer-events:none}
+.cheer{display:flex;align-items:center;gap:10px;padding:8px 18px 8px 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 18px 34px -18px rgba(60,40,140,.55)}
+.cheer-text{font-weight:600;font-size:.95rem}
+@media (max-width:900px){.cheer-wrap{bottom:calc(86px + env(safe-area-inset-bottom))}}
+.ptr-orb{display:inline-flex;transform-origin:50% 100%}
+.typing-orb{align-self:flex-end;margin:0 6px 4px 0}
+.bubble-row:has(.typing-orb){align-items:flex-end}

@@ -23,6 +23,7 @@ import { bindCampusEvents, unbindCampusEvents } from "./lib/campusEvents";
 import { bindCampusOrgs, unbindCampusOrgs } from "./lib/campusOrgs";
 import { clearVerified } from "./lib/verified";
 import ErrorBoundary from "./components/ErrorBoundary";
+import CheerHost from "./components/CheerHost";
 import { bindBlocks, unbindBlocks } from "./lib/safety";
 
 // Everything except the main feed loads when it is first opened, so the first download stays small.
@@ -157,6 +158,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <ArrivalScreen />
+      <CheerHost />
     </Suspense>
     </ErrorBoundary>
   );

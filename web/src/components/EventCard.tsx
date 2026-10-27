@@ -5,6 +5,7 @@ import { countdown, eventFlavor, hueFor, type FlavorKey } from "../lib/look";
 import { notice } from "../lib/notice";
 import RichText from "./RichText";
 import VerifiedBadge from "./VerifiedBadge";
+import { cheer, goingLine } from "../lib/cheer";
 
 export const eventWhen = (e: Pick<CampusEvent, "startsAt" | "endsAt">) => {
   const s = new Date(e.startsAt);
@@ -42,7 +43,7 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
   const going = e.mine === "going";
 
   function toggleGoing() {
-    if (!going) setBurst((n) => n + 1);
+    if (!going) { setBurst((n) => n + 1); cheer.show(goingLine(burst)); }
     eventActions.respond(e.id, going ? null : "going");
   }
 

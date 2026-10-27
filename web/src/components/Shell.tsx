@@ -15,6 +15,7 @@ import NotificationBell from "./NotificationBell";
 import Orb from "./Orb";
 import { useNotifs } from "../lib/notifs";
 import type { OrbMood } from "../lib/orbGaze";
+import { isNight } from "../lib/cheer";
 import ReminderAlerts from "./ReminderAlerts";
 import ClassAlerts from "./ClassAlerts";
 import ComposeModal from "./ComposeModal";
@@ -49,7 +50,14 @@ export default function Shell() {
   // The logo orb perks up for a few seconds when something new lands in the bell.
   const bellCount = useNotifs().filter((n) => n.unread).length;
   const prevBell = useRef(bellCount);
-  const [logoMood, setLogoMood] = useState<OrbMood>("idle");
+  const [excited, setLogoMood] = useState<OrbMood>("idle");
+  // Late at night the logo orb gets drowsy; tapping it wakes it for a while.
+  const [night, setNight] = useState(() => isNight(new Date()));
+  const [wakeUntil, setWakeUntil] = useState(0);
+  const [, rerender] = useState(0);
+  useEffect(() => { const t = window.setInterval(() => setNight(isNight(new Date())), 60_000); return () => window.clearInterval(t); }, []);
+  const logoMood: OrbMood = excited === "excited" ? "excited" : night && Date.now() > wakeUntil ? "sleepy" : "idle";
+  const wake = () => { setWakeUntil(Date.now() + 90_000); window.setTimeout(() => rerender((n) => n + 1), 90_500); };
   useEffect(() => {
     if (bellCount > prevBell.current) { setLogoMood("excited"); const t = window.setTimeout(() => setLogoMood("idle"), 3500); prevBell.current = bellCount; return () => window.clearTimeout(t); }
     prevBell.current = bellCount;
@@ -105,7 +113,7 @@ export default function Shell() {
       <a className="skip" href="#main">Skip to content</a>
       <aside className="side">
         <div className="side-top">
-          <button type="button" className="logo logo-toggle" aria-label={wide ? "Collapse menu" : "Expand menu"} aria-expanded={wide} onClick={toggleSide}><Orb variant="light" mood={logoMood} /><span className="navtext">Orbit</span></button>
+          <button type="button" className="logo logo-toggle" aria-label={wide ? "Collapse menu" : "Expand menu"} aria-expanded={wide} onClick={toggleSide}><Orb variant="light" mood={logoMood} onPoke={wake} /><span className="navtext">Orbit</span></button>
         </div>
         <nav className="navgroup" aria-label="Primary">
           {items.map((i) => (
@@ -136,7 +144,7 @@ export default function Shell() {
       </aside>
       <div className="content">
         <div className="topline">
-          <button type="button" className="logo logo-mobile" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><Orb variant="violet" mood={logoMood} /></button>
+          <button type="button" className="logo logo-mobile" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><Orb variant="violet" mood={logoMood} onPoke={wake} /></button>
           <span className="top-title" aria-hidden="true">{pageTitle}</span>
           <GlobalSearch />
           <NotificationBell />

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { RefreshCw } from "lucide-react";
+import Orb from "./Orb";
 import { refreshEverything } from "../lib/people";
 import { haptic } from "../lib/haptics";
 
@@ -52,7 +52,7 @@ export default function PullToRefresh() {
   if (pull <= 0 && !busy) return null;
   return (
     <div className="ptr" style={{ transform: `translateY(${pull - 44}px)`, opacity: Math.min(1, pull / TRIGGER) }} aria-hidden="true">
-      <span className={busy ? "spin" : ""} style={busy ? undefined : { transform: `rotate(${pull * 3}deg)` }}><RefreshCw size={18} /></span>
+      <span className="ptr-orb" style={{ transform: busy ? undefined : `scale(${1 - Math.min(0.12, pull / 900)}, ${1 + Math.min(0.28, pull / 380)})` }}><Orb size={34} variant="violet" mood={busy ? "loading" : pull >= TRIGGER ? "excited" : "idle"} poke={false} /></span>
     </div>
   );
 }
