@@ -1854,3 +1854,42 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .wb-ev.event{background:color-mix(in srgb,var(--butter) 70%,var(--surface));color:var(--butter-ink)}
 .wb-ev.event.m-yes{background:var(--mint);color:var(--mint-ink)}
 .cstrip .up-main{text-decoration:none;color:inherit}
+
+/* events versus hangouts: the labels, the explainer, the review queue */
+.ebadge{display:inline-flex;align-items:center;gap:5px;width:fit-content;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.01em}
+.ebadge.official{background:var(--violet);color:#fff}
+.ebadge.student{background:var(--mint);color:var(--mint-ink)}
+.ebadge.group{background:var(--peach);color:var(--peach-ink)}
+.ebadge.wait{background:var(--butter);color:var(--butter-ink)}
+.ebadge.no{background:var(--pink);color:var(--pink-ink)}
+.cevent-help{display:flex;align-items:center;gap:7px;width:fit-content;border:0;background:none;padding:2px 0;color:var(--violet);font:inherit;font-size:.86rem;font-weight:600;cursor:pointer}
+.cevent-help .chev{transition:transform .25s var(--ease)}
+.cevent-help[aria-expanded=true] .chev{transform:rotate(180deg)}
+.cevent-explain{display:grid;gap:10px;margin:0;padding:14px;border-radius:18px;background:var(--panel)}
+.cevent-explain>div{display:grid;gap:4px}
+.cevent-explain dd{margin:0;font-size:.86rem;color:var(--ink-soft);line-height:1.4}
+.cevent-demo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.84rem;color:var(--ink-soft)}
+.cevent-demo select{min-height:36px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.cevent.waiting{background:color-mix(in srgb,var(--butter) 30%,var(--panel))}
+.cevent-note{font-size:.82rem;color:var(--ink-soft)}
+.cevent-who{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cevent-foot{font-size:.82rem}
+.cevent-queue{display:grid;gap:10px;padding:14px;border-radius:20px;border:1.5px dashed color-mix(in srgb,var(--butter-ink) 45%,transparent);background:color-mix(in srgb,var(--butter) 28%,var(--surface))}
+.cevent-queue h3{display:flex;align-items:center;gap:6px;font-size:.92rem;font-weight:600}
+.cevent-queue ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.cevent-queue li{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;padding:12px;border-radius:16px;background:var(--surface)}
+.cevent-q-main{display:grid;gap:3px;min-width:0;flex:1 1 240px}
+.cevent-q-main strong{overflow-wrap:anywhere}
+.cevent-q-desc{font-size:.84rem;color:var(--ink-soft);overflow-wrap:anywhere}
+.cevent-q-actions,.cevent-q-decline{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cevent-q-decline input{min-height:38px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;min-width:200px}
+.agenda-sub{font-weight:400;font-size:.74rem;color:var(--muted);margin-left:4px}
+.plan-intro{margin-bottom:2px}
+.wb-legend{display:flex;gap:6px 16px;flex-wrap:wrap;list-style:none;margin:0;padding:8px 4px 2px;font-size:.74rem;color:var(--ink-soft)}
+.wb-legend li{display:inline-flex;align-items:center;gap:6px}
+.wb-legend .lg{width:12px;height:12px;border-radius:4px;display:inline-block}
+.wb-legend .lg.hangout{background:var(--peach)}
+.wb-legend .lg.event{background:var(--butter)}
+.wb-legend .lg.class{background:color-mix(in srgb,var(--violet) 30%,var(--surface))}
+.wb-legend .lg.reminder{background:var(--lav)}
+.cstrip .ebadge{margin-bottom:3px}

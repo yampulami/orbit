@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./supabase", () => ({ supabase: null }));
 
-import { applyEventChange, buildEvents, isOpen, problemWithEvent, type RawAnswer, type RawEvent } from "./campusEvents";
+import { applyEventChange, buildEvents, canReview, isOpen, outcomeFor, problemWithEvent, visibleEvents, type RawAnswer, type RawEvent } from "./campusEvents";
 
-const ev = (id: string, starts: string, extra: Partial<RawEvent> = {}): RawEvent => ({ id, host_id: "h1", host_label: "Library", title: "Workshop " + id, description: "", place_name: "Room 2", starts_at: starts, ends_at: null, canceled_at: null, ...extra });
+const ev = (id: string, starts: string, extra: Partial<RawEvent> = {}): RawEvent => ({ id, host_id: "h1", host_label: "Library", title: "Workshop " + id, description: "", place_name: "Room 2", starts_at: starts, ends_at: null, canceled_at: null, kind: "official", status: "published", ...extra });
 const ans = (event_id: string, user_id: string, answer: RawAnswer["answer"]): RawAnswer => ({ event_id, user_id, answer });
 const change = (table: string, type: "INSERT" | "UPDATE" | "DELETE", row: Record<string, unknown>, old: Record<string, unknown> = {}) => ({ table, type, row, old });
 
@@ -57,5 +57,36 @@ describe("campus events", () => {
   it("asks for a full look at anything it does not understand", () => {
     expect(applyEventChange({ events: [], answers: [] }, change("campus_events", "INSERT", {}))).toBeNull();
     expect(applyEventChange({ events: [], answers: [] }, change("somewhere_else", "INSERT", { id: "x" }))).toBeNull();
+  });
+});
+
+describe("official and student events", () => {
+  it("publishes staff and coordinator events at once, and holds student events for approval", () => {
+    expect(outcomeFor("staff")).toEqual({ kind: "official", status: "published" });
+    expect(outcomeFor("coordinator")).toEqual({ kind: "official", status: "published" });
+    expect(outcomeFor("student")).toEqual({ kind: "student", status: "pending" });
+  });
+
+  it("lets only staff and coordinators review", () => {
+    expect(canReview("staff")).toBe(true);
+    expect(canReview("coordinator")).toBe(true);
+    expect(canReview("student")).toBe(false);
+    expect(canReview(null)).toBe(false);
+  });
+
+  it("carries the kind and status to the screen", () => {
+    const [e] = buildEvents([ev("a", "2026-10-28T10:00:00Z", { kind: "student", status: "pending", review_note: "Room taken" })], [], "me");
+    expect(e).toMatchObject({ kind: "student", status: "pending", note: "Room taken" });
+  });
+
+  it("shows waiting and declined events only to their host and to reviewers", () => {
+    const list = buildEvents([
+      ev("pub", "2026-10-28T10:00:00Z"),
+      ev("wait", "2026-10-29T10:00:00Z", { kind: "student", status: "pending", host_id: "club" }),
+      ev("mine", "2026-10-30T10:00:00Z", { kind: "student", status: "pending", host_id: "me" }),
+      ev("no", "2026-10-31T10:00:00Z", { kind: "student", status: "rejected", host_id: "club" }),
+    ], [], "me");
+    expect(visibleEvents(list, false).map((e) => e.id)).toEqual(["pub", "mine"]);
+    expect(visibleEvents(list, true).map((e) => e.id)).toEqual(["pub", "wait", "mine", "no"]);
   });
 });

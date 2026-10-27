@@ -7,11 +7,16 @@ import { notice } from "./notice";
 /** Campus events: the big public ones put on by a host (a department, club, instructor or staff member) and shown to everyone on the campus.
  *  Groups stay for small private hangouts. Only people in the `campus_hosts` list can post; everyone can say going or interested. */
 export type Answer = "going" | "interested";
-export type RawEvent = { id: string; host_id: string; host_label: string; title: string; description: string; place_name: string; starts_at: string; ends_at: string | null; canceled_at: string | null };
+export type Role = "coordinator" | "staff" | "student";
+export type Kind = "official" | "student";
+export type Status = "pending" | "published" | "rejected";
+export type RawEvent = { id: string; host_id: string; host_label: string; kind: Kind; status: Status; title: string; description: string; place_name: string; starts_at: string; ends_at: string | null; canceled_at: string | null; review_note?: string | null };
 export type RawAnswer = { event_id: string; user_id: string; answer: Answer };
 export type CampusEvent = {
   id: string; hostId: string; host: string; title: string; description: string; place: string;
   startsAt: string; endsAt?: string; canceled: boolean; going: number; interested: number; mine?: Answer; mineHost: boolean;
+  /** "official" is posted by staff; "student" is posted by a student host and needs a staff member to approve it. */
+  kind: Kind; status: Status; note?: string;
 };
 
 const HOUR = 3600000;
@@ -27,7 +32,7 @@ export function buildEvents(events: RawEvent[], answers: RawAnswer[], me: string
         id: e.id, hostId: e.host_id, host: e.host_label, title: e.title, description: e.description, place: e.place_name,
         startsAt: e.starts_at, endsAt: e.ends_at ?? undefined, canceled: !!e.canceled_at,
         going: of.filter((a) => a.answer === "going").length, interested: of.filter((a) => a.answer === "interested").length,
-        mine, mineHost: e.host_id === me,
+        mine, mineHost: e.host_id === me, kind: e.kind ?? "official", status: e.status ?? "published", note: e.review_note ?? undefined,
       };
     });
 }
@@ -44,7 +49,14 @@ export function problemWithEvent(d: { title: string; startsAt: string; endsAt?: 
   return null;
 }
 
-type Store = { events: RawEvent[]; answers: RawAnswer[]; hostLabel: string | null; ready: boolean };
+/** What the database does when this role posts: staff and coordinators publish officially at once; student hosts wait for approval. */
+export const outcomeFor = (role: Role): { kind: Kind; status: Status } => (role === "student" ? { kind: "student", status: "pending" } : { kind: "official", status: "published" });
+export const canReview = (role: Role | null) => role === "coordinator" || role === "staff";
+
+/** Waiting and declined events are for their host and for reviewers only; everyone else sees published ones. */
+export const visibleEvents = (list: CampusEvent[], reviewer: boolean) => list.filter((e) => e.status === "published" || e.mineHost || reviewer);
+
+type Store = { events: RawEvent[]; answers: RawAnswer[]; hostLabel: string | null; role: Role | null; ready: boolean };
 
 /** Pure: one change from the database applied to the lists. Returns null when it should simply be looked up again. */
 export function applyEventChange(s: Pick<Store, "events" | "answers">, e: ChangeEvent): Pick<Store, "events" | "answers"> | null {
@@ -69,19 +81,23 @@ export function applyEventChange(s: Pick<Store, "events" | "answers">, e: Change
 /* ---------- store ---------- */
 const live = !!supabase;
 const DEMO_KEY = "orbit-demo-campus-events";
+const DEMO_ROLE_KEY = "orbit-demo-role";
+const demoRole = (): Role => { try { const r = localStorage.getItem(DEMO_ROLE_KEY); if (r === "student" || r === "staff" || r === "coordinator") return r; } catch { /* default */ } return "coordinator"; };
 const demoSamples = (): Store => {
   const at = (d: number, h: number, m = 0) => { const t = new Date(); t.setDate(t.getDate() + d); t.setHours(h, m, 0, 0); return t.toISOString(); };
-  const mk = (id: string, host: string, title: string, description: string, place: string, d: number, h: number, m = 0, len = 90): RawEvent => ({ id, host_id: `demo-host-${host}`, host_label: host, title, description, place_name: place, starts_at: at(d, h, m), ends_at: new Date(new Date(at(d, h, m)).getTime() + len * 60000).toISOString(), canceled_at: null });
+  const mk = (id: string, host: string, title: string, description: string, place: string, d: number, h: number, m = 0, len = 90): RawEvent => ({ id, host_id: `demo-host-${host}`, host_label: host, title, description, place_name: place, starts_at: at(d, h, m), ends_at: new Date(new Date(at(d, h, m)).getTime() + len * 60000).toISOString(), canceled_at: null, kind: "official", status: "published" });
+  const student = (e: RawEvent): RawEvent => ({ ...e, kind: "student", host_id: "demo-host-club" });
   return {
     events: [
       mk("ce1", "University Library", "Study skills workshop", "Time management and note-taking for midterms. Bring a laptop. Snacks provided.", "Library, room 2B", 1, 16, 0, 60),
       mk("ce2", "Career Services", "Spring career fair", "Over 40 employers. Dress business casual and bring printed resumes.", "Main gym", 3, 10, 0, 300),
-      mk("ce3", "Student Life", "Open mic night", "Sign up at the door. Music, poetry and comedy.", "Student Center café", 2, 19, 30, 120),
+      student(mk("ce3", "Robotics Club", "Open build night", "No experience needed. Come and build with us. Snacks provided.", "Engineering lab", 2, 19, 30, 120)),
+      { ...student(mk("ce4", "Film Society", "Outdoor movie screening", "Bring a blanket. Free popcorn.", "North lawn", 4, 20, 0, 150)), status: "pending" },
     ],
-    answers: [], hostLabel: "Orbit demo", ready: true,
+    answers: [], hostLabel: "Orbit demo", role: "coordinator", ready: true,
   };
 };
-let state: Store = live ? { events: [], answers: [], hostLabel: null, ready: false } : (() => { try { const s = localStorage.getItem(DEMO_KEY); if (s) return JSON.parse(s) as Store; } catch { /* none saved */ } return demoSamples(); })();
+let state: Store = live ? { events: [], answers: [], hostLabel: null, role: null, ready: false } : (() => { try { const s = localStorage.getItem(DEMO_KEY); if (s) return { ...(JSON.parse(s) as Store), role: demoRole() }; } catch { /* none saved */ } return { ...demoSamples(), role: demoRole() }; })();
 let who: string | null = null;
 let stop: (() => void) | null = null;
 let loadId = 0;
@@ -100,15 +116,16 @@ async function reload() {
   try {
     const since = new Date(Date.now() - 24 * HOUR).toISOString();
     const [ev, host] = await Promise.all([
-      supabase!.from("campus_events").select("id,host_id,host_label,title,description,place_name,starts_at,ends_at,canceled_at").gte("starts_at", since).order("starts_at", { ascending: true }).limit(300),
-      supabase!.from("campus_hosts").select("label").eq("user_id", me).maybeSingle(),
+      supabase!.from("campus_events").select("id,host_id,host_label,kind,status,title,description,place_name,starts_at,ends_at,canceled_at,review_note").gte("starts_at", since).order("starts_at", { ascending: true }).limit(300),
+      supabase!.from("campus_hosts").select("label,role").eq("user_id", me).maybeSingle(),
     ]);
     // Before the campus events migration is applied the tables are missing: show an empty list, never an error.
     if (ev.error) { if (mine === loadId && who === me) set({ ...state, events: [], answers: [], ready: true }); return; }
     const events = (ev.data ?? []) as RawEvent[];
     const ans = events.length ? await supabase!.from("campus_event_responses").select("event_id,user_id,answer").in("event_id", events.map((e) => e.id)).limit(5000) : { data: [] as RawAnswer[], error: null };
     if (mine !== loadId || who !== me) return;
-    set({ events, answers: (ans.data ?? []) as RawAnswer[], hostLabel: (host.data as { label: string } | null)?.label ?? null, ready: true });
+    const h = host.data as { label: string; role: Role } | null;
+    set({ events, answers: (ans.data ?? []) as RawAnswer[], hostLabel: h?.label ?? null, role: h?.role ?? null, ready: true });
   } catch { /* keep what is on screen */ }
 }
 
@@ -129,26 +146,29 @@ export function bindCampusEvents(userId: string) {
 export function unbindCampusEvents() {
   if (!live) return;
   stop?.(); stop = null; who = null; loadId++;
-  state = { events: [], answers: [], hostLabel: null, ready: false };
+  state = { events: [], answers: [], hostLabel: null, role: null, ready: false };
   subs.forEach((f) => f());
 }
 
 export const eventActions = {
-  /** Post an event (hosts only). Resolves to a message if it did not work, or null. */
-  async create(d: { title: string; description: string; place: string; startsAt: string; endsAt?: string }): Promise<string | null> {
+  /** Post an event (hosts only). Staff and coordinators publish at once; a student host's event waits for approval. Resolves to a message if it
+   *  did not work, or null, plus the outcome so the screen can say which. */
+  async create(d: { title: string; description: string; place: string; startsAt: string; endsAt?: string }): Promise<{ error: string | null; status?: Status }> {
     const bad = problemWithEvent(d);
-    if (bad) return bad;
+    if (bad) return { error: bad };
     const row = { title: d.title.trim().slice(0, 120), description: d.description.trim().slice(0, 1000), place_name: d.place.trim().slice(0, 120), starts_at: new Date(d.startsAt).toISOString(), ends_at: d.endsAt ? new Date(d.endsAt).toISOString() : null };
+    const role = state.role ?? "student";
     if (!live) {
-      const e: RawEvent = { id: crypto.randomUUID(), host_id: DEMO_ME, host_label: state.hostLabel ?? "Orbit demo", canceled_at: null, ...row };
+      const e: RawEvent = { id: crypto.randomUUID(), host_id: DEMO_ME, host_label: state.hostLabel ?? "Orbit demo", canceled_at: null, ...outcomeFor(role), ...row };
       set({ ...state, events: [...state.events, e] });
-      return null;
+      return { error: null, status: e.status };
     }
-    if (!who) return "Sign in first.";
+    if (!who) return { error: "Sign in first." };
     const { data: member } = await supabase!.from("campus_memberships").select("campus_key").eq("user_id", who).maybeSingle();
+    // The database decides the kind and the status from the host's role; none is sent from here.
     const { error } = await supabase!.from("campus_events").insert({ ...row, host_id: who, campus_key: (member as { campus_key: string } | null)?.campus_key, host_label: state.hostLabel ?? "Host" });
-    if (error) return /row-level|42501|only campus hosts/i.test(error.message) ? "Your account is not set up to post campus events yet." : error.message;
-    return null;
+    if (error) return { error: /row-level|42501|only campus hosts/i.test(error.message) ? "Your account is not set up to post campus events yet." : error.message };
+    return { error: null, status: outcomeFor(role).status };
   },
   async cancel(id: string): Promise<string | null> {
     const at = new Date().toISOString();
@@ -158,6 +178,10 @@ export const eventActions = {
     if (error) { notice.show({ icon: "alert", title: "That did not cancel", message: error.message }); void reload(); return error.message; }
     return null;
   },
+  /** A reviewer approves a waiting student event, which then shows to everyone with a "Student event" label. */
+  async approve(id: string): Promise<string | null> { return review(id, "published"); },
+  /** A reviewer declines a waiting student event, with a short reason the host sees. */
+  async decline(id: string, note: string): Promise<string | null> { return review(id, "rejected", note.trim().slice(0, 200) || undefined); },
   /** Say going or interested, or take it back with null. Shows at once, then saves. */
   respond(id: string, answer: Answer | null) {
     const me = live ? who : DEMO_ME;
@@ -172,8 +196,32 @@ export const eventActions = {
   },
 };
 
+async function review(id: string, status: "published" | "rejected", note?: string): Promise<string | null> {
+  const before = state;
+  set({ ...state, events: state.events.map((e) => (e.id === id ? { ...e, status, review_note: note ?? null } : e)) });
+  if (!live) return null;
+  const { error } = await supabase!.from("campus_events").update({ status, review_note: note ?? null }).eq("id", id);
+  if (error) { set(before); notice.show({ icon: "alert", title: "That did not save", message: error.message }); return error.message; }
+  return null;
+}
+
+/** Demo only: preview the screens as a different kind of host. */
+export function setDemoRole(role: Role) {
+  if (live) return;
+  try { localStorage.setItem(DEMO_ROLE_KEY, role); } catch { /* ignore */ }
+  set({ ...state, role });
+}
+
 export function useCampusEvents() {
   const s = useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => state);
   const me = live ? who ?? "" : DEMO_ME;
-  return { events: buildEvents(s.events, s.answers, me), isHost: live ? !!s.hostLabel : true, hostLabel: s.hostLabel, ready: s.ready };
+  const reviewer = canReview(s.role);
+  const all = buildEvents(s.events, s.answers, me);
+  const events = visibleEvents(all, reviewer);
+  return {
+    events,
+    /** Student events waiting for a reviewer (only reviewers see these). */
+    pending: reviewer ? events.filter((e) => e.status === "pending" && !e.canceled) : [],
+    isHost: live ? !!s.role : true, role: s.role, canReview: reviewer, hostLabel: s.hostLabel, ready: s.ready,
+  };
 }

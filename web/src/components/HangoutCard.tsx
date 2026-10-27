@@ -29,7 +29,7 @@ export default function HangoutCard({ h, group, tone = 0, plain = false }: { h: 
   return (
     <article className={"hang" + (plain ? " plain" : "") + (pinned ? " is-pinned" : "")} data-tone={tone % 5}>
       {!plain && !past && <div className="hang-pin"><PinButton kind="hangout" id={h.id} title={h.title} /></div>}
-      <div className="hang-top"><span className="chip">{h.visibility === "campus" ? (group ? `${group} · Open to campus` : "Open to campus") : group}</span><span className="hang-when">{fmtWhen(h.when)}</span></div>
+      <div className="hang-top"><span className="chip">{h.visibility === "campus" ? (group ? `Hangout · ${group} · open to campus` : "Hangout · open to campus") : `Group hangout · ${group}`}</span><span className="hang-when">{fmtWhen(h.when)}</span></div>
       <h3>{h.title}</h3>
       <p className="hang-place"><MapPin size={16} strokeWidth={1.75} aria-hidden="true" />{h.place}</p>
       <div className="hang-meta">

@@ -72,10 +72,10 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
       for (const c of classesOn(classes, d)) put(raw, d.toDateString(), { id: `${c.id}-${d.toDateString()}`, kind: "class", title: c.name, place: c.place, start: toMinutes(c.start), len: toMinutes(c.end) - toMinutes(c.start) });
     }
     for (const c of campus) {
-      if (c.canceled) continue;
+      if (c.canceled || c.status !== "published") continue;
       const s = new Date(c.startsAt);
       const len = c.endsAt ? Math.max(30, Math.round((new Date(c.endsAt).getTime() - s.getTime()) / 60000)) : 90;
-      put(raw, s.toDateString(), { id: `ce-${c.id}`, kind: "event", title: c.title, place: c.place || c.host, start: minutesOf(s), len: Math.min(len, 600), mark: c.mine === "going" ? "yes" : undefined, going: undefined });
+      put(raw, s.toDateString(), { id: `ce-${c.id}`, kind: "event", title: c.title, place: `${c.kind === "official" ? "Official" : "Student event"}${c.place ? ` · ${c.place}` : ""}`, start: minutesOf(s), len: Math.min(len, 600), mark: c.mine === "going" ? "yes" : undefined, going: undefined });
     }
     for (const t of space?.tasks ?? []) if (t.due && t.assignee === YOU) put(chips, fromYmd(t.due).toDateString(), { id: t.id, kind: "chore", title: t.title, done: t.done });
     const blocks = new Map<string, Block[]>();
@@ -123,6 +123,12 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
       </header>
 
       <div className="wb-card">
+        <ul className="wb-legend" aria-label="What the colours mean">
+          <li><i className="lg hangout" aria-hidden="true" /> Group hangout (private)</li>
+          <li><i className="lg event" aria-hidden="true" /> Campus event (public)</li>
+          <li><i className="lg class" aria-hidden="true" /> Class</li>
+          <li><i className="lg reminder" aria-hidden="true" /> Reminder</li>
+        </ul>
         <div className="wb-cols" style={cols}>
           <span />
           {days.map((d, i) => {

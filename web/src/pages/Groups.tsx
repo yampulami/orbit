@@ -197,6 +197,7 @@ export default function Groups() {
             )}
             {planning && (
               <form className="plan-form" onSubmit={plan}>
+                <p className="vis-note plan-intro">A hangout is a plan with your friends. For a big event for the whole campus, look at Campus events in Plans.</p>
                 <label className="field">What<input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Coffee break" /></label>
                 <label className="field">Where<input list="campus-places" value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Pick a campus place or type your own" /><datalist id="campus-places">{campusPlaces.map((p) => <option key={p.id} value={p.name} />)}</datalist></label>
                 <label className="field">When<input type="datetime-local" min={nowLocal} value={when} onChange={(e) => setWhen(e.target.value)} /></label>
@@ -207,7 +208,7 @@ export default function Groups() {
                     <button type="button" role="radio" aria-checked={!openToCampus} onClick={() => setOpenToCampus(false)}>Just {group.name}</button>
                     <button type="button" role="radio" aria-checked={openToCampus} onClick={() => setOpenToCampus(true)}>Everyone on campus</button>
                   </div>
-                  {openToCampus && <p className="vis-note">Anyone at your university will see it and can say yes.</p>}
+                  {openToCampus && <p className="vis-note">Anyone at your university will see this hangout and can say yes. It is still a student hangout, not an official campus event. Official events come from staff in Plans.</p>}
                 </div>
                 <button className="btn primary">{openToCampus ? "Share with campus" : `Share with ${group.name}`}</button>
               </form>
