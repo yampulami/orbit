@@ -27,7 +27,7 @@ describe("activityOf", () => {
 describe("permsOf", () => {
   const roles = [{ id: "r1", permissions: ["announce", "bogus", "polls"] }, { id: "r2", permissions: [] }];
   it("gives the owner everything and a role exactly what it ticks", () => {
-    expect(permsOf({ role: "owner" }, roles)).toHaveLength(7);
+    expect(permsOf({ role: "owner" }, roles)).toHaveLength(8);
     expect(permsOf({ role: "officer", role_id: "r1" }, roles)).toEqual(["announce", "polls"]);
     expect(permsOf({ role: "officer", role_id: "r2" }, roles)).toEqual([]);
   });
@@ -61,5 +61,41 @@ describe("club feed", () => {
     expect(problemWithPoll("Which?", ["A"])).toMatch(/two choices/);
     expect(problemWithPoll("Which?", ["A", "a"])).toMatch(/same/);
     expect(problemWithPoll("Which?", ["A", "B"])).toBeNull();
+  });
+});
+
+import { buildChannels, buildMessages, channelSlug, problemWithChannel } from "./clubChat";
+describe("club chat", () => {
+  const chans = [
+    { id: "c2", org_id: "o", name: "build", description: "", team_only: false, is_default: false, position: 1 },
+    { id: "c1", org_id: "o", name: "general", description: "", team_only: false, is_default: true, position: 0 },
+    { id: "c3", org_id: "o", name: "officers", description: "", team_only: true, is_default: false, position: 2 },
+  ];
+  const msgs = [
+    { id: "a", channel_id: "c1", org_id: "o", author_id: "u2", body: "hi", created_at: "2026-10-27T10:00:00Z" },
+    { id: "b", channel_id: "c1", org_id: "o", author_id: "u2", body: "again", created_at: "2026-10-27T12:00:00Z" },
+    { id: "c", channel_id: "c1", org_id: "o", author_id: "u1", body: "mine", created_at: "2026-10-27T12:30:00Z" },
+    { id: "d", channel_id: "c2", org_id: "o", author_id: "u2", body: "x", created_at: "2026-10-27T09:00:00Z" },
+  ];
+  it("puts #general first and counts what others wrote after you last read", () => {
+    const list = buildChannels(chans, msgs, [{ channel_id: "c1", last_read_at: "2026-10-27T11:00:00Z" }], "u1");
+    expect(list.map((c) => c.name)).toEqual(["general", "build", "officers"]);
+    expect(list[0].unread).toBe(1); // only the 12:00 message from someone else is after the marker
+    expect(list[1].unread).toBe(1); // never read
+    expect(list[2].unread).toBe(0);
+    expect(list[0].lastAt).toBe("2026-10-27T12:30:00Z");
+  });
+  it("lists a channel's messages oldest first with who wrote them", () => {
+    const m = buildMessages(msgs, "c1", { u2: "Sam" }, "u1");
+    expect(m.map((x) => x.body)).toEqual(["hi", "again", "mine"]);
+    expect(m[0]).toMatchObject({ author: "Sam", mine: false });
+    expect(m[2]).toMatchObject({ author: "You", mine: true });
+  });
+  it("turns what people type into a channel name and refuses duplicates", () => {
+    expect(channelSlug("  Build Night! ")).toBe("build-night");
+    expect(channelSlug("***")).toBe("");
+    expect(problemWithChannel("***", [])).toMatch(/name/);
+    expect(problemWithChannel("General", ["general"])).toMatch(/already/);
+    expect(problemWithChannel("Study group", ["general"])).toBeNull();
   });
 });

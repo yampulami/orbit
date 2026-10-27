@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, CalendarDays, Check, Clock, MapPin, Megaphone, Pause, Play, Plus, ShieldCheck, UserPlus, UserRound, Users, X } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CalendarDays, Check, Clock, MapPin, Megaphone, MessageSquare, Pause, Play, Plus, ShieldCheck, UserPlus, UserRound, Users, X } from "lucide-react";
 import { isOpen, useCampusEvents } from "../lib/campusEvents";
 import { canHostEvents, orgActions, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
 import { useClubFeed, lastPostAt } from "../lib/clubFeed";
+import { useClubChat } from "../lib/clubChat";
 import { activityOf } from "../lib/activity";
 import { dayLabel, hueFor } from "../lib/look";
 import { notice } from "../lib/notice";
@@ -15,10 +16,11 @@ import VerifiedBadge from "../components/VerifiedBadge";
 import ApplicationDetails from "../components/ApplicationDetails";
 import { JoinButton, JoinRequests } from "../components/JoinPanel";
 import ClubFeed from "../components/ClubFeed";
+import ClubChat from "../components/ClubChat";
 import RolesPanel from "../components/RolesPanel";
 import CohostInvites from "../components/CohostInvites";
 
-type Tab = "feed" | "events" | "people" | "about";
+type Tab = "feed" | "chat" | "events" | "people" | "about";
 const initials = (n: string) => n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
 
 /** One club, office or circle: a header in its own colour, then Feed, Events, People and About one tap apart so nothing needs a long scroll. */
@@ -37,6 +39,7 @@ export default function Club() {
   const [reason, setReason] = useState("");
   const org = orgs.find((o) => o.id === id);
   const feed = useClubFeed(org?.id ?? "", !!org && (org.status === "active" || org.mine || reviewer));
+  const chat = useClubChat(org?.id ?? "", !!org && org.status === "active" && (org.myJoin === "officer" || org.myJoin === "member"));
 
   if (!org) {
     return (
@@ -114,12 +117,15 @@ export default function Club() {
 
       <div className="segment club-seg" role="tablist" aria-label="Club sections">
         <button type="button" role="tab" aria-selected={tab === "feed"} onClick={() => setTab("feed")}><Megaphone size={15} aria-hidden="true" /> Feed</button>
+        <button type="button" role="tab" aria-selected={tab === "chat"} onClick={() => setTab("chat")}><MessageSquare size={15} aria-hidden="true" /> Chat{chat.unread > 0 && <span className="rem-count">{chat.unread > 9 ? "9+" : chat.unread}</span>}</button>
         {!circle && <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}><CalendarDays size={15} aria-hidden="true" /> Events{upcoming.length > 0 && <span className="rem-count">{upcoming.length}</span>}</button>}
         <button type="button" role="tab" aria-selected={tab === "people"} onClick={() => setTab("people")}><Users size={15} aria-hidden="true" /> People{requests > 0 && <span className="rem-count">{requests}</span>}</button>
         <button type="button" role="tab" aria-selected={tab === "about"} onClick={() => setTab("about")}>About</button>
       </div>
 
       {tab === "feed" && <ClubFeed org={org} reviewer={reviewer} feed={feed} />}
+
+      {tab === "chat" && <ClubChat org={org} reviewer={reviewer} chat={chat} />}
 
       {tab === "events" && !circle && (
         <section className="club-section" aria-label="Events">

@@ -2411,3 +2411,45 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .cohost-invites ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .cohost-invites li{display:grid;gap:8px;padding:12px;border-radius:16px;background:var(--surface)}
 .ev-cohost-note{margin:0;font-size:.82rem}
+
+/* Club chat */
+.cc{display:grid;grid-template-columns:200px minmax(0,1fr);gap:14px;align-items:start}
+.cc-channels{display:grid;gap:4px;align-content:start}
+.cc-chan{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border:0;border-radius:12px;background:none;color:var(--ink-soft);font:inherit;font-weight:600;cursor:pointer;text-align:left;transition:background .2s,color .2s}
+.cc-chan:hover{background:var(--panel);color:var(--ink)}
+.cc-chan.on{background:var(--tint);color:var(--tint-ink)}
+.cc-chan.new{color:var(--violet);font-weight:500}
+.cc-unread{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--violet);color:#fff;font-size:.7rem;display:grid;place-items:center}
+.cc-pane{display:grid;gap:10px;min-width:0;padding:14px;border-radius:22px;background:var(--surface);border:1px solid var(--line)}
+.cc-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cc-head h2{display:flex;align-items:center;gap:6px;font-size:1.05rem}
+.cc-head p{margin:2px 0 0;font-size:.84rem}
+.cc-msgs{display:grid;align-content:start;gap:2px;height:min(52vh,460px);overflow-y:auto;padding:4px 2px}
+.cc-day{display:flex;justify-content:center;margin:10px 0 6px}
+.cc-day span{padding:2px 12px;border-radius:999px;background:var(--panel);color:var(--ink-soft);font-size:.74rem;font-weight:600}
+.cc-msg{display:flex;gap:10px;align-items:flex-start;padding:4px 6px;border-radius:12px}
+.cc-msg:hover{background:var(--panel)}
+.cc-msg.joined{padding-left:44px}
+.cc-body{min-width:0;flex:1}
+.cc-meta{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0}
+.cc-text{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.cc-del{opacity:0;transition:opacity .2s}
+.cc-msg:hover .cc-del,.cc-del:focus-visible{opacity:1}
+.cc-compose{display:flex;gap:8px;align-items:center}
+.cc-compose input{flex:1;min-width:0;min-height:46px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.cc-new{display:grid;gap:10px;padding:14px;border-radius:16px;background:var(--panel)}
+.cc-locked{display:block}
+@media (max-width:700px){
+  .cc{grid-template-columns:minmax(0,1fr)}
+  .cc-channels{display:flex;overflow-x:auto;gap:6px;padding-bottom:4px;scrollbar-width:none}
+  .cc-chan{flex:none;border:1px solid var(--line)}
+  .cc-msgs{height:52vh}
+  .cc-del{opacity:1}
+}
+
+.cc>*{min-width:0}
+.cc-channels{max-width:100%}
+.cc-compose .btn{flex:none}
+.club-page{grid-template-columns:minmax(0,1fr)}
+.club-seg{overflow-x:auto;scrollbar-width:none}
+@media (max-width:520px){.club-seg button{padding:0 4px;gap:4px}.club-seg button svg{display:none}}

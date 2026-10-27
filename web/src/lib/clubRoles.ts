@@ -1,6 +1,6 @@
 /** What people can do inside a club. The owner can do everything; others can do what their role ticks. This mirrors the database (org_perms), which
  *  is what actually enforces it; the screen uses it to show only the buttons that will work. */
-export type Perm = "announce" | "events" | "members" | "roles" | "tasks" | "polls" | "moderate";
+export type Perm = "announce" | "events" | "members" | "roles" | "tasks" | "polls" | "moderate" | "channels";
 
 export const PERMS: { key: Perm; label: string; help: string }[] = [
   { key: "announce", label: "Post announcements", help: "Announcements show to the whole campus and notify the club." },
@@ -8,7 +8,8 @@ export const PERMS: { key: Perm; label: string; help: string }[] = [
   { key: "polls", label: "Run polls", help: "Ask the club a question and collect votes." },
   { key: "members", label: "Manage members", help: "Answer join requests and welcome people in." },
   { key: "roles", label: "Manage roles", help: "Give people titles and change what a role can do." },
-  { key: "moderate", label: "Moderate", help: "Remove posts and comments that do not belong." },
+  { key: "moderate", label: "Moderate", help: "Remove posts, comments and chat messages that do not belong." },
+  { key: "channels", label: "Manage channels", help: "Add and remove the club's chat channels." },
   { key: "tasks", label: "Assign tasks", help: "Hand out jobs to the team (coming soon)." },
 ];
 export const ALL_PERMS: Perm[] = PERMS.map((p) => p.key);
