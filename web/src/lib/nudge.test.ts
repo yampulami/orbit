@@ -23,7 +23,7 @@ vi.mock("./supabase", () => ({
   },
 }));
 
-import { fetchChange, listenRooms, sendNudge } from "./nudge";
+import { fetchChange, listenRooms, onTyping, sendNudge } from "./nudge";
 
 beforeEach(() => { net.removed = []; for (const k of Object.keys(net.channels)) delete net.channels[k]; listenRooms("a", [], () => undefined); listenRooms("b", [], () => undefined); net.removed = []; });
 
@@ -80,5 +80,15 @@ describe("nudges that name a row by more than one field", () => {
     deliver("r9", { table: "campus_hangout_rsvps", id: "h1", op: "upsert", by: { password: "x" } });
     deliver("r9", { table: "campus_hangout_rsvps", id: "h1", op: "upsert", by: "oops" });
     expect(got).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("typing", () => {
+  it("keeps a room open while someone is watching it for typing", () => {
+    const off = onTyping("r7", () => undefined);
+    listenRooms("a", ["r7"], () => undefined);
+    listenRooms("a", [], () => undefined);
+    expect(net.removed).not.toContain("nudge-r7");
+    off();
   });
 });

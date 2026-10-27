@@ -52,7 +52,8 @@ export function listenRooms(who: string, ids: string[], onNudge: (n: Nudge) => v
     if (next.has(id)) continue;
     const r = rooms.get(id);
     r?.listeners.delete(who);
-    if (r && r.listeners.size === 0) { void supabase.removeChannel(r.ch); rooms.delete(id); }
+    // A room someone is watching for typing stays open even when nothing else listens in it.
+    if (r && r.listeners.size === 0 && r.typing.size === 0) { void supabase.removeChannel(r.ch); rooms.delete(id); }
   }
   for (const id of next) room(id).listeners.set(who, onNudge);
   if (next.size) listening.set(who, next); else listening.delete(who);
@@ -65,7 +66,7 @@ export function sendNudge(roomId: string | null | undefined, n: Nudge) {
     const r = room(roomId);
     void Promise.resolve(r.ch.send({ type: "broadcast", event: "n", payload: n })).catch(() => undefined);
     // A room nobody here listens in (someone else's inbox) is closed again shortly after.
-    if (r.listeners.size === 0) setTimeout(() => { if (r.listeners.size === 0 && rooms.get(roomId) === r) { void supabase!.removeChannel(r.ch); rooms.delete(roomId); } }, 3000);
+    if (r.listeners.size === 0) setTimeout(() => { if (r.listeners.size === 0 && r.typing.size === 0 && rooms.get(roomId) === r) { void supabase!.removeChannel(r.ch); rooms.delete(roomId); } }, 3000);
   } catch { /* the slower change feed still delivers it */ }
 }
 
@@ -84,6 +85,13 @@ export function sendTyping(roomId: string | null | undefined, userId: string) {
   if (!supabase || !roomId || Date.now() - lastTyping < 2500) return;
   lastTyping = Date.now();
   try { void Promise.resolve(room(roomId).ch.send({ type: "broadcast", event: "t", payload: { u: userId } })).catch(() => undefined); } catch { /* it is only a nicety */ }
+}
+
+/** Make sure the quick channel for this room is joined. A phone that slept can come back with the channel closed, and then nothing arrives until it is joined again. */
+export function ensureRoom(roomId: string) {
+  if (!supabase) return;
+  const st = (room(roomId).ch as { state?: string }).state;
+  if (st === "closed" || st === "errored") { try { room(roomId).ch.subscribe(); } catch { /* it retries on its own */ } }
 }
 
 /** Be told when someone types in this room. Returns a function that stops listening. */
