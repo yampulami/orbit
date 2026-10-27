@@ -19,6 +19,8 @@ import { setTheme, useTheme } from "../lib/theme";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { unreadDms, useDms } from "../lib/dms";
 import OfflineBanner from "./OfflineBanner";
+import Shortcuts from "./Shortcuts";
+import PullToRefresh from "./PullToRefresh";
 
 const items = [
   { to: "/app/feed", label: "Feed", icon: HomeIcon },
@@ -127,6 +129,8 @@ export default function Shell() {
         <button type="button" className="drawer-link" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}><LogOut size={22} strokeWidth={1.75} /><span>Sign out</span></button>
       </nav>
       <OfflineBanner />
+      <PullToRefresh />
+      <Shortcuts onNew={newPost} />
       <BadgeToast />
       <UndoToast />
       <NoticeHost />

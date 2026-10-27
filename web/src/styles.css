@@ -1750,3 +1750,17 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
 .wb-ev.class{background:color-mix(in srgb,var(--violet) 16%,var(--surface));color:var(--violet-deep);box-shadow:inset 3px 0 0 var(--violet)}
 [data-theme=dark] .wb-ev.class{color:#d9d3ff}
 .up li[data-kind=class] .up-ico{background:color-mix(in srgb,var(--violet) 18%,var(--surface));color:var(--violet-deep)}
+
+/* shortcuts help, pull to refresh */
+.shortcuts{width:min(420px,calc(100vw - 32px));background:var(--surface);color:var(--ink);border-radius:24px;padding:18px 20px 20px;box-shadow:0 30px 70px -24px rgba(20,10,60,.6)}
+.shortcuts header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.shortcuts h2{display:flex;align-items:center;gap:8px;font-size:1.05rem;font-weight:600}
+.shortcuts dl{display:grid;gap:6px;margin:0}
+.shortcuts dl>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line)}
+.shortcuts dl>div:last-child{border-bottom:0}
+.shortcuts dd{margin:0;color:var(--ink-soft);font-size:.9rem}
+kbd{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:7px;background:var(--panel);border:1px solid var(--line);font:600 .78rem var(--sans,inherit);color:var(--ink)}
+.ptr{position:fixed;top:env(safe-area-inset-top);left:50%;margin-left:-20px;width:40px;height:40px;border-radius:50%;background:var(--surface);color:var(--violet);display:grid;place-items:center;z-index:65;box-shadow:0 10px 24px -10px rgba(40,25,90,.5);pointer-events:none}
+.ptr .spin svg{animation:ptr-spin .7s linear infinite}
+@keyframes ptr-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.ptr .spin svg{animation:none}}

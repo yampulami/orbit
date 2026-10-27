@@ -3,6 +3,7 @@ import { Flame, LogOut, Pencil, Trash2 } from "lucide-react";
 import { NAME_MAX, renameMe, useDisplayName } from "../lib/displayName";
 import { pushSupported } from "../lib/push";
 import { haptic, setHaptics, useHaptics } from "../lib/haptics";
+import { install, useInstall } from "../lib/install";
 import { disableDeviceAlerts, enableDeviceAlerts, notifyDevice, useDeviceAlerts } from "../lib/deviceAlerts";
 import { setNudge, useNudges } from "../lib/nudges";
 import { notice } from "../lib/notice";
@@ -73,6 +74,7 @@ export default function Profile() {
   const nudges = useNudges(session?.user.id);
   const device = useDeviceAlerts();
   const feel = useHaptics();
+  const installable = useInstall();
   const uid = session?.user.id;
 
   async function toggleDevice() {
@@ -142,6 +144,16 @@ export default function Profile() {
         </div>
         <ThemeSegment />
       </section>
+
+      {installable !== "installed" && installable !== "unavailable" && (
+        <section className="notif-card" aria-label="Install Orbit">
+          <div>
+            <h2>Install Orbit</h2>
+            <p className="muted">{installable === "ios" ? "On iPhone: tap the Share button in Safari, then Add to Home Screen. Orbit then opens like an app and can send you alerts." : "Add Orbit to your device so it opens in its own window, like an app."}</p>
+          </div>
+          {installable === "can-install" && <div className="notif-row"><span>Open Orbit like an app</span><button type="button" className="btn primary" onClick={() => void install()}>Install</button></div>}
+        </section>
+      )}
 
       <section className="notif-card" aria-label="Touch feedback">
         <div>
