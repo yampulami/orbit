@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, CalendarDays, Coffee, ListChecks, MessageSquare, Newspaper, NotebookText, Search, ShoppingBasket, Users, type LucideIcon } from "lucide-react";
+import { Bell, CalendarDays, Coffee, ListChecks, MessageSquare, Newspaper, NotebookText, Search, ShoppingBasket, Users, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi, type Row } from "../lib/feedData";
 import { friendsLive, useFriends } from "../lib/friends";
@@ -20,6 +20,7 @@ const TOP_MAX = 4;
 export default function GlobalSearch() {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const [phoneOpen, setPhoneOpen] = useState(false); // on a phone the box is an icon until tapped
   const [active, setActive] = useState(0);
   const [posts, setPosts] = useState<Row[] | null>(null);
   const [people, setPeople] = useState<PersonHit[]>([]);
@@ -94,11 +95,13 @@ export default function GlobalSearch() {
   const idx = (section: Option["section"], id: string) => options.findIndex((o) => o.section === section && o.id === id);
 
   return (
-    <div className="gsearch" ref={root} role="search" onKeyDown={key}>
-      <Search size={18} aria-hidden="true" />
+    <div className={"gsearch" + (phoneOpen ? " phone-open" : "")} ref={root} role="search" onKeyDown={key}>
+      <button type="button" className="gs-toggle" aria-label="Search" aria-expanded={phoneOpen} onClick={() => { setPhoneOpen(true); setTimeout(() => input.current?.focus(), 50); }}><Search size={20} aria-hidden="true" /></button>
+      <Search size={18} aria-hidden="true" className="gs-glass" />
       <input ref={input} type="search" value={q} placeholder={friendsLive ? "Search, or @username" : "Search"} aria-label="Search Orbit" role="combobox" aria-expanded={showPanel} aria-controls={listId} aria-autocomplete="list" aria-activedescendant={showPanel && options.length ? `${listId}-${active}` : undefined}
         onChange={(e) => { setQ(e.target.value); setActive(0); setOpen(true); }} onFocus={() => { loadPosts(); setOpen(true); }} />
       <kbd aria-hidden="true">Ctrl K</kbd>
+      <button type="button" className="gs-close" aria-label="Close search" onClick={() => { setPhoneOpen(false); setOpen(false); setQ(""); }}><X size={20} aria-hidden="true" /></button>
       {showPanel && (
         <ul id={listId} role="listbox" className="gs-panel" aria-label="Search results">
           {options.length === 0 ? (

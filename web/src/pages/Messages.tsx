@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { MessageCircle, Plus, Send } from "lucide-react";
+import { ArrowLeft, MessageCircle, Plus, Send } from "lucide-react";
+import { useChatOpenClass, useIsPhone } from "../lib/phone";
 import EmptyState from "../components/EmptyState";
 import EmojiButton from "../components/EmojiButton";
 import RichText from "../components/RichText";
@@ -27,6 +28,8 @@ const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "nume
 /** Direct messages with students on your campus. New messages show up on their own, without refreshing. */
 function LiveMessages() {
   const { threads, people, status } = useDms();
+  const phone = useIsPhone();
+  const [chatOpen, setChatOpen] = useState(false); // phone: false shows the list of chats, true shows one chat full screen
   const [active, setActive] = useState<string>("");
   const [text, setText] = useState("");
   const [picking, setPicking] = useState(false);
@@ -38,9 +41,11 @@ function LiveMessages() {
   const [, tick] = useState(0);
   // Arriving from someone's profile ("Message") opens that conversation.
   const asked = (useLocation().state as { thread?: string } | null)?.thread;
-  useEffect(() => { if (asked) { setActive(asked); setPicking(false); } }, [asked]);
+  useEffect(() => { if (asked) { setActive(asked); setPicking(false); setChatOpen(true); } }, [asked]);
   const current = threads.find((t) => t.id === active) ?? (picking ? undefined : threads[0]);
   const shownId = current?.id ?? "";
+  const inChat = !phone || chatOpen || picking;
+  useChatOpenClass(phone && inChat);
 
   // Keep the newest message in view, and mark what you are looking at as read.
   useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [shownId, current?.messages.length]);
@@ -83,11 +88,12 @@ function LiveMessages() {
   return (
     <div className="page">
       <h1 className="sr">Messages</h1>
-      <div className="chat">
+      {phone && inChat && <button type="button" className="chat-back-bar" onClick={() => { setChatOpen(false); setPicking(false); }}><ArrowLeft size={18} aria-hidden="true" /> Messages</button>}
+      <div className={"chat" + (phone ? (inChat ? " phone-chat" : " phone-list") : "")}>
         <div className="threads" role="tablist" aria-label="Conversations">
-          <button type="button" className="thread new" onClick={() => { setPicking((v) => !v); setActive(""); }} aria-expanded={picking}><Plus size={16} aria-hidden="true" /><strong>New message</strong></button>
+          <button type="button" className="thread new" onClick={() => { setPicking((v) => !v); setActive(""); setChatOpen(true); }} aria-expanded={picking}><Plus size={16} aria-hidden="true" /><strong>New message</strong></button>
           {threads.map((t) => (
-            <button key={t.id} role="tab" aria-selected={!picking && t.id === shownId} className={"thread" + (!picking && t.id === shownId ? " on" : "")} onClick={() => { setPicking(false); setActive(t.id); }}>
+            <button key={t.id} role="tab" aria-selected={!picking && t.id === shownId} className={"thread" + (!picking && t.id === shownId ? " on" : "")} onClick={() => { setPicking(false); setActive(t.id); setChatOpen(true); }}>
               {!picking && t.id === shownId && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
               <strong>{t.name}{t.unread > 0 && <span className="dm-unread" aria-label={`${t.unread} unread`}>{t.unread}</span>}</strong>
               <span className="muted">{t.messages.length ? t.messages[t.messages.length - 1].text : "No messages yet"}</span>

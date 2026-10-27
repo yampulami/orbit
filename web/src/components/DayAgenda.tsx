@@ -3,6 +3,9 @@ import { MapPin, Users } from "lucide-react";
 import PinButton from "./PinButton";
 import RemindersPanel from "./RemindersPanel";
 import { hangActions, isVisible, useHang, YOU } from "../lib/hangouts";
+import { classesOn, clockLabel, useClasses } from "../lib/classes";
+import { useCampusEvents } from "../lib/campusEvents";
+import { EventBadge } from "./CampusEvents";
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
@@ -15,6 +18,8 @@ export default function DayAgenda({ day }: { day: string }) {
     .filter((h) => isVisible(h, groups) && new Date(h.when).toDateString() === day)
     .sort((a, b) => a.when.localeCompare(b.when));
   const asking = list.filter((h) => !h.rsvps[YOU]).length;
+  const classes = classesOn(useClasses(), d);
+  const dayEvents = useCampusEvents().events.filter((e) => e.status === "published" && !e.canceled && new Date(e.startsAt).toDateString() === day);
 
   return (
     <section className="agenda" aria-label="Selected day">
@@ -24,6 +29,12 @@ export default function DayAgenda({ day }: { day: string }) {
           {list.length > 0 && ` · ${list.length} hangout${list.length === 1 ? "" : "s"}`}
           {asking > 0 && ` · ${asking} need${asking === 1 ? "s" : ""} your answer`}</p>
       </header>
+      {(classes.length > 0 || dayEvents.length > 0) && (
+        <ul className="agenda-extra" aria-label="Classes and campus events that day">
+          {classes.map((c) => <li key={c.id} className="x-class"><b>{clockLabel(c.start)}</b><span>{c.name}{c.place ? ` · ${c.place}` : ""}</span><em>Class</em></li>)}
+          {dayEvents.map((e) => <li key={e.id} className="x-event"><b>{new Date(e.startsAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</b><span>{e.title}{e.place ? ` · ${e.place}` : ""}</span><EventBadge e={e} /></li>)}
+        </ul>
+      )}
       <div className="agenda-grid">
         <div className="agenda-hangs">
           <h3><Users size={15} aria-hidden="true" />Group hangouts <span className="agenda-sub">private plans with your groups</span></h3>

@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { LogOut, Moon, SquarePen, Sun } from "lucide-react";
+import { LayoutGrid, LogOut, Moon, SquarePen, Sun } from "lucide-react";
 import { GroupsIcon, HomeIcon, MapIcon, MessagesIcon, PlansIcon, RoommatesIcon } from "./icons";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
@@ -22,6 +22,7 @@ import { unreadDms, useDms } from "../lib/dms";
 import OfflineBanner from "./OfflineBanner";
 import Shortcuts from "./Shortcuts";
 import PullToRefresh from "./PullToRefresh";
+import { useIsPhone } from "../lib/phone";
 
 const items = [
   { to: "/app/feed", label: "Feed", icon: HomeIcon },
@@ -69,8 +70,26 @@ export default function Shell() {
   const [composing, setComposing] = useState(false);
   const newPost = () => setComposing(true);
 
+  // Phone: the top bar tucks away when you scroll down and comes back when you scroll up, like a phone app.
+  const phone = useIsPhone();
+  const [hideTop, setHideTop] = useState(false);
+  useEffect(() => {
+    if (!phone) { setHideTop(false); return; }
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y > last + 10 && y > 90) setHideTop(true); else if (y < last - 10 || y < 40) setHideTop(false);
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [phone]);
+  useEffect(() => { setHideTop(false); }, [loc.pathname]);
+  const pageTitle = [...items, { to: "/app/profile", label: "Profile" }].find((i) => loc.pathname.startsWith(i.to))?.label ?? "Orbit";
+  const tabs = items.filter((i) => ["/app/feed", "/app/messages", "/app/groups", "/app/plans"].includes(i.to));
+
   return (
-    <div className={"shell" + (wide ? " wide" : "")}>
+    <div className={"shell" + (wide ? " wide" : "") + (hideTop ? " hide-top" : "")}>
       <a className="skip" href="#main">Skip to content</a>
       <aside className="side">
         <div className="side-top">
@@ -106,6 +125,7 @@ export default function Shell() {
       <div className="content">
         <div className="topline">
           <button type="button" className="logo logo-mobile" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><i /></button>
+          <span className="top-title" aria-hidden="true">{pageTitle}</span>
           <GlobalSearch />
           <NotificationBell />
           <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="me topme">{name.slice(0, 1).toUpperCase()}</NavLink>
@@ -114,6 +134,21 @@ export default function Shell() {
           <Outlet />
         </motion.main>
       </div>
+      <nav className="tabbar" aria-label="Main">
+        {tabs.map((t) => (
+          <NavLink key={t.to} to={t.to} className={({ isActive }) => "tab" + (isActive ? " active" : "")}>
+            <span className="tab-ico"><t.icon size={22} strokeWidth={1.75} />
+              {t.to === "/app/messages" && unread > 0 && <b className="tab-count" role="img" aria-label={`${unread} unread`}>{unread > 9 ? "9+" : unread}</b>}
+              {t.to === "/app/plans" && waiting > 0 && <i className="tab-dot" role="img" aria-label={`${waiting} need your answer`} />}
+            </span>
+            <span className="tab-label">{t.label}</span>
+          </NavLink>
+        ))}
+        <button type="button" className={"tab" + (drawer ? " active" : "")} aria-label="More" aria-expanded={drawer} onClick={() => setDrawer(true)}>
+          <span className="tab-ico"><LayoutGrid size={22} strokeWidth={1.75} /></span><span className="tab-label">More</span>
+        </button>
+      </nav>
+      {loc.pathname.startsWith("/app/feed") && <button type="button" className="fab" aria-label="New post" onClick={newPost}><SquarePen size={24} strokeWidth={1.9} aria-hidden="true" /></button>}
       <div className={"drawer-scrim" + (drawer ? " open" : "")} aria-hidden="true" onClick={() => setDrawer(false)} />
       <nav className={"drawer" + (drawer ? " open" : "")} aria-label="Menu" aria-hidden={!drawer} inert={!drawer}>
         <div className="drawer-head"><span className="logo"><i /><span>Orbit</span></span></div>

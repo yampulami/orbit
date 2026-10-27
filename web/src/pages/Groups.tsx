@@ -2,8 +2,9 @@ import { siteUrl } from "../lib/siteUrl";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
 import EmojiButton from "../components/EmojiButton";
+import { useChatOpenClass, useIsPhone } from "../lib/phone";
 import RichText from "../components/RichText";
 import HangoutCard from "../components/HangoutCard";
 import FriendsPanel from "../components/FriendsPanel";
@@ -20,6 +21,8 @@ export default function Groups() {
   const loc = useLocation();
   const nav = useNavigate();
   const { live: campusPlaces } = useMapPlaces();
+  const phone = useIsPhone();
+  const [paneOpen, setPaneOpen] = useState(false); // phone: false shows the list of groups, true shows one group full screen
   // Arriving from the map with a place already chosen opens the plan form with it filled in.
   const fromMap = (loc.state as { place?: string } | null)?.place;
   useEffect(() => { if (fromMap) { setPlace(fromMap); setPlanning(true); setAdding(false); setCreating(false); } }, [fromMap, loc.key]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -28,6 +31,7 @@ export default function Groups() {
   useEffect(() => { if (asked && groups.some((g) => g.id === asked)) { setActiveId(asked); setCreating(false); } }, [asked, loc.key]);
   const [text, setText] = useState("");
   const chatInput = useRef<HTMLInputElement>(null);
+  useChatOpenClass(phone && paneOpen);
   const [creating, setCreating] = useState(false);
   const [gName, setGName] = useState("");
   const [gMembers, setGMembers] = useState("");
@@ -122,17 +126,18 @@ export default function Groups() {
   return (
     <div className="page">
       <h1 className="sr">Groups</h1>
-      <div className="chat">
+      {phone && paneOpen && <button type="button" className="chat-back-bar" onClick={() => setPaneOpen(false)}><ArrowLeft size={18} aria-hidden="true" /> Groups</button>}
+      <div className={"chat" + (phone ? (paneOpen ? " phone-chat" : " phone-list") : "")}>
         <div className="threads" aria-label="Your groups">
           {groups.map((g) => (
-            <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate && !friendsOpen ? " on" : "")} aria-current={g.id === group?.id && !showCreate && !friendsOpen} onClick={() => { setActiveId(g.id); setFriendsOpen(false); setCreating(false); setPlanning(false); setAdding(false); setError(""); }}>
+            <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate && !friendsOpen ? " on" : "")} aria-current={g.id === group?.id && !showCreate && !friendsOpen} onClick={() => { setActiveId(g.id); setFriendsOpen(false); setCreating(false); setPlanning(false); setAdding(false); setError(""); setPaneOpen(true); }}>
               {g.id === group?.id && !showCreate && !friendsOpen && <motion.span layoutId="group-indicator" className="threadpill" transition={slide} />}
               <strong>{g.name}</strong>
               <span className="muted">{g.members.length} people</span>
             </button>
           ))}
-          <button className="thread new" onClick={() => { setCreating(true); setFriendsOpen(false); setError(""); }}><Plus size={16} /> New group</button>
-          {hangLive && <button className="thread new" onClick={() => { setFriendsOpen(true); setCreating(false); setError(""); }} aria-pressed={friendsOpen}><Users size={16} /> Friends{friendRequests.length > 0 && <span className="dm-unread" aria-label={`${friendRequests.length} friend requests`}>{friendRequests.length}</span>}</button>}
+          <button className="thread new" onClick={() => { setCreating(true); setFriendsOpen(false); setError(""); setPaneOpen(true); }}><Plus size={16} /> New group</button>
+          {hangLive && <button className="thread new" onClick={() => { setFriendsOpen(true); setCreating(false); setError(""); setPaneOpen(true); }} aria-pressed={friendsOpen}><Users size={16} /> Friends{friendRequests.length > 0 && <span className="dm-unread" aria-label={`${friendRequests.length} friend requests`}>{friendRequests.length}</span>}</button>}
           {hangLive && (
             joining ? (
               <form className="join-code" onSubmit={joinWithCode}>

@@ -1893,3 +1893,120 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .wb-legend .lg.class{background:color-mix(in srgb,var(--violet) 30%,var(--surface))}
 .wb-legend .lg.reminder{background:var(--lav)}
 .cstrip .ebadge{margin-bottom:3px}
+
+/* =====================================================================================================================
+   The phone: its own lighter layout. A bottom tab bar, a slim top bar that tucks away on scroll, one pane at a time for
+   chats, a compose button, bottom sheets, and fewer things on screen. Tablets get the tab bar too.
+   ===================================================================================================================== */
+.tabbar,.fab,.chat-back-bar,.gs-toggle,.gs-close,.top-title{display:none}
+
+@media (max-width:900px){
+  .shell .side{display:none!important}
+  .shell{padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+  .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:50;justify-content:space-around;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line)}
+  .tab{position:relative;flex:1;display:grid;justify-items:center;gap:2px;padding:4px 0 2px;border:0;background:none;color:var(--muted);font:inherit;font-size:.68rem;font-weight:600;cursor:pointer;border-radius:14px}
+  .tab-ico{position:relative;display:grid;place-items:center;width:56px;height:30px;border-radius:15px;transition:background .25s var(--ease),color .25s}
+  .tab.active{color:var(--violet)}
+  .tab.active .tab-ico{background:color-mix(in srgb,var(--violet) 18%,transparent)}
+  .tab:active .tab-ico{transform:scale(.92)}
+  .tab-count{position:absolute;top:-4px;right:6px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#ff9f43;color:#2b1a00;font-size:.64rem;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--surface)}
+  .tab-dot{position:absolute;top:0;right:12px;width:10px;height:10px;border-radius:50%;background:#ff9f43;box-shadow:0 0 0 2px var(--surface)}
+  body.chat-open .tabbar,body.chat-open .fab{display:none}
+  body.chat-open .shell{padding-bottom:0}
+  /* the slim top bar */
+  .topline{padding:8px 10px;background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none;transition:transform .28s var(--ease);gap:8px}
+  .topline::before{display:none}
+  .shell.hide-top .topline{transform:translateY(-110%)}
+  .top-title{display:block;flex:1;min-width:0;font-family:var(--serif);font-size:1.25rem;font-weight:500;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .topline .me.topme{display:none}
+  .gsearch{flex:none;width:44px;min-width:0;background:none;box-shadow:none}
+  .gsearch .gs-toggle{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer}
+  .gsearch>.gs-glass,.gsearch input,.gsearch kbd{display:none}
+  .gsearch.phone-open{position:fixed;left:0;right:0;top:0;z-index:90;width:auto;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);box-shadow:0 10px 30px -14px rgba(0,0,0,.5)}
+  .gsearch.phone-open .gs-toggle{display:none}
+  .gsearch.phone-open input{display:block;flex:1;min-height:44px;font-size:1rem}
+  .gsearch.phone-open .gs-glass{display:block}
+  .gsearch.phone-open .gs-close{display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;background:none;color:var(--ink-soft)}
+  .gsearch.phone-open .gs-panel{position:fixed;left:8px;right:8px;top:62px;max-height:calc(100dvh - 120px)}
+  /* the page content */
+  .page{padding-top:4px}
+  .main{padding-bottom:8px}
+}
+
+@media (max-width:700px){
+  .fab{display:grid;place-items:center;position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:45;width:56px;height:56px;border:0;border-radius:50%;background:var(--violet);color:#fff;cursor:pointer;box-shadow:0 14px 28px -10px rgba(60,40,140,.7);transition:transform .2s var(--ease)}
+  .fab:active{transform:scale(.92)}
+  .rem-alerts{bottom:calc(86px + env(safe-area-inset-bottom))}
+
+  /* chats: the list first, then one chat full screen with a back button */
+  .chat.phone-list>:not(.threads){display:none}
+  .chat.phone-chat>.threads{display:none}
+  .chat.phone-list .threads{grid-auto-flow:row;grid-auto-columns:auto;overflow:visible;gap:8px}
+  .chat.phone-list .thread{min-height:64px;padding:12px 16px}
+  .chat-back-bar{display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:30;width:100%;padding:12px 2px;border:0;background:var(--bg);color:var(--violet);font:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-align:left}
+  body.chat-open .topline{display:none}
+  .chat.phone-chat .convo{min-height:calc(100dvh - 76px)}
+  .chat.phone-chat .bubbles{max-height:none;flex:1;min-height:40vh}
+  .chat.phone-chat .comment-form{position:sticky;bottom:0;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom));margin:0}
+  .convo-actions .btn{flex:1 1 140px}
+
+  /* the feed: posts and plans, nothing else */
+  .feed-layout{display:block}
+  .hangs .pill-link,.hangs .hang-fold,.hangs .hang-nav,.streak-chip{display:none}
+  .posts .post{content-visibility:auto;contain-intrinsic-size:auto 220px}
+  .post.tile{padding:14px 16px}
+
+  /* plans: a day strip and a list */
+  .plans-phone{display:grid;gap:14px}
+  .daystrip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 2px 6px;margin:0 -2px}
+  .daystrip::-webkit-scrollbar{display:none}
+  .ds{flex:none;display:grid;justify-items:center;gap:1px;width:52px;padding:8px 0 6px;border:0;border-radius:18px;background:var(--surface);color:var(--ink-soft);font:inherit;cursor:pointer;transition:background .2s,color .2s,transform .18s var(--ease)}
+  .ds span{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .ds b{font-size:1.15rem;font-weight:600;color:var(--ink)}
+  .ds i{width:5px;height:5px;border-radius:50%;background:transparent}
+  .ds i.dot{background:var(--violet)}
+  .ds.on{background:var(--ink);color:var(--on-ink)}
+  .ds.on b{color:var(--on-ink)}
+  .ds.on i.dot{background:currentColor}
+  .ds:active{transform:scale(.95)}
+  .wide-btn{width:100%;min-height:48px}
+  .agenda-extra{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
+  .agenda-extra li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--panel);font-size:.9rem}
+  .agenda-extra b{flex:none;min-width:64px;font-weight:600}
+  .agenda-extra span{flex:1;min-width:0;overflow-wrap:anywhere}
+  .agenda-extra em{font-style:normal;font-size:.72rem;font-weight:700;color:var(--violet)}
+  .agenda,.cevents,.classes,.up{border-radius:20px}
+  .cevents>header .btn{width:100%}
+
+  /* modals and pickers become bottom sheets */
+  .modal-back{place-items:end center;padding:0}
+  .modal-back>*{width:100%!important;max-width:none!important;max-height:92dvh;border-radius:26px 26px 0 0!important;padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+  .modal-back>*::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 12px}
+  .emoji-pop{position:fixed;left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));width:auto;max-height:56dvh;z-index:95;border-radius:22px}
+  .emoji-grid{grid-template-columns:repeat(7,1fr)}
+  .emoji-grid button{height:44px}
+  .picker-menu{max-height:50dvh}
+
+  /* lighter to draw: no glass blur, no entrance animation, flatter shadows */
+  .pills,.rsvp,.topline,.modal-back{-webkit-backdrop-filter:none;backdrop-filter:none}
+  .main>*{animation:none}
+  .card,.post,.hang{box-shadow:none}
+}
+
+/* a touch screen: no grey flash on tap, no double-tap zoom delay, our own pull to refresh instead of the browser one */
+@media (pointer:coarse){
+  *{-webkit-tap-highlight-color:transparent}
+  button,a,[role=button],[role=tab],[role=switch],input,select,textarea,summary{touch-action:manipulation}
+  html{overscroll-behavior-y:none}
+  input,select,textarea{font-size:max(16px,1em)}
+}
+@media (hover:none){
+  .btn.primary:hover,.thread:hover,.hang:hover,.post:hover,.wb-ev:hover{transform:none;box-shadow:none}
+}
+@media (max-width:700px){
+  .cstrip li:nth-child(n+2){display:none}
+  .cstrip{padding:12px 14px}
+  .cevents>header p.muted{display:none}
+  .cevents{padding:14px}
+  .hangs{margin-bottom:6px}
+}

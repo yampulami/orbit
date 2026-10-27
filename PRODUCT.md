@@ -70,3 +70,15 @@ Earlier rounds set these practices: 44-point touch targets, labels that don't re
 - **Around the app.** Keyboard shortcuts (`?` lists them: `g` then a letter to go to a page, `n` new post, `/` search), an install option in Profile, and larger tap areas for small buttons on touch screens.
 - **Checked.** Every page at desktop and phone width for sideways overflow, unnamed controls, unlabelled fields and small tap targets; the live checks (unread badge, Seen, typing) were run with two real accounts in separate tabs.
 - **Not done, and why.** Class schedules do not follow you between devices yet (that needs a database table, so it is a small follow-up). Haptics on iPhone depend on iOS 17.4 or later, and I could not test on a physical phone.
+
+## The phone layout (2026-10-27)
+
+On a phone (700px and narrower; tablets get the same tab bar) Orbit is a different, lighter layout rather than the desktop squeezed:
+
+- **A bottom tab bar** (Feed, Messages, Groups, Plans, More) with labels and unread badges; "More" opens the menu with Roommates, Map and Profile.
+- **A slim top bar** with the page name, a search icon (the box opens full width when tapped) and the bell. It tucks away when you scroll down and returns when you scroll up.
+- **One pane at a time for chats:** Messages and Groups show a list; opening one shows the chat full screen with a back button, and the tab bar steps aside so the message box sits at the bottom.
+- **Feed:** a round compose button instead of the composer card, hangouts folded into one line until tapped, a single "Happening on campus" line, and no side panels.
+- **Plans:** a two-week day strip, that day's agenda (hangouts, classes, campus events, reminders), campus events and "Coming up". The month calendar and the week board are desktop-only, and are not even downloaded on a phone.
+- **Sheets:** the post box and the emoji picker open as bottom sheets.
+- **Lighter and more native:** no glass blur or entrance animations, flatter shadows, no tap flash, no browser pull-to-refresh (Orbit's own instead), 16px inputs so iPhones do not zoom, and long lists skip drawing what is off screen.

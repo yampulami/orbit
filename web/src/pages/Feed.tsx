@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "react";
+import { useIsPhone } from "../lib/phone";
 import EmojiButton from "../components/EmojiButton";
 import RichText from "../components/RichText";
 import CampusEventsStrip from "../components/CampusEventsStrip";
@@ -11,7 +12,8 @@ import { feedApi as api, type Row } from "../lib/feedData";
 import { campusKey, validCampus } from "../shared/campus";
 import { communities, type Community } from "../shared/feed";
 import { enter, exit } from "../lib/motion";
-import Calendar from "../components/Calendar";
+// The month calendar is only used on a larger screen, so it is loaded only there.
+const Calendar = lazy(() => import("../components/Calendar"));
 import UpcomingList from "../components/UpcomingList";
 import CommunityPicker from "../components/CommunityPicker";
 import { communityIcon } from "../lib/communityUi";
@@ -70,7 +72,11 @@ export default function Feed() {
   const [posting, setPosting] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [filter, setFilter] = useState<"All" | Community>("All");
-  const [hangsOpen, setHangsOpen] = useState(() => { try { return localStorage.getItem("orbit-feed-hangs") !== "0"; } catch { return true; } });
+  // On a phone the hangouts start folded into one line (tap to open), so the posts are what you see first.
+  const [hangsOpen, setHangsOpen] = useState(() => {
+    try { const v = localStorage.getItem("orbit-feed-hangs"); if (v === "1") return true; if (v === "0") return false; } catch { /* default below */ }
+    return !(typeof matchMedia !== "undefined" && matchMedia("(max-width: 700px)").matches);
+  });
   const toggleHangs = () => setHangsOpen((v) => { try { localStorage.setItem("orbit-feed-hangs", v ? "0" : "1"); } catch { /* ignore */ } return !v; });
   const [calOpen, setCalOpen] = useState(() => { try { return localStorage.getItem("orbit-feed-cal") === "1"; } catch { return false; } });
   const toggleCal = () => setCalOpen((v) => { try { localStorage.setItem("orbit-feed-cal", v ? "0" : "1"); } catch { /* ignore */ } return !v; });
@@ -80,6 +86,7 @@ export default function Feed() {
   const staying = useRef<{ tab: string; ids: Map<string, number | null> } | null>(null);
   const [, nudge] = useState(0);
 
+  const phone = useIsPhone();
   const rail = useRef<HTMLElement>(null);
   useStickyRail(rail, !loading && !!campus);
   const { groups, hangouts } = useHang();
@@ -172,6 +179,7 @@ export default function Feed() {
     <div className="feed-layout">
       <div className="feed-main">
         <h1 className="sr">Campus feed</h1>
+        {phone && <CampusEventsStrip />}
         <section className="hangs" aria-label="Hangouts">
           <header>
             <h2 className="sr">Hangouts</h2>
@@ -224,7 +232,7 @@ export default function Feed() {
             </AnimatePresence>
           )}
         </section>
-        <form className={"card post composer" + (body ? " has-text" : "")} onSubmit={publish}>
+        {!phone && <form className={"card post composer" + (body ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
             <span className="sr">Write a post</span>
             <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder="What’s happening on campus?" />
@@ -238,7 +246,7 @@ export default function Feed() {
             <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span>
             <button className="btn primary" disabled={posting || !body.trim()}>{posting ? "Posting…" : "Post"}</button>
           </div>
-        </form>
+        </form>}
         <h2 className="sr">Campus feed at {campus.name}</h2>
         <div className="pills" role="group" aria-label="Filter by community">
           {(["All", ...communities] as const).map((c) => {
@@ -290,7 +298,7 @@ export default function Feed() {
           </AnimatePresence>
         </div>
       </div>
-      <aside className="rail" ref={rail} aria-label="Your campus summary">
+      {!phone && <aside className="rail" ref={rail} aria-label="Your campus summary">
         <CampusEventsStrip />
         <section className="cal-fold">
           <button type="button" className="cal-toggle" aria-expanded={calOpen} onClick={toggleCal}>
@@ -301,13 +309,13 @@ export default function Feed() {
           <AnimatePresence initial={false}>
             {calOpen && (
               <motion.div key="cal" className="reveal" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1, transition: enter }} exit={{ height: 0, opacity: 0, transition: exit }}>
-                <Calendar posts={posts} day={day} onDay={setDay} compact />
+                <Suspense fallback={<div className="skeleton sk-card" />}><Calendar posts={posts} day={day} onDay={setDay} compact /></Suspense>
               </motion.div>
             )}
           </AnimatePresence>
         </section>
         <UpcomingList limit={5} moreTo="/app/plans" hide={["hangout"]} title="Reminders and chores" />
-      </aside>
+      </aside>}
     </div>
   );
 }
