@@ -22,6 +22,7 @@ import { bindClasses, unbindClasses } from "./lib/classes";
 import { bindCampusEvents, unbindCampusEvents } from "./lib/campusEvents";
 import { bindCampusOrgs, unbindCampusOrgs } from "./lib/campusOrgs";
 import { clearVerified } from "./lib/verified";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { bindBlocks, unbindBlocks } from "./lib/safety";
 
 // Everything except the main feed loads when it is first opened, so the first download stays small.
@@ -129,6 +130,7 @@ function JoinLink() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<Landing />} />
@@ -156,5 +158,6 @@ export default function App() {
       </Routes>
       <ArrivalScreen />
     </Suspense>
+    </ErrorBoundary>
   );
 }

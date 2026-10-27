@@ -12,6 +12,12 @@ import { startHaptics } from "./lib/haptics";
 
 startHaptics();
 
+// A new deploy renames the built files. A tab opened before it can fail to load a screen: reload once to pick up the new build.
+window.addEventListener("vite:preloadError", () => {
+  try { if (sessionStorage.getItem("orbit-reloaded")) return; sessionStorage.setItem("orbit-reloaded", "1"); } catch { /* reload anyway */ }
+  location.reload();
+});
+
 const Router = DEMO_BUILD ? MemoryRouter : BrowserRouter; // hosted preview can't use real URLs
 
 createRoot(document.getElementById("root")!).render(
