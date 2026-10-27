@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { LayoutGrid, LogOut, Moon, SquarePen, Sun } from "lucide-react";
+import { LayoutGrid, LogOut, Megaphone, Moon, SquarePen, Sun } from "lucide-react";
 import { GroupsIcon, HomeIcon, MapIcon, MessagesIcon, PlansIcon, RoommatesIcon } from "./icons";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
@@ -30,6 +30,7 @@ const items = [
   { to: "/app/groups", label: "Groups", icon: GroupsIcon },
   { to: "/app/roommates", label: "Roommates", icon: RoommatesIcon },
   { to: "/app/plans", label: "Plans", icon: PlansIcon },
+  { to: "/app/campus", label: "Campus", icon: Megaphone },
   { to: "/app/map", label: "Map", icon: MapIcon },
 ];
 
@@ -86,7 +87,7 @@ export default function Shell() {
   }, [phone]);
   useEffect(() => { setHideTop(false); }, [loc.pathname]);
   const pageTitle = [...items, { to: "/app/profile", label: "Profile" }].find((i) => loc.pathname.startsWith(i.to))?.label ?? "Orbit";
-  const tabs = items.filter((i) => ["/app/feed", "/app/messages", "/app/groups", "/app/plans"].includes(i.to));
+  const tabs = items.filter((i) => ["/app/feed", "/app/messages", "/app/groups", "/app/plans", "/app/campus"].includes(i.to));
 
   return (
     <div className={"shell" + (wide ? " wide" : "") + (hideTop ? " hide-top" : "")}>

@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 import { watchTables, type ChangeEvent } from "./people";
 import { readCache, writeCache } from "./localCache";
 import { notice } from "./notice";
+import { useMyOrgIds } from "./campusOrgs";
 
 /** Campus events: the big public ones put on by a host (a department, club, instructor or staff member) and shown to everyone on the campus.
  *  Groups stay for small private hangouts. Only people in the `campus_hosts` list can post; everyone can say going or interested. */
@@ -55,7 +56,7 @@ export const outcomeFor = (role: Role): { kind: Kind; status: Status } => (role 
 export const canReview = (role: Role | null) => role === "coordinator" || role === "staff";
 
 /** Waiting and declined events are for their host and for reviewers only; everyone else sees published ones. */
-export const visibleEvents = (list: CampusEvent[], reviewer: boolean) => list.filter((e) => e.status === "published" || e.mineHost || reviewer);
+export const visibleEvents = (list: CampusEvent[], reviewer: boolean, myOrgs: Set<string> = new Set()) => list.filter((e) => e.status === "published" || e.mineHost || reviewer || (!!e.orgId && myOrgs.has(e.orgId)));
 
 /** What a host sees on an event they cannot see live, in words. */
 export const statusNote = (s: Status) => (s === "pending" ? "Waiting for approval" : s === "rejected" ? "Not approved" : s === "removed" ? "Removed by a coordinator" : "");
@@ -95,8 +96,8 @@ const demoSamples = (): Store => {
     events: [
       mk("ce1", "University Library", "Study skills workshop", "Time management and note-taking for midterms. Bring a laptop. Snacks provided.", "Library, room 2B", 1, 16, 0, 60),
       mk("ce2", "Career Services", "Spring career fair", "Over 40 employers. Dress business casual and bring printed resumes.", "Main gym", 3, 10, 0, 300),
-      student(mk("ce3", "Robotics Club", "Open build night", "No experience needed. Come and build with us. Snacks provided.", "Engineering lab", 2, 19, 30, 120)),
-      { ...student(mk("ce4", "Film Society", "Outdoor movie screening", "Bring a blanket. Free popcorn.", "North lawn", 4, 20, 0, 150)), status: "pending" },
+      { ...student(mk("ce3", "Robotics Club", "Open build night", "No experience needed. Come and build with us. Snacks provided.", "Engineering lab", 2, 19, 30, 120)), org_id: "o1" },
+      { ...student(mk("ce4", "Film Society", "Outdoor movie screening", "Bring a blanket. Free popcorn.", "North lawn", 4, 20, 0, 150)), status: "pending", org_id: "o3" },
     ],
     answers: [], reports: [], hostLabel: "Orbit demo", role: "coordinator", ready: true,
   };
@@ -159,14 +160,14 @@ export function unbindCampusEvents() {
 export const eventActions = {
   /** Post an event (hosts only). Staff and coordinators publish at once; a student host's event waits for approval. Resolves to a message if it
    *  did not work, or null, plus the outcome so the screen can say which. */
-  async create(d: { title: string; description: string; place: string; startsAt: string; endsAt?: string; orgId?: string; orgName?: string; orgKind?: Kind }): Promise<{ error: string | null; status?: Status }> {
+  async create(d: { title: string; description: string; place: string; startsAt: string; endsAt?: string; orgId?: string; orgName?: string; orgKind?: Kind; orgTrusted?: boolean }): Promise<{ error: string | null; status?: Status }> {
     const bad = problemWithEvent(d);
     if (bad) return { error: bad };
     const row = { title: d.title.trim().slice(0, 120), description: d.description.trim().slice(0, 1000), place_name: d.place.trim().slice(0, 120), starts_at: new Date(d.startsAt).toISOString(), ends_at: d.endsAt ? new Date(d.endsAt).toISOString() : null };
     const role = state.role ?? "student";
     if (!live) {
       const e: RawEvent = d.orgId
-        ? { id: crypto.randomUUID(), org_id: d.orgId, host_id: DEMO_ME, host_label: d.orgName ?? "Organization", canceled_at: null, kind: d.orgKind ?? "student", status: "published", ...row }
+        ? { id: crypto.randomUUID(), org_id: d.orgId, host_id: DEMO_ME, host_label: d.orgName ?? "Organization", canceled_at: null, kind: d.orgKind ?? "student", status: d.orgKind === "official" || d.orgTrusted ? "published" : "pending", ...row }
         : { id: crypto.randomUUID(), host_id: DEMO_ME, host_label: state.hostLabel ?? "Orbit demo", canceled_at: null, ...outcomeFor(role), ...row };
       set({ ...state, events: [...state.events, e] });
       return { error: null, status: e.status };
@@ -242,8 +243,9 @@ export function useCampusEvents() {
   const s = useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => state);
   const me = live ? who ?? "" : DEMO_ME;
   const reviewer = canReview(s.role);
+  const myOrgs = useMyOrgIds();
   const all = buildEvents(s.events, s.answers, me);
-  const events = visibleEvents(all, reviewer);
+  const events = visibleEvents(all, reviewer, myOrgs);
   return {
     events,
     /** Student events waiting for a reviewer (only reviewers see these). */

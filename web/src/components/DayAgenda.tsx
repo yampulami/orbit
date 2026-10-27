@@ -5,7 +5,7 @@ import RemindersPanel from "./RemindersPanel";
 import { hangActions, isVisible, useHang, YOU } from "../lib/hangouts";
 import { classesOn, clockLabel, useClasses } from "../lib/classes";
 import { useCampusEvents } from "../lib/campusEvents";
-import { EventBadge } from "./CampusEvents";
+import { EventBadge } from "./EventCard";
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 

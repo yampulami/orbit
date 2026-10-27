@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./supabase", () => ({ supabase: null }));
 
-import { buildOrgs, postableOrgs, problemWithOrg, type RawMember, type RawOrg } from "./campusOrgs";
+import { buildOrgs, eventsNeedApproval, postableOrgs, problemWithOrg, type RawMember, type RawOrg } from "./campusOrgs";
 
 const org = (id: string, name: string, status: RawOrg["status"] = "active", kind: RawOrg["kind"] = "student"): RawOrg => ({ id, name, description: "", kind, status, created_by: "u1" });
 const mem = (org_id: string, user_id: string, role: RawMember["role"] = "officer"): RawMember => ({ org_id, user_id, role });
@@ -30,5 +30,13 @@ describe("organizations", () => {
     expect(problemWithOrg({ name: "x".repeat(90), description: "" })).toMatch(/long/);
     expect(problemWithOrg({ name: "Chess Club", description: "y".repeat(400) })).toMatch(/300/);
     expect(problemWithOrg({ name: "Chess Club", description: "We play." })).toBeNull();
+  });
+});
+
+describe("eventsNeedApproval", () => {
+  it("waits for review unless the club is official or trusted", () => {
+    expect(eventsNeedApproval({ kind: "student", trusted: false })).toBe(true);
+    expect(eventsNeedApproval({ kind: "student", trusted: true })).toBe(false);
+    expect(eventsNeedApproval({ kind: "official", trusted: false })).toBe(false);
   });
 });

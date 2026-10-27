@@ -2064,3 +2064,49 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .report-btn{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;color:var(--muted);text-decoration:none}
 .report-btn:hover{color:var(--ink);text-decoration:underline}
 .cevent .cevent-actions select,.cevent-form select{min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+
+/* Campus tab: events, clubs, review */
+.segment button[aria-selected=true]{background:var(--ink);color:var(--on-ink)}
+.campus{display:grid;gap:16px;align-content:start}
+.campus-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.campus-head h2{display:flex;align-items:center;gap:8px;font-size:1.3rem}
+.campus-head p{margin:2px 0 0}
+.campus-seg .rem-count{margin-left:4px}
+.cevents-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.clubs{display:grid;gap:12px}
+.clubs-h{font-size:.9rem;font-weight:600;margin:6px 0 0}
+.create-club{width:fit-content}
+.club-create{padding:16px;border-radius:20px;background:var(--panel)}
+.club-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.club-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);color:var(--ink);text-decoration:none;transition:transform .2s var(--ease),border-color .2s}
+.club-card:hover{border-color:var(--violet);transform:translateY(-1px)}
+.club-card:active{transform:scale(.99)}
+.club-mark{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:14px;background:color-mix(in srgb,var(--violet) 18%,transparent);color:var(--violet);font-weight:700}
+.club-mark.big{width:56px;height:56px;border-radius:18px;font-size:1.4rem}
+.club-text{display:grid;gap:2px;min-width:0;flex:1}
+.club-text strong{overflow-wrap:anywhere}
+.club-sub{font-size:.82rem;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.club-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.club-card .club-tags{flex:none;justify-content:flex-end;max-width:40%}
+.club-page{display:grid;gap:14px;align-content:start}
+.back-link{display:inline-flex;align-items:center;gap:6px;width:fit-content;color:var(--violet);font-weight:600;font-size:.88rem;text-decoration:none}
+.club-head{display:flex;align-items:center;gap:14px}
+.club-head h1{font-size:1.4rem;overflow-wrap:anywhere}
+.club-about{margin:0;color:var(--ink-soft)}
+.club-review{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px;border-radius:16px;background:var(--panel)}
+.club-section{display:grid;gap:10px}
+.club-section h2{font-size:1rem}
+.club-members{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.club-members li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface)}
+.club-member-name{font-weight:600;flex:1;min-width:0;overflow-wrap:anywhere}
+.club-add{display:flex;gap:8px}
+.club-add input{flex:1;min-width:0;min-height:42px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.review{display:grid;gap:18px}
+.review-clear{display:flex;align-items:center;gap:8px;margin:0;padding:14px;border-radius:16px;background:var(--panel);color:var(--ink-soft)}
+.check-line{display:flex;align-items:center;gap:8px;font-size:.88rem}
+@media (max-width:700px){
+  .campus-seg{width:100%}
+  .club-card{flex-wrap:wrap}
+  .club-card .club-tags{max-width:none;flex-basis:100%;justify-content:flex-start}
+}
+@media (max-width:900px){.tab-ico{width:48px}}

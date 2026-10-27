@@ -12,7 +12,7 @@ export function describe(n: RawNotif, actor: string): Pick<Notif, "title" | "sub
     case "friend_request": return { title: `${actor} wants to be your friend`, to: n.actor_id ? `/app/people/${n.actor_id}` : "/app/groups" };
     case "friend_accept": return { title: `${actor} accepted your friend request`, to: n.actor_id ? `/app/people/${n.actor_id}` : "/app/groups" };
     case "group_add": return { title: `${actor} ${n.body || "added you to a group"}`, to: "/app/groups" };
-    case "event": return { title: n.body || "A new campus event", to: "/app/plans" };
+    case "event": return { title: n.body || "A new campus event", to: "/app/campus" };
     case "like": case "comment": case "reply": return { title: `${actor} ${n.body}`, to: "/app/feed" };
     default: return { title: n.body ? `${actor} ${n.body}` : "Something new", to: "/app/feed" };
   }

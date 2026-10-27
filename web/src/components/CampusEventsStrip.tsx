@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Megaphone } from "lucide-react";
-import { EventBadge } from "./CampusEvents";
+import { EventBadge } from "./EventCard";
 import { isOpen, useCampusEvents } from "../lib/campusEvents";
 import RichText from "./RichText";
 
@@ -15,13 +15,13 @@ export default function CampusEventsStrip() {
       <ul>
         {next.map((e) => (
           <li key={e.id}>
-            <Link className="up-main" to="/app/plans">
+            <Link className="up-main" to="/app/campus">
               <span className="up-text"><EventBadge e={e} /><strong><RichText text={e.title} /></strong><span className="up-sub">{new Date(e.startsAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}, {new Date(e.startsAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} · {e.host}</span></span>
             </Link>
           </li>
         ))}
       </ul>
-      <Link className="up-more" to="/app/plans">See all campus events</Link>
+      <Link className="up-more" to="/app/campus">See all campus events</Link>
     </section>
   );
 }

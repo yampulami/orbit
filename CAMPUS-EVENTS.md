@@ -12,17 +12,17 @@ Big public events for the whole campus, put on by **organizations** (a club, a d
 
 In the app: Plans has a "Campus events" section with a "What is the difference between events and hangouts?" explainer, the week board has a colour key (group hangout, campus event, class, reminder), hangout cards say "Group hangout", and the Groups plan form says a hangout is not an official event.
 
-## Organizations (the better way to approve)
+## Campus tab: clubs first, events inside them
 
-Instead of approving every event, a coordinator approves the **organization once**. After that its officers post events as the organization and they go live at once.
+Events and clubs live in their own **Campus** tab (not in Plans), with three sections: **Events** (what is coming up, public), **Clubs** (every club and office, plus "Create a club"), and **Review** (coordinators only).
 
-1. **A student asks.** In Plans, "Host events for a club or office", then "Ask to host events for a club": a name and a line about it. It goes to the coordinators ("Club waiting for approval" in their bell and in a box in Plans). The student becomes the organization's **owner**.
-2. **A coordinator approves or declines** (with a short reason). On approval the owner is told, and they can post events as the club. A coordinator or staff host who sets up an organization makes it active at once.
-3. **The owner adds officers** by username ("Add an officer"). Officers can post for the club. An owner can remove officers; the last owner cannot leave.
-4. **Posting.** "Post an event" asks who to post as when there is a choice. Posts as a student club are labelled "Student event"; posts as an official office are labelled "Official campus event".
-5. **Pause.** A coordinator can pause an organization (it cannot post while paused) and resume it later.
+1. **Create the club first.** Anyone taps Clubs, then "Create a club" (name and a line about it). The club is saved as waiting and its page opens. The creator is the **owner** and can add officers by username while waiting.
+2. **A coordinator approves the club** (or declines with a reason) from Review or from the club's page. A club made by a coordinator or staff is active at once.
+3. **Events are posted inside the club.** The club's page has "Post an event" once the club is active. New events from a student club **wait for a coordinator**, unless the coordinator marks the club **Trusted**, after which they go live at once. Official offices always go live at once.
+4. **Pause.** A coordinator can pause a club (no new events) and resume it.
+5. Staff and coordinators can still post Official events as themselves from the Events section.
 
-Staff and coordinators (people in `campus_hosts` with role `staff` or `coordinator`) can also post Official events directly as themselves, and approve organizations and moderate events. Student hosts in `campus_hosts` (role `student`) still work the old way, where each event waits for approval, but organizations are the recommended route.
+The club's officers see their club's waiting events; everyone else sees only live ones. Migration `20261027180000_org_trust.sql` adds the `trusted` switch and the matching database rules.
 
 ## Moderation
 

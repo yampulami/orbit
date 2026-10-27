@@ -35,6 +35,8 @@ const Messages = lazy(() => import("./pages/Messages"));
 const Person = lazy(() => import("./pages/Person"));
 const Roommates = lazy(() => import("./pages/Roommates"));
 const CampusMap = lazy(() => import("./pages/CampusMap"));
+const Campus = lazy(() => import("./pages/Campus"));
+const Club = lazy(() => import("./pages/Club"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 
 function Protected({ children }: { children: ReactNode }) {
@@ -143,6 +145,8 @@ export default function App() {
           <Route path="groups" element={<Groups />} />
           <Route path="roommates" element={<Roommates />} />
           <Route path="plans" element={<Plans />} />
+          <Route path="campus" element={<Campus />} />
+          <Route path="campus/clubs/:id" element={<Club />} />
           <Route path="map" element={<CampusMap />} />
           <Route path="profile" element={<Profile />} />
           <Route path="people/:id" element={<Person />} />
