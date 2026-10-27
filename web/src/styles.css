@@ -1747,7 +1747,7 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
 .class-list li>div{flex:1;min-width:0;display:grid;gap:1px}
 .class-list strong{font-size:.92rem;overflow-wrap:anywhere}
 .class-list span{font-size:.78rem;color:var(--ink-soft);display:inline-flex;align-items:center;gap:4px}
-.wb-ev.class{background:color-mix(in srgb,var(--violet) 16%,var(--surface));color:var(--violet-deep);box-shadow:inset 3px 0 0 var(--violet)}
+.wb-ev.class{background:color-mix(in srgb,var(--violet) 16%,var(--surface));color:var(--violet-deep)}
 [data-theme=dark] .wb-ev.class{color:#d9d3ff}
 .up li[data-kind=class] .up-ico{background:color-mix(in srgb,var(--violet) 18%,var(--surface));color:var(--violet-deep)}
 
