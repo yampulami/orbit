@@ -4,6 +4,7 @@ import Calendar from "../components/Calendar";
 import DayAgenda from "../components/DayAgenda";
 import UpcomingList from "../components/UpcomingList";
 import WeekBoard from "../components/WeekBoard";
+import ClassesPanel from "../components/ClassesPanel";
 import { feedApi as api, type Row } from "../lib/feedData";
 
 export default function Plans() {
@@ -21,6 +22,7 @@ export default function Plans() {
         <div className="plans-col">
           <Calendar posts={posts} day={day} onDay={(k) => setDay(k ?? new Date().toDateString())} details={false} />
           <UpcomingList limit={5} />
+          <ClassesPanel />
         </div>
         <div className="plans-main">
           <DayAgenda day={day} />

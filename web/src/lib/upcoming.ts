@@ -1,8 +1,9 @@
 import { isVisible, YOU, type Group, type Hangout } from "./hangouts";
 import { fromYmd, type Reminder } from "./reminders";
 import type { Task } from "./roommates";
+import { clockLabel, nextClass, type ClassSlot } from "./classes";
 
-export type UpKind = "hangout" | "chore" | "reminder";
+export type UpKind = "hangout" | "chore" | "reminder" | "class";
 export type UpTag = "answer" | "overdue" | "today" | "soon" | "tomorrow";
 export type UpItem = {
   id: string;
@@ -34,7 +35,7 @@ const soft = (label: string) => (/^(Today|Tomorrow|Yesterday)$/.test(label) ? la
 const timeLabel = (d: Date) => d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
 /** Everything coming up, soonest first: hangouts, your chores and your reminders. Overdue things come first so they are not missed. */
-export function buildUpcoming(o: { now: Date; groups: Group[]; hangouts: Hangout[]; tasks: Task[]; reminders: Reminder[]; limit?: number }): UpItem[] {
+export function buildUpcoming(o: { now: Date; groups: Group[]; hangouts: Hangout[]; tasks: Task[]; reminders: Reminder[]; classes?: ClassSlot[]; limit?: number }): UpItem[] {
   const { now } = o;
   const items: UpItem[] = [];
 
@@ -70,6 +71,13 @@ export function buildUpcoming(o: { now: Date; groups: Group[]; hangouts: Hangout
     if (!overdue && when.getTime() > now.getTime() + 60 * DAY) continue;
     const sameDay = startOfDay(when).getTime() === startOfDay(now).getTime();
     items.push({ id: `r-${r.id}`, kind: "reminder", title: r.title, sub: `${dayLabel(day, now)}${r.time ? `, ${timeLabel(when)}` : ""}`, when, tag: overdue ? "overdue" : sameDay ? "today" : undefined, to: "/app/plans", state: { day: day.toDateString() }, reminderId: r.id });
+  }
+
+  // The next class, if it is today or tomorrow.
+  const next = nextClass(o.classes ?? [], now);
+  if (next && next.starts.getTime() - now.getTime() < 2 * DAY) {
+    const untilMs = next.starts.getTime() - now.getTime();
+    items.push({ id: `c-${next.slot.id}`, kind: "class", title: next.slot.name, sub: `${dayLabel(next.starts, now)}, ${clockLabel(next.slot.start)}${next.slot.place ? ` · ${next.slot.place}` : ""}`, when: next.starts, tag: untilMs <= 3 * HOUR ? "soon" : startOfDay(next.starts).getTime() === startOfDay(now).getTime() ? "today" : undefined, to: "/app/plans", state: { day: next.starts.toDateString() } });
   }
 
   items.sort((a, b) => (a.when && b.when ? a.when.getTime() - b.when.getTime() : a.when ? -1 : b.when ? 1 : 0));

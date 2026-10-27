@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { fromYmd, useReminders } from "../lib/reminders";
 import { useSpace } from "../lib/roommates";
+import { classesOn, clockLabel, toMinutes, useClasses } from "../lib/classes";
 
 const ROW = 56; // px per hour
 const addDays = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
@@ -11,7 +12,7 @@ const hourLabel = (h: number) => `${h % 12 || 12} ${h < 12 || h === 24 ? "AM" : 
 const clock = (m: number) => { const h = Math.floor(m / 60) % 24, mm = m % 60; return `${h % 12 || 12}:${String(mm).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
 
 type Mark = "pending" | "yes" | "no";
-type Block = { id: string; kind: "hangout" | "reminder"; title: string; place?: string; start: number; len: number; mark?: Mark; done?: boolean; going?: string[]; lane: number; lanes: number };
+type Block = { id: string; kind: "hangout" | "reminder" | "class"; title: string; place?: string; start: number; len: number; mark?: Mark; done?: boolean; going?: string[]; lane: number; lanes: number };
 type Chip = { id: string; kind: "chore" | "reminder"; title: string; done: boolean };
 
 /** Side-by-side lanes for events that overlap in time, so none hides another. */
@@ -36,6 +37,7 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
   const { groups, hangouts } = useHang();
   const reminders = useReminders();
   const space = useSpace();
+  const classes = useClasses();
   const [view, setView] = useState<"week" | "day">("week");
   const [anchor, setAnchor] = useState(() => (day ? new Date(day) : new Date()));
   const [now, setNow] = useState(() => new Date());
@@ -64,11 +66,14 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
         put(raw, d.toDateString(), { id: r.id, kind: "reminder", title: r.title, start: hh * 60 + mm, len: 40, done: r.done });
       } else put(chips, d.toDateString(), { id: r.id, kind: "reminder", title: r.title, done: r.done });
     }
+    for (const d of days) {
+      for (const c of classesOn(classes, d)) put(raw, d.toDateString(), { id: `${c.id}-${d.toDateString()}`, kind: "class", title: c.name, place: c.place, start: toMinutes(c.start), len: toMinutes(c.end) - toMinutes(c.start) });
+    }
     for (const t of space?.tasks ?? []) if (t.due && t.assignee === YOU) put(chips, fromYmd(t.due).toDateString(), { id: t.id, kind: "chore", title: t.title, done: t.done });
     const blocks = new Map<string, Block[]>();
     raw.forEach((list, k) => blocks.set(k, layout(list)));
     return { blocks, chips };
-  }, [hangouts, groups, reminders, space]);
+  }, [hangouts, groups, reminders, space, classes, view, anchor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Show every event in view: start at 8 AM unless something is earlier, end at 9 PM unless something runs later.
   const shown = days.flatMap((d) => blocks.get(d.toDateString()) ?? []);

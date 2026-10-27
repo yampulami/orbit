@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, Check, ListChecks, Users } from "lucide-react";
+import { Bell, Check, GraduationCap, ListChecks, Users } from "lucide-react";
+import { useClasses } from "../lib/classes";
 import { useHang } from "../lib/hangouts";
 import { reminderActions, useReminders } from "../lib/reminders";
 import { useSpace } from "../lib/roommates";
@@ -8,7 +9,7 @@ import PinButton from "./PinButton";
 import { usePins } from "../lib/pins";
 import { buildUpcoming, type UpKind, type UpTag } from "../lib/upcoming";
 
-const ICON: Record<UpKind, typeof Bell> = { hangout: Users, chore: ListChecks, reminder: Bell };
+const ICON: Record<UpKind, typeof Bell> = { hangout: Users, chore: ListChecks, reminder: Bell, class: GraduationCap };
 const TAG: Record<UpTag, string> = { answer: "Needs your answer", overdue: "Overdue", today: "Today", soon: "Soon", tomorrow: "Tomorrow" };
 
 /** What is coming up: hangouts (with what needs an answer), your chores in the house, and reminders you set on the calendar. */
@@ -16,6 +17,7 @@ export default function UpcomingList({ limit = 5, moreTo, hide = [], title = "Co
   const { groups, hangouts } = useHang();
   const space = useSpace();
   const reminders = useReminders();
+  const classes = useClasses();
   const nav = useNavigate();
   const [all, setAll] = useState(false);
   const [leaving, setLeaving] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export default function UpcomingList({ limit = 5, moreTo, hide = [], title = "Co
   const pins = usePins();
   const isPinned = (it: { kind: UpKind; id: string; reminderId?: string }) => pins.some((p) => p.kind === it.kind && p.id === (it.reminderId ?? it.id.replace(/^[a-z]-/, "")));
   // Pinned things lead the list, otherwise soonest first.
-  const items = buildUpcoming({ now: new Date(), groups, hangouts, tasks: space?.tasks ?? [], reminders })
+  const items = buildUpcoming({ now: new Date(), groups, hangouts, tasks: space?.tasks ?? [], reminders, classes })
     .filter((it) => !hide.includes(it.kind))
     .sort((a, b) => Number(isPinned(b)) - Number(isPinned(a)));
   const visible = all && !moreTo ? items.length : limit;
@@ -46,7 +48,7 @@ export default function UpcomingList({ limit = 5, moreTo, hide = [], title = "Co
                   <span className="up-text"><strong>{it.title}</strong><span className="up-sub">{it.sub}</span></span>
                   {it.tag && <span className="up-tag" data-tag={it.tag}>{TAG[it.tag]}</span>}
                 </button>
-                <PinButton kind={it.kind} id={it.reminderId ?? it.id.replace(/^[a-z]-/, "")} title={it.title} />
+                {it.kind !== "class" && <PinButton kind={it.kind} id={it.reminderId ?? it.id.replace(/^[a-z]-/, "")} title={it.title} />}
                 {it.reminderId && (
                   <button type="button" className="check" role="checkbox" aria-checked={leaving === it.id} aria-label={`Mark done: ${it.title}`} onClick={() => finish(it.id, it.reminderId!)}><Check size={14} strokeWidth={2.4} aria-hidden="true" /></button>
                 )}

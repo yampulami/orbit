@@ -18,6 +18,7 @@ import { bindRoommates, unbindRoommates } from "./lib/roommates";
 import { bindDms, unbindDms } from "./lib/dms";
 import { bindFriends, unbindFriends } from "./lib/friends";
 import { bindNotifs, unbindNotifs } from "./lib/notifs";
+import { bindClasses, unbindClasses } from "./lib/classes";
 import { bindBlocks, unbindBlocks } from "./lib/safety";
 
 // Everything except the main feed loads when it is first opened, so the first download stays small.
@@ -70,6 +71,9 @@ function useOnboarded(userId: string | undefined, fallbackName = "Student") {
 function InApp({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const nav = useNavigate();
+  const classesFor = session?.user.id;
+  // The class schedule is kept on this device for this person, in demo mode and with a database alike.
+  useEffect(() => { if (!classesFor) return; bindClasses(classesFor); return () => unbindClasses(); }, [classesFor]);
   const { state: done, campusKey } = useOnboarded(session?.user.id, nameFor(session));
   const uid = session?.user.id;
   // With a database, groups and hangouts load for this student once their campus is known, and are forgotten when they leave.

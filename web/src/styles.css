@@ -1731,3 +1731,22 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
 .main>*:nth-child(2){animation-delay:.04s}.main>*:nth-child(3){animation-delay:.08s}.main>*:nth-child(4){animation-delay:.12s}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.main>*{animation:none}.check[aria-checked=true],.check[aria-pressed=true]{animation:none}}
+
+/* class schedule */
+.classes{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:16px 16px 12px;display:grid;gap:12px}
+.classes header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.classes h3{display:flex;align-items:center;gap:6px;font-size:.95rem;font-weight:600}
+.class-form{display:grid;gap:12px;padding:14px;border-radius:18px;background:var(--panel)}
+.class-days{display:flex;gap:6px;flex-wrap:wrap}
+.class-days button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink-soft);font-weight:600;cursor:pointer;transition:background .2s,color .2s,transform .18s var(--ease)}
+.class-days button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.class-times{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.class-times>span{min-width:48px;font-size:.84rem;color:var(--ink-soft)}
+.class-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.class-list li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:var(--panel)}
+.class-list li>div{flex:1;min-width:0;display:grid;gap:1px}
+.class-list strong{font-size:.92rem;overflow-wrap:anywhere}
+.class-list span{font-size:.78rem;color:var(--ink-soft);display:inline-flex;align-items:center;gap:4px}
+.wb-ev.class{background:color-mix(in srgb,var(--violet) 16%,var(--surface));color:var(--violet-deep);box-shadow:inset 3px 0 0 var(--violet)}
+[data-theme=dark] .wb-ev.class{color:#d9d3ff}
+.up li[data-kind=class] .up-ico{background:color-mix(in srgb,var(--violet) 18%,var(--surface));color:var(--violet-deep)}
