@@ -4,6 +4,7 @@ import { QUICK_TIMES, fromYmd, reminderActions, useReminders, ymd } from "../lib
 import PinButton from "./PinButton";
 import { notice } from "../lib/notice";
 import TimePicker from "./TimePicker";
+import { deviceAlertsOn, deviceSupported, devicePermission, enableDeviceAlerts } from "../lib/deviceAlerts";
 
 const clock = (t: string) => new Date(`2000-01-01T${t}`).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
@@ -39,6 +40,13 @@ export default function RemindersPanel({ day }: { day: string }) {
     }
     if (time && new Date(`${date}T${time}`).getTime() < Date.now()) notice.show({ icon: "calendar", title: "That time has passed", message: "I saved it, but it will not alert you because the time is already behind us.", ms: 5000 });
     reminderActions.add(title.trim(), date, time || undefined);
+    // A reminder with a time is only useful if it can reach you: offer the device alert the first time.
+    if (time && deviceSupported() && !deviceAlertsOn() && devicePermission() === "default") {
+      notice.show({
+        icon: "calendar", title: "Get this as a device alert?", message: "Orbit can show a notification in the corner of your screen when a reminder is due.", ms: 15000,
+        actions: [{ label: "Turn on alerts", onClick: () => { void enableDeviceAlerts(); } }],
+      });
+    }
     setTitle(""); setPick(""); setCustom(""); setStarted(false);
   }
 

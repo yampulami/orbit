@@ -23,7 +23,7 @@ export default function ReminderAlerts() {
       for (const r of due) {
         reminderActions.markNotified(r.id);
         // Something that came due while Orbit was closed days ago is not worth a pop-up.
-        if (wantsReminders && now.getTime() - dueAt(r).getTime() < 24 * 3600000) { fresh.push(r.id); notifyDevice(r.title, "Reminder from Orbit", `reminder-${r.id}`); }
+        if (wantsReminders && now.getTime() - dueAt(r).getTime() < 24 * 3600000) { fresh.push(r.id); void notifyDevice(r.title, "Reminder from Orbit", `reminder-${r.id}`); }
       }
       if (fresh.length) setShown((s) => [...new Set([...s, ...fresh])]); // a set, because React may run this twice in development
     };

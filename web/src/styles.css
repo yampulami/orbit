@@ -1681,3 +1681,12 @@ button.bell-settings{width:100%;background:none;border:0;border-top:1px solid va
 .wb-ev.compact span{text-align:left}
 .wb-ev:hover,.wb-ev:focus-visible{height:auto!important;min-height:var(--h);z-index:6;overflow:visible;box-shadow:0 14px 28px -12px rgba(40,30,90,.6)}
 .wb-ev:hover strong,.wb-ev:focus-visible strong{-webkit-line-clamp:unset;display:block}
+
+/* pop-ups never sit under the menu: reminder alerts start beside the sidebar, and on phones everything sits above the bottom bar */
+.rem-alerts{z-index:55}
+@media (min-width:901px){.rem-alerts{left:calc(var(--sw, 96px) + 40px);transition:left .5s cubic-bezier(.32,.72,0,1)}}
+@media (max-width:900px){
+  .rem-alerts{left:16px;bottom:calc(84px + env(safe-area-inset-bottom))}
+  .toast-wrap{bottom:calc(84px + env(safe-area-inset-bottom));z-index:55}
+  .undo-wrap{bottom:calc(84px + env(safe-area-inset-bottom));z-index:55}
+}

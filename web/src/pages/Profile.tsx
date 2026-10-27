@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Flame, LogOut, Pencil, Trash2 } from "lucide-react";
 import { NAME_MAX, renameMe, useDisplayName } from "../lib/displayName";
 import { pushSupported } from "../lib/push";
-import { disableDeviceAlerts, enableDeviceAlerts, useDeviceAlerts } from "../lib/deviceAlerts";
+import { disableDeviceAlerts, enableDeviceAlerts, notifyDevice, useDeviceAlerts } from "../lib/deviceAlerts";
 import { setNudge, useNudges } from "../lib/nudges";
 import { notice } from "../lib/notice";
 import { useNavigate } from "react-router-dom";
@@ -80,6 +80,13 @@ export default function Profile() {
     else if (r === "unsupported") notice.show({ icon: "alert", title: "Not available here", message: "This browser can't show device alerts. The bell in the top bar still shows everything that needs you." });
   }
 
+  async function testAlert() {
+    const shown = await notifyDevice("Orbit test alert", "If you can see this, device alerts work.", "orbit-test");
+    notice.show(shown
+      ? { icon: "pin", title: "Test alert sent", message: "Look in the corner of your screen or your notifications. If nothing appeared, check that notifications are allowed for your browser in your device's settings (on Windows: Settings, System, Notifications) and that Do not disturb or Focus is off.", ms: 12000 }
+      : { icon: "alert", title: "The test alert did not show", message: "Turn on \"Alert me on this device\" first, and allow notifications for Orbit in your browser." });
+  }
+
   return (
     <div className="page">
       <h1 className="sr">Profile</h1>
@@ -149,6 +156,7 @@ export default function Profile() {
           <span id="n-device">Alert me on this device</span>
           <button type="button" role="switch" aria-checked={device.on} aria-labelledby="n-device" className="switch" onClick={toggleDevice} disabled={!device.supported}><span /></button>
         </div>
+        {device.on && <div className="notif-row"><span>Check that it works</span><button type="button" className="btn" onClick={() => void testAlert()}>Send a test alert</button></div>}
         <p className="muted notif-note">{pushSupported() ? "Reminders and hangouts about to start reach this device even when Orbit is closed. On iPhone, add Orbit to your Home Screen first." : "Alerts only reach you while Orbit is open in a tab or window."}</p>
       </section>
 

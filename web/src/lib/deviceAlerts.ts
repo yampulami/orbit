@@ -29,13 +29,21 @@ export async function enableDeviceAlerts(): Promise<DevicePermission> {
 }
 export const disableDeviceAlerts = () => { store(false); void unsubscribePush(); };
 
-/** Show an alert from the device, but only when asked for and only when the person is not already looking at Orbit. */
-export function notifyDevice(title: string, body: string, tag: string) {
-  if (!deviceAlertsOn() || !document.hidden) return;
+/** Show an alert from the device (the Windows or Mac notification area, or the phone's), when the person has turned alerts on. It is shown even while
+ *  Orbit is in view, because people expect the corner-of-the-screen alert when a reminder is due. It goes through the service worker when there is one,
+ *  which Chrome and Windows treat as a proper app notification, and falls back to the page's own notification. Resolves to whether one was shown. */
+export async function notifyDevice(title: string, body: string, tag: string): Promise<boolean> {
+  if (!deviceAlertsOn()) return false;
+  const options = { body, tag, icon: "/icon-192.png", badge: "/icon-192.png", data: { url: "/app" } };
   try {
-    const n = new Notification(title, { body, tag, icon: "/icon-192.png" });
+    const reg = typeof navigator !== "undefined" && "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : undefined;
+    if (reg) { await reg.showNotification(title, options); return true; }
+  } catch { /* fall back to the page's own notification */ }
+  try {
+    const n = new Notification(title, options);
     n.onclick = () => { window.focus(); n.close(); };
-  } catch { /* some browsers only allow alerts from a service worker */ }
+    return true;
+  } catch { return false; }
 }
 
 export function useDeviceAlerts() {
