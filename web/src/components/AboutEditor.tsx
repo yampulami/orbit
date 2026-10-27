@@ -3,6 +3,7 @@ import { Pencil, Plus, X } from "lucide-react";
 import { BIO_MAX, HOBBY_IDEAS, HOBBY_LEN, HOBBY_MAX, bioLength, cleanBio, cleanHobbies, loadAbout, saveAbout, type About } from "../lib/about";
 import { notice } from "../lib/notice";
 import EmojiButton from "./EmojiButton";
+import RichText from "./RichText";
 
 /** The bio and free-time tags, for the person's own profile: shows them, and lets them add or change them. Anyone on the campus sees them on the profile page. */
 export default function AboutEditor({ userId }: { userId: string }) {
@@ -52,8 +53,8 @@ export default function AboutEditor({ userId }: { userId: string }) {
 
       {!editing && has && (
         <div className="about-view">
-          {about.bio && <p className="about-bio">{about.bio}</p>}
-          {about.hobbies.length > 0 && <ul className="person-tags" aria-label="Free time">{about.hobbies.map((t) => <li key={t}>{t}</li>)}</ul>}
+          {about.bio && <p className="about-bio"><RichText text={about.bio} /></p>}
+          {about.hobbies.length > 0 && <ul className="person-tags" aria-label="Free time">{about.hobbies.map((t) => <li key={t}><RichText text={t} /></li>)}</ul>}
         </div>
       )}
 

@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
 import EmojiButton from "../components/EmojiButton";
+import RichText from "../components/RichText";
 import HangoutCard from "../components/HangoutCard";
 import FriendsPanel from "../components/FriendsPanel";
 import GroupAddFriend from "../components/GroupAddFriend";
@@ -222,7 +223,7 @@ export default function Groups() {
                 }
                 return (
                   <motion.p key={m.id} title={new Date(m.at).toLocaleString()} className={"bubble" + (m.author === YOU ? " mine" : "")} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={enter}>
-                    {m.author !== YOU && <strong className="who-name">{m.author}</strong>}{m.text}
+                    {m.author !== YOU && <strong className="who-name">{m.author}</strong>}<RichText text={m.text ?? ""} />
                   </motion.p>
                 );
               })}

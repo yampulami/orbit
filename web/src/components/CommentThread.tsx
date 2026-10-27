@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import EmojiButton from "./EmojiButton";
+import RichText from "./RichText";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import { ancestorsOf, directReplies, replyCount, topLevel } from "../lib/commentThread";
@@ -65,7 +66,7 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
           <span className="cmt-who"><PersonLink id={c.user_id} className="who-link"><strong>{c.author_name}</strong></PersonLink> · <span className="cmt-when">{ago(c.created_at)}</span></span>
           <SafetyMenu userId={c.user_id} name={c.author_name} postId={postId} commentId={c.id} context="comment" />
         </div>
-        <p className="cmt-body">{c.body}</p>
+        <p className="cmt-body"><RichText text={c.body} /></p>
         {kind !== "focus" && (
           <div className="cmt-actions">
             <button type="button" className="iconbtn" aria-label={n === 0 ? `Reply to ${c.author_name}` : `${n} ${n === 1 ? "reply" : "replies"} to ${c.author_name}. Open the thread`} onClick={() => open(c.id)}>

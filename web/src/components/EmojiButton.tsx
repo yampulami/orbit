@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import { Smile } from "lucide-react";
 import { EMOJI_GROUPS, insertAt, recentEmoji, rememberEmoji, searchEmoji } from "../lib/emojis";
 import { haptic } from "../lib/haptics";
+import { Emoji } from "./RichText";
 
 /** A smiley button that opens an emoji picker and puts the chosen emoji where the caret is in `inputRef`'s box. They are the device's own emoji. */
 export default function EmojiButton({ value, onChange, inputRef, max, label = "Add an emoji" }: {
@@ -60,19 +61,19 @@ export default function EmojiButton({ value, onChange, inputRef, max, label = "A
           <input className="emoji-search" type="search" aria-label="Search emoji" placeholder="Search emoji" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
           {!found && (
             <div className="emoji-tabs" role="tablist" aria-label="Emoji categories">
-              {EMOJI_GROUPS.map((g) => <button key={g.id} type="button" role="tab" aria-selected={g.id === group} aria-label={g.label} title={g.label} onClick={() => setGroup(g.id)}>{g.icon}</button>)}
+              {EMOJI_GROUPS.map((g) => <button key={g.id} type="button" role="tab" aria-selected={g.id === group} aria-label={g.label} title={g.label} onClick={() => setGroup(g.id)}><Emoji e={g.icon} /></button>)}
             </div>
           )}
           <div className="emoji-grid" role="listbox" aria-label={found ? "Search results" : EMOJI_GROUPS.find((g) => g.id === group)!.label}>
             {!found && recent.length > 0 && group === EMOJI_GROUPS[0].id && (
               <>
                 <p className="emoji-h">Recent</p>
-                {recent.map((e) => <button key={"r" + e} type="button" role="option" aria-selected={false} onClick={() => pick(e)}>{e}</button>)}
+                {recent.map((e) => <button key={"r" + e} type="button" role="option" aria-selected={false} onClick={() => pick(e)}><Emoji e={e} /></button>)}
                 <p className="emoji-h">{EMOJI_GROUPS[0].label}</p>
               </>
             )}
             {shown.length === 0 && <p className="emoji-none">Nothing matches that.</p>}
-            {shown.map((x) => <button key={x.e} type="button" role="option" aria-selected={false} aria-label={x.k.split(" ")[0] || x.e} title={x.k} onClick={() => pick(x.e)}>{x.e}</button>)}
+            {shown.map((x) => <button key={x.e} type="button" role="option" aria-selected={false} aria-label={x.k.split(" ")[0] || x.e} title={x.k} onClick={() => pick(x.e)}><Emoji e={x.e} /></button>)}
           </div>
         </div>
       )}

@@ -1817,3 +1817,9 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 /* class alerts sit above reminder alerts */
 .class-alerts{bottom:auto;top:auto}
 .rem-alert-ico.class{background:color-mix(in srgb,var(--violet) 18%,var(--surface));color:var(--violet-deep)}
+
+/* emoji drawn as pictures sit in the line like a letter */
+.emoji-img{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.28em;margin:0 .04em;object-fit:contain;user-select:text}
+.emoji-grid button .emoji-img,.emoji-tabs button .emoji-img{width:1.35rem;height:1.35rem;vertical-align:middle;margin:0}
+.emoji-tabs button .emoji-img{width:1.2rem;height:1.2rem}
+.emoji-native{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}

@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 import { friendActions, useRelation } from "../lib/friends";
 import { dmActions } from "../lib/dms";
 import SafetyMenu from "../components/SafetyMenu";
+import RichText from "../components/RichText";
 
 type Profile = { name: string; username: string | null; tenure: string | null; interests: string[]; bio: string; hobbies: string[] };
 
@@ -58,8 +59,8 @@ export default function Person() {
           <div className="person-title"><h2>{profile.name}</h2><SafetyMenu userId={id} name={profile.name} context="profile" onBlocked={() => nav("/app/feed")} /></div>
           {profile.username && <p className="muted">@{profile.username}</p>}
           {profile.tenure && <p className="muted">{TENURE[profile.tenure] ?? profile.tenure}</p>}
-          {profile.bio && <p className="about-bio">{profile.bio}</p>}
-          {profile.hobbies.length > 0 && <><p className="person-sub">In their free time</p><ul className="person-tags" aria-label="Free time">{profile.hobbies.map((t) => <li key={t}>{t}</li>)}</ul></>}
+          {profile.bio && <p className="about-bio"><RichText text={profile.bio} /></p>}
+          {profile.hobbies.length > 0 && <><p className="person-sub">In their free time</p><ul className="person-tags" aria-label="Free time">{profile.hobbies.map((t) => <li key={t}><RichText text={t} /></li>)}</ul></>}
           {profile.interests.length > 0 && <><p className="person-sub">Here for</p><ul className="person-tags" aria-label="Interests">{profile.interests.map((t) => <li key={t}>{t}</li>)}</ul></>}
           {!profile.bio && profile.hobbies.length === 0 && relation === "self" && <p className="muted">You have not added a bio yet. <Link to="/app/profile">Add one in your profile</Link>.</p>}
 

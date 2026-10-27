@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { MessageCircle, Plus, Send } from "lucide-react";
 import EmptyState from "../components/EmptyState";
 import EmojiButton from "../components/EmojiButton";
+import RichText from "../components/RichText";
 import { enter, slide } from "../lib/motion";
 import { dmActions, dmLive, useDms } from "../lib/dms";
 import SafetyMenu from "../components/SafetyMenu";
@@ -112,7 +113,7 @@ function LiveMessages() {
                 {current.messages.length === 0 && <p className="rm-empty">Say hello to {current.name}.</p>}
                 {current.messages.map((m) => (
                   <motion.div key={m.id} className={"bubble-row" + (m.mine ? " mine" : "")} initial={{ opacity: 0, y: 10, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={enter}>
-                    <p className={"bubble" + (m.mine ? " mine" : "")} title={time(m.at)}>{m.text}</p>
+                    <p className={"bubble" + (m.mine ? " mine" : "")} title={time(m.at)}><RichText text={m.text} /></p>
                     {m === lastMine && <span className="bubble-meta">{m.seenAt ? `Seen ${time(m.seenAt)}` : time(m.at)}</span>}
                   </motion.div>
                 ))}
@@ -175,7 +176,7 @@ function SampleMessages() {
           <div className="bubbles" ref={scroller}>
             {threads[active].map((m, i) => {
               const isNew = fresh === `${active}-${i}`;
-              return <motion.p key={`${active}-${i}`} className={"bubble" + (m.mine ? " mine" : "")} initial={isNew ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }} transition={enter}>{m.text}</motion.p>;
+              return <motion.p key={`${active}-${i}`} className={"bubble" + (m.mine ? " mine" : "")} initial={isNew ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }} transition={enter}><RichText text={m.text} /></motion.p>;
             })}
           </div>
           <form className="comment-form" onSubmit={send}>

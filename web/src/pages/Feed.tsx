@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import EmojiButton from "../components/EmojiButton";
+import RichText from "../components/RichText";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, Navigate } from "react-router-dom";
@@ -260,7 +261,7 @@ export default function Feed() {
                 <motion.article key={p.id} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: -14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
                   <div className="meta"><span className="who"><PersonLink id={p.author_id} className="who-link"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span></PersonLink><span><PersonLink id={p.author_id} className="who-link"><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong></PersonLink> · {when(p.created_at)}</span></span><span className="meta-end"><span className="chip">{p.community}</span><SafetyMenu userId={p.author_id} name={p.author_name} postId={p.id} context="post" /></span></div>
                   {p.payload.title && <h3>{p.payload.title}</h3>}
-                  <p className="body" style={{ whiteSpace: "pre-wrap" }}>{p.payload.body ?? p.payload.text ?? ""}</p>
+                  <p className="body" style={{ whiteSpace: "pre-wrap" }}><RichText text={p.payload.body ?? p.payload.text ?? ""} /></p>
                   <div className="foot">
                     {people.length > 0 && <span className="avatars" aria-hidden="true">{people.map((n) => <span key={n}>{initials(n)}</span>)}</span>}
                     <div className="actions" style={{ width: "auto", marginLeft: "auto" }}>
