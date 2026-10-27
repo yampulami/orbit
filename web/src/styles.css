@@ -2810,7 +2810,7 @@ body.chat-open .asst-fab{display:none}
 .asst-fab[data-side=right]:hover .asst-tip,.asst-fab[data-side=right]:focus-visible .asst-tip{transform:translateY(-50%)}
 .asst-layer .mo-bg{background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
 .asst-layer .mo-reset{display:none}
-.asst-scrim{position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+.asst-scrim{position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
 .asst-stage{position:absolute;inset:0}
 .asst-pane{position:absolute;inset:0;display:grid;place-items:center;padding:24px}
 

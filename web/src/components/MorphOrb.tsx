@@ -256,15 +256,19 @@ const DU = Float32Array.from(DOT_LIST, (d) => d.u);
 const DS = Float32Array.from(DOT_LIST, (d) => d.seed);
 
 const G_STEPS = 24, A_STEPS = 48;
-const COLORS: string[] = (() => {
+/** The dots fade from a base colour to green. Pale dots on a dark page, deep violet dots on a light one, so they never disappear into the background. */
+const palette = (from: [number, number, number], to: [number, number, number]): string[] => {
   const out: string[] = [];
   for (let gi = 0; gi <= G_STEPS; gi++) {
     const g = gi / G_STEPS;
-    const r = Math.round(lerp(235, 52, g)), gg = Math.round(lerp(235, 211, g)), b = Math.round(lerp(235, 153, g));
+    const r = Math.round(lerp(from[0], to[0], g)), gg = Math.round(lerp(from[1], to[1], g)), b = Math.round(lerp(from[2], to[2], g));
     for (let ai = 0; ai <= A_STEPS; ai++) out.push(`rgba(${r},${gg},${b},${(ai / A_STEPS).toFixed(3)})`);
   }
   return out;
-})();
+};
+const COLORS_DARK = palette([235, 235, 235], [52, 211, 153]);
+const COLORS_LIGHT = palette([70, 40, 170], [16, 150, 105]);
+const lightTheme = () => document.documentElement.dataset.theme !== "dark";
 
 interface OrbParams {
   k: number; alpha: number; spin: number; rot: number; sweep: number; pop: number;
@@ -376,6 +380,7 @@ function createOrb(canvas: HTMLCanvasElement, getSpeed: () => number, isReduced:
       SC[n] = ai <= 0 ? -1 : gi * (A_STEPS + 1) + ai;
     }
 
+    const COLORS = lightTheme() ? COLORS_LIGHT : COLORS_DARK;
     /* two passes: back half first, then front half */
     for (let pass = 0; pass < 2; pass++) {
       for (let n = 0; n < N; n++) {
