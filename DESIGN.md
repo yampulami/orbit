@@ -177,6 +177,8 @@ Night (#0e0c15) ground, Night Panel (#191624), Night Surface (#211d2e), Night Ra
 - **Body** (400, 1rem, 1.5): messages and posts; post text steps up to 1.15rem at weight 500 on a tile. Keep measure under 65 to 75 characters.
 - **Label** (500, .82rem): chips, meta lines, timestamps. Numerals are tabular in counters.
 
+**Emoji fallback.** Emoji are drawn by the device's own emoji font (Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji) wherever people type them. These are fallbacks for emoji only, never a second text face, and Apple's artwork cannot be bundled.
+
 ### Named Rules
 **The No Page Title Rule.** App pages open straight into content. Page headings exist for screen readers only (`.sr`), not as large visible titles.
 
