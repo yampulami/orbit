@@ -127,3 +127,50 @@ describe("club tasks", () => {
     expect(problemWithTask({ title: "Do it", details: "" })).toBeNull();
   });
 });
+
+import { checkinOpen, checkinUrl, demoCode, slotAt } from "./checkin";
+describe("check-in", () => {
+  const start = new Date(2026, 9, 27, 18, 0);
+  const iso = (h: number) => new Date(start.getTime() + h * 3600000).toISOString();
+  it("opens an hour before and closes an hour after the end", () => {
+    const e = { startsAt: iso(0), endsAt: iso(2) };
+    expect(checkinOpen(e, new Date(start.getTime() - 2 * 3600000))).toBe(false);
+    expect(checkinOpen(e, new Date(start.getTime() - 30 * 60000))).toBe(true);
+    expect(checkinOpen(e, new Date(start.getTime() + 2.5 * 3600000))).toBe(true);
+    expect(checkinOpen(e, new Date(start.getTime() + 3.5 * 3600000))).toBe(false);
+  });
+  it("treats an event with no end as three hours long", () => {
+    const e = { startsAt: iso(0) };
+    expect(checkinOpen(e, new Date(start.getTime() + 3.9 * 3600000))).toBe(true);
+    expect(checkinOpen(e, new Date(start.getTime() + 4.1 * 3600000))).toBe(false);
+  });
+  it("makes a six-letter code that changes each 30 seconds and differs per event", () => {
+    const t = Date.UTC(2026, 9, 27, 18, 0, 5);
+    expect(demoCode("e1", slotAt(t))).toMatch(/^[A-Z]{6}$/);
+    expect(demoCode("e1", slotAt(t))).toBe(demoCode("e1", slotAt(t + 10_000)));
+    expect(demoCode("e1", slotAt(t))).not.toBe(demoCode("e1", slotAt(t + 30_000)));
+    expect(demoCode("e1", slotAt(t))).not.toBe(demoCode("e2", slotAt(t)));
+  });
+  it("builds the link the QR code carries", () => {
+    expect(checkinUrl("e1", "ABCDEF")).toMatch(/\/app\/checkin\/e1\?c=ABCDEF$/);
+  });
+});
+
+import { buildPods, problemWithPod } from "./clubPods";
+describe("pods", () => {
+  const pods = [{ id: "p1", org_id: "o", name: "Street", description: "" }, { id: "p2", org_id: "o", name: "Film", description: "" }, { id: "p3", org_id: "o", name: "Portrait", description: "" }];
+  const members = [{ pod_id: "p1", user_id: "u1" }, { pod_id: "p1", user_id: "u2" }, { pod_id: "p3", user_id: "u1" }];
+  it("lists pods you are in first and says who is in each", () => {
+    const list = buildPods(pods, members, [{ id: "c1", pod_id: "p1" }], { u2: "Sam" }, "u1");
+    expect(list.map((p) => p.name)).toEqual(["Portrait", "Street", "Film"]);
+    expect(list[1]).toMatchObject({ mine: true, channelId: "c1" });
+    expect(list[1].members.map((m) => m.name)).toEqual(["Sam", "You"]);
+    expect(list[2].mine).toBe(false);
+  });
+  it("checks a new pod name", () => {
+    expect(problemWithPod("  ", [])).toMatch(/name/);
+    expect(problemWithPod("***", [])).toMatch(/letters/);
+    expect(problemWithPod("film", ["Film"])).toMatch(/already/);
+    expect(problemWithPod("Landscape", ["Film"])).toBeNull();
+  });
+});

@@ -12,6 +12,7 @@ import EventForm from "../components/EventForm";
 import ReviewPanel from "../components/ReviewPanel";
 import ClubApplication from "../components/ClubApplication";
 import CohostInvites from "../components/CohostInvites";
+import AttendedList from "../components/AttendedList";
 import EmptyState from "../components/EmptyState";
 import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
@@ -110,6 +111,7 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
           ))}
         </>
       )}
+      <AttendedList />
       {rest.length > 6 && <button type="button" className="up-more" onClick={() => setAll((v) => !v)}>{all ? "Show fewer" : `Show all ${rest.length + 1}`}</button>}
     </section>
   );

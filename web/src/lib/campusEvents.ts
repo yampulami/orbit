@@ -23,6 +23,8 @@ export type CampusEvent = {
   kind: Kind; status: Status; note?: string;
   /** Other clubs invited to co-host this event, and whether they said yes. */
   cohosts: { orgId: string; name: string; status: CohostStatus }[];
+  /** I run this event (I host it, or my role in the host or a co-host club allows it, or I am a coordinator): I can run its check-in. */
+  manage?: boolean;
 };
 
 const HOUR = 3600000;
@@ -298,7 +300,8 @@ export function useCampusEvents() {
   const { orgs } = useCampusOrgs();
   const names = Object.fromEntries(orgs.map((o) => [o.id, o.name]));
   const all = buildEvents(s.events, s.answers, me, s.cohosts, names);
-  const events = visibleEvents(all, reviewer, myOrgs);
+  const can = (orgId?: string) => !!orgId && !!orgs.find((o) => o.id === orgId)?.myPerms.includes("events");
+  const events = visibleEvents(all, reviewer, myOrgs).map((e) => ({ ...e, manage: e.mineHost || reviewer || can(e.orgId) || e.cohosts.some((c) => c.status === "accepted" && can(c.orgId)) }));
   return {
     events,
     /** Student events waiting for a reviewer (only reviewers see these). */

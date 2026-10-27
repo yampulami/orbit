@@ -6,10 +6,10 @@ import { notice } from "./notice";
 
 /** Club chat: channels like a small Discord server. Every running club has #general; people with the "manage channels" permission add more, including
  *  team-only ones. Only the club's own people can read and write (the database enforces it). Unread dots come from a per-person read marker. */
-export type RawChannel = { id: string; org_id: string; name: string; description: string; team_only: boolean; is_default: boolean; position: number };
+export type RawChannel = { id: string; org_id: string; name: string; description: string; team_only: boolean; is_default: boolean; position: number; pod_id?: string | null };
 export type RawMsg = { id: string; channel_id: string; org_id: string; author_id: string; body: string; created_at: string };
 export type RawRead = { channel_id: string; last_read_at: string };
-export type Channel = { id: string; name: string; description: string; teamOnly: boolean; isDefault: boolean; unread: number; lastAt?: string };
+export type Channel = { id: string; name: string; description: string; teamOnly: boolean; isDefault: boolean; podId?: string; unread: number; lastAt?: string };
 export type Message = { id: string; authorId: string; author: string; body: string; at: string; mine: boolean };
 
 /** Pure: what the user typed, as a channel name (lower case, letters, numbers and dashes). */
@@ -31,7 +31,7 @@ export function buildChannels(channels: RawChannel[], messages: RawMsg[], reads:
       const mine = messages.filter((m) => m.channel_id === c.id);
       const readAt = reads.find((r) => r.channel_id === c.id)?.last_read_at ?? "";
       return {
-        id: c.id, name: c.name, description: c.description, teamOnly: c.team_only, isDefault: c.is_default,
+        id: c.id, name: c.name, description: c.description, teamOnly: c.team_only, isDefault: c.is_default, podId: c.pod_id ?? undefined,
         unread: mine.filter((m) => m.author_id !== me && m.created_at > readAt).length,
         lastAt: mine.reduce<string | undefined>((a, m) => (!a || m.created_at > a ? m.created_at : a), undefined),
       };
@@ -52,6 +52,8 @@ const demoStart = (): Demo => ({
     { id: "ch1", org_id: "o1", name: "general", description: "Everyone in the club", team_only: false, is_default: true, position: 0 },
     { id: "ch2", org_id: "o1", name: "build-night", description: "Parts, plans and who is bringing snacks", team_only: false, is_default: false, position: 1 },
     { id: "ch3", org_id: "o1", name: "officers", description: "Team only", team_only: true, is_default: false, position: 2 },
+    { id: "ch-pd1", org_id: "o1", name: "pod-competition-team", description: "Building the regional competition robot", team_only: false, is_default: false, position: 3, pod_id: "pd1" },
+    { id: "ch-pd2", org_id: "o1", name: "pod-beginners", description: "New to robotics? Start here", team_only: false, is_default: false, position: 4, pod_id: "pd2" },
   ],
   messages: [
     { id: "m1", channel_id: "ch1", org_id: "o1", author_id: "demo-riley", body: "Welcome to the club chat! Say hi.", created_at: ago(30 * 3600_000) },
@@ -63,6 +65,20 @@ const demoStart = (): Demo => ({
   reads: [{ channel_id: "ch1", last_read_at: ago(24 * 3600_000) }],
 });
 const DEMO_NAMES: Record<string, string> = { "demo-sam": "Sam", "demo-riley": "Riley", "demo-maya": "Maya" };
+
+/** Demo only: a pod made in the demo gets its channel (and loses it when the pod is deleted). The real database does this itself. */
+export function addDemoPodChannel(orgId: string, podId: string, name: string, about: string) {
+  const d = readDemo();
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 24);
+  d.channels.push({ id: `ch-${podId}`, org_id: orgId, name: `pod-${slug}`, description: about, team_only: false, is_default: false, position: d.channels.length, pod_id: podId });
+  writeDemo(d);
+}
+export function removeDemoPodChannel(podId: string) {
+  const d = readDemo();
+  d.channels = d.channels.filter((c) => c.pod_id !== podId);
+  d.messages = d.messages.filter((m) => d.channels.some((c) => c.id === m.channel_id));
+  writeDemo(d);
+}
 const readDemo = (): Demo => { try { const s = localStorage.getItem(DEMO_KEY); if (s) return JSON.parse(s) as Demo; } catch { /* none saved */ } return demoStart(); };
 const writeDemo = (d: Demo) => { try { localStorage.setItem(DEMO_KEY, JSON.stringify(d)); } catch { /* ignore */ } };
 const fail = (m: string) => { notice.show({ icon: "alert", title: "That did not work", message: m }); return m; };
@@ -87,7 +103,9 @@ export function useClubChat(orgId: string, enabled = true) {
       return;
     }
     try {
-      const ch = await supabase!.from("campus_club_channels").select("id,org_id,name,description,team_only,is_default,position").eq("org_id", orgId).order("position", { ascending: true }).limit(40);
+      const withPod = await supabase!.from("campus_club_channels").select("id,org_id,name,description,team_only,is_default,position,pod_id").eq("org_id", orgId).order("position", { ascending: true }).limit(40);
+      // Before the pods migration is applied the pod_id column is missing: ask for the plain list.
+      const ch: { data: unknown[] | null; error: unknown } = withPod.error ? await supabase!.from("campus_club_channels").select("id,org_id,name,description,team_only,is_default,position").eq("org_id", orgId).order("position", { ascending: true }).limit(40) : withPod;
       // Before the channels migration is applied the table is missing: show no channels, never an error.
       if (ch.error) { if (id === mount.current) { setChannels([]); setMessages([]); setReady(true); } return; }
       const chans = (ch.data ?? []) as RawChannel[];
@@ -162,5 +180,5 @@ export function useClubChat(orgId: string, enabled = true) {
   };
 
   const list = buildChannels(channels, messages, reads, me);
-  return { channels: list, messagesIn: (channelId: string) => buildMessages(messages, channelId, names, me), unread: list.reduce((n, c) => n + c.unread, 0), ready, actions };
+  return { reload: load, channels: list, messagesIn: (channelId: string) => buildMessages(messages, channelId, names, me), unread: list.reduce((n, c) => n + c.unread, 0), ready, actions };
 }

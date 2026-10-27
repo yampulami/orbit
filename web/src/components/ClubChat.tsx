@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Hash, Lock, MessageSquare, Plus, Send, Trash2, X } from "lucide-react";
 import type { Org } from "../lib/campusOrgs";
 import type { useClubChat } from "../lib/clubChat";
+import type { Pod } from "../lib/clubPods";
 import EmojiButton from "./EmojiButton";
 import EmptyState from "./EmptyState";
 import RichText from "./RichText";
@@ -15,13 +16,16 @@ const dayOf = (iso: string) => {
 };
 
 /** A club's chat: channels down the side (or across the top on a phone), the conversation, and a box to write in. */
-export default function ClubChat({ org, reviewer, chat }: { org: Org; reviewer: boolean; chat: ReturnType<typeof useClubChat> }) {
+export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "" }: { org: Org; reviewer: boolean; chat: ReturnType<typeof useClubChat>; pods?: Pod[]; focusId?: string }) {
   const inClub = org.myJoin === "officer" || org.myJoin === "member";
   const canManage = org.owner || org.myPerms.includes("channels");
   const canModerate = org.myPerms.includes("moderate") || reviewer;
   // Team-only channels are for the team; the database hides them from everyone else, and so does the screen.
-  const channels = chat.channels.filter((c) => !c.teamOnly || org.mine);
-  const [activeId, setActiveId] = useState("");
+  // A pod's channel is for the pod's members and the team.
+  const myPods = new Set(pods.filter((p) => p.mine).map((p) => p.id));
+  const channels = chat.channels.filter((c) => (!c.teamOnly || org.mine) && (!c.podId || org.mine || myPods.has(c.podId)));
+  const [activeId, setActiveId] = useState(focusId);
+  useEffect(() => { if (focusId) setActiveId(focusId); }, [focusId]);
   const active = channels.find((c) => c.id === activeId) ?? channels[0];
   const [text, setText] = useState("");
   const [making, setMaking] = useState(false);
@@ -64,11 +68,11 @@ export default function ClubChat({ org, reviewer, chat }: { org: Org; reviewer: 
   return (
     <section className="cc" aria-label="Club chat">
       <nav className="cc-channels" aria-label="Channels">
-        {channels.map((c) => (
-          <button key={c.id} type="button" className={"cc-chan" + (c.id === active?.id ? " on" : "")} aria-current={c.id === active?.id} onClick={() => { setActiveId(c.id); setSure(false); }}>
+        {channels.map((c, i) => (
+          <Fragment key={c.id}>{c.podId && !channels[i - 1]?.podId && <p className="cc-group">Pods</p>}<button type="button" className={"cc-chan" + (c.id === active?.id ? " on" : "")} aria-current={c.id === active?.id} onClick={() => { setActiveId(c.id); setSure(false); }}>
             {c.teamOnly ? <Lock size={14} aria-hidden="true" /> : <Hash size={14} aria-hidden="true" />}<span>{c.name}</span>
             {c.unread > 0 && c.id !== active?.id && <b className="cc-unread" aria-label={`${c.unread} unread`}>{c.unread > 9 ? "9+" : c.unread}</b>}
-          </button>
+          </button></Fragment>
         ))}
         {canManage && !making && <button type="button" className="cc-chan new" onClick={() => setMaking(true)}><Plus size={14} aria-hidden="true" /><span>New channel</span></button>}
       </nav>
@@ -87,7 +91,7 @@ export default function ClubChat({ org, reviewer, chat }: { org: Org; reviewer: 
           <>
             <header className="cc-head">
               <div><h2>{active.teamOnly ? <Lock size={16} aria-hidden="true" /> : <Hash size={16} aria-hidden="true" />}{active.name}</h2>{active.description && <p className="muted">{active.description}</p>}</div>
-              {canManage && !active.isDefault && (sure
+              {canManage && !active.isDefault && !active.podId && (sure
                 ? <span className="cevent-sure"><button type="button" className="btn danger" onClick={() => { void chat.actions.deleteChannel(active.id); setActiveId(""); setSure(false); }}>Delete channel</button><button type="button" className="btn" onClick={() => setSure(false)}>Keep</button></span>
                 : <button type="button" className="link-btn" aria-label={`Delete #${active.name}`} onClick={() => setSure(true)}><Trash2 size={14} aria-hidden="true" /></button>)}
             </header>

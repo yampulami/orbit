@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
-import { BadgeCheck, Check, Clock, Flag, Gamepad2, Hammer, MapPin, Mic, PartyPopper, Star, Store, Trophy, UserRound, Users, Utensils, X } from "lucide-react";
+import { BadgeCheck, Check, Clock, Flag, Gamepad2, Hammer, MapPin, Mic, PartyPopper, QrCode, Star, Store, Trophy, UserRound, Users, Utensils, X } from "lucide-react";
 import { eventActions, hostedBy, type CampusEvent } from "../lib/campusEvents";
 import { countdown, eventFlavor, hueFor, type FlavorKey } from "../lib/look";
 import { notice } from "../lib/notice";
 import RichText from "./RichText";
 import VerifiedBadge from "./VerifiedBadge";
 import { cheer, goingLine } from "../lib/cheer";
+import { checkinActions, checkinOpen, useMyCheckins } from "../lib/checkin";
+import EventCheckin from "./EventCheckin";
 
 export const eventWhen = (e: Pick<CampusEvent, "startsAt" | "endsAt">) => {
   const s = new Date(e.startsAt);
@@ -33,6 +35,12 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
   const [why, setWhy] = useState("");
   const [sure, setSure] = useState(false);
   const [burst, setBurst] = useState(0);
+  const [ci, setCi] = useState(false);
+  const [runCi, setRunCi] = useState(false);
+  const [code, setCode] = useState("");
+  const [ciError, setCiError] = useState("");
+  const checked = useMyCheckins().ids.has(e.id);
+  const canCheckIn = e.status === "published" && !e.canceled && !e.manage && checkinOpen(e, new Date());
   const goRef = useRef<HTMLButtonElement>(null);
   const d = new Date(e.startsAt);
   const live = e.status === "published";
@@ -59,6 +67,7 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
         <div className="ev-tags">
           <EventBadge e={e} />
           {flavor && live && <span className="ev-flavor">{flavor.label}</span>}
+          {checked && <span className="ev-checked"><Check size={11} aria-hidden="true" /> Checked in</span>}
           {when && when.tone !== "past" && <span className={"ev-count " + when.tone}>{when.tone === "live" && <i className="live-dot" aria-hidden="true" />}{when.text}</span>}
         </div>
         <strong className="ev-title"><RichText text={e.title} /></strong>
@@ -90,6 +99,14 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
               </div>
             )}
             <span className="ev-people"><Users size={13} aria-hidden="true" /> <b key={e.going}>{e.going}</b> going{e.interested > 0 ? ` · ${e.interested} interested` : ""}</span>
+            {canCheckIn && !checked && (ci
+              ? <form className="ev-ci-form" onSubmit={async (x) => { x.preventDefault(); const err = await checkinActions.checkIn(e.id, code, { title: e.title, startsAt: e.startsAt, host: e.host }); if (err) { setCiError(err); return; } setCi(false); setCode(""); setCiError(""); cheer.show("You are checked in!"); }}>
+                  <input aria-label="Check-in code" autoFocus value={code} maxLength={8} placeholder="Code from the screen" autoCapitalize="characters" onChange={(x) => { setCode(x.target.value.toUpperCase()); setCiError(""); }} />
+                  <button className="btn primary" disabled={!code.trim()}>Check in</button><button type="button" className="btn" onClick={() => setCi(false)}>Cancel</button>
+                  {ciError && <p className="error" role="alert">{ciError}</p>}
+                </form>
+              : <button type="button" className="btn" onClick={() => setCi(true)}><QrCode size={14} aria-hidden="true" /> Check in</button>)}
+            {e.manage && !e.canceled && <button type="button" className="btn" aria-expanded={runCi} onClick={() => setRunCi((v) => !v)}><QrCode size={14} aria-hidden="true" /> {checkinOpen(e, new Date()) ? "Check-in" : "Attendance"}</button>}
             <span className="ev-more">
               {!e.mineHost && !e.canceled && (reporting
                 ? <form className="cevent-report" onSubmit={async (ev) => { ev.preventDefault(); await eventActions.report(e.id, why); setReporting(false); setWhy(""); notice.show({ icon: "pin", title: "Thanks for telling us", message: "A coordinator will take a look.", ms: 4000 }); }}>
@@ -104,6 +121,7 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
             </span>
           </div>
         )}
+        {runCi && e.manage && <div className="ev-ci-panel"><EventCheckin e={e} /></div>}
       </div>
     </li>
   );

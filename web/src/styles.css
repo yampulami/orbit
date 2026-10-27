@@ -2494,3 +2494,46 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .my-tasks li div{display:grid;gap:2px;min-width:0}
 .my-tasks li.late{border:1px solid color-mix(in srgb,#e0525c 55%,var(--line))}
 @media (max-width:900px){.tb-cols{grid-template-columns:minmax(0,1fr)}.dash-top{grid-template-columns:minmax(0,1fr)}}
+
+/* Check-in */
+.ev-checked{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;background:var(--mint);color:var(--mint-ink)}
+.ev-ci-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ev-ci-form input{min-height:44px;width:11rem;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;letter-spacing:.12em;text-transform:uppercase}
+.ev-ci-form .error{flex-basis:100%;margin:0}
+.ev-ci-panel{display:grid;gap:12px;margin-top:6px;padding:14px;border-radius:18px;background:var(--panel)}
+.ci{display:grid;gap:14px}
+.ci-qr{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.ci-qr img{border-radius:14px;background:#fff;padding:6px;box-shadow:0 10px 24px -16px rgba(40,30,90,.5)}
+.ci-skel{width:212px;height:212px;border-radius:14px}
+.ci-code{display:grid;gap:6px;min-width:0}
+.ci-code span{font-size:.82rem;color:var(--ink-soft)}
+.ci-code b{font-family:var(--serif);font-size:clamp(1.8rem,6vw,2.6rem);letter-spacing:.14em;line-height:1}
+.ci-code small{color:var(--ink-soft);max-width:30ch}
+.ci-bar{display:block;height:5px;max-width:200px;border-radius:3px;background:var(--line);overflow:hidden}
+.ci-bar u{display:block;height:100%;background:var(--violet);transition:width 1s linear}
+.ci-list h4{display:flex;align-items:center;gap:6px;font-size:.9rem;margin:0 0 6px}
+.ci-list ul{list-style:none;margin:0;padding:0;display:grid;gap:4px;max-height:220px;overflow:auto}
+.ci-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--surface)}
+.ci-list li span:first-child{flex:1;min-width:0;overflow-wrap:anywhere}
+.ci-hand{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.ci-hand input{flex:1;min-width:180px;min-height:42px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.checkin-page{display:grid;gap:16px;align-content:start}
+.checkin-card{display:grid;gap:12px;justify-items:center;text-align:center;max-width:420px;margin:0 auto;padding:28px 22px;border-radius:28px;background:var(--surface);border:1px solid var(--line)}
+.checkin-card h1{font-size:1.6rem}
+.checkin-card p{margin:0}
+.checkin-card .field{width:100%;text-align:left}
+.checkin-card .field input{text-align:center;letter-spacing:.2em;font-size:1.3rem;text-transform:uppercase}
+.attended{display:grid;gap:8px}
+.attended ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.attended li{display:grid;gap:1px;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+
+/* Pods */
+.cc-group{margin:8px 12px 2px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft)}
+.pod-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.pod-card{display:grid;gap:8px;padding:14px;border-radius:18px;background:var(--surface);border:1px solid var(--line)}
+.pod-card.mine{border-color:var(--ring)}
+.pod-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pod-card p{margin:0;font-size:.88rem}
+.pod-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pod-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+@media (max-width:700px){.cc-group{display:none}}

@@ -22,6 +22,7 @@ import { bindClasses, unbindClasses } from "./lib/classes";
 import { bindCampusEvents, unbindCampusEvents } from "./lib/campusEvents";
 import { bindCampusOrgs, unbindCampusOrgs } from "./lib/campusOrgs";
 import { clearVerified } from "./lib/verified";
+import { bindCheckins, unbindCheckins } from "./lib/checkin";
 import ErrorBoundary from "./components/ErrorBoundary";
 import CheerHost from "./components/CheerHost";
 import { bindBlocks, unbindBlocks } from "./lib/safety";
@@ -40,6 +41,7 @@ const Roommates = lazy(() => import("./pages/Roommates"));
 const CampusMap = lazy(() => import("./pages/CampusMap"));
 const Campus = lazy(() => import("./pages/Campus"));
 const Club = lazy(() => import("./pages/Club"));
+const CheckIn = lazy(() => import("./pages/CheckIn"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 
 function Protected({ children }: { children: ReactNode }) {
@@ -99,6 +101,7 @@ function InApp({ children }: { children: ReactNode }) {
     bindBlocks(uid);
     bindCampusEvents(uid);
     bindCampusOrgs(uid);
+    bindCheckins(uid);
     // An invite link opened before signing in leaves its code here. Use it now that the person is in.
     let waiting: string | null = null;
     try { waiting = sessionStorage.getItem("orbit-join-code"); if (waiting) sessionStorage.removeItem("orbit-join-code"); } catch { /* ignore */ }
@@ -108,7 +111,7 @@ function InApp({ children }: { children: ReactNode }) {
         else { notice.show({ icon: "pin", title: "You joined the group", message: "It is on your Groups list.", ms: 4000 }); nav("/app/groups"); }
       });
     }
-    return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); unbindCampusOrgs(); clearVerified(); };
+    return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); unbindCampusOrgs(); unbindCheckins(); clearVerified(); };
   }, [done, uid, campusKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (done === "checking") return <p className="muted" style={{ padding: 24 }} role="status">Loading…</p>;
   return done === "yes" ? <>{children}</> : <Navigate to="/onboarding" replace />;
@@ -151,6 +154,7 @@ export default function App() {
           <Route path="plans" element={<Plans />} />
           <Route path="campus" element={<Campus />} />
           <Route path="campus/clubs/:id" element={<Club />} />
+          <Route path="checkin/:id" element={<CheckIn />} />
           <Route path="map" element={<CampusMap />} />
           <Route path="profile" element={<Profile />} />
           <Route path="people/:id" element={<Person />} />

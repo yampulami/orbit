@@ -5,6 +5,7 @@ import { isOpen, useCampusEvents } from "../lib/campusEvents";
 import { canHostEvents, orgActions, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
 import { useClubFeed, lastPostAt } from "../lib/clubFeed";
 import { useClubChat } from "../lib/clubChat";
+import { useClubPods } from "../lib/clubPods";
 import { useClubTasks, isOverdue } from "../lib/clubTasks";
 import { activityOf } from "../lib/activity";
 import { dayLabel, hueFor } from "../lib/look";
@@ -18,6 +19,7 @@ import ApplicationDetails from "../components/ApplicationDetails";
 import { JoinButton, JoinRequests } from "../components/JoinPanel";
 import ClubFeed from "../components/ClubFeed";
 import ClubChat from "../components/ClubChat";
+import PodsPanel from "../components/PodsPanel";
 import ClubDashboard from "../components/ClubDashboard";
 import MyTasks from "../components/MyTasks";
 import RolesPanel from "../components/RolesPanel";
@@ -42,6 +44,8 @@ export default function Club() {
   const [reason, setReason] = useState("");
   const org = orgs.find((o) => o.id === id);
   const feed = useClubFeed(org?.id ?? "", !!org && (org.status === "active" || org.mine || reviewer));
+  const pods = useClubPods(org?.id ?? "", !!org && org.status === "active" && (org.myJoin === "officer" || org.myJoin === "member"));
+  const [chatFocus, setChatFocus] = useState("");
   const tasks = useClubTasks(org?.id ?? "", !!org && org.status === "active" && (org.myJoin === "officer" || org.myJoin === "member"));
   const chat = useClubChat(org?.id ?? "", !!org && org.status === "active" && (org.myJoin === "officer" || org.myJoin === "member"));
 
@@ -132,7 +136,7 @@ export default function Club() {
 
       {tab === "dashboard" && org.mine && <ClubDashboard org={org} events={events} board={tasks} reviewer={reviewer} go={setTab} />}
 
-      {tab === "chat" && <ClubChat org={org} reviewer={reviewer} chat={chat} />}
+      {tab === "chat" && <ClubChat org={org} reviewer={reviewer} chat={chat} pods={pods.pods} focusId={chatFocus} />}
 
       {tab === "events" && !circle && (
         <section className="club-section" aria-label="Events">
@@ -190,6 +194,7 @@ export default function Club() {
             )}
             {error && <p className="error" role="alert">{error}</p>}
           </section>
+          {org.status === "active" && <PodsPanel org={org} pods={pods} openChat={(id) => { void chat.reload(); setChatFocus(id); setTab("chat"); }} />}
           {canRoles && org.status === "active" && <RolesPanel org={org} />}
         </>
       )}
