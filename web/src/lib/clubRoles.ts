@@ -10,7 +10,7 @@ export const PERMS: { key: Perm; label: string; help: string }[] = [
   { key: "roles", label: "Manage roles", help: "Give people titles and change what a role can do." },
   { key: "moderate", label: "Moderate", help: "Remove posts, comments and chat messages that do not belong." },
   { key: "channels", label: "Manage channels", help: "Add and remove the club's chat channels." },
-  { key: "tasks", label: "Assign tasks", help: "Hand out jobs to the team (coming soon)." },
+  { key: "tasks", label: "Assign tasks", help: "Hand out jobs to people in the club and track them on the dashboard." },
 ];
 export const ALL_PERMS: Perm[] = PERMS.map((p) => p.key);
 /** An officer from before roles existed (no role yet) keeps these. */

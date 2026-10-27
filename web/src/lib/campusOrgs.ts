@@ -31,6 +31,8 @@ export type Org = {
   application: Application; createdAt: string; decidedAt?: string; creator: string;
   /** People in the club besides its officers. */
   memberCount: number;
+  /** Who they are (for giving out tasks and the like). */
+  clubMembers: { id: string; name: string }[];
   /** My place in it: not in it, waiting for an officer, in it, turned down, or an officer. */
   myJoin: "none" | JoinStatus | "officer";
   /** Join requests waiting for an officer (only officers and coordinators can see these). */
@@ -51,6 +53,7 @@ export function buildOrgs(orgs: RawOrg[], members: RawMember[], me: string, name
         application: { purpose: o.purpose ?? "", category: o.category ?? "", advisorName: o.advisor_name ?? "", advisorEmail: o.advisor_email ?? "", meeting: o.meeting ?? "", expectedMembers: o.expected_members ?? null, firstEvent: o.first_event ?? "", contact: o.contact ?? "" },
         createdAt: o.created_at ?? "", decidedAt: o.reviewed_at ?? undefined, creator: o.created_by === me ? "You" : names[o.created_by] ?? "A student",
         memberCount: cm.filter((c) => c.status === "member").length,
+        clubMembers: cm.filter((c) => c.status === "member").map((c) => ({ id: c.user_id, name: c.user_id === me ? "You" : names[c.user_id] ?? "Member" })),
         myJoin: (ms.some((m) => m.user_id === me) ? "officer" : mineJoin ?? "none") as Org["myJoin"],
         requests: cm.filter((c) => c.status === "pending" && c.user_id !== me).map((c) => ({ id: c.user_id, name: names[c.user_id] ?? "Student", message: c.message ?? "", at: c.created_at ?? "" })).sort((a, b) => a.at.localeCompare(b.at)),
         roles: rs.sort((a, b) => (a.position ?? 0) - (b.position ?? 0)).map((r) => ({ id: r.id, name: r.name, permissions: permsOf({ role: "officer", role_id: r.id }, rs), people: ms.filter((m) => m.role_id === r.id).length })),
@@ -134,7 +137,7 @@ async function reload() {
     // Before the join-requests migration is applied this table is missing: the clubs still show, with no members.
     const club = c.error ? [] : ((c.data ?? []) as RawClubMember[]);
     const orgs = (o.data ?? []) as RawOrg[];
-    const names = await loadNames([...members.map((x) => x.user_id), ...club.filter((x) => x.status === "pending").map((x) => x.user_id), ...orgs.map((x) => x.created_by)]).catch(() => ({}));
+    const names = await loadNames([...members.map((x) => x.user_id), ...club.filter((x) => x.status === "pending" || x.status === "member").map((x) => x.user_id), ...orgs.map((x) => x.created_by)]).catch(() => ({}));
     if (mine !== loadId || who !== me) return;
     set({ orgs, members, club, roles, names, ready: true });
   } catch { /* keep what is on screen */ }

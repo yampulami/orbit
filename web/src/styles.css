@@ -2453,3 +2453,44 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .club-page{grid-template-columns:minmax(0,1fr)}
 .club-seg{overflow-x:auto;scrollbar-width:none}
 @media (max-width:520px){.club-seg button{padding:0 4px;gap:4px}.club-seg button svg{display:none}}
+
+/* Dashboard and tasks */
+.dash{display:grid;gap:18px}
+.dash-top{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px}
+.dash-attn,.dash-soon{display:grid;gap:10px;align-content:start;padding:16px;border-radius:20px;background:var(--panel)}
+.dash h2{font-size:1rem}
+.dash ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.dash-attn li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface)}
+.dash-attn li span{flex:1;min-width:0}
+.dash-clear{display:flex;align-items:center;gap:8px;margin:0;color:var(--ink-soft)}
+.dash-soon li{display:grid;gap:1px;padding:10px 12px;border-radius:14px;background:var(--surface)}
+.tb{display:grid;gap:12px}
+.tb-tools{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tb-form{display:grid;gap:12px;padding:16px;border-radius:20px;background:var(--panel)}
+.tb-form textarea{width:100%;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;resize:vertical}
+.tb-form select{min-height:44px;padding:0 10px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+.tb-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.tb-col{display:grid;gap:8px;align-content:start;padding:12px;border-radius:20px;background:var(--panel)}
+.tb-col h3{display:flex;align-items:center;gap:8px;font-size:.9rem}
+.tb-col ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.tb-empty{padding:10px;font-size:.84rem;text-align:center}
+.tb-card{display:grid;gap:6px;padding:12px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.tb-card.mine{border-color:var(--ring)}
+.tb-card.overdue{border-color:color-mix(in srgb,#e0525c 55%,var(--line))}
+.tb-card strong{overflow-wrap:anywhere}
+.tb-card p{margin:0;font-size:.86rem}
+.tb-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.8rem}
+.tb-due{display:inline-flex;align-items:center;gap:4px;color:var(--ink-soft)}
+.tb-due.late{color:#c63a45;font-weight:700}
+[data-theme=dark] .tb-due.late{color:#ff8a93}
+.tb-who{color:var(--ink-soft)}
+.tb-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:2px}
+.tb-next{min-height:36px;padding:0 14px;font-size:.84rem}
+.tb-col.done .tb-card{opacity:.75}
+.my-tasks{display:grid;gap:8px;padding:14px;border-radius:20px;background:var(--panel)}
+.my-tasks h3{display:flex;align-items:center;gap:6px;font-size:.92rem}
+.my-tasks ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.my-tasks li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:var(--surface)}
+.my-tasks li div{display:grid;gap:2px;min-width:0}
+.my-tasks li.late{border:1px solid color-mix(in srgb,#e0525c 55%,var(--line))}
+@media (max-width:900px){.tb-cols{grid-template-columns:minmax(0,1fr)}.dash-top{grid-template-columns:minmax(0,1fr)}}

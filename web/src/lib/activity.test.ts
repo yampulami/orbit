@@ -99,3 +99,31 @@ describe("club chat", () => {
     expect(problemWithChannel("Study group", ["general"])).toBeNull();
   });
 });
+
+import { buildTasks, isOverdue, problemWithTask } from "./clubTasks";
+describe("club tasks", () => {
+  const now = new Date(2026, 9, 27, 12, 0);
+  const iso = (n: number) => new Date(now.getTime() + n * 86400000).toISOString();
+  const raw = [
+    { id: "a", org_id: "o", title: "Later", details: "", assignee_id: "u1", due_at: iso(5), status: "todo" as const, created_by: "u1", created_at: iso(-3), done_at: null },
+    { id: "b", org_id: "o", title: "Soon", details: "", assignee_id: "u2", due_at: iso(1), status: "doing" as const, created_by: "u1", created_at: iso(-2), done_at: null },
+    { id: "c", org_id: "o", title: "No date", details: "", assignee_id: null, due_at: null, status: "todo" as const, created_by: "u1", created_at: iso(-4), done_at: null },
+    { id: "d", org_id: "o", title: "Finished", details: "", assignee_id: "u1", due_at: iso(-2), status: "done" as const, created_by: "u1", created_at: iso(-8), done_at: iso(-3) },
+    { id: "e", org_id: "o", title: "Late", details: "", assignee_id: "u2", due_at: iso(-1), status: "todo" as const, created_by: "u1", created_at: iso(-7), done_at: null },
+  ];
+  it("lists open tasks by due date, undated after dated, and finished last", () => {
+    const t = buildTasks(raw, { u2: "Sam" }, "u1");
+    expect(t.map((x) => x.id)).toEqual(["e", "b", "a", "c", "d"]);
+    expect(t[1]).toMatchObject({ assignee: "Sam", mine: false });
+    expect(t[2]).toMatchObject({ assignee: "You", mine: true });
+  });
+  it("calls a task overdue only when it is open and past due", () => {
+    const t = buildTasks(raw, {}, "u1");
+    expect(t.filter((x) => isOverdue(x, now)).map((x) => x.id)).toEqual(["e"]);
+  });
+  it("checks a new task", () => {
+    expect(problemWithTask({ title: " ", details: "" })).toMatch(/title/);
+    expect(problemWithTask({ title: "Do it", details: "x".repeat(501) })).toMatch(/500/);
+    expect(problemWithTask({ title: "Do it", details: "" })).toBeNull();
+  });
+});
