@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Flame, LogOut, Pencil, Trash2 } from "lucide-react";
 import { NAME_MAX, renameMe, useDisplayName } from "../lib/displayName";
 import { pushSupported } from "../lib/push";
+import { haptic, setHaptics, useHaptics } from "../lib/haptics";
 import { disableDeviceAlerts, enableDeviceAlerts, notifyDevice, useDeviceAlerts } from "../lib/deviceAlerts";
 import { setNudge, useNudges } from "../lib/nudges";
 import { notice } from "../lib/notice";
@@ -71,6 +72,7 @@ export default function Profile() {
   const weeks = streakWeeks(p);
   const nudges = useNudges(session?.user.id);
   const device = useDeviceAlerts();
+  const feel = useHaptics();
   const uid = session?.user.id;
 
   async function toggleDevice() {
@@ -139,6 +141,17 @@ export default function Profile() {
           <p className="muted">Light, dark, or match your device.</p>
         </div>
         <ThemeSegment />
+      </section>
+
+      <section className="notif-card" aria-label="Touch feedback">
+        <div>
+          <h2>Touch feedback</h2>
+          <p className="muted">A small tap you can feel when you press buttons, tick things off, send a message or get one. Works on phones; nothing happens on a computer.</p>
+        </div>
+        <div className="notif-row">
+          <span id="n-haptics">Haptic feedback</span>
+          <button type="button" role="switch" aria-checked={feel} aria-labelledby="n-haptics" className="switch" onClick={() => { setHaptics(!feel); haptic("success"); }}><span /></button>
+        </div>
       </section>
 
       <section className="notif-card" aria-label="Notifications">

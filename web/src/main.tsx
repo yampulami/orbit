@@ -8,6 +8,9 @@ import App from "./App";
 import "@fontsource-variable/dm-sans";
 import "@fontsource-variable/fraunces/opsz.css";
 import "./styles.css";
+import { startHaptics } from "./lib/haptics";
+
+startHaptics();
 
 const Router = DEMO_BUILD ? MemoryRouter : BrowserRouter; // hosted preview can't use real URLs
 

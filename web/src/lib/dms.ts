@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 import { dbRun, refreshOnReturn } from "./privateDb";
 import { staleLimiter, watchTables } from "./people";
 import { readCache, writeCache } from "./localCache";
+import { haptic } from "./haptics";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
 import { notice } from "./notice";
 import { applyDmChange, buildThreads, loadDms, loadPeople, pairOf, type DmThread, type Person } from "./dmDb";
@@ -25,6 +26,9 @@ let stopReturn: (() => void) | null = null;
 let loadId = 0;
 const reading = new Set<string>();
 const limit = staleLimiter();
+/** A little tap when a message from someone else has just arrived (not when the list first loads). */
+const theirs = (threads: DmThread[]) => threads.reduce((n, t) => n + t.messages.filter((m) => !m.mine).length, 0);
+function heard(before: DmThread[], after: DmThread[]) { if (theirs(after) > theirs(before)) haptic("receive"); }
 let epoch = 0; // counts changes applied straight from the live connection
 
 async function reload() {
@@ -47,7 +51,7 @@ async function onNudge(n: Nudge) {
   const change = await fetchChange(n.table, n.id).catch(() => null);
   if (!change) return;
   const next = applyDmChange(state.threads, who, change);
-  if (next) { epoch++; if (next !== state.threads) set({ ...state, threads: next }); } else void reload();
+  if (next) { epoch++; if (next !== state.threads) { heard(state.threads, next); set({ ...state, threads: next }); } } else void reload();
 }
 
 export function bindDms(userId: string) {
@@ -63,7 +67,7 @@ export function bindDms(userId: string) {
     const next = applyDmChange(state.threads, userId, e);
     if (!next) return false;
     epoch++;
-    if (next !== state.threads) set({ ...state, threads: next });
+    if (next !== state.threads) { heard(state.threads, next); set({ ...state, threads: next }); }
     return true;
   }, async () => {
     // Is the newest message in the database one we already show? If not, something was missed (for example the phone slept).
@@ -88,6 +92,7 @@ export const dmActions = {
     const body = text.trim().slice(0, 2000);
     if (!body || !who) return;
     const me = who, id = crypto.randomUUID(), at = new Date().toISOString();
+    haptic("send");
     patchThread(threadId, (t) => ({ ...t, messages: [...t.messages, { id, mine: true, text: body, at }], updatedAt: at }));
     dbRun("Sending that message", () => supabase!.from("direct_messages").insert({ id, conversation_id: threadId, sender_id: me, body }), () => void reload(), () => {
       const note = { table: "direct_messages", id, op: "upsert" } as const;

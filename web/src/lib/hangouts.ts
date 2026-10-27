@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 import { notice } from "./notice";
 import { staleLimiter, type ChangeEvent } from "./people";
 import { readCache, writeCache } from "./localCache";
+import { haptic } from "./haptics";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
 import { applyHangChange, buildState, labelerFor, loadRaw, watch } from "./hangoutsDb";
 import { YOU, type Group, type HangState, type Hangout, type Msg, type Rsvp } from "./hangTypes";
@@ -82,6 +83,7 @@ let stopWatching: (() => void) | null = null;
 let loadId = 0;
 let nameOf: (id: string) => string | undefined = () => undefined;
 const limit = staleLimiter();
+const heardCount = (s: State) => s.groups.reduce((n, g) => n + g.messages.filter((m) => m.author !== YOU).length, 0);
 let epoch = 0; // counts changes applied straight from the live connection
 
 async function reload() {
@@ -110,7 +112,7 @@ async function onNudge(n: Nudge) {
   else change = await fetchChange(n.table, n.id, n.by).catch(() => null);
   if (!change) return;
   const next = applyHangChange(state, nameOf, change);
-  if (next) { epoch++; if (next !== state) set(next); } else void reload(); // an unknown group, hangout or person
+  if (next) { epoch++; if (next !== state) { if (heardCount(next) > heardCount(state)) haptic("receive"); set(next); } } else void reload(); // an unknown group, hangout or person
 }
 
 /** Start using the database for this signed-in student. Call once the person and their campus are known. */
@@ -129,7 +131,7 @@ export function bindHang(user: { id: string; name: string; campusKey: string }) 
     const next = applyHangChange(state, nameOf, e);
     if (!next) return false;
     epoch++;
-    if (next !== state) set(next);
+    if (next !== state) { if (heardCount(next) > heardCount(state)) haptic("receive"); set(next); }
     return true;
   }, async () => {
     // Is the newest chat message in the database one we already show? If not, something was missed (for example the phone slept).
@@ -193,6 +195,7 @@ export const hangActions = {
     return id;
   },
   send(groupId: string, text: string) {
+    haptic("send");
     const mid = crypto.randomUUID();
     patchGroup(groupId, (g) => ({ ...g, messages: [...g.messages, { id: mid, author: YOU, text, at: new Date().toISOString() }] }));
     if (live && who) run("Sending that message", () => supabase!.from("group_messages").insert({ id: mid, group_id: groupId, sender_id: who!.id, sender_name: who!.name, body: text }), () => sendNudge(groupId, { table: "group_messages", id: mid, op: "upsert" }));
