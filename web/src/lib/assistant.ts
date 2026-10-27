@@ -11,7 +11,7 @@ export type AssistantCtx = {
   unreadMessages: number;
   unreadNotifs: number;
 };
-export type Reply = { text: string; go?: string };
+export type Reply = { text: string; go?: string; /** What to call the button that opens `go`. */ goLabel?: string };
 
 const PAGES: [RegExp, string, string][] = [
   [/\b(feed|home)\b/, "/app/feed", "the feed"],
@@ -47,7 +47,7 @@ export function answerFor(raw: string, ctx: AssistantCtx): Reply {
   /* open a page */
   if (/^(open|go to|take me|bring me|navigate|switch to)\b/.test(q)) {
     const hit = PAGES.find(([re]) => re.test(q));
-    if (hit) return { text: `Opened ${hit[2]}. Anything else?`, go: hit[1] };
+    if (hit) return { text: `Here is ${hit[2]}. Tap the button to go there.`, go: hit[1], goLabel: `Open ${hit[2]}` };
   }
 
   if (/^(hi|hello|hey|yo|good (morning|afternoon|evening))\b/.test(q)) return { text: "Hi! Ask me what is on tonight, about a club, your next class or your reminders, or tell me a page to open." };
@@ -57,7 +57,7 @@ export function answerFor(raw: string, ctx: AssistantCtx): Reply {
   const club = ctx.clubs.find((c) => q.includes(c.name.toLowerCase()));
   if (club) {
     const kind = club.kind === "official" ? "an official office" : club.kind === "circle" ? "a student circle" : "a student club";
-    return { text: `${club.name} is ${kind} with ${club.people} ${club.people === 1 ? "person" : "people"}${club.category ? `, in ${club.category}` : ""}.${club.meeting ? ` It meets ${club.meeting}.` : ""}${club.description ? ` ${club.description}` : ""}${club.mine ? " You are in it." : ""} I opened its page.`, go: `/app/campus/clubs/${club.id}` };
+    return { text: `${club.name} is ${kind} with ${club.people} ${club.people === 1 ? "person" : "people"}${club.category ? `, in ${club.category}` : ""}.${club.meeting ? ` It meets ${club.meeting}.` : ""}${club.description ? ` ${club.description}` : ""}${club.mine ? " You are in it." : ""}`, go: `/app/campus/clubs/${club.id}`, goLabel: `Open ${club.name}` };
   }
 
   /* how things work */

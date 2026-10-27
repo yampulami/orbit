@@ -15,6 +15,8 @@ type Phase = "idle" | "launch" | "assemble" | "think" | "resolve" | "condense" |
 
 export interface MorphOrbProps {
   onSubmit?: (text: string) => Promise<string> | string;
+  /** Called once the answer card has settled, with what was asked and the answer. */
+  onAnswered?: (question: string, answer: string) => void;
   minThinkMs?: number;
   speed?: number;
 }
@@ -827,6 +829,11 @@ export default function MorphOrb(props: MorphOrbProps) {
   const reducedRef = useRef(false);
   const rtRef = useRef<Runtime | null>(null);
   const timers = useRef<{ typing?: number; shake?: number; flash?: number }>({});
+  const asked = useRef("");
+  useEffect(() => {
+    if (phase === "answered") propsRef.current.onAnswered?.(asked.current, answer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   useIsoLayoutEffect(() => {
     const root = rootRef.current, mover = moverRef.current, actor = actorRef.current, canvas = canvasRef.current;
@@ -920,6 +927,7 @@ export default function MorphOrb(props: MorphOrbProps) {
     if (!rt || rt.busy() || phaseRef.current !== "idle") return;
     const text = value.trim();
     if (!text) { shake(); return; }
+    asked.current = text;
     rt.start(text, makeCfg());
   };
 
