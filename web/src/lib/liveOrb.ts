@@ -10,6 +10,8 @@ export type LiveOrbOptions = {
   colors?: string[];
   interactive?: boolean;
   blink?: boolean;
+  /** 0 to 1: how excited it is. Eyes open wider and rounder as it goes up. */
+  joy?: number;
   /** Fires when WebGL is ready (true) or gone (false). */
   onHasGl?: (ok: boolean) => void;
 };
@@ -54,6 +56,7 @@ uniform float u_time;
 uniform float u_speed;
 uniform vec2 u_look;
 uniform float u_blink;
+uniform float u_joy;
 uniform float u_mode;
 uniform vec3 u_body;
 uniform vec3 u_eye;
@@ -148,8 +151,8 @@ void main() {
   vec3 eL = orient(normalize(vec3(-0.32, 0.08, 1.0)), look);
   vec3 eR = orient(normalize(vec3(0.32, 0.08, 1.0)), look);
 
-  float halfH = mix(0.128, 0.012, u_blink);
-  float rad = mix(0.054, 0.062, u_blink);
+  float halfH = mix(0.128, 0.012, u_blink) * (1.0 + 0.32 * u_joy);
+  float rad = mix(0.054, 0.062, u_blink) * (1.0 + 0.24 * u_joy);
   float eyes = max(
     eyeMask(n, eL, right, up, halfH, rad),
     eyeMask(n, eR, right, up, halfH, rad)
@@ -219,6 +222,7 @@ export function createLiveOrb(canvas: HTMLCanvasElement, initial: LiveOrbOptions
   let uSpeed: WebGLUniformLocation | null = null;
   let uLook: WebGLUniformLocation | null = null;
   let uBlink: WebGLUniformLocation | null = null;
+  let uJoy: WebGLUniformLocation | null = null;
   let uMode: WebGLUniformLocation | null = null;
   let uBody: WebGLUniformLocation | null = null;
   let uEye: WebGLUniformLocation | null = null;
@@ -253,6 +257,7 @@ export function createLiveOrb(canvas: HTMLCanvasElement, initial: LiveOrbOptions
     uSpeed = gl.getUniformLocation(prog, "u_speed");
     uLook = gl.getUniformLocation(prog, "u_look");
     uBlink = gl.getUniformLocation(prog, "u_blink");
+    uJoy = gl.getUniformLocation(prog, "u_joy");
     uMode = gl.getUniformLocation(prog, "u_mode");
     uBody = gl.getUniformLocation(prog, "u_body");
     uEye = gl.getUniformLocation(prog, "u_eye");
@@ -278,6 +283,7 @@ export function createLiveOrb(canvas: HTMLCanvasElement, initial: LiveOrbOptions
   let blinkAt = -10_000;
   let nextGlance = 600 + Math.random() * 900;
   let pointerAt = -Infinity;
+  let joy = 0;
 
   /** Returns whether the backing size changed (which clears the canvas). */
   const resize = () => {
@@ -368,6 +374,8 @@ export function createLiveOrb(canvas: HTMLCanvasElement, initial: LiveOrbOptions
       else if (bt < 0.1) b = 1;
       else if (bt < 0.18) b = 1 - (bt - 0.1) / 0.08;
     }
+    // Joy eases toward its target so the eyes widen and relax smoothly.
+    joy += ((reduce ? 0 : options.joy ?? 0) - joy) * (live ? 0.14 : 1);
     const body = hexToRgb(resolved.body);
     const eye = hexToRgb(resolved.eye);
     const palette = [0, 1, 2].map((i) => hexToRgb(resolved.palette[i % resolved.palette.length] ?? WEBGL_COLORS[i]!));
@@ -379,6 +387,7 @@ export function createLiveOrb(canvas: HTMLCanvasElement, initial: LiveOrbOptions
     gl.uniform1f(uSpeed, reduce ? 0 : 0.55);
     gl.uniform2f(uLook, look.x, look.y);
     gl.uniform1f(uBlink, b);
+    gl.uniform1f(uJoy, joy);
     gl.uniform1f(uMode, resolved.mode);
     gl.uniform3f(uBody, body[0], body[1], body[2]);
     gl.uniform3f(uEye, eye[0], eye[1], eye[2]);

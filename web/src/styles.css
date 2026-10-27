@@ -2303,3 +2303,17 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .ptr-orb{display:inline-flex;transform-origin:50% 100%}
 .typing-orb{align-self:flex-end;margin:0 6px 4px 0}
 .bubble-row:has(.typing-orb){align-items:flex-end}
+
+/* Landing: three orbs, one headline, two buttons */
+.land-hero{display:grid;justify-items:center;text-align:center;padding:clamp(16px,5vh,64px) 0 clamp(40px,8vh,88px)}
+.land-orbs{position:relative;display:flex;align-items:flex-end;justify-content:center;gap:clamp(0px,2vw,28px);margin-bottom:clamp(20px,5vh,44px)}
+.land-orbs::before{content:"";position:absolute;inset:-30% -10% -10%;background:radial-gradient(50% 55% at 50% 55%,color-mix(in srgb,var(--violet) 26%,transparent),transparent 72%);filter:blur(8px);pointer-events:none}
+.land-orb{position:relative;width:calc(clamp(88px,25vw,204px)*var(--s,1));aspect-ratio:1;cursor:pointer;touch-action:manipulation;transform-origin:50% 100%}
+.land-orb .orb-gl{width:100%!important;height:100%!important}
+.land-hero h1{font-size:clamp(2.4rem,7vw,5rem);font-weight:400;max-width:14ch;margin:0 auto 18px;letter-spacing:-.035em;text-wrap:balance}
+.land-hero p{font-size:1.12rem;max-width:44ch;margin:0 auto 30px;color:var(--muted)}
+.land-hero .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.land-inside{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:28px;padding:44px 0 56px;border-top:1px solid var(--line)}
+.land-inside h3{font-size:1.05rem;margin:0 0 6px}
+.land-inside p{margin:0;max-width:32ch}
+.orb-gl .orb-gl-fallback{width:94%!important;height:94%!important}
