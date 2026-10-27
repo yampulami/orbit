@@ -2110,3 +2110,6 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
   .club-card .club-tags{max-width:none;flex-basis:100%;justify-content:flex-start}
 }
 @media (max-width:900px){.tab-ico{width:48px}}
+
+.verified{display:inline-flex;vertical-align:-3px;margin-left:4px;color:var(--violet);flex:none}
+.cevent-host .verified,.club-text .verified{vertical-align:-2px}

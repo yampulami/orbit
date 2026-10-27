@@ -10,6 +10,7 @@ import EventForm from "../components/EventForm";
 import ReviewPanel from "../components/ReviewPanel";
 import EmptyState from "../components/EmptyState";
 import RichText from "../components/RichText";
+import VerifiedBadge from "../components/VerifiedBadge";
 
 type Tab = "events" | "clubs" | "review";
 
@@ -106,7 +107,7 @@ function ClubCard({ o }: { o: Org }) {
       <Link className="club-card" to={`/app/campus/clubs/${o.id}`}>
         <span className="club-mark" aria-hidden="true">{o.name.slice(0, 1).toUpperCase()}</span>
         <span className="club-text">
-          <strong><RichText text={o.name} /></strong>
+          <strong><RichText text={o.name} />{o.status === "active" && <VerifiedBadge label={o.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</strong>
           <span className="club-sub">{o.description || (o.kind === "official" ? "Official office" : "Student club")}</span>
         </span>
         <span className="club-tags">

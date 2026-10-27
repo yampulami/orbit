@@ -7,6 +7,8 @@ import { ancestorsOf, directReplies, replyCount, topLevel } from "../lib/comment
 import type { Comment } from "../lib/feedData";
 import { enter } from "../lib/motion";
 import PersonLink from "./PersonLink";
+import VerifiedBadge from "./VerifiedBadge";
+import { useVerified } from "../lib/verified";
 import SafetyMenu from "./SafetyMenu";
 
 const ago = (iso: string) => {
@@ -32,6 +34,7 @@ type Props = {
  *  count. Pressing it opens that comment's thread: the comment on top, a box to reply to it, and its replies as cards of their own, each with
  *  their own reply icon, so you can keep going down. Back goes up one level. */
 export default function CommentThread({ postId, comments, onComment, onReply }: Props) {
+  const isVerified = useVerified();
   const reduce = useReducedMotion();
   const [focusId, setFocusId] = useState<string | null>(null);
   const [text, setText] = useState("");
@@ -63,7 +66,7 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
       <article key={c.id} className={"cmt-card" + (kind === "focus" ? " focus" : kind === "context" ? " context" : "")}>
         <div className="cmt-head">
           <PersonLink id={c.user_id} className="who-link"><span className="who-av" aria-hidden="true">{initial(c.author_name)}</span></PersonLink>
-          <span className="cmt-who"><PersonLink id={c.user_id} className="who-link"><strong>{c.author_name}</strong></PersonLink> · <span className="cmt-when">{ago(c.created_at)}</span></span>
+          <span className="cmt-who"><PersonLink id={c.user_id} className="who-link"><strong>{c.author_name}</strong></PersonLink>{isVerified(c.user_id) && <VerifiedBadge label="Verified campus staff" />} · <span className="cmt-when">{ago(c.created_at)}</span></span>
           <SafetyMenu userId={c.user_id} name={c.author_name} postId={postId} commentId={c.id} context="comment" />
         </div>
         <p className="cmt-body"><RichText text={c.body} /></p>

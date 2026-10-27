@@ -8,6 +8,7 @@ import EventCard from "../components/EventCard";
 import EventForm from "../components/EventForm";
 import EmptyState from "../components/EmptyState";
 import RichText from "../components/RichText";
+import VerifiedBadge from "../components/VerifiedBadge";
 
 /** One club or office: who runs it, its events, and (for its officers) the button that posts a new event. */
 export default function Club() {
@@ -49,7 +50,7 @@ export default function Club() {
       <header className="club-head">
         <span className="club-mark big" aria-hidden="true">{org.name.slice(0, 1).toUpperCase()}</span>
         <div>
-          <h1><RichText text={org.name} /></h1>
+          <h1><RichText text={org.name} />{org.status === "active" && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
           <div className="club-tags">
             <span className={"ebadge " + (org.kind === "official" ? "official" : "student")}>{org.kind === "official" ? <><BadgeCheck size={12} aria-hidden="true" /> Official</> : <><UserRound size={12} aria-hidden="true" /> Student club</>}</span>
             {org.status === "pending" && <span className="ebadge wait"><Clock size={12} aria-hidden="true" /> Waiting for approval</span>}

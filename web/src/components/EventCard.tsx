@@ -3,6 +3,7 @@ import { BadgeCheck, Check, Clock, Flag, MapPin, Star, UserRound, Users, X } fro
 import { eventActions, type CampusEvent } from "../lib/campusEvents";
 import { notice } from "../lib/notice";
 import RichText from "./RichText";
+import VerifiedBadge from "./VerifiedBadge";
 
 export const eventWhen = (e: Pick<CampusEvent, "startsAt" | "endsAt">) => {
   const s = new Date(e.startsAt);
@@ -37,7 +38,7 @@ export default function EventCard({ e, reviewer }: { e: CampusEvent; reviewer: b
         <EventBadge e={e} />
         <div className="cevent-top">
           <strong><RichText text={e.title} /></strong>
-          <span className="cevent-host">by {e.host}</span>
+          <span className="cevent-host">by {e.host}{live && (e.kind === "official" || !!e.orgId) && <VerifiedBadge label={e.kind === "official" ? "Verified: official campus office" : "Verified: club approved by a coordinator"} />}</span>
         </div>
         <p className="cevent-meta">{eventWhen(e)}{e.place && <><span aria-hidden="true"> · </span><MapPin size={12} aria-hidden="true" /> {e.place}</>}</p>
         {e.canceled && <p className="cevent-cancel" role="status">Cancelled</p>}

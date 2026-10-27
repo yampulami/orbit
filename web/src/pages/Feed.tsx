@@ -27,6 +27,8 @@ import { isVisible, useHang, YOU } from "../lib/hangouts";
 import { progress, streakWeeks, useProgress } from "../lib/progress";
 import { undo } from "../lib/undo";
 import { supabase } from "../lib/supabase";
+import { useVerified } from "../lib/verified";
+import VerifiedBadge from "../components/VerifiedBadge";
 import { watchTables } from "../lib/people";
 import { refreshOnReturn } from "../lib/privateDb";
 
@@ -58,6 +60,7 @@ function useStickyRail(ref: React.RefObject<HTMLElement | null>, ready: boolean)
 }
 
 export default function Feed() {
+  const isVerified = useVerified();
   const { session } = useAuth();
   const me = session?.user.id ?? "";
   const name = useDisplayName();
@@ -268,7 +271,7 @@ export default function Feed() {
               const people = [...new Set(p.post_comments.map((c) => c.author_name))].slice(0, 3);
               return (
                 <motion.article key={p.id} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: -14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
-                  <div className="meta"><span className="who"><PersonLink id={p.author_id} className="who-link"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span></PersonLink><span><PersonLink id={p.author_id} className="who-link"><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong></PersonLink> · {when(p.created_at)}</span></span><span className="meta-end"><span className="chip">{p.community}</span><SafetyMenu userId={p.author_id} name={p.author_name} postId={p.id} context="post" /></span></div>
+                  <div className="meta"><span className="who"><PersonLink id={p.author_id} className="who-link"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span></PersonLink><span><PersonLink id={p.author_id} className="who-link"><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong></PersonLink>{isVerified(p.author_id) && <VerifiedBadge label="Verified campus staff" />} · {when(p.created_at)}</span></span><span className="meta-end"><span className="chip">{p.community}</span><SafetyMenu userId={p.author_id} name={p.author_name} postId={p.id} context="post" /></span></div>
                   {p.payload.title && <h3>{p.payload.title}</h3>}
                   <p className="body" style={{ whiteSpace: "pre-wrap" }}><RichText text={p.payload.body ?? p.payload.text ?? ""} /></p>
                   <div className="foot">
