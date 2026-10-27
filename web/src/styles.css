@@ -2113,3 +2113,10 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 
 .verified{display:inline-flex;vertical-align:-3px;margin-left:4px;color:var(--violet);flex:none}
 .cevent-host .verified,.club-text .verified{vertical-align:-2px}
+
+.feed-events{display:grid;gap:8px;margin:2px 0}
+.feed-events-h{display:flex;align-items:center;gap:6px;margin:0;font-size:.82rem;font-weight:600;color:var(--ink-soft)}
+.feed-events-h a{margin-left:auto;color:var(--violet);text-decoration:none}
+.feed-event{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-left:3px solid var(--violet)}
+.feed-event .cevent-body{display:grid;gap:4px;min-width:0}
+.feed-event.student{border-left-color:var(--ink-soft)}

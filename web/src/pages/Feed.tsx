@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "rea
 import { useIsPhone } from "../lib/phone";
 import EmojiButton from "../components/EmojiButton";
 import RichText from "../components/RichText";
-import CampusEventsStrip from "../components/CampusEventsStrip";
+import FeedEvents from "../components/FeedEvents";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, Navigate } from "react-router-dom";
@@ -182,7 +182,6 @@ export default function Feed() {
     <div className="feed-layout">
       <div className="feed-main">
         <h1 className="sr">Campus feed</h1>
-        {phone && <CampusEventsStrip />}
         <section className="hangs" aria-label="Hangouts">
           <header>
             <h2 className="sr">Hangouts</h2>
@@ -265,11 +264,11 @@ export default function Feed() {
         <div className="posts">
           {shown.length === 0 && <p className="empty">{posts.length === 0 ? "No posts yet. Be the first." : `Nothing in ${filter} yet.`}</p>}
           <AnimatePresence initial={false}>
-            {shown.map((p) => {
+            {shown.map((p, idx) => {
               const liked = p.post_likes.some((l) => l.user_id === me);
               const expanded = open === p.id;
               const people = [...new Set(p.post_comments.map((c) => c.author_name))].slice(0, 3);
-              return (
+              const card = (
                 <motion.article key={p.id} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: -14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
                   <div className="meta"><span className="who"><PersonLink id={p.author_id} className="who-link"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span></PersonLink><span><PersonLink id={p.author_id} className="who-link"><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong></PersonLink>{isVerified(p.author_id) && <VerifiedBadge label="Verified campus staff" />} · {when(p.created_at)}</span></span><span className="meta-end"><span className="chip">{p.community}</span><SafetyMenu userId={p.author_id} name={p.author_name} postId={p.id} context="post" /></span></div>
                   {p.payload.title && <h3>{p.payload.title}</h3>}
@@ -297,12 +296,12 @@ export default function Feed() {
                   </AnimatePresence>
                 </motion.article>
               );
+              return filter === "All" && idx === Math.min(1, shown.length - 1) ? [card, <FeedEvents key="campus-events" />] : card;
             })}
           </AnimatePresence>
         </div>
       </div>
       {!phone && <aside className="rail" ref={rail} aria-label="Your campus summary">
-        <CampusEventsStrip />
         <section className="cal-fold">
           <button type="button" className="cal-toggle" aria-expanded={calOpen} onClick={toggleCal}>
             <span className="cal-ico"><CalendarDays size={18} strokeWidth={1.75} /></span>
