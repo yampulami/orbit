@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent } from "react";
-import { BadgeCheck, CalendarDays, Check, ChevronDown, Clock, Info, MapPin, Megaphone, Plus, Star, UserRound, Users, X } from "lucide-react";
+import { BadgeCheck, CalendarDays, Check, ChevronDown, Clock, Flag, Info, MapPin, Megaphone, Plus, Star, UserRound, Users, X } from "lucide-react";
 import { eventActions, isOpen, setDemoRole, useCampusEvents, type CampusEvent, type Role } from "../lib/campusEvents";
 import { supabase } from "../lib/supabase";
 import { notice } from "../lib/notice";
@@ -7,6 +7,8 @@ import EmojiButton from "./EmojiButton";
 import DateTimeField from "./DateTimeField";
 import RichText from "./RichText";
 import EmptyState from "./EmptyState";
+import HostTools from "./HostTools";
+import { useCampusOrgs } from "../lib/campusOrgs";
 
 const when = (e: CampusEvent) => {
   const s = new Date(e.startsAt);
@@ -19,6 +21,7 @@ const when = (e: CampusEvent) => {
 export function EventBadge({ e }: { e: Pick<CampusEvent, "kind" | "status"> }) {
   if (e.status === "pending") return <span className="ebadge wait"><Clock size={12} aria-hidden="true" /> Waiting for approval</span>;
   if (e.status === "rejected") return <span className="ebadge no"><X size={12} aria-hidden="true" /> Not approved</span>;
+  if (e.status === "removed") return <span className="ebadge no"><X size={12} aria-hidden="true" /> Removed</span>;
   return e.kind === "official"
     ? <span className="ebadge official"><BadgeCheck size={12} aria-hidden="true" /> Official campus event</span>
     : <span className="ebadge student"><UserRound size={12} aria-hidden="true" /> Student event</span>;
@@ -28,7 +31,12 @@ export function EventBadge({ e }: { e: Pick<CampusEvent, "kind" | "status"> }) {
  *  Anyone can say going or interested. This is different from a group hangout, which is a private plan among friends. */
 export default function CampusEvents() {
   const { events, pending, isHost, role, canReview: reviewer, hostLabel, ready } = useCampusEvents();
+  const { postable } = useCampusOrgs();
+  const canPost = isHost || postable.length > 0;
   const [form, setForm] = useState(false);
+  const [postAs, setPostAs] = useState<string>("self"); // "self" is you as a host, otherwise an organization id
+  const [reporting, setReporting] = useState<string | null>(null);
+  const [why, setWhy] = useState("");
   const [all, setAll] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [sure, setSure] = useState<string | null>(null);
@@ -37,8 +45,8 @@ export default function CampusEvents() {
   const [reason, setReason] = useState("");
 
   const now = new Date();
-  const published = events.filter((e) => isOpen(e, now) && e.status !== "pending" && e.status !== "rejected");
-  const mineWaiting = events.filter((e) => e.mineHost && (e.status === "pending" || e.status === "rejected") && isOpen(e, now));
+  const published = events.filter((e) => isOpen(e, now) && e.status === "published");
+  const mineWaiting = events.filter((e) => (e.mineHost || reviewer) && (e.status === "pending" || e.status === "rejected" || e.status === "removed") && isOpen(e, now) && (e.mineHost || e.status === "removed"));
   const upcoming = [...mineWaiting, ...published].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const shown = all ? upcoming : upcoming.slice(0, 4);
 
@@ -49,14 +57,14 @@ export default function CampusEvents() {
           <h2><Megaphone size={18} aria-hidden="true" /> Campus events</h2>
           <p className="muted">Public events for the whole campus, put on by departments, clubs and staff. Your own plans with friends are <strong>hangouts</strong> in Groups.</p>
         </div>
-        {isHost && <button type="button" className="btn primary" aria-expanded={form} onClick={() => setForm((v) => !v)}><Plus size={16} aria-hidden="true" />Post an event</button>}
+        {canPost && <button type="button" className="btn primary" aria-expanded={form} onClick={() => { setPostAs(isHost ? "self" : postable[0]?.id ?? "self"); setForm((v) => !v); }}><Plus size={16} aria-hidden="true" />Post an event</button>}
       </header>
 
       <button type="button" className="cevent-help" aria-expanded={help} onClick={() => setHelp((v) => !v)}><Info size={15} aria-hidden="true" /> What is the difference between events and hangouts? <ChevronDown size={15} aria-hidden="true" className="chev" /></button>
       {help && (
         <dl className="cevent-explain">
           <div><dt><span className="ebadge official"><BadgeCheck size={12} aria-hidden="true" /> Official campus event</span></dt><dd>Posted by staff, like a department, the library or an instructor. Open to everyone at your university.</dd></div>
-          <div><dt><span className="ebadge student"><UserRound size={12} aria-hidden="true" /> Student event</span></dt><dd>Put on by a student club or group. A staff member approves it before it appears here. Open to everyone.</dd></div>
+          <div><dt><span className="ebadge student"><UserRound size={12} aria-hidden="true" /> Student event</span></dt><dd>Put on by a student club that a coordinator has approved. Open to everyone. Anyone can report an event if something is wrong.</dd></div>
           <div><dt><span className="ebadge group"><Users size={12} aria-hidden="true" /> Group hangout</span></dt><dd>A private plan you make with friends in a group. Only the people in that group see it, and it is not an event.</dd></div>
         </dl>
       )}
@@ -71,7 +79,9 @@ export default function CampusEvents() {
         </label>
       )}
 
-      {form && isHost && <EventForm hostLabel={hostLabel} role={role} onDone={() => setForm(false)} />}
+      <HostTools onPost={(id) => { setPostAs(id); setForm(true); }} />
+
+      {form && canPost && <EventForm hostLabel={isHost ? hostLabel : null} role={isHost ? role : null} postAs={postAs} setPostAs={setPostAs} onDone={() => setForm(false)} />}
 
       {reviewer && pending.length > 0 && (
         <div className="cevent-queue" role="region" aria-label="Waiting for your approval">
@@ -124,6 +134,8 @@ export default function CampusEvents() {
                   {e.canceled && <p className="cevent-cancel" role="status">Cancelled</p>}
                   {e.status === "pending" && <p className="cevent-note" role="status">A staff member needs to approve this before other students can see it.</p>}
                   {e.status === "rejected" && <p className="cevent-note" role="status">Not approved{e.note ? `: ${e.note}` : "."} You can post it again with changes.</p>}
+                  {e.status === "removed" && <p className="cevent-note" role="status">A coordinator removed this event, so students cannot see it.{reviewer ? "" : " Ask a coordinator if you think that was a mistake."}</p>}
+                  {e.status === "removed" && reviewer && <div className="cevent-actions"><button type="button" className="btn" onClick={() => void eventActions.setRemoved(e.id, false)}>Bring it back</button></div>}
                   {e.description && (
                     <p className={"cevent-desc" + (expanded ? " open" : "")}><RichText text={e.description} />{" "}
                       {e.description.length > 110 && <button type="button" className="link-btn" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : e.id)}>{expanded ? "Less" : "More"}</button>}
@@ -138,6 +150,13 @@ export default function CampusEvents() {
                           <button type="button" aria-pressed={e.mine === "interested"} onClick={() => eventActions.respond(e.id, e.mine === "interested" ? null : "interested")}><Star size={14} aria-hidden="true" /> Interested</button>
                         </div>
                       )}
+                      {!e.mineHost && !e.canceled && (reporting === e.id
+                        ? <form className="cevent-report" onSubmit={async (ev) => { ev.preventDefault(); await eventActions.report(e.id, why); setReporting(null); setWhy(""); notice.show({ icon: "pin", title: "Thanks for telling us", message: "A coordinator will take a look.", ms: 4000 }); }}>
+                            <input aria-label="What is wrong? (optional)" autoFocus value={why} maxLength={200} placeholder="What is wrong? (optional)" onChange={(x) => setWhy(x.target.value)} />
+                            <button className="btn">Report</button><button type="button" className="btn" onClick={() => setReporting(null)}>Back</button>
+                          </form>
+                        : <button type="button" className="link-btn report-btn" onClick={() => { setReporting(e.id); setWhy(""); }}><Flag size={12} aria-hidden="true" /> Report</button>)}
+                      {reviewer && !e.mineHost && <button type="button" className="link-btn report-btn" onClick={() => { void eventActions.setRemoved(e.id, true); notice.show({ icon: "calendar", title: "Event removed", message: "It is hidden from students.", ms: 3500 }); }}>Remove</button>}
                       {e.mineHost && !e.canceled && (sure === e.id
                         ? <span className="cevent-sure"><button type="button" className="btn danger" onClick={() => { void eventActions.cancel(e.id); setSure(null); notice.show({ icon: "calendar", title: "Event cancelled", message: "People who said going or interested have been told.", ms: 4000 }); }}>Yes, cancel it</button><button type="button" className="btn" onClick={() => setSure(null)}>Keep it</button></span>
                         : <button type="button" className="btn" onClick={() => setSure(e.id)}>Cancel event</button>)}
@@ -155,7 +174,9 @@ export default function CampusEvents() {
   );
 }
 
-function EventForm({ hostLabel, role, onDone }: { hostLabel: string | null; role: Role | null; onDone: () => void }) {
+function EventForm({ hostLabel, role, postAs, setPostAs, onDone }: { hostLabel: string | null; role: Role | null; postAs: string; setPostAs: (v: string) => void; onDone: () => void }) {
+  const { postable } = useCampusOrgs();
+  const org = postAs === "self" ? undefined : postable.find((o) => o.id === postAs);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [place, setPlace] = useState("");
@@ -165,12 +186,12 @@ function EventForm({ hostLabel, role, onDone }: { hostLabel: string | null; role
   const [busy, setBusy] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
   const nowLocal = (() => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); })();
-  const student = role === "student";
+  const student = !org && role === "student";
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
-    const r = await eventActions.create({ title, description, place, startsAt, endsAt: endsAt || undefined });
+    const r = await eventActions.create({ title, description, place, startsAt, endsAt: endsAt || undefined, orgId: org?.id, orgName: org?.name, orgKind: org?.kind });
     setBusy(false);
     if (r.error) { setError(r.error); return; }
     notice.show(r.status === "pending"
@@ -181,8 +202,23 @@ function EventForm({ hostLabel, role, onDone }: { hostLabel: string | null; role
 
   return (
     <form className="cevent-form" onSubmit={submit}>
+      {(hostLabel && postable.length > 0) && (
+        <label className="field">Post as
+          <select value={postAs} onChange={(e) => setPostAs(e.target.value)}>
+            <option value="self">{hostLabel} (you)</option>
+            {postable.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
+        </label>
+      )}
+      {!hostLabel && postable.length > 1 && (
+        <label className="field">Post as
+          <select value={postAs} onChange={(e) => setPostAs(e.target.value)}>
+            {postable.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
+        </label>
+      )}
       <p className="cevent-who">
-        Posting as <strong>{hostLabel ?? "host"}</strong> <span className={"ebadge " + (student ? "student" : "official")}>{student ? <><UserRound size={12} aria-hidden="true" /> Student event</> : <><BadgeCheck size={12} aria-hidden="true" /> Official campus event</>}</span>
+        Posting as <strong>{org?.name ?? hostLabel ?? "host"}</strong> <span className={"ebadge " + ((org ? org.kind === "student" : student) ? "student" : "official")}>{(org ? org.kind === "student" : student) ? <><UserRound size={12} aria-hidden="true" /> Student event</> : <><BadgeCheck size={12} aria-hidden="true" /> Official campus event</>}</span>
       </p>
       <p className="muted">{student ? "A staff member approves student events before other students see them." : "This goes live right away, and everyone on your campus is told."}</p>
       <label className="field">Title<input autoFocus value={title} maxLength={120} onChange={(e) => { setTitle(e.target.value); setError(""); }} placeholder="e.g. Study skills workshop" /></label>

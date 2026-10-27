@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./supabase", () => ({ supabase: null }));
 
-import { applyEventChange, buildEvents, canReview, isOpen, outcomeFor, problemWithEvent, visibleEvents, type RawAnswer, type RawEvent } from "./campusEvents";
+import { applyEventChange, buildEvents, canReview, isOpen, outcomeFor, problemWithEvent, statusNote, visibleEvents, type RawAnswer, type RawEvent } from "./campusEvents";
 
 const ev = (id: string, starts: string, extra: Partial<RawEvent> = {}): RawEvent => ({ id, host_id: "h1", host_label: "Library", title: "Workshop " + id, description: "", place_name: "Room 2", starts_at: starts, ends_at: null, canceled_at: null, kind: "official", status: "published", ...extra });
 const ans = (event_id: string, user_id: string, answer: RawAnswer["answer"]): RawAnswer => ({ event_id, user_id, answer });
@@ -88,5 +88,22 @@ describe("official and student events", () => {
     ], [], "me");
     expect(visibleEvents(list, false).map((e) => e.id)).toEqual(["pub", "mine"]);
     expect(visibleEvents(list, true).map((e) => e.id)).toEqual(["pub", "wait", "mine", "no"]);
+  });
+});
+
+describe("removed events and organizations", () => {
+  it("shows a removed event only to its host and to reviewers", () => {
+    const list = buildEvents([ev("pub", "2026-10-28T10:00:00Z"), ev("gone", "2026-10-29T10:00:00Z", { status: "removed", host_id: "club" }), ev("mine", "2026-10-30T10:00:00Z", { status: "removed", host_id: "me" })], [], "me");
+    expect(visibleEvents(list, false).map((e) => e.id)).toEqual(["pub", "mine"]);
+    expect(visibleEvents(list, true).map((e) => e.id)).toEqual(["pub", "gone", "mine"]);
+  });
+  it("says in words why an event is not live", () => {
+    expect(statusNote("pending")).toMatch(/approval/);
+    expect(statusNote("removed")).toMatch(/Removed/);
+    expect(statusNote("published")).toBe("");
+  });
+  it("carries the organization an event was posted as", () => {
+    const [e] = buildEvents([ev("a", "2026-10-28T10:00:00Z", { org_id: "org1", host_label: "Robotics Club", kind: "student" })], [], "me");
+    expect(e).toMatchObject({ orgId: "org1", host: "Robotics Club", kind: "student" });
   });
 });

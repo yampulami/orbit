@@ -20,6 +20,7 @@ import { bindFriends, unbindFriends } from "./lib/friends";
 import { bindNotifs, unbindNotifs } from "./lib/notifs";
 import { bindClasses, unbindClasses } from "./lib/classes";
 import { bindCampusEvents, unbindCampusEvents } from "./lib/campusEvents";
+import { bindCampusOrgs, unbindCampusOrgs } from "./lib/campusOrgs";
 import { bindBlocks, unbindBlocks } from "./lib/safety";
 
 // Everything except the main feed loads when it is first opened, so the first download stays small.
@@ -92,6 +93,7 @@ function InApp({ children }: { children: ReactNode }) {
     bindNotifs(uid);
     bindBlocks(uid);
     bindCampusEvents(uid);
+    bindCampusOrgs(uid);
     // An invite link opened before signing in leaves its code here. Use it now that the person is in.
     let waiting: string | null = null;
     try { waiting = sessionStorage.getItem("orbit-join-code"); if (waiting) sessionStorage.removeItem("orbit-join-code"); } catch { /* ignore */ }
@@ -101,7 +103,7 @@ function InApp({ children }: { children: ReactNode }) {
         else { notice.show({ icon: "pin", title: "You joined the group", message: "It is on your Groups list.", ms: 4000 }); nav("/app/groups"); }
       });
     }
-    return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); };
+    return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); unbindCampusOrgs(); };
   }, [done, uid, campusKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (done === "checking") return <p className="muted" style={{ padding: 24 }} role="status">Loading…</p>;
   return done === "yes" ? <>{children}</> : <Navigate to="/onboarding" replace />;

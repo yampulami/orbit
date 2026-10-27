@@ -2040,3 +2040,27 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
   .dtf-pop,.cevent-times .dtf-pop{position:fixed;left:8px;right:8px;top:auto;bottom:calc(8px + env(safe-area-inset-bottom));width:auto;max-height:86dvh;overflow-y:auto;z-index:95;border-radius:24px}
 }
 @media (prefers-reduced-motion:reduce){.dtf-pop{animation:none}}
+
+/* host tools: organizations, approvals, reports */
+.htools{display:grid;gap:10px}
+.htools-head{display:flex;align-items:center;gap:8px;width:100%;min-height:46px;padding:0 14px;border:1px dashed var(--line);border-radius:16px;background:none;color:var(--ink);font:inherit;font-weight:600;font-size:.9rem;cursor:pointer;text-align:left}
+.htools-head .chev{margin-left:auto;transition:transform .25s var(--ease)}
+.htools-head[aria-expanded=true] .chev{transform:rotate(180deg)}
+.htools-head:hover{border-color:var(--violet)}
+.htools-body{display:grid;gap:14px;padding:14px;border-radius:20px;background:var(--panel)}
+.htools-block{display:grid;gap:8px}
+.htools-block h3{display:flex;align-items:center;gap:6px;font-size:.9rem;font-weight:600}
+.htools-block ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.htools-block li{display:grid;gap:8px;padding:12px;border-radius:16px;background:var(--surface)}
+.htools-main{display:grid;gap:3px;min-width:0}
+.htools-main strong{overflow-wrap:anywhere}
+.htools-title{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.htools-members,.htools-why{font-size:.8rem;color:var(--ink-soft);overflow-wrap:anywhere}
+.htools-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.htools-row input,.cevent-report input{min-height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;min-width:180px;flex:1}
+.htools-form{display:grid;gap:12px}
+.htools-form textarea{width:100%;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;resize:vertical}
+.cevent-report{display:flex;gap:6px;flex-wrap:wrap;align-items:center;width:100%}
+.report-btn{display:inline-flex;align-items:center;gap:4px;font-size:.78rem;color:var(--muted);text-decoration:none}
+.report-btn:hover{color:var(--ink);text-decoration:underline}
+.cevent .cevent-actions select,.cevent-form select{min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
