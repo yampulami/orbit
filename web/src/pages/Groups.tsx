@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
 import EmojiButton from "../components/EmojiButton";
+import DateTimeField from "../components/DateTimeField";
 import { useChatOpenClass, useIsPhone } from "../lib/phone";
 import RichText from "../components/RichText";
 import HangoutCard from "../components/HangoutCard";
@@ -205,7 +206,7 @@ export default function Groups() {
                 <p className="vis-note plan-intro">A hangout is a plan with your friends. For a big event for the whole campus, look at Campus events in Plans.</p>
                 <label className="field">What<input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Coffee break" /></label>
                 <label className="field">Where<input list="campus-places" value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Pick a campus place or type your own" /><datalist id="campus-places">{campusPlaces.map((p) => <option key={p.id} value={p.name} />)}</datalist></label>
-                <label className="field">When<input type="datetime-local" min={nowLocal} value={when} onChange={(e) => setWhen(e.target.value)} /></label>
+                <DateTimeField label="When" value={when} min={nowLocal} onChange={setWhen} />
                 {error && <p className="error" role="alert">{error}</p>}
                 <div className="field vis" role="radiogroup" aria-label="Who can see it">
                   <span>Who can see it</span>

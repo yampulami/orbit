@@ -4,6 +4,7 @@ import { eventActions, isOpen, setDemoRole, useCampusEvents, type CampusEvent, t
 import { supabase } from "../lib/supabase";
 import { notice } from "../lib/notice";
 import EmojiButton from "./EmojiButton";
+import DateTimeField from "./DateTimeField";
 import RichText from "./RichText";
 import EmptyState from "./EmptyState";
 
@@ -187,8 +188,8 @@ function EventForm({ hostLabel, role, onDone }: { hostLabel: string | null; role
       <label className="field">Title<input autoFocus value={title} maxLength={120} onChange={(e) => { setTitle(e.target.value); setError(""); }} placeholder="e.g. Study skills workshop" /></label>
       <label className="field">Where<input value={place} maxLength={120} onChange={(e) => setPlace(e.target.value)} placeholder="e.g. Library, room 2B" /></label>
       <div className="cevent-times">
-        <label className="field">Starts<input type="datetime-local" min={nowLocal} value={startsAt} onChange={(e) => { setStartsAt(e.target.value); setError(""); }} /></label>
-        <label className="field">Ends (optional)<input type="datetime-local" min={startsAt || nowLocal} value={endsAt} onChange={(e) => { setEndsAt(e.target.value); setError(""); }} /></label>
+        <DateTimeField label="Starts" value={startsAt} min={nowLocal} onChange={(v) => { setStartsAt(v); setError(""); }} />
+        <DateTimeField label="Ends (optional)" value={endsAt} min={startsAt || nowLocal} optional placeholder="No end time" onChange={(v) => { setEndsAt(v); setError(""); }} />
       </div>
       <div className="field">
         <label htmlFor="cevent-desc">What is it about?</label>
