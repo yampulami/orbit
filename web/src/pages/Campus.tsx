@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { BadgeCheck, CalendarDays, ChevronDown, Info, Megaphone, Plus, UserRound, Users } from "lucide-react";
 import { eventActions, isOpen, setDemoRole, useCampusEvents, type Role } from "../lib/campusEvents";
 import { useCampusOrgs, type Org } from "../lib/campusOrgs";
+import { dayLabel, hueFor } from "../lib/look";
 import { supabase } from "../lib/supabase";
 import { notice } from "../lib/notice";
 import EventCard, { EventBadge } from "../components/EventCard";
@@ -80,7 +81,11 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
   const live = events.filter((e) => isOpen(e, now) && e.status === "published");
   const mineElsewhere = events.filter((e) => e.mineHost && !e.orgId && e.status !== "published" && isOpen(e, now));
   const list = [...mineElsewhere, ...live].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-  const shown = all ? list : list.slice(0, 6);
+  const next = list.find((e) => e.status === "published" && !e.canceled);
+  const rest = list.filter((e) => e !== next);
+  const shown = all ? rest : rest.slice(0, 6);
+  const groups: [string, typeof rest][] = [];
+  for (const e of shown) { const k = dayLabel(e.startsAt, now); const g = groups.find((x) => x[0] === k); if (g) g[1].push(e); else groups.push([k, [e]]); }
 
   return (
     <section className="cevents" aria-label="Campus events">
@@ -95,24 +100,33 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
       ) : list.length === 0 ? (
         <EmptyState icon={CalendarDays} title="No campus events yet">When a department or club posts one, it shows up here and in your bell. Clubs are in the next tab.</EmptyState>
       ) : (
-        <ul className="cevent-list">{shown.map((e) => <EventCard key={e.id} e={e} reviewer={reviewer} />)}</ul>
+        <>
+          {next && <div className="club-next"><h2>Up next on campus</h2><ul className="ev-list"><EventCard e={next} reviewer={reviewer} featured /></ul></div>}
+          {groups.map(([label, items]) => (
+            <div key={label} className="ev-day"><h3>{label}</h3><ul className="ev-list">{items.map((e) => <EventCard key={e.id} e={e} reviewer={reviewer} />)}</ul></div>
+          ))}
+        </>
       )}
-      {list.length > 6 && <button type="button" className="up-more" onClick={() => setAll((v) => !v)}>{all ? "Show fewer" : `Show all ${list.length}`}</button>}
+      {rest.length > 6 && <button type="button" className="up-more" onClick={() => setAll((v) => !v)}>{all ? "Show fewer" : `Show all ${rest.length + 1}`}</button>}
     </section>
   );
 }
 
 function ClubCard({ o }: { o: Org }) {
+  const { events } = useCampusEvents();
+  const now = new Date();
+  const soon = events.find((e) => e.orgId === o.id && e.status === "published" && !e.canceled && isOpen(e, now));
   return (
     <li>
-      <Link className="club-card" to={`/app/campus/clubs/${o.id}`}>
+      <Link className="club-card" style={{ ["--h" as string]: hueFor(o.name) }} to={`/app/campus/clubs/${o.id}`}>
         <span className="club-mark" aria-hidden="true">{o.name.slice(0, 1).toUpperCase()}</span>
         <span className="club-text">
           <strong><RichText text={o.name} />{o.status === "active" && <VerifiedBadge label={o.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</strong>
           <span className="club-sub">{o.description || (o.kind === "official" ? "Official office" : "Student club")}</span>
+          {soon && <span className="club-soon"><CalendarDays size={12} aria-hidden="true" /> {dayLabel(soon.startsAt, now)}: {soon.title}</span>}
         </span>
         <span className="club-tags">
-          <span className={"ebadge " + (o.kind === "official" ? "official" : "student")}>{o.kind === "official" ? "Official" : "Club"}</span>
+          {o.status === "active" && <span className="muted club-count"><Users size={12} aria-hidden="true" /> {o.memberCount + o.members.length}</span>}
           {o.status !== "active" && <span className={"ebadge " + (o.status === "paused" ? "no" : "wait")}>{o.status === "pending" ? "Waiting for approval" : o.status === "paused" ? "Paused" : "Not approved"}</span>}
         </span>
       </Link>

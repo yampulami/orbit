@@ -2156,3 +2156,103 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .app-card-head strong{font-size:1.02rem}
 .app-card .app-details{background:var(--panel)}
 @media (prefers-reduced-motion:reduce){.live-dot,.app-card.fresh{animation:none}}
+
+/* Clubs and events: each club gets its own colour (--h) between violet and pink; events read as tickets */
+.club-page,.ev,.club-card,.feed-event{--tint:hsl(var(--h,262) 70% 93%);--tint-ink:hsl(var(--h,262) 45% 30%);--solid:hsl(var(--h,262) 52% 46%);--ring:hsl(var(--h,262) 50% 62% / .34)}
+[data-theme=dark] .club-page,[data-theme=dark] .ev,[data-theme=dark] .club-card,[data-theme=dark] .feed-event{--tint:hsl(var(--h,262) 32% 22%);--tint-ink:hsl(var(--h,262) 70% 86%);--solid:hsl(var(--h,262) 52% 56%);--ring:hsl(var(--h,262) 60% 70% / .3)}
+
+.club-mark{background:var(--tint);color:var(--tint-ink)}
+.club-card:hover{border-color:var(--solid)}
+.club-soon{display:flex;align-items:center;gap:5px;font-size:.78rem;font-weight:600;color:var(--tint-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.club-count{display:inline-flex;align-items:center;gap:4px;font-size:.8rem}
+
+.club-hero{position:relative;overflow:hidden;display:flex;gap:18px;align-items:flex-start;padding:24px;border-radius:28px;background:radial-gradient(120% 150% at 0% 0%,var(--tint) 0%,var(--surface) 72%);border:1px solid var(--line)}
+.club-orbits{position:absolute;right:-70px;top:-70px;width:340px;height:340px;pointer-events:none}
+.club-orbits i{position:absolute;border-radius:50%;border:1px solid var(--ring)}
+.club-orbits i:nth-child(1){inset:0}
+.club-orbits i:nth-child(2){inset:48px;animation:orbit-spin 60s linear infinite;border-style:dashed}
+.club-orbits i:nth-child(3){inset:96px}
+.club-planet{position:relative;flex:none;display:grid;place-items:center;width:76px;height:76px;border-radius:50%;background:var(--solid);color:#fff;font-family:Fraunces,Georgia,serif;font-size:2.1rem;font-weight:600;box-shadow:0 14px 26px -12px var(--solid)}
+.club-moon{position:absolute;inset:-13px;animation:orbit-spin 9s linear infinite}
+.club-moon::before{content:"";position:absolute;top:0;left:50%;width:13px;height:13px;margin-left:-6px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px var(--surface)}
+@keyframes orbit-spin{to{transform:rotate(360deg)}}
+.club-hero-text{position:relative;display:grid;gap:10px;min-width:0;flex:1}
+.club-hero h1{font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.1;overflow-wrap:anywhere;text-wrap:balance}
+.club-faces{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.86rem}
+.faces{display:inline-flex}
+.faces i{display:grid;place-items:center;width:28px;height:28px;margin-left:-7px;border-radius:50%;background:var(--tint);color:var(--tint-ink);border:2px solid var(--surface);font-style:normal;font-size:.7rem;font-weight:700}
+.faces i:first-child{margin-left:0}
+.faces i.more{background:var(--raised);color:var(--ink-soft)}
+.club-cta{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.club-seg{width:100%}
+.club-seg button{flex:1;justify-content:center}
+.club-next h2,.ev-day h3{font-size:.95rem;font-weight:600;margin:0 0 8px}
+.ev-day h3{color:var(--ink-soft);font-size:.84rem;margin-top:6px}
+.club-next,.ev-day{display:grid}
+.ev-past{display:grid;gap:10px}
+.club-people{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.club-people li{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.club-av{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;background:var(--tint);color:var(--tint-ink);font-style:normal;font-weight:700;font-size:.8rem}
+.club-about-long{margin:0;max-width:68ch;line-height:1.6}
+
+.ev-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.ev{position:relative;display:grid;grid-template-columns:72px minmax(0,1fr);overflow:hidden;border-radius:22px;background:var(--surface);border:1px solid var(--line);transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s}
+.ev:hover{transform:translateY(-2px);border-color:var(--ring);box-shadow:0 16px 28px -22px var(--solid)}
+.ev.waiting{opacity:.92;border-style:dashed}
+.ev.canceled .ev-title{text-decoration:line-through;opacity:.6}
+.ev-stub{position:relative;display:grid;place-content:center;justify-items:center;gap:1px;padding:12px 6px;background:var(--tint);color:var(--tint-ink);text-align:center;transition:background .35s var(--ease),color .35s}
+.ev-stub b{font-family:Fraunces,Georgia,serif;font-size:1.7rem;line-height:1}
+.ev-mon,.ev-dow{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.ev-dow{opacity:.75}
+.ev-ico{margin-top:8px;opacity:.85}
+.ev-stub::before,.ev-stub::after{content:"";position:absolute;right:-7px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.ev-stub::before{top:-7px}
+.ev-stub::after{bottom:-7px}
+.ev.is-going .ev-stub{background:var(--solid);color:#fff}
+.ev-body{display:grid;gap:6px;padding:14px 16px 14px 20px;min-width:0}
+.ev-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ev-flavor{display:inline-flex;align-items:center;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;background:var(--raised);color:var(--ink-soft)}
+.ev-count{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.72rem;font-weight:700;background:var(--raised);color:var(--ink-soft)}
+.ev-count.soon{background:color-mix(in srgb,var(--gold) 55%,transparent);color:var(--butter-ink)}
+.ev-count.live{background:var(--mint);color:var(--mint-ink)}
+.ev-title{font-size:1.08rem;line-height:1.25;overflow-wrap:anywhere;text-wrap:balance}
+.ev-host{display:flex;align-items:center;font-size:.84rem;color:var(--ink-soft)}
+.ev-meta{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:0;font-size:.86rem;color:var(--ink-soft)}
+.ev-desc{margin:0;font-size:.92rem;max-width:68ch;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ev-desc.open{display:block}
+.ev-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.ev-answer{display:flex;gap:8px;flex-wrap:wrap}
+.ev-go,.ev-maybe{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.9rem;font-weight:600;cursor:pointer;transition:transform .25s var(--ease),background .25s,color .25s,border-color .25s}
+.ev-go:hover,.ev-maybe:hover{border-color:var(--solid)}
+.ev-go:active,.ev-maybe:active{transform:scale(.94)}
+.ev-go[aria-pressed=true]{background:var(--solid);color:#fff;border-color:var(--solid)}
+.ev-maybe[aria-pressed=true]{background:var(--tint);color:var(--tint-ink);border-color:var(--ring)}
+.ev-burst{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
+.ev-burst i{position:absolute;left:-3px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--gold);transform:rotate(var(--a)) translateY(-10px);animation:ev-burst .6s var(--ease) forwards}
+@keyframes ev-burst{to{transform:rotate(var(--a)) translateY(-38px) scale(.4);opacity:0}}
+.ev-people{display:inline-flex;align-items:center;gap:5px;font-size:.84rem;color:var(--ink-soft)}
+.ev-people b{color:var(--ink);animation:ev-tick .35s var(--ease)}
+@keyframes ev-tick{from{transform:translateY(5px);opacity:0}}
+.ev-more{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-left:auto}
+
+.ev.featured{grid-template-columns:92px minmax(0,1fr);box-shadow:0 22px 36px -26px var(--solid);border-color:var(--ring)}
+.ev.featured .ev-stub b{font-size:2.3rem}
+.ev.featured .ev-title{font-size:1.35rem}
+.ev.featured .ev-body{padding:18px 20px 18px 24px;gap:8px}
+
+@media (max-width:700px){
+  .club-hero{flex-direction:column;padding:18px;gap:14px;border-radius:24px}
+  .club-orbits{right:-120px;top:-120px;opacity:.7}
+  .club-orbits i:nth-child(2),.club-moon{animation:none}
+  .ev{grid-template-columns:58px minmax(0,1fr);border-radius:20px}
+  .ev:hover{transform:none}
+  .ev.featured{grid-template-columns:68px minmax(0,1fr)}
+  .ev.featured .ev-stub b{font-size:1.9rem}
+  .ev.featured .ev-title{font-size:1.2rem}
+  .ev-body{padding:12px 12px 12px 16px}
+  .ev-stub b{font-size:1.4rem}
+  .ev-more{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){.club-orbits i,.club-moon,.ev-burst i,.ev-people b{animation:none}.ev,.ev-go{transition:none}}
+
+.club-seg .rem-count,.campus-seg .rem-count{margin-left:4px}
