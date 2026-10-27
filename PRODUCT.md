@@ -60,3 +60,13 @@ Orbit is one campus-life app for a single university. It combines a campus socia
 ## Accessibility & Inclusion
 
 Earlier rounds set these practices: 44-point touch targets, labels that don't rely on color alone, visible focus states, accessible names for icon buttons, respect for reduced motion, and checked contrast for the main text pairs. The web app keeps these practices. No formal WCAG certification is claimed.
+
+## Round of 2026-10-26: feel, messaging and planning
+
+- **Haptics.** A small tap on buttons, switches, ticks, sending and receiving messages (`web/src/lib/haptics.ts`). Android vibrates; iPhones borrow the system switch tap; computers do nothing. It respects the device's reduced-motion setting and has a switch in Profile.
+- **Messaging.** Unread count on Messages (sidebar, menu, bottom bar and the tab title), "Seen" under your last message, and a typing indicator, all live. An offline banner says so when the connection drops and catches everything up when it returns.
+- **Planning.** A weekly class schedule (kept on the device for now, per person) that shows on the week board, the day's agenda and "Coming up".
+- **Feel.** Skeleton loading instead of blank or wrong screens, friendly empty states, softer press and tick animations, pages that rise in, and pull to refresh on phones.
+- **Around the app.** Keyboard shortcuts (`?` lists them: `g` then a letter to go to a page, `n` new post, `/` search), an install option in Profile, and larger tap areas for small buttons on touch screens.
+- **Checked.** Every page at desktop and phone width for sideways overflow, unnamed controls, unlabelled fields and small tap targets; the live checks (unread badge, Seen, typing) were run with two real accounts in separate tabs.
+- **Not done, and why.** Class schedules do not follow you between devices yet (that needs a database table, so it is a small follow-up). Haptics on iPhone depend on iOS 17.4 or later, and I could not test on a physical phone.

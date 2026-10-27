@@ -30,6 +30,8 @@ export const useHaptics = () => useSyncExternalStore((cb) => { subs.add(cb); ret
 
 const reducedMotion = () => typeof matchMedia !== "undefined" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 const canVibrate = () => typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+/** Browsers only allow a buzz after the person has touched the page at least once; asking sooner just fills the console with warnings. */
+const touched = () => { const ua = (navigator as unknown as { userActivation?: { hasBeenActive: boolean } }).userActivation; return ua ? ua.hasBeenActive : true; };
 const isTouchPhone = () => typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches;
 
 let last = 0;
@@ -51,7 +53,7 @@ function iosTap() {
 
 /** Give a tap. Safe to call anywhere: it does nothing when it cannot or should not. */
 export function haptic(feel: Feel = "tap") {
-  if (!on || typeof document === "undefined" || reducedMotion()) return;
+  if (!on || typeof document === "undefined" || reducedMotion() || !touched()) return;
   const now = Date.now();
   if (now - last < 35) return; // a pile of calls in one moment is one tap
   last = now;
