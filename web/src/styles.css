@@ -2119,3 +2119,11 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .feed-events-h a{margin-left:auto;color:var(--violet);text-decoration:none}
 .feed-event{display:flex;gap:12px;align-items:flex-start;padding:12px 14px}
 .feed-event .cevent-body{display:grid;gap:4px;min-width:0}
+
+.quiet-link{display:inline-flex;align-items:center;gap:6px;width:fit-content;color:var(--ink-soft);font-size:.82rem}
+.join-code.quiet{display:flex;gap:8px;align-items:center}
+.join-code.quiet input{flex:1;min-width:0;min-height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;letter-spacing:.08em}
+.invite-more{margin-top:4px}
+.invite-more summary{cursor:pointer;color:var(--ink-soft);font-size:.84rem;width:fit-content;padding:4px 0}
+.invite-more[open] summary{margin-bottom:6px}
+.invite-code-inline{font-family:ui-monospace,monospace;font-size:.78rem;color:var(--ink-soft);margin-left:4px}

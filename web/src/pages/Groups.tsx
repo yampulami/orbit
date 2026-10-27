@@ -139,15 +139,6 @@ export default function Groups() {
           ))}
           <button className="thread new" onClick={() => { setCreating(true); setFriendsOpen(false); setError(""); setPaneOpen(true); }}><Plus size={16} /> New group</button>
           {hangLive && <button className="thread new" onClick={() => { setFriendsOpen(true); setCreating(false); setError(""); setPaneOpen(true); }} aria-pressed={friendsOpen}><Users size={16} /> Friends{friendRequests.length > 0 && <span className="dm-unread" aria-label={`${friendRequests.length} friend requests`}>{friendRequests.length}</span>}</button>}
-          {hangLive && (
-            joining ? (
-              <form className="join-code" onSubmit={joinWithCode}>
-                <label className="sr" htmlFor="join-code">Invite code</label>
-                <input id="join-code" autoFocus value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder="Invite code" maxLength={20} autoComplete="off" spellCheck={false} />
-                <button className="btn primary" disabled={!joinCode.trim()}>Join</button>
-              </form>
-            ) : <button className="thread new" onClick={() => setJoining(true)}><KeyRound size={16} /> Join with a code</button>
-          )}
         </div>
 
         {friendsOpen && hangLive ? (
@@ -158,9 +149,16 @@ export default function Groups() {
               <h2 style={{ fontSize: "1.4rem" }}>Start a group</h2>
               <label className="field">Group name<input value={gName} onChange={(e) => setGName(e.target.value)} placeholder="e.g. Coffee crew" /></label>
               {hangLive
-                ? <p className="muted">When it is made you get a code. Friends who enter it join the group. Only members can see the group.</p>
+                ? <p className="muted">After it is made, add friends by username. Only members can see the group.</p>
                 : <label className="field">Friends (names, separated by commas)<input value={gMembers} onChange={(e) => setGMembers(e.target.value)} placeholder="Maya, Jordan, Priya" /></label>}
               {error && <p className="error" role="alert">{error}</p>}
+              {hangLive && (joining ? (
+                <div className="join-code quiet">
+                  <label className="sr" htmlFor="join-code">Invite code</label>
+                  <input id="join-code" autoFocus value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void joinWithCode(e as unknown as FormEvent); } }} placeholder="Invite code" maxLength={20} autoComplete="off" spellCheck={false} />
+                  <button type="button" className="btn" disabled={!joinCode.trim()} onClick={(e) => void joinWithCode(e as unknown as FormEvent)}>Join</button>
+                </div>
+              ) : <button type="button" className="link-btn quiet-link" onClick={() => setJoining(true)}><KeyRound size={13} aria-hidden="true" /> Have an invite code?</button>)}
             </div>
             <div className="composer-row">
               {groups.length > 0 && <button type="button" className="btn" onClick={() => { setCreating(false); setError(""); }}>Cancel</button>}
@@ -180,18 +178,19 @@ export default function Groups() {
               <div className="plan-form invite">
                 <h3>Add a friend</h3>
                 <GroupAddFriend groupId={group.id} groupName={group.name} memberNames={group.members} />
-                <h3>Or share the invite code</h3>
-                <p className="muted">Friends who enter this code, or open the link, join {group.name}. Only members can see the group and its code.</p>
-                {group.code ? (
-                  <>
-                    <div className="invite-code" aria-label="Invite code">{group.code}</div>
-                    <div className="invite-actions">
-                      <button type="button" className="btn" onClick={() => copy(group.code!, "Code")}><Copy size={16} aria-hidden="true" /> Copy code</button>
-                      <button type="button" className="btn" onClick={() => copy(inviteLink(group.code!), "Link")}><Copy size={16} aria-hidden="true" /> Copy link</button>
-                      <button type="button" className="btn invite-new" onClick={newCode}>Make a new code</button>
-                    </div>
-                  </>
-                ) : <p className="muted" role="status">Making your code…</p>}
+                <details className="invite-more">
+                  <summary>Invite with a link instead</summary>
+                  <p className="muted">Anyone who opens the link or enters the code joins {group.name}. Only share it with people you trust.</p>
+                  {group.code ? (
+                    <>
+                      <div className="invite-actions">
+                        <button type="button" className="btn" onClick={() => copy(inviteLink(group.code!), "Link")}><Copy size={16} aria-hidden="true" /> Copy link</button>
+                        <button type="button" className="btn" onClick={() => copy(group.code!, "Code")}><Copy size={16} aria-hidden="true" /> Copy code <span className="invite-code-inline">{group.code}</span></button>
+                        <button type="button" className="btn invite-new" onClick={newCode}>Make a new code</button>
+                      </div>
+                    </>
+                  ) : <p className="muted" role="status">Making your code…</p>}
+                </details>
               </div>
             )}
             {adding && !hangLive && (
