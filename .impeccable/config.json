@@ -5,5 +5,26 @@
       "maxFindings": 5,
       "maxChars": 8000
     }
+  },
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "apple color emoji",
+        "createdAt": "2026-10-27T01:16:25.942Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "segoe ui emoji",
+        "createdAt": "2026-10-27T01:16:26.047Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "noto color emoji",
+        "createdAt": "2026-10-27T01:16:26.155Z"
+      }
+    ]
   }
 }
