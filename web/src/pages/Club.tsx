@@ -18,6 +18,7 @@ import VerifiedBadge from "../components/VerifiedBadge";
 import ApplicationDetails from "../components/ApplicationDetails";
 import { JoinButton, JoinRequests } from "../components/JoinPanel";
 import ClubFeed from "../components/ClubFeed";
+import ClubAbout from "../components/ClubAbout";
 import ClubChat from "../components/ClubChat";
 import PodsPanel from "../components/PodsPanel";
 import ClubDashboard from "../components/ClubDashboard";
@@ -142,8 +143,8 @@ export default function Club() {
         <section className="club-section" aria-label="Events">
           {canPost && waits && !posting && <p className="muted">New events from this club wait for a coordinator before everyone sees them.</p>}
           {posting && canPost && <EventForm org={org} onDone={() => setPosting(false)} />}
-          <CohostInvites orgId={org.id} />
-          {upcoming.length === 0
+          {!posting && <CohostInvites orgId={org.id} />}
+          {!(posting && canPost) && (upcoming.length === 0
             ? <EmptyState icon={CalendarDays} title="Nothing coming up">{canPost ? "Post the first event. It shows to the whole campus once it is live." : org.status === "active" ? "When this club posts one, it shows here." : "Events can be posted once a coordinator approves the club."}</EmptyState>
             : (
               <>
@@ -152,8 +153,8 @@ export default function Club() {
                   <div key={label} className="ev-day"><h3>{label}</h3><ul className="ev-list">{list.map((e) => <EventCard key={e.id} e={e} reviewer={reviewer} />)}</ul></div>
                 ))}
               </>
-            )}
-          {gone.length > 0 && (
+            ))}
+          {gone.length > 0 && !(posting && canPost) && (
             <div className="ev-past">
               <button type="button" className="link-btn" aria-expanded={past} onClick={() => setPast((v) => !v)}>{past ? "Hide" : "Show"} past and declined events ({gone.length})</button>
               {past && <ul className="ev-list">{gone.slice().reverse().map((e) => <EventCard key={e.id} e={e} reviewer={reviewer} />)}</ul>}
@@ -201,14 +202,8 @@ export default function Club() {
 
       {tab === "about" && (
         <section className="club-section" aria-label="About">
-          {org.description ? <p className="club-about-long"><RichText text={org.description} /></p> : <p className="muted">No description yet.</p>}
-          {!seesApplication && org.status === "active" && (org.application.meeting || org.application.category) && (
-            <dl className="app-details">
-              {org.application.meeting && <div><dt>Meets</dt><dd>{org.application.meeting}</dd></div>}
-              {org.application.category && <div><dt>Category</dt><dd>{org.application.category}</dd></div>}
-            </dl>
-          )}
-          {seesApplication && <ApplicationDetails org={org} />}
+          <ClubAbout key={org.id + org.about + org.description + org.application.meeting + org.application.category} org={org} canEdit={org.owner} />
+          {seesApplication && <><h3 className="about-sub">The application</h3><ApplicationDetails org={org} /></>}
           {reviewer && !org.mine && (
             <div className="club-review" role="group" aria-label="Coordinator controls">
               {org.status === "pending" && (declining ? (

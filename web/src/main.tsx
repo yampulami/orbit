@@ -14,7 +14,7 @@ startHaptics();
 
 // A new deploy renames the built files. A tab opened before it can fail to load a screen: reload once to pick up the new build.
 window.addEventListener("vite:preloadError", () => {
-  try { if (sessionStorage.getItem("orbit-reloaded")) return; sessionStorage.setItem("orbit-reloaded", "1"); } catch { /* reload anyway */ }
+  try { const last = Number(sessionStorage.getItem("orbit-chunk-reload") ?? 0); if (Date.now() - last < 60_000) return; sessionStorage.setItem("orbit-chunk-reload", String(Date.now())); } catch { /* reload anyway */ }
   location.reload();
 });
 

@@ -15,7 +15,7 @@ export type Application = { purpose: string; category: string; advisorName: stri
 export const CATEGORIES = ["Academic", "Arts and culture", "Sports and fitness", "Service and volunteering", "Faith and belief", "Career and professional", "Gaming and hobbies", "Other"];
 export type RawOrg = {
   id: string; name: string; description: string; kind: OrgKind; status: OrgStatus; created_by: string; review_note?: string | null; trusted?: boolean; created_at?: string; reviewed_at?: string | null;
-  purpose?: string; category?: string; advisor_name?: string; advisor_email?: string; meeting?: string; expected_members?: number | null; first_event?: string; contact?: string;
+  about?: string; purpose?: string; category?: string; advisor_name?: string; advisor_email?: string; meeting?: string; expected_members?: number | null; first_event?: string; contact?: string;
 };
 export type JoinStatus = "pending" | "member" | "declined";
 export type RawClubMember = { org_id: string; user_id: string; status: JoinStatus; message?: string; created_at?: string };
@@ -29,6 +29,8 @@ export type Org = {
   /** The roles the club has made, and what I may do here. */
   roles: Role[]; myPerms: Perm[];
   application: Application; createdAt: string; decidedAt?: string; creator: string;
+  /** The longer text on the club page, written by its president. */
+  about: string;
   /** People in the club besides its officers. */
   memberCount: number;
   /** Who they are (for giving out tasks and the like). */
@@ -51,7 +53,7 @@ export function buildOrgs(orgs: RawOrg[], members: RawMember[], me: string, name
       return {
         id: o.id, name: o.name, description: o.description, kind: o.kind, status: o.status, note: o.review_note ?? undefined, trusted: o.kind === "official" || !!o.trusted,
         application: { purpose: o.purpose ?? "", category: o.category ?? "", advisorName: o.advisor_name ?? "", advisorEmail: o.advisor_email ?? "", meeting: o.meeting ?? "", expectedMembers: o.expected_members ?? null, firstEvent: o.first_event ?? "", contact: o.contact ?? "" },
-        createdAt: o.created_at ?? "", decidedAt: o.reviewed_at ?? undefined, creator: o.created_by === me ? "You" : names[o.created_by] ?? "A student",
+        about: o.about ?? "", createdAt: o.created_at ?? "", decidedAt: o.reviewed_at ?? undefined, creator: o.created_by === me ? "You" : names[o.created_by] ?? "A student",
         memberCount: cm.filter((c) => c.status === "member").length,
         clubMembers: cm.filter((c) => c.status === "member").map((c) => ({ id: c.user_id, name: c.user_id === me ? "You" : names[c.user_id] ?? "Member" })),
         myJoin: (ms.some((m) => m.user_id === me) ? "officer" : mineJoin ?? "none") as Org["myJoin"],
@@ -122,12 +124,14 @@ async function reload() {
   if (!who) return;
   const me = who, mine = ++loadId;
   try {
-    const [o, m0, c, rl] = await Promise.all([
-      supabase!.from("campus_orgs").select("id,name,description,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500),
+    const [o0, m0, c, rl] = await Promise.all([
+      supabase!.from("campus_orgs").select("id,name,description,about,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500),
       supabase!.from("campus_org_members").select("org_id,user_id,role,role_id").limit(3000),
       supabase!.from("campus_club_members").select("org_id,user_id,status,message,created_at").limit(5000),
       supabase!.from("campus_org_roles").select("id,org_id,name,permissions,position").limit(2000),
     ]);
+    // Before the profile migration is applied the about column is missing: ask for the clubs without it.
+    const o = o0.error ? await supabase!.from("campus_orgs").select("id,name,description,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500) : o0;
     // Before the roles migration is applied the role_id column and the roles table are missing: fall back to the plain list.
     const m = m0.error ? await supabase!.from("campus_org_members").select("org_id,user_id,role").limit(3000) : m0;
     const roles = rl.error ? [] : ((rl.data ?? []) as RawRole[]);
@@ -228,6 +232,19 @@ export const orgActions = {
   async approve(id: string) { return decide(id, "active"); },
   async decline(id: string, note: string) { return decide(id, "rejected", note.trim().slice(0, 200) || undefined); },
   async setPaused(id: string, paused: boolean) { return decide(id, paused ? "paused" : "active"); },
+  /** The president edits the club page: the line under the name, the About text, the category and when and where it meets. */
+  async updateProfile(id: string, d: { description: string; about: string; category: string; meeting: string }): Promise<string | null> {
+    const row = { description: d.description.trim().slice(0, 300), about: d.about.trim().slice(0, 1500), category: d.category, meeting: d.meeting.trim().slice(0, 160) };
+    if (!live) {
+      set({ ...state, orgs: state.orgs.map((o) => (o.id === id ? { ...o, description: row.description, about: row.about, category: row.category, meeting: row.meeting } : o)) });
+      return null;
+    }
+    const before = state;
+    set({ ...state, orgs: state.orgs.map((o) => (o.id === id ? { ...o, ...row } : o)) });
+    const { error } = await supabase!.from("campus_orgs").update(row).eq("id", id);
+    if (error) { set(before); return /about/.test(error.message) ? "Editing the About text needs the latest database update. Try again soon." : error.message; }
+    return null;
+  },
   /** Make a role, or change one (name and what it may do). Resolves to an error message or null. */
   async saveRole(orgId: string, roleId: string | null, name: string, perms: Perm[]): Promise<string | null> {
     const nm = name.trim();

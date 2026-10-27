@@ -2552,3 +2552,160 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .meet-actions .btn{min-height:38px;padding:0 14px;font-size:.86rem}
 .meet-actions .btn[aria-pressed=true]{background:var(--solid);color:#fff;border-color:var(--solid)}
 .meet-form{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--panel)}
+
+/* ===== Design pass: Campus, clubs and the conversation flow =====
+   Lists are ruled rows, not boxes. One type scale: page title 1.7rem, section heading .95rem, item title 1.02rem, meta .85rem. Buttons in a page are compact. */
+.btn.sm{min-height:38px;padding:0 16px;font-size:.88rem}
+.campus-title{font-family:var(--serif);font-weight:500;font-size:1.7rem;line-height:1.1;letter-spacing:-.02em}
+.campus-head p{margin:4px 0 0;font-size:.92rem}
+.campus-seg button{min-height:34px;padding:0 14px;font-size:.86rem}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.toolbar p{margin:0;font-size:.92rem}
+.toolbar-actions{display:flex;align-items:center;gap:16px}
+.explain{display:grid;gap:10px}
+.explain .link-btn{display:inline-flex;align-items:center;gap:6px;font-size:.88rem}
+.explain .chev{transition:transform .25s var(--ease)}
+.explain .link-btn[aria-expanded=true] .chev{transform:rotate(180deg)}
+.cevents,.clubs{display:grid;gap:28px;align-content:start}
+.cevents h2,.rows-block h2{font-size:.95rem;font-weight:600;margin:0 0 4px;color:var(--ink)}
+.more-link{justify-self:start;font-size:.9rem}
+
+/* events: ruled rows */
+.ev-list{gap:0}
+.ev{grid-template-columns:60px minmax(0,1fr);gap:0 16px;border:0;border-top:1px solid var(--line);border-radius:0;background:none;overflow:visible;padding:18px 0;box-shadow:none}
+.ev-list>.ev:first-child{border-top:0}
+.ev:hover{transform:none;box-shadow:none;border-color:var(--line)}
+.ev.waiting{border-style:solid;opacity:.9}
+.ev-stub{background:none;color:var(--ink);padding:0;place-content:start;justify-items:start;text-align:left;gap:0}
+.ev-stub::before,.ev-stub::after{display:none}
+.ev-stub b{font-size:1.9rem;color:var(--solid);line-height:1}
+.ev.is-going .ev-stub{background:none;color:var(--ink)}
+.ev-mon,.ev-dow{font-size:.7rem;letter-spacing:.05em}
+.ev-ico{margin-top:6px}
+.ev-body{padding:0;gap:5px}
+.ev-title{font-size:1.05rem}
+.ev-go,.ev-maybe{min-height:36px;padding:0 14px;font-size:.86rem}
+.ev.featured{background:var(--tint);border:0;border-radius:22px;padding:22px 24px;grid-template-columns:72px minmax(0,1fr);box-shadow:none}
+.ev.featured .ev-stub b{font-size:2.3rem}
+.ev.featured .ev-title{font-size:1.35rem}
+.ev.featured .ev-body{padding:0;gap:6px}
+.ev.featured .ev-go,.ev.featured .ev-maybe{background:var(--surface)}
+.ev.featured .ev-go[aria-pressed=true]{background:var(--solid)}
+.club-next h2,.ev-day h2{margin-bottom:8px}
+.ev-day h3{display:none}
+
+/* clubs: ruled rows */
+.club-rows{list-style:none;margin:0;padding:0;display:grid}
+.club-row{display:flex;align-items:center;gap:14px;padding:14px 8px;margin:0 -8px;border-top:1px solid var(--line);border-radius:14px;color:var(--ink);text-decoration:none;transition:background .2s}
+.club-rows>li:first-child .club-row{border-top-color:transparent}
+.club-row:hover{background:var(--panel)}
+.club-row .club-mark{width:40px;height:40px;border-radius:50%;font-size:1rem}
+.club-row .club-text{display:grid;gap:2px;min-width:0;flex:1}
+.club-row .club-text strong{font-size:1.02rem;font-weight:600}
+.club-row .club-sub{font-size:.88rem}
+.club-meta{display:grid;justify-items:end;gap:4px;flex:none;font-size:.82rem;max-width:36%}
+.club-count{color:var(--ink-soft)}
+.rows-block{display:grid;gap:4px}
+.rows-empty{margin:0;color:var(--ink-soft);font-size:.92rem;max-width:56ch;line-height:1.55}
+
+/* empty states: quieter */
+.empty-state{padding:28px 16px;gap:8px;max-width:380px}
+.empty-state h2{font-size:1.1rem}
+.empty-state p{font-size:.9rem;margin:0}
+
+/* club page: smaller hero, ruled feed, pods and roles */
+.club-hero{padding:20px 22px;border-radius:24px}
+.club-hero-text{gap:8px}
+.club-hero h1{font-size:clamp(1.5rem,3.4vw,1.9rem)}
+.club-planet{width:62px;height:62px;font-size:1.7rem}
+.club-moon{inset:-10px}
+.club-moon::before{width:11px;height:11px;margin-left:-5px}
+.club-seg button{min-height:36px;font-size:.86rem}
+.cf-list{gap:0}
+.cf-post{background:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:18px 0;box-shadow:none}
+.cf-list>.cf-post:first-child{border-top:0}
+.cf-post.announcement{border-color:var(--line)}
+.cf-post h3{font-size:1.08rem}
+.pod-list{gap:0}
+.pod-card{background:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:16px 0}
+.pod-list>.pod-card:first-child{border-top:0}
+.role-list{gap:0}
+.role-card{background:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:14px 0}
+.role-list>.role-card:first-child{border-top:0}
+.club-people{gap:0}
+.club-people li{background:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 0}
+.club-people>li:first-child{border-top:0}
+
+/* the conversation: one question at a time */
+.cv{max-width:560px;margin:0 auto;display:grid;gap:26px;padding:4px 0 28px}
+.cv-top{display:flex;align-items:center;gap:14px}
+.cv-progress{flex:1;display:flex;gap:6px}
+.cv-progress i{flex:1;height:4px;border-radius:2px;background:var(--line);transition:background .3s var(--ease)}
+.cv-progress i.done{background:var(--violet)}
+.cv-progress i.now{background:color-mix(in srgb,var(--violet) 55%,var(--line))}
+.cv-x{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:50%;background:none;color:var(--ink-soft);cursor:pointer;transition:background .2s}
+.cv-x:hover{background:var(--panel)}
+.cv-step{display:grid;gap:10px;align-content:start;min-height:210px}
+.cv-ask{font-family:var(--serif);font-weight:500;font-size:clamp(1.55rem,4.6vw,2.1rem);line-height:1.15;letter-spacing:-.02em;text-wrap:balance;margin:0}
+.cv-hint{margin:0;color:var(--ink-soft);font-size:.96rem;max-width:46ch;line-height:1.5}
+.cv-body{display:grid;gap:16px;margin-top:12px}
+.cv-input{width:100%;border:0;border-bottom:2px solid var(--line);border-radius:0;background:none;padding:10px 0;font:inherit;font-size:1.25rem;color:var(--ink);outline:0;transition:border-color .2s}
+.cv-input:focus{border-bottom-color:var(--violet)}
+.cv-input::placeholder{color:var(--ink-soft);opacity:.5}
+textarea.cv-text{resize:none;font-size:1.08rem;line-height:1.5;border:2px solid var(--line);border-radius:18px;padding:14px 16px}
+textarea.cv-text:focus{border-color:var(--violet)}
+.cv-textwrap{position:relative}
+.cv-textwrap .count{position:absolute;right:14px;bottom:10px;font-size:.74rem}
+.cv-pair{display:grid;gap:18px}
+.cv-chips{display:flex;gap:8px;flex-wrap:wrap}
+.cv-error{margin:4px 0 0}
+.cv-foot{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cv-foot .link-btn{display:inline-flex;align-items:center;gap:6px}
+.cv-review{margin:10px 0 0;display:grid}
+.cv-review div{display:grid;grid-template-columns:104px minmax(0,1fr) auto;gap:12px;align-items:baseline;padding:12px 0;border-top:1px solid var(--line)}
+.cv-review dt{color:var(--ink-soft);font-size:.85rem}
+.cv-review dd{margin:0;overflow-wrap:anywhere}
+
+/* the join window */
+.sheet-back{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:16px;background:rgba(12,9,26,.5)}
+.sheet{position:relative;display:grid;gap:12px;justify-items:start;width:min(440px,100%);padding:26px 24px 20px;border-radius:26px;background:var(--surface);border:1px solid var(--line);box-shadow:0 30px 60px -30px rgba(20,10,60,.6)}
+.sheet h2{font-family:var(--serif);font-size:1.45rem;font-weight:500;line-height:1.15;margin:4px 0 0}
+.sheet p{margin:0;font-size:.92rem;line-height:1.5}
+.sheet-x{position:absolute;right:12px;top:12px;display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:50%;background:none;color:var(--ink-soft);cursor:pointer}
+.sheet-x:hover{background:var(--panel)}
+.sheet-starters{display:flex;gap:8px;flex-wrap:wrap}
+.sheet-field{position:relative;width:100%}
+.sheet-field textarea{width:100%;resize:none;padding:12px 14px 26px;border-radius:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;line-height:1.5}
+.sheet-field textarea:focus{outline:2px solid var(--violet);outline-offset:1px}
+.sheet-field .count{position:absolute;right:12px;bottom:8px;font-size:.74rem}
+.sheet-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px;width:100%}
+@media (max-width:700px){
+  .sheet-back{place-items:end center;padding:0}
+  .sheet{width:100%;border-radius:26px 26px 0 0;border-bottom:0;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+  .ev{grid-template-columns:48px minmax(0,1fr);gap:0 12px}
+  .ev.featured{grid-template-columns:56px minmax(0,1fr);padding:18px 18px}
+  .ev.featured .ev-stub b{font-size:1.8rem}
+  .club-meta{max-width:34%}
+  .cv-review div{grid-template-columns:84px minmax(0,1fr) auto}
+}
+
+/* the club's About */
+.about-view{display:grid;gap:14px}
+.about-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.about-head h2{font-size:1.15rem}
+.about-text{margin:0;max-width:68ch;line-height:1.65;white-space:pre-wrap}
+.about-facts{display:grid;margin:4px 0 0}
+.about-facts div{display:flex;gap:16px;padding:12px 0;border-top:1px solid var(--line)}
+.about-facts dt{width:90px;flex:none;color:var(--ink-soft);font-size:.85rem}
+.about-facts dd{margin:0;overflow-wrap:anywhere}
+.about-edit{display:grid;gap:18px}
+.about-edit .field{position:relative}
+.about-edit textarea{width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;line-height:1.55;resize:vertical}
+.about-edit .field .count{position:absolute;right:12px;bottom:-18px;font-size:.74rem}
+.about-sub{font-size:.95rem;margin:16px 0 0}
+.join-row .btn.sm{min-height:38px}
+.cevents{background:none;border:0;border-radius:0;padding:0}
+.ev-actions .btn{min-height:36px;padding:0 14px;font-size:.86rem}
+.ev-more .btn{min-height:34px}
+.club-row,.sheet{--tint:hsl(var(--h,262) 70% 93%);--tint-ink:hsl(var(--h,262) 45% 30%);--solid:hsl(var(--h,262) 52% 46%);--ring:hsl(var(--h,262) 50% 62% / .34)}
+[data-theme=dark] .club-row,[data-theme=dark] .sheet{--tint:hsl(var(--h,262) 32% 22%);--tint-ink:hsl(var(--h,262) 70% 86%);--solid:hsl(var(--h,262) 52% 56%);--ring:hsl(var(--h,262) 60% 70% / .3)}

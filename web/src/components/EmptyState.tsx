@@ -7,7 +7,7 @@ import type { OrbMood } from "../lib/orbGaze";
 export default function EmptyState({ title, children, action, mood = "idle" }: { icon?: LucideIcon; title: string; children?: ReactNode; action?: ReactNode; mood?: OrbMood }) {
   return (
     <div className="empty-state" role="status">
-      <Orb size={76} variant="violet" mood={mood} className="empty-orb" />
+      <Orb size={56} variant="violet" mood={mood} className="empty-orb" />
       <h2>{title}</h2>
       {children && <p className="muted">{children}</p>}
       {action}

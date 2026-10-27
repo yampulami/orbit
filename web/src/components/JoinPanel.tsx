@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, Clock, UserPlus, X } from "lucide-react";
 import { orgActions, type Org } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
+import JoinSheet from "./JoinSheet";
 
 const ago = (iso: string) => {
   const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -11,26 +12,17 @@ const ago = (iso: string) => {
 /** For someone who is not an officer: ask to join, see that the request is waiting, or leave. */
 export function JoinButton({ org }: { org: Org }) {
   const [asking, setAsking] = useState(false);
-  const [msg, setMsg] = useState("");
   if (org.status !== "active" || org.myJoin === "officer") return null;
   if (org.myJoin === "member") return <div className="join-row"><span className="ebadge student"><Check size={12} aria-hidden="true" /> You are in this club</span><button type="button" className="link-btn" onClick={() => void orgActions.leaveClub(org.id)}>Leave</button></div>;
   if (org.myJoin === "pending") return <div className="join-row"><span className="ebadge wait"><Clock size={12} aria-hidden="true" /> Waiting for an officer to answer</span><button type="button" className="link-btn" onClick={() => void orgActions.leaveClub(org.id)}>Take back</button></div>;
   if (org.kind === "circle") {
-    return <div className="join-row"><button type="button" className="btn primary" onClick={async () => { const r = await orgActions.requestJoin(org.id, ""); if (!r) notice.show({ icon: "calendar", title: `You joined ${org.name}`, message: "It is a casual circle, so you are in right away.", ms: 3500 }); }}><UserPlus size={16} aria-hidden="true" /> Join circle</button></div>;
-  }
-  if (asking) {
-    return (
-      <form className="join-ask" onSubmit={async (e) => { e.preventDefault(); const r = await orgActions.requestJoin(org.id, msg); if (!r) { notice.show({ icon: "calendar", title: "Request sent", message: `${org.name}'s officers will look at it and you will get a notification.`, ms: 4500 }); setAsking(false); setMsg(""); } }}>
-        <label className="sr" htmlFor="join-msg">A line about why you want to join (optional)</label>
-        <input id="join-msg" autoFocus value={msg} maxLength={200} placeholder="Why you want to join (optional)" onChange={(e) => setMsg(e.target.value)} />
-        <button className="btn primary">Send request</button><button type="button" className="btn" onClick={() => setAsking(false)}>Cancel</button>
-      </form>
-    );
+    return <div className="join-row"><button type="button" className="btn sm primary" onClick={async () => { const r = await orgActions.requestJoin(org.id, ""); if (!r) notice.show({ icon: "calendar", title: `You joined ${org.name}`, message: "It is a casual circle, so you are in right away.", ms: 3500 }); }}><UserPlus size={16} aria-hidden="true" /> Join circle</button></div>;
   }
   return (
     <div className="join-row">
-      <button type="button" className="btn primary" onClick={() => setAsking(true)}><UserPlus size={16} aria-hidden="true" /> Ask to join</button>
+      <button type="button" className="btn sm primary" onClick={() => setAsking(true)}><UserPlus size={15} aria-hidden="true" /> Ask to join</button>
       {org.myJoin === "declined" && <span className="muted">Your last request was not approved. You can ask again.</span>}
+      <JoinSheet open={asking} name={org.name} onClose={() => setAsking(false)} onSend={async (note) => { const r = await orgActions.requestJoin(org.id, note); if (!r) { notice.show({ icon: "calendar", title: "Request sent", message: `${org.name}'s officers will look at it and you will get a notification.`, ms: 4500 }); setAsking(false); } }} />
     </div>
   );
 }
