@@ -13,6 +13,7 @@ import NoticeHost from "./NoticeHost";
 import { arrival } from "../lib/arrival";
 import NotificationBell from "./NotificationBell";
 import Orb from "./Orb";
+import Assistant from "./Assistant";
 import { useNotifs } from "../lib/notifs";
 import type { OrbMood } from "../lib/orbGaze";
 import { isNight } from "../lib/cheer";
@@ -154,6 +155,7 @@ export default function Shell() {
           <Outlet />
         </motion.main>
       </div>
+      <Assistant />
       <nav className="tabbar" aria-label="Main">
         {tabs.map((t) => (
           <NavLink key={t.to} to={t.to} className={({ isActive }) => "tab" + (isActive ? " active" : "")}>

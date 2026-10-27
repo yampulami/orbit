@@ -82,3 +82,11 @@ On a phone (700px and narrower; tablets get the same tab bar) Orbit is a differe
 - **Plans:** a two-week day strip, that day's agenda (hangouts, classes, campus events, reminders), campus events and "Coming up". The month calendar and the week board are desktop-only, and are not even downloaded on a phone.
 - **Sheets:** the post box and the emoji picker open as bottom sheets.
 - **Lighter and more native:** no glass blur or entrance animations, flatter shadows, no tap flash, no browser pull-to-refresh (Orbit's own instead), 16px inputs so iPhones do not zoom, and long lists skip drawing what is off screen.
+
+## The Orbit assistant (2026-10-30)
+
+A small orb floats in the corner of every page in the app (bottom right on a computer, bottom left above the tab bar on a phone). Tap it and the assistant opens over the page: a pill you type into launches a ball of dots that thinks, then settles into a small answer card ("Ask another" starts again; Escape or the X closes it). The interface is `web/src/components/MorphOrb.tsx`; the floating button and overlay are `Assistant.tsx`.
+
+- **What it answers.** It answers from what Orbit itself knows, in `web/src/lib/assistant.ts`: what is on tonight, tomorrow or this week, a club by name, your next class, your reminders, unread messages and notifications, how check-in, clubs, roles and pods work, and "open messages" style requests (it opens the page behind the overlay).
+- **It is not an AI model.** It matches what you ask against Orbit's own data with plain rules. Nothing you type leaves the app. It will say so when it does not understand. A real language model could be plugged in later by replacing `answerFor`, which would need a server function and an API key kept off the device.
+
