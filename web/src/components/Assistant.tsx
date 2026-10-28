@@ -164,12 +164,15 @@ export default function Assistant() {
     const env = aiEnv();
     const past: ModelMsg[] = history.slice(-10).map((m) => ({ role: m.role, content: m.text }));
     try {
-      return await converse({
+      const turn = await converse({
         history: [...past, { role: "user", content: q }],
         env,
         onStep: setStep,
         model: (messages) => askModel(messages, { name: session?.user.user_metadata?.name ?? session?.user.email?.split("@")[0] ?? "Student", now: nowD.toString(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
       });
+      if (turn.text) return turn;
+      const r = answerFor(q, ctx.current);
+      return { text: r.text, go: r.go, goLabel: r.goLabel };
     } catch (e) {
       const r = answerFor(q, ctx.current);
       const why = e instanceof AiProblem && e.code !== "off" ? `${e.message} Here is what Orbit can tell you directly. ` : "";

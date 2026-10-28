@@ -205,7 +205,7 @@ export async function converse(opts: { history: ModelMsg[]; env: AiEnv; model: (
   for (let round = 0; round < 5; round++) {
     const reply = await model(msgs);
     const calls = reply.tool_calls ?? [];
-    if (calls.length === 0) return { text: (reply.content ?? "").trim() || "I could not think of an answer to that. Try asking another way.", go, goLabel };
+    if (calls.length === 0) return { text: (reply.content ?? "").trim(), go, goLabel };
     msgs.push({ role: "assistant", content: reply.content ?? null, tool_calls: calls });
     for (const c of calls) {
       const name = c.function.name;

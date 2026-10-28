@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
     res = await fetch(`${base}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model, messages: [{ role: "system", content: system(body.context ?? {}) }, ...messages], ...(tools.length ? { tools, tool_choice: "auto" } : {}), temperature: 0.4, max_tokens: 700 }),
+      body: JSON.stringify({ model, messages: [{ role: "system", content: system(body.context ?? {}) }, ...messages], ...(tools.length ? { tools, tool_choice: "auto" } : {}), temperature: 0.4, max_tokens: 2500 }),
     });
   } catch (e) { console.error("assistant: could not reach the model", String(e)); return reply({ error: "unreachable" }, 502); }
 
