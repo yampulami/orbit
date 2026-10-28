@@ -5,7 +5,7 @@ import Orb from "./Orb";
 import { ThinkingOrb, type OrbState } from "thinking-orbs";
 
 /** Which animation says what the assistant is doing: looking things up, getting something ready, or just thinking. */
-const orbFor = (step?: string): OrbState => (!step ? "working" : /event|club|people|feed|notification|inbox/i.test(step) ? "searching" : /schedule|reminder|group/i.test(step) ? "listening" : "solving");
+const orbFor = (step?: string): OrbState => (!step ? "solving" : /event|club|people|feed|notification|inbox/i.test(step) ? "searching" : /schedule|reminder|group/i.test(step) ? "listening" : "solving");
 
 const SUGGESTIONS = ["What's on tonight?", "When is my next class?", "Which clubs am I in?", "Any unread messages?"];
 
@@ -165,7 +165,7 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, step
               ))}
               {thinking && (
                 <li className="ac-msg assistant" aria-label="Orbit is thinking">
-                  <div className="ac-body"><p className="ac-text ac-think"><ThinkingOrb state={orbFor(step)} size={64} />{step && <span className="ac-step">{step}</span>}</p></div>
+                  <div className="ac-body"><p className="ac-text ac-think"><span className="wait-pill"><span className="wait-orb"><ThinkingOrb state={orbFor(step)} size={64} /></span><span className="wait-t">{step ? `${step}…` : "Thinking…"}</span></span></p></div>
                 </li>
               )}
             </ol>

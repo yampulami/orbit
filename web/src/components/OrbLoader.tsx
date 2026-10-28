@@ -4,9 +4,9 @@ import { ThinkingOrb } from "thinking-orbs";
 export default function OrbLoader({ label = "Loading", tone = "busy", size = 168 }: { label?: string; tone?: "busy" | "error"; size?: number }) {
   if (tone === "busy") {
     return (
-      <div className="ol-wait" role="status" aria-live="polite" aria-label={label}>
-        <ThinkingOrb state="working" size={64} />
-        <span className="ol-wait-t" aria-hidden="true">{label}…</span>
+      <div className="wait-pill" role="status" aria-live="polite" aria-label={label}>
+        <span className="wait-orb"><ThinkingOrb state="solving" size={64} /></span>
+        <span className="wait-t" aria-hidden="true">{label}…</span>
       </div>
     );
   }

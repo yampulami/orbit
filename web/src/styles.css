@@ -3470,10 +3470,12 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .ev-hosting{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border-radius:999px;background:color-mix(in srgb,#1fa97a 16%,transparent);color:#1fa97a;font-size:.84rem;font-weight:700}
 
 /* the thinking orb in the chat */
-.ac-think{display:flex;align-items:center;gap:10px;height:auto;min-height:64px}
-.ac-think canvas{margin-left:-8px}
+.ac-think{display:flex;align-items:center;height:auto;min-height:74px}
 .ac-empty canvas{margin-bottom:6px}
 
-/* waiting: the dotted thinking orb with its word */
-.ol-wait{display:inline-flex;align-items:center;gap:10px;padding:6px 22px 6px 8px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
-.ol-wait-t{color:var(--ink-soft);font-size:1rem}
+/* waiting: the dotted thinking orb in a pill with what it is doing */
+.wait-pill{display:inline-flex;align-items:center;gap:10px;height:74px;padding:0 30px 0 9px;border-radius:999px;background:color-mix(in srgb,var(--panel) 70%,transparent);box-shadow:inset 0 0 0 1px var(--line)}
+.wait-orb{display:grid;place-items:center;width:56px;height:56px;flex:none}
+.wait-orb canvas{width:56px!important;height:56px!important}
+.wait-t{white-space:nowrap;font-size:1.05rem;line-height:1.5;color:var(--ink-soft)}
+@media (max-width:520px){.wait-pill{height:62px;padding-right:22px}.wait-orb,.wait-orb canvas{width:46px!important;height:46px!important}.wait-t{font-size:.95rem}}
