@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BadgeCheck, CalendarDays, ChevronDown, Compass, Info, Plus, ShieldCheck, UserRound, Users } from "lucide-react";
 import { isOpen, setDemoRole, useCampusEvents, type Role } from "../lib/campusEvents";
-import { useCampusOrgs, type Org } from "../lib/campusOrgs";
-import { dayLabel, hueFor } from "../lib/look";
+import { orgHue, useCampusOrgs, type Org } from "../lib/campusOrgs";
+import { dayLabel } from "../lib/look";
 import { activityOf } from "../lib/activity";
 import { supabase } from "../lib/supabase";
 import { notice } from "../lib/notice";
@@ -47,8 +47,8 @@ export default function Campus() {
           )}
           <span className="rail-sep" aria-hidden="true" />
           {mine.map((o) => (
-            <Link key={o.id} to={`/app/campus/clubs/${o.id}`} className="rail-ico" style={{ ["--h" as string]: hueFor(o.name) }} aria-label={o.name} data-tip={o.name}>
-              {o.name.slice(0, 1).toUpperCase()}
+            <Link key={o.id} to={`/app/campus/clubs/${o.id}`} className="rail-ico" style={{ ["--h" as string]: orgHue(o) }} aria-label={o.name} data-tip={o.name}>
+              {o.icon || o.name.slice(0, 1).toUpperCase()}
               {o.status === "pending" && <span className="rail-badge wait" aria-hidden="true" />}
             </Link>
           ))}
@@ -177,8 +177,8 @@ function ClubRow({ o }: { o: Org }) {
   const people = o.memberCount + o.members.length;
   return (
     <li>
-      <Link className="club-row" style={{ ["--h" as string]: hueFor(o.name) }} to={`/app/campus/clubs/${o.id}`}>
-        <span className="club-mark" aria-hidden="true">{o.name.slice(0, 1).toUpperCase()}</span>
+      <Link className="club-row" style={{ ["--h" as string]: orgHue(o) }} to={`/app/campus/clubs/${o.id}`}>
+        <span className="club-mark" aria-hidden="true">{o.icon || o.name.slice(0, 1).toUpperCase()}</span>
         <span className="club-text">
           <strong><RichText text={o.name} />{o.status === "active" && !circle && <VerifiedBadge label={o.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</strong>
           <span className="club-sub">{o.description || (o.kind === "official" ? "Official office" : circle ? "Student circle" : "Student club")}</span>

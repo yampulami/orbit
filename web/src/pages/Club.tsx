@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, ChevronDown, Clock, ClipboardList, Hash, Info, Lock, Megaphone, Orbit, Plus, Users, X } from "lucide-react";
 import { isOpen, useCampusEvents } from "../lib/campusEvents";
-import { canHostEvents, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
+import { canHostEvents, eventsNeedApproval, orgHue, useCampusOrgs } from "../lib/campusOrgs";
 import { useClubFeed, lastPostAt } from "../lib/clubFeed";
 import { useClubChat } from "../lib/clubChat";
 import { useClubPods } from "../lib/clubPods";
@@ -10,7 +10,7 @@ import { useClubTasks, isOverdue } from "../lib/clubTasks";
 import { useClubPresence } from "../lib/clubPresence";
 import { useAuth } from "../lib/auth";
 import { activityOf } from "../lib/activity";
-import { dayLabel, hueFor } from "../lib/look";
+import { dayLabel } from "../lib/look";
 import EventCard from "../components/EventCard";
 import EventForm from "../components/EventForm";
 import EmptyState from "../components/EmptyState";
@@ -105,10 +105,10 @@ export default function Club() {
   };
 
   return (
-    <div className="page club-page club-wide" style={{ ["--h" as string]: hueFor(org.name) }}>
+    <div className="page club-page club-wide" style={{ ["--h" as string]: orgHue(org) }}>
       <header className="club-bar">
         <Link className="club-back" to="/app/campus" aria-label="Back to Campus"><ArrowLeft size={18} aria-hidden="true" /></Link>
-        <span className="club-planet sm" aria-hidden="true">{org.name.slice(0, 1).toUpperCase()}</span>
+        <span className="club-planet sm" aria-hidden="true">{org.icon || org.name.slice(0, 1).toUpperCase()}</span>
         <div className="club-bar-text">
           <h1><RichText text={org.name} />{org.status === "active" && !circle && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
           <span className="club-bar-sub">

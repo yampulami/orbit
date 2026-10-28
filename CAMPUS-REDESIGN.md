@@ -22,3 +22,8 @@ Decisions from the questionnaire (2026-10-27). Goal: less text, less "form and c
 2. Club shell: channel sidebar, members panel, (i) info sheet
 3. Events and feed channels
 4. Manage view, phone drawers, club colours and icons
+
+## Status
+- Phase 1 (rail + Discover), phase 2 (club shell, members panel, info sheet), phase 3 (channels in the sidebar, events channel) are live.
+- Phase 4: each club's colour and icon (picked by the president in the (i) sheet) tint the rail, header and highlights. Needs `20261031100000_club_look.sql` (adds `accent` and `icon` to `campus_orgs`); the app works without it and says so when you try to save.
+- Not done: a separate `announcements` channel (needs a database change to create it for every club), swipe gestures are untested on a real phone.

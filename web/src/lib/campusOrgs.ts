@@ -1,3 +1,4 @@
+import { hueFor } from "./look";
 import { useSyncExternalStore } from "react";
 import { supabase } from "./supabase";
 import { loadNames, watchTables } from "./people";
@@ -15,7 +16,7 @@ export type Application = { purpose: string; category: string; advisorName: stri
 export const CATEGORIES = ["Academic", "Arts and culture", "Sports and fitness", "Service and volunteering", "Faith and belief", "Career and professional", "Gaming and hobbies", "Other"];
 export type RawOrg = {
   id: string; name: string; description: string; kind: OrgKind; status: OrgStatus; created_by: string; review_note?: string | null; trusted?: boolean; created_at?: string; reviewed_at?: string | null;
-  about?: string; purpose?: string; category?: string; advisor_name?: string; advisor_email?: string; meeting?: string; expected_members?: number | null; first_event?: string; contact?: string;
+  about?: string; accent?: number | null; icon?: string; purpose?: string; category?: string; advisor_name?: string; advisor_email?: string; meeting?: string; expected_members?: number | null; first_event?: string; contact?: string;
 };
 export type JoinStatus = "pending" | "member" | "declined";
 export type RawClubMember = { org_id: string; user_id: string; status: JoinStatus; message?: string; created_at?: string };
@@ -31,6 +32,8 @@ export type Org = {
   application: Application; createdAt: string; decidedAt?: string; creator: string;
   /** The longer text on the club page, written by its president. */
   about: string;
+  /** The club's own look: a hue and an icon (an emoji) its president chose. */
+  accent?: number; icon: string;
   /** People in the club besides its officers. */
   memberCount: number;
   /** Who they are (for giving out tasks and the like). */
@@ -53,7 +56,7 @@ export function buildOrgs(orgs: RawOrg[], members: RawMember[], me: string, name
       return {
         id: o.id, name: o.name, description: o.description, kind: o.kind, status: o.status, note: o.review_note ?? undefined, trusted: o.kind === "official" || !!o.trusted,
         application: { purpose: o.purpose ?? "", category: o.category ?? "", advisorName: o.advisor_name ?? "", advisorEmail: o.advisor_email ?? "", meeting: o.meeting ?? "", expectedMembers: o.expected_members ?? null, firstEvent: o.first_event ?? "", contact: o.contact ?? "" },
-        about: o.about ?? "", createdAt: o.created_at ?? "", decidedAt: o.reviewed_at ?? undefined, creator: o.created_by === me ? "You" : names[o.created_by] ?? "A student",
+        about: o.about ?? "", accent: typeof o.accent === "number" ? o.accent : undefined, icon: o.icon ?? "", createdAt: o.created_at ?? "", decidedAt: o.reviewed_at ?? undefined, creator: o.created_by === me ? "You" : names[o.created_by] ?? "A student",
         memberCount: cm.filter((c) => c.status === "member").length,
         clubMembers: cm.filter((c) => c.status === "member").map((c) => ({ id: c.user_id, name: c.user_id === me ? "You" : names[c.user_id] ?? "Member" })),
         myJoin: (ms.some((m) => m.user_id === me) ? "officer" : mineJoin ?? "none") as Org["myJoin"],
@@ -125,13 +128,15 @@ async function reload() {
   const me = who, mine = ++loadId;
   try {
     const [o0, m0, c, rl] = await Promise.all([
-      supabase!.from("campus_orgs").select("id,name,description,about,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500),
+      supabase!.from("campus_orgs").select("id,name,description,about,accent,icon,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500),
       supabase!.from("campus_org_members").select("org_id,user_id,role,role_id").limit(3000),
       supabase!.from("campus_club_members").select("org_id,user_id,status,message,created_at").limit(5000),
       supabase!.from("campus_org_roles").select("id,org_id,name,permissions,position").limit(2000),
     ]);
     // Before the profile migration is applied the about column is missing: ask for the clubs without it.
-    const o = o0.error ? await supabase!.from("campus_orgs").select("id,name,description,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500) : o0;
+    // Before the look migration is applied the accent and icon columns are missing: ask without them first.
+    const o1 = o0.error ? await supabase!.from("campus_orgs").select("id,name,description,about,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500) : o0;
+    const o = o1.error ? await supabase!.from("campus_orgs").select("id,name,description,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500) : o1;
     // Before the roles migration is applied the role_id column and the roles table are missing: fall back to the plain list.
     const m = m0.error ? await supabase!.from("campus_org_members").select("org_id,user_id,role").limit(3000) : m0;
     const roles = rl.error ? [] : ((rl.data ?? []) as RawRole[]);
@@ -245,6 +250,16 @@ export const orgActions = {
     if (error) { set(before); return /about/.test(error.message) ? "Editing the About text needs the latest database update. Try again soon." : error.message; }
     return null;
   },
+  /** The president picks the club's colour (a hue, or null for the default) and icon (one emoji, or empty for its first letter). */
+  async updateLook(id: string, d: { accent: number | null; icon: string }): Promise<string | null> {
+    const row = { accent: d.accent, icon: Array.from(d.icon.trim()).slice(0, 2).join("") };
+    const before = state;
+    set({ ...state, orgs: state.orgs.map((o) => (o.id === id ? { ...o, accent: row.accent ?? undefined, icon: row.icon } : o)) });
+    if (!live) return null;
+    const { error } = await supabase!.from("campus_orgs").update(row).eq("id", id);
+    if (error) { set(before); return /accent|icon/.test(error.message) ? "Choosing a colour needs the latest database update. Try again soon." : error.message; }
+    return null;
+  },
   /** Make a role, or change one (name and what it may do). Resolves to an error message or null. */
   async saveRole(orgId: string, roleId: string | null, name: string, perms: Perm[]): Promise<string | null> {
     const nm = name.trim();
@@ -329,3 +344,6 @@ export function useMyOrgIds(): Set<string> {
   const id = me();
   return new Set(s.members.filter((m) => m.user_id === id).map((m) => m.org_id));
 }
+
+/** The club's colour: the one its president chose, or one from its name. */
+export const orgHue = (o: { name: string; accent?: number }): number => (typeof o.accent === "number" ? o.accent : hueFor(o.name));

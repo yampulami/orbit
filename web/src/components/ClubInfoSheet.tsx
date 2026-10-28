@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { BadgeCheck, Check, Pause, Play, ShieldCheck, UserRound, Users, X } from "lucide-react";
-import { orgActions, type Org } from "../lib/campusOrgs";
+import { orgActions, orgHue, type Org } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
 import ClubAbout from "./ClubAbout";
 import ApplicationDetails from "./ApplicationDetails";
@@ -8,6 +8,30 @@ import RolesPanel from "./RolesPanel";
 import RichText from "./RichText";
 
 /** Everything about the club that used to sit on its front: what it is, when it meets, the president's editing, roles, the application and the coordinator's controls. */
+const HUES = [262, 285, 315, 340, 10, 35, 150, 190, 215];
+const ICONS = ["🤖", "♟️", "🎬", "🎨", "🎵", "⚽", "📚", "🧪", "🌱", "🎮", "🍜", "🚀"];
+
+/** The president picks the club's colour and icon. They tint its rail icon, header and highlights for everyone. */
+function LookPicker({ org }: { org: Org }) {
+  const hue = orgHue(org);
+  return (
+    <section className="look" aria-label="Colour and icon">
+      <h3 className="about-sub">Colour and icon</h3>
+      <div className="look-row" role="radiogroup" aria-label="Colour">
+        {HUES.map((h) => (
+          <button key={h} type="button" role="radio" aria-checked={hue === h} aria-label={`Colour ${h}`} className="look-sw" style={{ ["--h" as string]: h }} onClick={() => void orgActions.updateLook(org.id, { accent: h, icon: org.icon })} />
+        ))}
+      </div>
+      <div className="look-row" role="radiogroup" aria-label="Icon">
+        <button type="button" role="radio" aria-checked={!org.icon} className="look-ic" aria-label="First letter" onClick={() => void orgActions.updateLook(org.id, { accent: org.accent ?? null, icon: "" })}>{org.name.slice(0, 1).toUpperCase()}</button>
+        {ICONS.map((i) => (
+          <button key={i} type="button" role="radio" aria-checked={org.icon === i} className="look-ic" aria-label={`Icon ${i}`} onClick={() => void orgActions.updateLook(org.id, { accent: org.accent ?? null, icon: i })}>{i}</button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function ClubInfoSheet({ org, reviewer, canRoles, seesApplication, onClose }: { org: Org; reviewer: boolean; canRoles: boolean; seesApplication: boolean; onClose: () => void }) {
   const [declining, setDeclining] = useState(false);
   const [reason, setReason] = useState("");
@@ -29,6 +53,7 @@ export default function ClubInfoSheet({ org, reviewer, canRoles, seesApplication
         <h2 className="cinfo-title"><RichText text={org.name} /></h2>
 
         <ClubAbout key={org.id + org.about + org.description + org.application.meeting + org.application.category} org={org} canEdit={org.owner} />
+        {org.owner && org.status !== "rejected" && <LookPicker org={org} />}
         {seesApplication && <><h3 className="about-sub">The application</h3><ApplicationDetails org={org} /></>}
         {canRoles && org.status === "active" && <RolesPanel org={org} />}
 
