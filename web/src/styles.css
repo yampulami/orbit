@@ -3059,3 +3059,31 @@ body.chat-open .asst-fab{display:none}
 @media (prefers-reduced-motion:reduce){.merc-blob{animation:none}.merc-group,.merc-glow,.merc-drop,.merc-btn{transition:none}}
 
 .merc-theme{position:absolute;z-index:2;top:16px;right:16px}
+
+/* ===== Gradient menu: round icon buttons that melt open into a coloured pill ===== */
+.gm{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gm-item{position:relative;flex:none;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:999px;background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 6px 16px -10px rgba(40,25,110,.5);cursor:pointer;overflow:visible;transition:width .5s cubic-bezier(.22,1,.36,1),background .3s,box-shadow .4s,transform .2s var(--ease)}
+.gm-item::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(45deg,var(--a),var(--b));opacity:0;transition:opacity .35s}
+.gm-item::after{content:"";position:absolute;top:10px;left:0;right:0;height:100%;border-radius:inherit;background:linear-gradient(45deg,var(--a),var(--b));filter:blur(14px);opacity:0;z-index:-1;transition:opacity .4s}
+.gm-ic{position:relative;z-index:1;transition:transform .35s cubic-bezier(.22,1,.36,1),opacity .25s}
+.gm-label{position:absolute;inset:0;display:grid;place-items:center;z-index:1;padding:0 14px;color:#1b1140;font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;opacity:0;transform:scale(.6);transition:opacity .3s,transform .4s cubic-bezier(.22,1,.36,1)}
+.gm-badge{position:absolute;right:-4px;top:-4px;z-index:2;display:grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e0525c;color:#fff;font-size:.68rem;font-weight:700;box-shadow:0 0 0 2px var(--bg)}
+.gm-item[data-on],.gm-item:focus-visible{width:var(--w);box-shadow:none}
+.gm-item[data-on]::before,.gm-item:focus-visible::before,.gm-item[data-on]::after,.gm-item:focus-visible::after{opacity:1}
+.gm-item[data-on] .gm-ic,.gm-item:focus-visible .gm-ic{transform:scale(0);opacity:0}
+.gm-item[data-on] .gm-label,.gm-item:focus-visible .gm-label{opacity:1;transform:none}
+.gm-item:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+@media (hover:hover){
+  .gm-item:hover{width:var(--w);box-shadow:none}
+  .gm-item:hover::before,.gm-item:hover::after{opacity:1}
+  .gm-item:hover .gm-ic{transform:scale(0);opacity:0}
+  .gm-item:hover .gm-label{opacity:1;transform:none}
+}
+.gm-item:active{transform:scale(.96)}
+.gm-item:disabled{opacity:.5;cursor:default}
+.gm.sm .gm-item{height:38px;width:38px}
+.gm.sm .gm-item[data-on],.gm.sm .gm-item:focus-visible{width:var(--w)}
+@media (hover:hover){.gm.sm .gm-item:hover{width:var(--w)}}
+.club-bar .gm{flex:none;flex-wrap:nowrap;gap:8px}
+.ev-actions .gm{margin-right:6px}
+@media (prefers-reduced-motion:reduce){.gm-item,.gm-ic,.gm-label,.gm-item::before,.gm-item::after{transition:none}}

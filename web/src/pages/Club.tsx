@@ -24,6 +24,7 @@ import ClubDashboard from "../components/ClubDashboard";
 import ClubMembers from "../components/ClubMembers";
 import ClubInfoSheet from "../components/ClubInfoSheet";
 import MyTasks from "../components/MyTasks";
+import GradientMenu from "../components/GradientMenu";
 import CohostInvites from "../components/CohostInvites";
 
 type View = "feed" | "chat" | "dashboard" | "events" | "pods";
@@ -120,9 +121,14 @@ export default function Club() {
           </span>
         </div>
         <JoinButton org={org} />
-        {canPost && <button type="button" className="btn sm primary club-post" onClick={() => { setView("events"); setPosting(true); }}><Plus size={15} aria-hidden="true" /> <span>Post</span></button>}
-        <button type="button" className="ac-icon" aria-label={`About ${org.name}`} title="About" onClick={() => setInfo(true)}><Info size={19} aria-hidden="true" /></button>
-        <button type="button" className="ac-icon club-ppl" aria-label="Members" aria-pressed={people} title="Members" onClick={() => setPeople((v) => !v)}><Users size={19} aria-hidden="true" />{requests > 0 && <span className="rail-badge">{requests}</span>}</button>
+        <GradientMenu
+          label="Club actions"
+          items={[
+            ...(canPost ? [{ key: "post", label: "Post event", icon: Plus, tone: "orange" as const, onClick: () => { setView("events"); setPosting(true); } }] : []),
+            { key: "about", label: "About", icon: Info, tone: "blue" as const, on: info, onClick: () => setInfo(true) },
+            { key: "people", label: "Members", icon: Users, tone: "purple" as const, on: people, badge: requests > 0 ? String(requests) : undefined, onClick: () => setPeople((v) => !v) },
+          ]}
+        />
       </header>
 
       {org.status === "pending" && <p className="cevent-note" role="status">A coordinator needs to approve this club before it can post events. You can add officers while you wait.</p>}

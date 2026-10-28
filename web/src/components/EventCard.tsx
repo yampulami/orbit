@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
+import GradientMenu from "./GradientMenu";
 import { BadgeCheck, Check, Clock, Flag, Gamepad2, Hammer, MapPin, Mic, PartyPopper, QrCode, Star, Store, Trophy, UserRound, Users, Utensils, X } from "lucide-react";
 import { eventActions, hostedBy, type CampusEvent } from "../lib/campusEvents";
 import { countdown, eventFlavor, hueFor, type FlavorKey } from "../lib/look";
@@ -41,7 +42,6 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
   const [ciError, setCiError] = useState("");
   const checked = useMyCheckins().ids.has(e.id);
   const canCheckIn = e.status === "published" && !e.canceled && !e.manage && checkinOpen(e, new Date());
-  const goRef = useRef<HTMLButtonElement>(null);
   const d = new Date(e.startsAt);
   const live = e.status === "published";
   const flavor = eventFlavor(e.title, e.description);
@@ -90,13 +90,14 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
         {live && (
           <div className="ev-actions">
             {!e.canceled && (
-              <div className="ev-answer" role="group" aria-label={`Your answer for ${e.title}`}>
-                <button ref={goRef} type="button" className="ev-go" data-a="yes" aria-pressed={going} onClick={toggleGoing}>
-                  <Check size={15} aria-hidden="true" /> {going ? "You are going" : "Going"}
-                  {burst > 0 && going && <span key={burst} className="ev-burst" aria-hidden="true">{Array.from({ length: 8 }, (_, i) => <i key={i} style={{ ["--a" as string]: `${i * 45}deg` }} />)}</span>}
-                </button>
-                <button type="button" className="ev-maybe" aria-pressed={e.mine === "interested"} onClick={() => eventActions.respond(e.id, e.mine === "interested" ? null : "interested")}><Star size={14} aria-hidden="true" /> Interested</button>
-              </div>
+              <GradientMenu
+                label={`Your answer for ${e.title}`}
+                items={[
+                  { key: "go", label: going ? "You are going" : "Going", icon: Check, tone: "green", on: going, onClick: toggleGoing,
+                    extra: burst > 0 && going ? <span key={burst} className="ev-burst" aria-hidden="true">{Array.from({ length: 8 }, (_, i) => <i key={i} style={{ ["--a" as string]: `${i * 45}deg` }} />)}</span> : undefined },
+                  { key: "maybe", label: "Interested", icon: Star, tone: "pink", on: e.mine === "interested", onClick: () => eventActions.respond(e.id, e.mine === "interested" ? null : "interested") },
+                ]}
+              />
             )}
             <span className="ev-people"><Users size={13} aria-hidden="true" /> <b key={e.going}>{e.going}</b> going{e.interested > 0 ? ` · ${e.interested} interested` : ""}</span>
             {canCheckIn && !checked && (ci
