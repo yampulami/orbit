@@ -131,7 +131,7 @@ export default function Groups() {
             <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate && !friendsOpen ? " on" : "")} aria-current={g.id === group?.id && !showCreate && !friendsOpen} onClick={() => { setActiveId(g.id); setFriendsOpen(false); setCreating(false); setPlanning(false); setAdding(false); setError(""); setPaneOpen(true); }}>
               {g.id === group?.id && !showCreate && !friendsOpen && <motion.span layoutId="group-indicator" className="threadpill" transition={slide} />}
               <strong>{g.name}</strong>
-              <span className="thread-people"><AvatarStack names={g.members.filter((m) => m !== YOU)} max={4} size={24} /><span className="muted">{g.members.length} people</span></span>
+              <span className="muted">{g.members.length} people</span>
             </button>
           ))}
           <button className="thread new" onClick={() => { setCreating(true); setFriendsOpen(false); setError(""); setPaneOpen(true); }}><Plus size={16} /> New group</button>
