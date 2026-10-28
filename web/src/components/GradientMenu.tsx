@@ -56,7 +56,7 @@ export default function GradientMenu({ items, label, className = "", quietOnScro
             aria-pressed={it.on === undefined ? undefined : it.on}
             aria-label={it.label}
             disabled={it.disabled}
-            style={{ ["--a" as string]: a, ["--b" as string]: b, ["--w" as string]: `${pill(it.label)}px`, ["--slot" as string]: `${Math.round(44 + (pill(it.label) - 44) * 0.85)}px` }}
+            style={{ ["--a" as string]: a, ["--b" as string]: b, ["--w" as string]: `${pill(it.label)}px` }}
             onClick={it.onClick}
           >
             <span className="gm-bg" aria-hidden="true" />

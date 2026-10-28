@@ -3190,47 +3190,45 @@ body.chat-open .asst-fab{display:none}
 .pills:has(.gm[data-quiet]){background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:999px;width:fit-content;margin-left:0;padding:5px 10px}
 
 
+
 /* ===== Gradient menu =====
-   Every icon has a fixed slot wide enough for its open pill. Pointing at one opens the pill in place, inside its own slot, so nothing next to it moves and
-   nothing slides out from under the pointer. Only the chosen item takes the room of its full pill (and only when you choose it). */
-.gm{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.gm-item{position:relative;flex:none;display:grid;place-items:center;width:var(--slot);height:44px;padding:0;border:0;background:none;color:var(--ink);cursor:pointer;transition:width .5s cubic-bezier(.22,1,.36,1)}
-.gm-item[data-on]{width:var(--w)}
-.gm-bg{position:absolute;left:50%;top:0;width:44px;height:44px;margin-left:-22px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 6px 16px -10px rgba(40,25,110,.5);transition:width .45s cubic-bezier(.22,1,.36,1) .05s,margin-left .45s cubic-bezier(.22,1,.36,1) .05s,box-shadow .35s,background .3s}
-.gm-bg::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(45deg,var(--a),var(--b));opacity:0;transition:opacity .35s .05s}
-.gm-ic{position:relative;z-index:1;transition:transform .35s cubic-bezier(.22,1,.36,1),opacity .25s}
-.gm-label{position:absolute;inset:0;display:grid;place-items:center;z-index:1;padding:0 12px;color:#1b1140;font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;opacity:0;transform:scale(.6);transition:opacity .3s,transform .4s cubic-bezier(.22,1,.36,1);pointer-events:none}
-.gm-badge{position:absolute;left:calc(50% + 8px);top:-4px;z-index:3;display:grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e0525c;color:#fff;font-size:.68rem;font-weight:700;box-shadow:0 0 0 2px var(--bg)}
-.gm-item[data-on] .gm-bg,.gm-item:focus-visible .gm-bg{width:var(--w);margin-left:calc(var(--w) / -2);box-shadow:0 5px 12px -6px var(--b)}
-.gm-item[data-on] .gm-bg::before,.gm-item:focus-visible .gm-bg::before{opacity:1}
-.gm-item[data-on] .gm-ic,.gm-item:focus-visible .gm-ic{transform:scale(0);opacity:0}
-.gm-item[data-on] .gm-label,.gm-item:focus-visible .gm-label{opacity:1;transform:none}
+   Point at an icon and it opens into its pill, pushing the others aside, as on 21st.dev, but slowly: it opens after a beat and eases over most of a second,
+   and when you leave it holds for a moment before closing, so the next icon is still under your pointer when you get there. */
+.gm{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.gm-item{position:relative;flex:none;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:none;color:var(--ink);cursor:pointer;transition:width .85s cubic-bezier(.25,.8,.25,1) .45s}
+.gm-bg{position:absolute;inset:0;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 6px 16px -10px rgba(40,25,110,.5);transition:box-shadow .6s .45s,background .3s}
+.gm-bg::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(45deg,var(--a),var(--b));opacity:0;transition:opacity .6s .45s}
+.gm-ic{position:relative;z-index:1;transition:transform .5s cubic-bezier(.25,.8,.25,1) .45s,opacity .4s .45s}
+.gm-label{position:absolute;inset:0;display:grid;place-items:center;z-index:1;padding:0 12px;color:#1b1140;font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;opacity:0;transform:scale(.7);transition:opacity .35s 0s,transform .45s 0s;pointer-events:none}
+.gm-badge{position:absolute;right:-4px;top:-4px;z-index:3;display:grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e0525c;color:#fff;font-size:.68rem;font-weight:700;box-shadow:0 0 0 2px var(--bg)}
+/* open: the chosen one, the one you point at, and the one you reach with the keyboard */
+.gm-item[data-on],.gm-item:focus-visible{width:var(--w);transition-delay:0s}
+.gm-item[data-on] .gm-bg,.gm-item:focus-visible .gm-bg{box-shadow:0 5px 12px -6px var(--b);transition-delay:0s}
+.gm-item[data-on] .gm-bg::before,.gm-item:focus-visible .gm-bg::before{opacity:1;transition-delay:.1s}
+.gm-item[data-on] .gm-ic,.gm-item:focus-visible .gm-ic{transform:scale(0);opacity:0;transition-delay:0s}
+.gm-item[data-on] .gm-label,.gm-item:focus-visible .gm-label{opacity:1;transform:none;transition:opacity .5s .3s,transform .55s .3s}
 .gm-item:focus-visible{outline:none}
 .gm-item:focus-visible .gm-bg{outline:2px solid var(--violet);outline-offset:3px}
 @media (hover:hover){
-  .gm-item:hover{z-index:5}
-  .gm-item:hover .gm-bg{width:var(--w);margin-left:calc(var(--w) / -2);box-shadow:0 5px 12px -6px var(--b);transition-delay:.06s}
-  .gm-item:hover .gm-bg::before{opacity:1}
-  .gm-item:hover .gm-ic{transform:scale(0);opacity:0}
-  .gm-item:hover .gm-label{opacity:1;transform:none;transition-delay:.1s}
+  .gm-item:hover{width:var(--w);transition-delay:.12s}
+  .gm-item:hover .gm-bg{box-shadow:0 5px 12px -6px var(--b);transition-delay:.12s}
+  .gm-item:hover .gm-bg::before{opacity:1;transition-delay:.18s}
+  .gm-item:hover .gm-ic{transform:scale(0);opacity:0;transition-delay:.12s}
+  .gm-item:hover .gm-label{opacity:1;transform:none;transition:opacity .5s .38s,transform .55s .38s}
 }
 .gm-item:active .gm-bg{transform:scale(.97)}
 .gm-item:disabled{opacity:.5;cursor:default}
-.club-bar .gm{flex:none;flex-wrap:nowrap;gap:4px}
+.club-bar .gm{flex:none;flex-wrap:nowrap}
 .ev-actions .gm{margin-right:6px}
 .cf-modes .gm-item{flex:none}
 .gm-bar{padding:6px 8px 12px;margin:-2px -4px -4px}
 .pills .gm-bar{padding:0 0 4px;margin:0;overflow-x:auto}
 /* scrolling down: small icons, the chosen one ringed, on a faint strip */
 .gm[data-quiet] .gm-item,.gm[data-quiet] .gm-item[data-on]{width:34px;height:34px}
-.gm[data-quiet] .gm-bg,.gm[data-quiet] .gm-item[data-on] .gm-bg{width:34px;height:34px;margin-left:-17px}
 .gm[data-quiet] .gm-item[data-on] .gm-bg{box-shadow:0 0 0 2px var(--b)}
 .gm[data-quiet] .gm-item[data-on] .gm-bg::before{opacity:.28}
 .gm[data-quiet] .gm-item[data-on] .gm-ic{transform:none;opacity:1}
-.gm[data-quiet] .gm-item[data-on] .gm-label{opacity:0;transform:scale(.6)}
+.gm[data-quiet] .gm-item[data-on] .gm-label{opacity:0;transform:scale(.7)}
 .gm[data-quiet] .gm-ic{width:16px;height:16px}
-@media (hover:hover){
-  .gm[data-quiet] .gm-item:hover{width:var(--slot)}
-  .gm[data-quiet] .gm-item:hover .gm-bg{width:var(--w);margin-left:calc(var(--w) / -2)}
-}
+@media (hover:hover){.gm[data-quiet] .gm-item:hover{width:var(--w)}}
 @media (prefers-reduced-motion:reduce){.gm-item,.gm-bg,.gm-bg::before,.gm-ic,.gm-label{transition:none}}
