@@ -5,7 +5,7 @@ import RichText from "../components/RichText";
 import FeedEvents from "../components/FeedEvents";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link, Navigate } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Flame, Pin, Repeat2, Trash2 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi as api, type Row } from "../lib/feedData";
@@ -19,6 +19,8 @@ import CommunityPicker from "../components/CommunityPicker";
 import { communityIcon } from "../lib/communityUi";
 import GradientMenu, { type GMItem } from "../components/GradientMenu";
 import ReactionBar from "../components/ReactionBar";
+import ShareMenu from "../components/ShareMenu";
+import { siteUrl } from "../lib/siteUrl";
 import { usePins } from "../lib/pins";
 import { notice } from "../lib/notice";
 import HangoutCard from "../components/HangoutCard";
@@ -75,6 +77,19 @@ export default function Feed() {
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const [community, setCommunity] = useState<Community>("Everyone");
   const [posting, setPosting] = useState(false);
+  const [sharing, setSharing] = useState<Row | null>(null);
+  const [sp] = useSearchParams();
+  const target = sp.get("post");
+  // A shared link opens the feed at that post.
+  useEffect(() => {
+    if (!target || loading) return;
+    const el = document.getElementById(`post-${target}`);
+    if (!el) return;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    el.classList.add("flash");
+    const t = window.setTimeout(() => el.classList.remove("flash"), 2400);
+    return () => window.clearTimeout(t);
+  }, [target, loading, posts.length]);
   const [open, setOpen] = useState<string | null>(null);
   const [filter, setFilter] = useState<"All" | Community>("All");
   // On a phone the hangouts start folded into one line (tap to open), so the posts are what you see first.
@@ -142,16 +157,6 @@ export default function Feed() {
     if (mine) { remove(mine); return; }
     await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community: p.community, body: p.payload.body ?? p.payload.text ?? "", repostOf: originalOf(p), repostName: p.payload.repostName ?? p.author_name }); await load(); });
   }
-  async function share(p: Row) {
-    const text = `${p.payload.body ?? p.payload.text ?? ""}
-
-${p.author_name} on Orbit`;
-    try {
-      if (navigator.share) await navigator.share({ text });
-      else { await navigator.clipboard.writeText(text); notice.show({ icon: "pin", title: "Copied", message: "The post is ready to paste.", ms: 2500 }); }
-    } catch { /* cancelled */ }
-  }
-
   // Deleting is undoable: the post leaves the feed now, and the real delete runs after the undo window.
   const remove = (p: Row) => {
     removing.current.add(p.id);
@@ -179,7 +184,8 @@ ${p.author_name} on Orbit`;
   if (!campus) return <Navigate to="/onboarding" replace />;
 
   // Picking a day on the calendar shows that day's reminders and hangouts. It never hides posts from the feed.
-  const shown = posts.filter((p) => filter === "All" || p.community === filter);
+  // Reposts are kept on your profile, not repeated in the feed.
+  const shown = posts.filter((p) => !p.payload.repostOf && (filter === "All" || p.community === filter));
   const upcoming = hangouts
     .filter((h) => isVisible(h, groups) && new Date(h.when).getTime() > Date.now() - 3 * 3600000)
     .sort((x, y) => x.when.localeCompare(y.when));
@@ -283,6 +289,7 @@ ${p.author_name} on Orbit`;
           }))}
         />
         </div>
+        {sharing && <ShareMenu text={sharing.payload.body ?? sharing.payload.text ?? ""} author={sharing.author_name} url={`${siteUrl()}/app/feed?post=${originalOf(sharing)}`} onClose={() => setSharing(null)} />}
         {error && <p className="error" role="alert">{error}</p>}
         <div className="posts">
           {shown.length === 0 && <p className="empty">{posts.length === 0 ? "No posts yet. Be the first." : `Nothing in ${filter} yet.`}</p>}
@@ -292,7 +299,7 @@ ${p.author_name} on Orbit`;
               const expanded = open === p.id;
               const people = [...new Set(p.post_comments.map((c) => c.author_name))].slice(0, 3);
               const card = (
-                <motion.article key={p.id} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: -14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
+                <motion.article key={p.id} id={`post-${p.id}`} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: -14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
                   <div className="meta"><span className="who"><PersonLink id={p.author_id} className="who-link"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span></PersonLink><span><PersonLink id={p.author_id} className="who-link"><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong></PersonLink>{isVerified(p.author_id) && <VerifiedBadge label="Verified campus staff" />} · {when(p.created_at)}</span></span><span className="meta-end"><span className="chip">{p.community}</span><SafetyMenu userId={p.author_id} name={p.author_name} postId={p.id} context="post" /></span></div>
                   {p.payload.title && <h3>{p.payload.title}</h3>}
                   {p.payload.repostOf && <p className="repost-note"><Repeat2 size={14} aria-hidden="true" /> Reposted from {p.payload.repostName ?? "someone"}</p>}
@@ -303,7 +310,7 @@ ${p.author_name} on Orbit`;
                       liked={liked} likes={p.post_likes.length} onLike={() => like(p)}
                       commentsOpen={expanded} comments={p.post_comments.length} onComment={() => setOpen(expanded ? null : p.id)}
                       reposted={!!myRepost(p)} reposts={repostCount(p)} onRepost={p.author_id === me && !p.payload.repostOf ? undefined : () => repost(p)}
-                      onShare={() => void share(p)}
+                      onShare={() => setSharing(p)}
                     />
                     {p.author_id === me && <button className="iconbtn rb-del" aria-label="Delete post" onClick={() => remove(p)}><Trash2 size={16} /></button>}
                   </div>

@@ -7,6 +7,8 @@ import { friendActions, useRelation } from "../lib/friends";
 import { dmActions } from "../lib/dms";
 import SafetyMenu from "../components/SafetyMenu";
 import RichText from "../components/RichText";
+import GradientMenu from "../components/GradientMenu";
+import ProfileActivity, { profileTabs, useProfileRows } from "../components/ProfileActivity";
 
 type Profile = { name: string; username: string | null; tenure: string | null; interests: string[]; bio: string; hobbies: string[] };
 
@@ -25,6 +27,8 @@ export default function Person() {
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [sure, setSure] = useState(false);
+  const [tab, setTab] = useState<"posts" | "reposts" | "clubs">("posts");
+  const data = useProfileRows(id);
 
   useEffect(() => {
     let alive = true;
@@ -85,6 +89,9 @@ export default function Person() {
           </div>
         </div>
       </section>
+
+      <div className="pf-tabs"><GradientMenu className="gm-bar" label="Profile sections" items={profileTabs(false, { posts: data.posts.length, reposts: data.reposts.length }, (t) => setTab(t as "posts" | "reposts" | "clubs"), tab)} /></div>
+      <ProfileActivity tab={tab} userId={id} isMe={false} name={profile.name} data={data} />
     </div>
   );
 }

@@ -1,4 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
+import GradientMenu from "../components/GradientMenu";
+import ProfileActivity, { profileTabs, useProfileRows, type ProfileTab } from "../components/ProfileActivity";
+import RichText from "../components/RichText";
+import { gradientFor } from "../lib/look";
+import { loadAbout, type About } from "../lib/about";
 import { Flame, LogOut, Pencil, Trash2 } from "lucide-react";
 import { NAME_MAX, renameMe, useDisplayName } from "../lib/displayName";
 import { pushSupported } from "../lib/push";
@@ -79,6 +84,10 @@ export default function Profile() {
   const showingActive = useShowActive();
   const installable = useInstall();
   const uid = session?.user.id;
+  const [tab, setTab] = useState<ProfileTab>("posts");
+  const data = useProfileRows(uid ?? "");
+  const [about, setAbout] = useState<About | null>(null);
+  useEffect(() => { if (!uid) return; let alive = true; loadAbout(uid).then((a) => { if (alive) setAbout(a); }, () => undefined); return () => { alive = false; }; }, [uid, tab]);
 
   async function toggleDevice() {
     if (device.on) { disableDeviceAlerts(); return; }
@@ -97,6 +106,23 @@ export default function Profile() {
   return (
     <div className="page">
       <h1 className="sr">Profile</h1>
+      <header className="pf-head">
+        <span className="pf-av" aria-hidden="true" style={{ background: gradientFor(name) }}>{name.slice(0, 1).toUpperCase()}</span>
+        <div className="pf-info">
+          <h2>{name}</h2>
+          <p className="muted pf-sub">{username ? `@${username}` : email ?? ""}</p>
+          {about?.bio ? <p className="pf-bio"><RichText text={about.bio} /></p> : <p className="pf-bio muted">No bio yet. <button type="button" className="link-btn" onClick={() => setTab("edit")}>Add one</button></p>}
+          {about && about.hobbies.length > 0 && <ul className="person-tags" aria-label="Free time">{about.hobbies.map((t) => <li key={t}><RichText text={t} /></li>)}</ul>}
+          <p className="pf-stats"><span><b>{data.posts.length}</b> posts</span><span><b>{data.reposts.length}</b> reposts</span></p>
+        </div>
+      </header>
+
+      <div className="pf-tabs"><GradientMenu className="gm-bar" label="Profile sections" items={profileTabs(true, { posts: data.posts.length, reposts: data.reposts.length }, setTab, tab)} /></div>
+
+      {(tab === "posts" || tab === "reposts" || tab === "clubs") && uid && <ProfileActivity tab={tab} userId={uid} isMe name={name} data={data} />}
+
+      {tab === "edit" && (
+        <>
       <section className="me-card">
         <span className="me big" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
         <div className="me-info">
@@ -142,6 +168,11 @@ export default function Profile() {
 
       {session && <AboutEditor userId={session.user.id} />}
 
+        </>
+      )}
+
+      {tab === "settings" && (
+        <>
       <section className="track">
         <div>
           <h2>Appearance</h2>
@@ -279,6 +310,8 @@ export default function Profile() {
           </div>
         )}
       </section>
+        </>
+      )}
     </div>
   );
 }
