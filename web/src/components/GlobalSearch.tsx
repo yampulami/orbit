@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, CalendarDays, Coffee, ListChecks, MessageSquare, Newspaper, NotebookText, Search, ShoppingBasket, Users, X, type LucideIcon } from "lucide-react";
+import { Bell, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, Users, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi, type Row } from "../lib/feedData";
 import { friendsLive, useFriends } from "../lib/friends";
@@ -11,7 +11,17 @@ import { useSpace } from "../lib/roommates";
 
 type Hit = { id: string; kind: string; Icon: LucideIcon; title: string; sub: string; to: string; state?: Record<string, unknown> };
 /** One row in the list under the search box, whichever section it is in. */
-type Option = { section: "top" | "people"; id: string; go: () => void };
+type Option = { section: "top" | "people" | "pages"; id: string; go: () => void };
+/** Where you can jump to from the search box before you have typed anything. */
+const PAGES: { id: string; title: string; sub: string; to: string; Icon: LucideIcon }[] = [
+  { id: "feed", title: "Feed", sub: "What is happening on campus", to: "/app/feed", Icon: Newspaper },
+  { id: "messages", title: "Messages", sub: "Your conversations", to: "/app/messages", Icon: MessageSquare },
+  { id: "groups", title: "Groups", sub: "Your groups and hangouts", to: "/app/groups", Icon: Users },
+  { id: "plans", title: "Plans", sub: "Classes, reminders and plans", to: "/app/plans", Icon: CalendarDays },
+  { id: "campus", title: "Campus", sub: "Clubs and events", to: "/app/campus", Icon: Megaphone },
+  { id: "roommates", title: "Roommates", sub: "Chores, groceries and expenses", to: "/app/roommates", Icon: Sofa },
+  { id: "map", title: "Map", sub: "Places around campus", to: "/app/map", Icon: MapPin },
+];
 const clip = (s: string, n = 70) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 const TOP_MAX = 4;
 
@@ -74,7 +84,9 @@ export default function GlobalSearch() {
   }, [term, usernameOnly, hangouts, reminders, space, groups, posts]);
 
   const close = () => { setOpen(false); setQ(""); };
+  const pages = longEnough(q) ? [] : PAGES.filter((p) => !q.trim() || p.title.toLowerCase().includes(q.trim().toLowerCase()));
   const options: Option[] = [
+    ...pages.map((p): Option => ({ section: "pages", id: p.id, go: () => { close(); nav(p.to); } })),
     ...things.map((h): Option => ({ section: "top", id: h.id, go: () => { close(); nav(h.to, { state: h.state }); } })),
     ...people.map((p): Option => ({ section: "people", id: `person-${p.id}`, go: () => { close(); nav(`/app/people/${p.id}`); } })),
   ];
@@ -91,7 +103,7 @@ export default function GlobalSearch() {
     else if (e.key === "Enter" && open) { e.preventDefault(); options[Math.min(active, options.length - 1)].go(); }
   }
 
-  const showPanel = open && longEnough(q);
+  const showPanel = open && (longEnough(q) || pages.length > 0);
   const idx = (section: Option["section"], id: string) => options.findIndex((o) => o.section === section && o.id === id);
 
   return (
@@ -110,6 +122,17 @@ export default function GlobalSearch() {
             <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />Nothing found for “{q.trim()}”.</li>
           ) : (
             <>
+              {pages.length > 0 && <li className="gs-head" role="presentation">Jump to</li>}
+              {pages.map((p) => {
+                const i = idx("pages", p.id);
+                return (
+                  <li key={p.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onClick={() => options[i].go()}>
+                    <span className="gs-ico"><p.Icon size={16} strokeWidth={1.9} aria-hidden="true" /></span>
+                    <span className="gs-text"><strong>{p.title}</strong><span>{p.sub}</span></span>
+                    <span className="gs-kind">Open</span>
+                  </li>
+                );
+              })}
               {things.length > 0 && <li className="gs-head" role="presentation">Top results</li>}
               {things.map((h) => {
                 const i = idx("top", h.id);

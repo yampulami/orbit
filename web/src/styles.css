@@ -3291,3 +3291,19 @@ a.avs-face{text-decoration:none;cursor:pointer}
 
 .iconbtn .rn{margin-left:2px}
 .link-btn .rn{vertical-align:middle}
+
+/* Search: a bigger Spotlight bar that widens when you use it */
+@media (min-width:901px){
+  .gsearch{flex:0 1 330px;width:330px;min-height:52px;padding:0 20px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 12px 30px -20px rgba(40,25,110,.55);transition:flex-basis .4s cubic-bezier(.22,1,.36,1),width .4s cubic-bezier(.22,1,.36,1),border-radius .25s,box-shadow .3s}
+  .gsearch:focus-within,.gsearch.has-panel{flex-basis:600px;width:600px;outline:none}
+  .gsearch .gs-glass{width:22px;height:22px}
+  .gsearch input{font-size:1.05rem}
+  .gsearch kbd{display:inline}
+}
+/* Posts: the like and comment row is an activity bar of its own */
+.posts .post .foot{border-top:1px solid var(--line);padding-top:10px;margin-top:12px}
+.posts .post .actions{display:flex;gap:4px}
+.posts .post .iconbtn{min-height:38px;padding:6px 14px;border-radius:12px;background:none;color:var(--ink-soft);font-weight:600;font-size:.95rem;gap:8px;transition:background .2s,color .2s}
+.posts .post .iconbtn:hover{background:var(--panel);color:var(--ink)}
+.posts .post .iconbtn[aria-pressed=true]{background:color-mix(in srgb,#f0476b 14%,transparent);color:#f0476b}
+.posts .post .iconbtn svg{width:18px;height:18px}
