@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "./lib/auth";
+import OrbLoader from "./components/OrbLoader";
 import Shell from "./components/Shell";
 import Feed from "./pages/Feed";
 import { supabase } from "./lib/supabase";
@@ -40,13 +41,14 @@ const Person = lazy(() => import("./pages/Person"));
 const Roommates = lazy(() => import("./pages/Roommates"));
 const CampusMap = lazy(() => import("./pages/CampusMap"));
 const Campus = lazy(() => import("./pages/Campus"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const Club = lazy(() => import("./pages/Club"));
 const CheckIn = lazy(() => import("./pages/CheckIn"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 
 function Protected({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
-  if (loading) return <p className="muted" style={{ padding: 24 }} role="status">Loading…</p>;
+  if (loading) return <div className="ol-page"><OrbLoader label="Loading" /></div>;
   return session ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
@@ -113,7 +115,7 @@ function InApp({ children }: { children: ReactNode }) {
     }
     return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); unbindCampusOrgs(); unbindCheckins(); clearVerified(); };
   }, [done, uid, campusKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (done === "checking") return <p className="muted" style={{ padding: 24 }} role="status">Loading…</p>;
+  if (done === "checking") return <div className="ol-page"><OrbLoader label="Loading" /></div>;
   return done === "yes" ? <>{children}</> : <Navigate to="/onboarding" replace />;
 }
 
@@ -121,7 +123,7 @@ function InApp({ children }: { children: ReactNode }) {
 function OnboardingGate() {
   const { session } = useAuth();
   const { state: done } = useOnboarded(session?.user.id);
-  if (done === "checking") return <p className="muted" style={{ padding: 24 }} role="status">Loading…</p>;
+  if (done === "checking") return <div className="ol-page"><OrbLoader label="Loading" /></div>;
   return done === "yes" ? <Navigate to="/app" replace /> : <Onboarding />;
 }
 
@@ -158,8 +160,9 @@ export default function App() {
           <Route path="map" element={<CampusMap />} />
           <Route path="profile" element={<Profile />} />
           <Route path="people/:id" element={<Person />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <ArrivalScreen />
       <CheerHost />

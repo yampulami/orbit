@@ -95,7 +95,9 @@ export default function GlobalSearch() {
   const idx = (section: Option["section"], id: string) => options.findIndex((o) => o.section === section && o.id === id);
 
   return (
-    <div className={"gsearch" + (phoneOpen ? " phone-open" : "")} ref={root} role="search" onKeyDown={key}>
+    <>
+    {showPanel && <div className="gs-dim" aria-hidden="true" />}
+    <div className={"gsearch" + (phoneOpen ? " phone-open" : "") + (showPanel ? " has-panel" : "")} ref={root} role="search" onKeyDown={key}>
       <button type="button" className="gs-toggle" aria-label="Search" aria-expanded={phoneOpen} onClick={() => { setPhoneOpen(true); setTimeout(() => input.current?.focus(), 50); }}><Search size={20} aria-hidden="true" /></button>
       <Search size={18} aria-hidden="true" className="gs-glass" />
       <input ref={input} type="search" value={q} placeholder={friendsLive ? "Search, or @username" : "Search"} aria-label="Search Orbit" role="combobox" aria-expanded={showPanel} aria-controls={listId} aria-autocomplete="list" aria-activedescendant={showPanel && options.length ? `${listId}-${active}` : undefined}
@@ -132,8 +134,10 @@ export default function GlobalSearch() {
               })}
             </>
           )}
+          <li className="gs-foot" role="presentation"><span>↑ ↓ to move</span><span>Enter to open</span><span>Esc to close</span></li>
         </ul>
       )}
     </div>
+    </>
   );
 }

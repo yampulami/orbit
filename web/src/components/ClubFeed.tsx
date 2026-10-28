@@ -5,6 +5,7 @@ import type { Org } from "../lib/campusOrgs";
 import EmptyState from "./EmptyState";
 import GradientMenu from "./GradientMenu";
 import ClubComments from "./ClubComments";
+import RollingNumber from "./RollingNumber";
 import RichText from "./RichText";
 
 const initials = (n: string) => n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
@@ -127,7 +128,7 @@ function PostCard({ p, title, inClub, canPin, canModerate, actions, me }: { p: P
       )}
 
       <footer>
-        {p.kind !== "announcement" || inClub ? <button type="button" className="link-btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}><MessageCircle size={14} aria-hidden="true" /> {p.comments.length > 0 ? `${p.comments.length} ${p.comments.length === 1 ? "comment" : "comments"}` : inClub ? "Comment" : "Comments"}</button> : <span />}
+        {p.kind !== "announcement" || inClub ? <button type="button" className="link-btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}><MessageCircle size={14} aria-hidden="true" /> {p.comments.length > 0 ? <><RollingNumber value={p.comments.length} /> {p.comments.length === 1 ? "comment" : "comments"}</> : inClub ? "Comment" : "Comments"}</button> : <span />}
         <span className="cf-tools">
           {canPin && <button type="button" className="link-btn" onClick={() => void actions.pin(p.id, !p.pinned)}>{p.pinned ? <><PinOff size={13} aria-hidden="true" /> Unpin</> : <><Pin size={13} aria-hidden="true" /> Pin</>}</button>}
           {(p.mine || canModerate) && (sure

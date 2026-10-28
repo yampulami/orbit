@@ -18,6 +18,7 @@ import UpcomingList from "../components/UpcomingList";
 import CommunityPicker from "../components/CommunityPicker";
 import { communityIcon } from "../lib/communityUi";
 import GradientMenu, { type GMItem } from "../components/GradientMenu";
+import RollingNumber from "../components/RollingNumber";
 import { usePins } from "../lib/pins";
 import { notice } from "../lib/notice";
 import HangoutCard from "../components/HangoutCard";
@@ -279,10 +280,10 @@ export default function Feed() {
                     {people.length > 0 && <span className="avatars" aria-hidden="true">{people.map((n) => <span key={n}>{initials(n)}</span>)}</span>}
                     <div className="actions" style={{ width: "auto", marginLeft: "auto" }}>
                       <motion.button whileTap={{ scale: 0.88 }} className="iconbtn" aria-pressed={liked} aria-label={liked ? "Unlike" : "Like"} onClick={() => like(p)}>
-                        <motion.span key={liked ? "on" : "off"} style={{ display: "inline-flex" }} initial={liked ? { scale: 0.7 } : false} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 600, damping: 22 }}><Heart size={16} fill={liked ? "currentColor" : "none"} /></motion.span>{p.post_likes.length}
+                        <motion.span key={liked ? "on" : "off"} style={{ display: "inline-flex" }} initial={liked ? { scale: 0.7 } : false} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 600, damping: 22 }}><Heart size={16} fill={liked ? "currentColor" : "none"} /></motion.span><RollingNumber value={p.post_likes.length} />
                       </motion.button>
                       <button className="iconbtn" aria-expanded={expanded} aria-label="Comments" onClick={() => setOpen(expanded ? null : p.id)}>
-                        <MessageCircle size={16} />{p.post_comments.length}
+                        <MessageCircle size={16} /><RollingNumber value={p.post_comments.length} />
                       </button>
                       {p.author_id === me && <button className="iconbtn" aria-label="Delete post" onClick={() => remove(p)}><Trash2 size={16} /></button>}
                     </div>
