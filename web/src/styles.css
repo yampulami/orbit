@@ -3213,3 +3213,21 @@ body.chat-open .asst-fab{display:none}
 .chan-row .chan{padding-left:20px}
 @media (hover:none){.arr-grip{opacity:.45}}
 @media (max-width:720px){.rail-clubs{flex-direction:row}.rail-item{touch-action:pan-x}}
+
+/* gentler: no big glow (it was clipped into hard-edged boxes), just a soft lift under the open pill */
+.gm-item::after{display:none}
+.gm-item[data-on],.gm-item:focus-visible{box-shadow:0 5px 12px -6px var(--b)}
+@media (hover:hover){.gm-item:hover{box-shadow:0 5px 12px -6px var(--b)}}
+.gm-bar{padding:6px 10px 14px;margin:-2px -6px -6px}
+.pills .gm-bar{padding:0 0 6px;margin:0}
+.gm,.gm-bar{transition:gap .3s}
+/* scrolling down: small icons, the chosen one ringed, and the bar goes quiet */
+.gm[data-quiet] .gm-item{width:34px;height:34px;box-shadow:0 0 0 1px var(--line)}
+.gm[data-quiet] .gm-item[data-on]{width:34px;box-shadow:0 0 0 2px var(--b)}
+.gm[data-quiet] .gm-item[data-on]::before{opacity:.28}
+.gm[data-quiet] .gm-item[data-on] .gm-ic{transform:none;opacity:1}
+.gm[data-quiet] .gm-item[data-on] .gm-label{opacity:0;transform:scale(.6)}
+.gm[data-quiet] .gm-ic{width:16px;height:16px}
+.gm-item,.gm-ic{transition-property:width,height,background,box-shadow,transform,opacity}
+.pills:has(.gm[data-quiet]){background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;padding-top:4px;padding-bottom:4px}
+.pills:has(.gm[data-quiet]){background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:999px;width:fit-content;margin-left:0;padding:5px 10px}

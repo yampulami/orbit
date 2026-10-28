@@ -254,6 +254,7 @@ export default function Feed() {
         <div className="pills">
         <GradientMenu
           className="gm-bar"
+          quietOnScroll
           label="Filter by community"
           items={(["All", ...communities] as const).map((c): GMItem => ({
             key: c, label: c, icon: communityIcon[c].Icon, on: filter === c, onClick: () => setFilter(c),

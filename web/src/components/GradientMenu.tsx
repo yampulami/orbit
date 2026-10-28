@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 /** The colours an item can melt into when you point at it: soft gradients, each with a glow. */
 export const GM = {
@@ -24,9 +24,23 @@ export type GMItem = {
 };
 
 /** A row of round icon buttons. Point at one (or tap it) and it opens into a gradient pill with its name, and the others make room. */
-export default function GradientMenu({ items, label, className = "" }: { items: GMItem[]; label: string; className?: string }) {
+export default function GradientMenu({ items, label, className = "", quietOnScroll = false }: { items: GMItem[]; label: string; className?: string; /** Scrolling down shrinks it to small icons (the chosen one ringed); scrolling back up, or reaching the top, opens it again. */ quietOnScroll?: boolean }) {
+  const [quiet, setQuiet] = useState(false);
+  useEffect(() => {
+    if (!quietOnScroll) return;
+    let last = window.scrollY;
+    const on = () => {
+      const y = window.scrollY;
+      if (y < 80) setQuiet(false);
+      else if (y > last + 6) setQuiet(true);
+      else if (y < last - 6) setQuiet(false);
+      last = y;
+    };
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, [quietOnScroll]);
   return (
-    <div className={"gm " + className} role="group" aria-label={label}>
+    <div className={"gm " + className} role="group" aria-label={label} data-quiet={quiet ? "" : undefined}>
       {items.map((it) => {
         const [a, b] = GM[it.tone];
         return (
