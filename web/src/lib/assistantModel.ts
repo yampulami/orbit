@@ -9,7 +9,15 @@ export class AiProblem extends Error {
 /** Ask the model (through the `assistant` edge function, which keeps the API key). Only works with a database and a signed-in student. */
 export async function askModel(messages: ModelMsg[], context: { name: string; now: string; timezone: string; campus?: string }): Promise<ModelMsg> {
   if (!supabase) throw new AiProblem("off", "The AI needs an account.");
-  const { data, error } = await supabase.functions.invoke("assistant", { body: { messages, tools: TOOLS, context } });
+  // Give up after 30 seconds rather than leaving the dots spinning.
+  const ctl = new AbortController();
+  const timer = window.setTimeout(() => ctl.abort(), 30_000);
+  let result: Awaited<ReturnType<typeof supabase.functions.invoke>>;
+  try { result = await supabase.functions.invoke("assistant", { body: { messages, tools: TOOLS, context }, signal: ctl.signal } as never); }
+  catch { throw new AiProblem("failed", "The AI took too long to answer (over 30 seconds). The model may be slow or unavailable."); }
+  finally { window.clearTimeout(timer); }
+  const { data, error } = result;
+  if (error && ctl.signal.aborted) throw new AiProblem("failed", "The AI took too long to answer (over 30 seconds). The model may be slow or unavailable.");
   if (error) {
     let code = "", status = 0, detail = "";
     try {
