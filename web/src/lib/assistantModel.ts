@@ -21,7 +21,7 @@ export async function askModel(messages: ModelMsg[], context: { name: string; no
     if (code === "busy" || code === "slow_down") throw new AiProblem("busy", "The AI is busy right now. Give it a minute.");
     if (code === "sign_in") throw new AiProblem("sign_in", "Sign in to use the AI.");
     if (code === "model_error" && (status === 401 || status === 403)) throw new AiProblem("failed", "The AI service did not accept the key. Check the AI_API_KEY secret.");
-    if (code === "model_error") throw new AiProblem("failed", `The AI service refused the request (error ${status || "unknown"}).`);
+    if (code === "model_error") throw new AiProblem("failed", `The AI service refused the request (error ${status || "unknown"}${detail ? `: ${detail.replace(/\s+/g, " ").slice(0, 160)}` : ""}).`);
     throw new AiProblem("failed", "The AI could not answer just now.");
   }
   const m = (data as { message?: ModelMsg } | null)?.message;
