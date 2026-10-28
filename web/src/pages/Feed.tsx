@@ -6,7 +6,7 @@ import FeedEvents from "../components/FeedEvents";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, Navigate } from "react-router-dom";
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Flame, Pin, Heart, MessageCircle, Trash2 } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Flame, Pin, Repeat2, Trash2 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi as api, type Row } from "../lib/feedData";
 import { campusKey, validCampus } from "../shared/campus";
@@ -18,7 +18,7 @@ import UpcomingList from "../components/UpcomingList";
 import CommunityPicker from "../components/CommunityPicker";
 import { communityIcon } from "../lib/communityUi";
 import GradientMenu, { type GMItem } from "../components/GradientMenu";
-import RollingNumber from "../components/RollingNumber";
+import ReactionBar from "../components/ReactionBar";
 import { usePins } from "../lib/pins";
 import { notice } from "../lib/notice";
 import HangoutCard from "../components/HangoutCard";
@@ -130,6 +130,26 @@ export default function Feed() {
     const liked = p.post_likes.some((l) => l.user_id === me);
     setPosts((ps) => ps.map((x) => x.id !== p.id ? x : { ...x, post_likes: liked ? x.post_likes.filter((l) => l.user_id !== me) : [...x.post_likes, { user_id: me }] }));
     await run(() => api.like(p.id, me, !liked));
+  }
+
+  // Reposting puts the same words on your own feed with a note of who wrote them; pressing again takes it back. You cannot repost a repost or your own post.
+  const originalOf = (p: Row) => p.payload.repostOf ?? p.id;
+  const myRepost = (p: Row) => posts.find((x) => x.author_id === me && x.payload.repostOf === originalOf(p));
+  const repostCount = (p: Row) => posts.filter((x) => x.payload.repostOf === originalOf(p)).length;
+  async function repost(p: Row) {
+    if (!campus) return;
+    const mine = myRepost(p);
+    if (mine) { remove(mine); return; }
+    await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community: p.community, body: p.payload.body ?? p.payload.text ?? "", repostOf: originalOf(p), repostName: p.payload.repostName ?? p.author_name }); await load(); });
+  }
+  async function share(p: Row) {
+    const text = `${p.payload.body ?? p.payload.text ?? ""}
+
+${p.author_name} on Orbit`;
+    try {
+      if (navigator.share) await navigator.share({ text });
+      else { await navigator.clipboard.writeText(text); notice.show({ icon: "pin", title: "Copied", message: "The post is ready to paste.", ms: 2500 }); }
+    } catch { /* cancelled */ }
   }
 
   // Deleting is undoable: the post leaves the feed now, and the real delete runs after the undo window.
@@ -275,18 +295,17 @@ export default function Feed() {
                 <motion.article key={p.id} layout="position" className="card post tile" data-c={p.community} initial={{ opacity: 0, y: -14, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, transition: exit }} transition={enter}>
                   <div className="meta"><span className="who"><PersonLink id={p.author_id} className="who-link"><span className="who-av" aria-hidden="true">{initials(p.author_name)}</span></PersonLink><span><PersonLink id={p.author_id} className="who-link"><strong style={{ color: "var(--ink)" }}>{p.author_name}</strong></PersonLink>{isVerified(p.author_id) && <VerifiedBadge label="Verified campus staff" />} · {when(p.created_at)}</span></span><span className="meta-end"><span className="chip">{p.community}</span><SafetyMenu userId={p.author_id} name={p.author_name} postId={p.id} context="post" /></span></div>
                   {p.payload.title && <h3>{p.payload.title}</h3>}
+                  {p.payload.repostOf && <p className="repost-note"><Repeat2 size={14} aria-hidden="true" /> Reposted from {p.payload.repostName ?? "someone"}</p>}
                   <p className="body" style={{ whiteSpace: "pre-wrap" }}><RichText text={p.payload.body ?? p.payload.text ?? ""} /></p>
                   <div className="foot">
                     {people.length > 0 && <span className="avatars" aria-hidden="true">{people.map((n) => <span key={n}>{initials(n)}</span>)}</span>}
-                    <div className="actions" style={{ width: "auto", marginLeft: "auto" }}>
-                      <motion.button whileTap={{ scale: 0.88 }} className="iconbtn" aria-pressed={liked} aria-label={liked ? "Unlike" : "Like"} onClick={() => like(p)}>
-                        <motion.span key={liked ? "on" : "off"} style={{ display: "inline-flex" }} initial={liked ? { scale: 0.7 } : false} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 600, damping: 22 }}><Heart size={16} fill={liked ? "currentColor" : "none"} /></motion.span><RollingNumber value={p.post_likes.length} />
-                      </motion.button>
-                      <button className="iconbtn" aria-expanded={expanded} aria-label="Comments" onClick={() => setOpen(expanded ? null : p.id)}>
-                        <MessageCircle size={16} /><RollingNumber value={p.post_comments.length} />
-                      </button>
-                      {p.author_id === me && <button className="iconbtn" aria-label="Delete post" onClick={() => remove(p)}><Trash2 size={16} /></button>}
-                    </div>
+                    <ReactionBar
+                      liked={liked} likes={p.post_likes.length} onLike={() => like(p)}
+                      commentsOpen={expanded} comments={p.post_comments.length} onComment={() => setOpen(expanded ? null : p.id)}
+                      reposted={!!myRepost(p)} reposts={repostCount(p)} onRepost={p.author_id === me && !p.payload.repostOf ? undefined : () => repost(p)}
+                      onShare={() => void share(p)}
+                    />
+                    {p.author_id === me && <button className="iconbtn rb-del" aria-label="Delete post" onClick={() => remove(p)}><Trash2 size={16} /></button>}
                   </div>
                   <AnimatePresence initial={false}>
                     {expanded && (

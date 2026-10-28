@@ -3307,3 +3307,41 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .posts .post .iconbtn:hover{background:var(--panel);color:var(--ink)}
 .posts .post .iconbtn[aria-pressed=true]{background:color-mix(in srgb,#f0476b 14%,transparent);color:#f0476b}
 .posts .post .iconbtn svg{width:18px;height:18px}
+
+/* ===== Reaction bar: like, comment, repost, share in one pill. Posts run in one column. ===== */
+.posts{grid-template-columns:minmax(0,1fr)}
+.rb{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--panel);box-shadow:0 0 0 1px var(--line),0 8px 20px -14px rgba(30,15,90,.5)}
+.rb-item{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 14px;border:0;border-radius:999px;background:none;color:var(--ink-soft);font:inherit;font-size:.98rem;font-weight:650;cursor:pointer;transition:background .2s,color .2s}
+.rb-item:hover:not(:disabled){background:color-mix(in srgb,var(--tone) 12%,transparent);color:var(--tone)}
+.rb-item[data-on]{color:var(--tone)}
+.rb-item:disabled{opacity:.45;cursor:default}
+.rb-item:active:not(:disabled) .rb-ic{transform:scale(.9)}
+.rb-ic{display:inline-grid;place-items:center}
+.posts .post .foot{border-top:0;padding-top:0;margin-top:10px;justify-content:space-between}
+.posts .post .foot .rb-del{margin-left:auto}
+.repost-note{display:flex;align-items:center;gap:6px;margin:0 0 6px;font-size:.82rem;font-weight:600;color:var(--ink-soft)}
+
+/* ===== Search with four category circles: click the bar and it makes room for them ===== */
+.gs-row{position:relative;display:flex;align-items:flex-start;gap:10px;flex:0 1 330px;width:330px;max-width:100%;transition:flex-basis .45s cubic-bezier(.22,1,.36,1),width .45s cubic-bezier(.22,1,.36,1)}
+.gs-row.open{z-index:45;flex-basis:740px;width:740px}
+.gs-row .gsearch,.gs-row .gsearch:focus-within,.gs-row .gsearch.has-panel{flex:1 1 auto;width:auto;min-width:0}
+.gs-scopes.beside{display:flex;gap:10px;max-width:0;opacity:0;overflow:hidden;padding:2px 0;transform:translateX(-12px);transition:max-width .45s cubic-bezier(.22,1,.36,1),opacity .3s,transform .45s cubic-bezier(.22,1,.36,1)}
+.gs-row.open .gs-scopes.beside{max-width:260px;opacity:1;transform:none;overflow:visible}
+.gs-scope{position:relative;flex:none;display:grid;place-items:center;width:52px;height:52px;border:0;border-radius:50%;background:var(--surface);color:var(--ink-soft);box-shadow:0 0 0 1px var(--line),0 10px 24px -16px rgba(40,25,110,.5);cursor:pointer;transition:background .25s,color .25s,transform .2s var(--ease),box-shadow .25s}
+.gs-scope:hover{color:var(--ink);transform:translateY(-2px)}
+.gs-scope[aria-pressed=true]{background:var(--violet);color:#fff;box-shadow:0 8px 20px -10px var(--violet)}
+.gs-scope:active{transform:scale(.94)}
+.gs-scope-l{display:none}
+.gs-panel li.gs-chips{display:none;padding:2px 2px 8px;cursor:default;background:none}
+@media (max-width:900px){
+  .gs-row,.gs-row.open{display:contents}
+  .gs-scopes.beside{display:none}
+  .gs-panel li.gs-chips{display:block}
+  .gs-scopes.in-panel{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+  .gs-scopes.in-panel .gs-scope{width:auto;height:38px;padding:0 14px 0 12px;gap:8px;border-radius:999px;grid-auto-flow:column;box-shadow:0 0 0 1px var(--line)}
+  .gs-scopes.in-panel .gs-scope-l{display:inline;font-size:.82rem;font-weight:600;white-space:nowrap}
+}
+@media (prefers-reduced-motion:reduce){.gs-row,.gs-scopes.beside,.gs-scope{transition:none}}
+
+.gsearch{cursor:text}
+.gsearch button,.gs-panel li{cursor:pointer}
