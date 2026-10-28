@@ -3209,7 +3209,7 @@ body.chat-open .asst-fab{display:none}
 .gm-item[data-on] .gm-label,.gm-item:focus-visible .gm-label{opacity:1;transform:none;transition:opacity .5s .3s,transform .55s .3s}
 .gm-item:focus-visible{outline:none}
 .gm-item:focus-visible .gm-bg{outline:2px solid var(--violet);outline-offset:3px}
-@media (hover:hover){
+@media (hover:hover),(any-hover:hover),(min-width:701px){
   .gm-item:hover{width:var(--w);transition-delay:.12s}
   .gm-item:hover .gm-bg{box-shadow:0 5px 12px -6px var(--b);transition-delay:.12s}
   .gm-item:hover .gm-bg::before{opacity:1;transition-delay:.18s}
@@ -3230,7 +3230,7 @@ body.chat-open .asst-fab{display:none}
 .gm[data-quiet] .gm-item[data-on] .gm-ic{transform:none;opacity:1}
 .gm[data-quiet] .gm-item[data-on] .gm-label{opacity:0;transform:scale(.7)}
 .gm[data-quiet] .gm-ic{width:16px;height:16px}
-@media (hover:hover){.gm[data-quiet] .gm-item:hover{width:var(--w)}}
+@media (hover:hover),(any-hover:hover),(min-width:701px){.gm[data-quiet] .gm-item:hover{width:var(--w)}}
 @media (prefers-reduced-motion:reduce){.gm-item,.gm-bg,.gm-bg::before,.gm-ic,.gm-label{transition:none}}
 
 /* the group header's faces, links to profiles, and room so the menus are not clipped */
