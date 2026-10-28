@@ -16,7 +16,12 @@ function Reveal({ text, live, onGrow }: { text: string; live: boolean; onGrow: (
     return () => window.clearInterval(t);
   }, [live, parts.length]);
   useEffect(() => { onGrow(); }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
-  return <>{parts.slice(0, n).join("")}</>;
+  return <>{bold(parts.slice(0, n).join(""))}</>;
+}
+
+/** The model writes **bold** the way chat apps do; show it as bold rather than as asterisks. */
+function bold(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((t, i) => (t.startsWith("**") && t.endsWith("**") && t.length > 4 ? <strong key={i}>{t.slice(2, -2)}</strong> : t.replace(/\*\*/g, "")));
 }
 
 type Props = {

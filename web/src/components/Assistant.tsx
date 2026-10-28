@@ -137,7 +137,8 @@ export default function Assistant() {
     if (justDragged.current) return;
     const r = fab.current?.getBoundingClientRect();
     setOrigin(r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: window.innerWidth - 56, y: window.innerHeight - 56 });
-    setMode("morph");
+    // Someone who has chatted before goes straight to their chats; the pill is for the very first question.
+    setMode(history.chats.some((c) => c.messages.length > 0) ? "chat" : "morph");
   };
 
   const close = useCallback(() => {

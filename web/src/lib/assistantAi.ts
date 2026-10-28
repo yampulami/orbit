@@ -70,9 +70,9 @@ export const TOOLS = [
   fn("inbox_summary", "How many unread messages and notifications the student has."),
   fn("open_page", "Take the student to a page of the app.", { page: { type: "string", enum: Object.keys(PAGES) } }, ["page"]),
   fn("create_reminder", "Add a one-off reminder for a single date (a task or thing to remember). Not for weekly classes: use add_class for those. The student confirms it first.", { title: s("What to be reminded of."), date: s("YYYY-MM-DD"), time: s("HH:MM, 24 hour. Optional.") }, ["title", "date"]),
-  fn("create_hangout", "Plan a hangout inside one of the student's groups. The student confirms it first.", { group: s("The group's name."), title: s("What it is."), place: s("Where."), when: s("YYYY-MM-DDTHH:MM") }, ["group", "title", "place", "when"]),
+  fn("create_hangout", "Plan a hangout inside one of the student's groups. The student confirms it first.", { group: s("The group's name."), title: s("What it is."), place: s("Where."), when: s("YYYY-MM-DDTHH:MM") }, ["group", "title"]),
   fn("create_group", "Make a new group with some of the student's friends. The student confirms it first.", { name: s("The group's name."), members: { type: "array", items: { type: "string" }, description: "Names of friends to add." } }, ["name"]),
-  fn("create_event", "Post an event for a club the student runs. The student confirms it first.", { club: s("The club's name."), title: s("Event title."), description: s("A sentence or two."), place: s("Where."), starts_at: s("YYYY-MM-DDTHH:MM"), ends_at: s("YYYY-MM-DDTHH:MM. Optional.") }, ["club", "title", "place", "starts_at"]),
+  fn("create_event", "Post an event for a club the student runs. The student confirms it first.", { club: s("The club's name."), title: s("Event title."), description: s("A sentence or two."), place: s("Where."), starts_at: s("YYYY-MM-DDTHH:MM"), ends_at: s("YYYY-MM-DDTHH:MM. Optional.") }, ["club", "title"]),
   fn("send_message", "Send a direct message to someone. The student confirms it first. Find the person with find_people first.", { person_id: s("The id from find_people."), person_name: s("Their name."), text: s("The message.") }, ["person_id", "person_name", "text"]),
 ];
 TOOLS.push(
@@ -182,8 +182,8 @@ export function prepareAction(env: AiEnv, tool: string, a: Record<string, unknow
     const g = named(env.groups, str(a.group));
     const title = str(a.title).slice(0, 80), place = str(a.place).slice(0, 80), when = str(a.when);
     if (!g) return { error: `No group called "${str(a.group)}". Their groups: ${env.groups.map((x) => x.name).join(", ") || "none"}.` };
-    if (!title || !place) return { error: "A hangout needs a title and a place." };
-    if (!isLocalDateTime(when)) return { error: "Give the time as YYYY-MM-DDTHH:MM." };
+    if (!title || !place) return { error: "Ask the student where the hangout is. It needs a title and a place." };
+    if (!isLocalDateTime(when)) return { error: "Ask the student when it is, then give the time as YYYY-MM-DDTHH:MM." };
     if (new Date(when).getTime() < now.getTime() - 60_000) return { error: "That time has already passed." };
     return { summary: `Plan "${title}" for ${g.name}, ${describeWhen(new Date(when).toISOString(), now)} at ${place}.`, args: { groupId: g.id, title, place, when } };
   }
@@ -205,8 +205,8 @@ export function prepareAction(env: AiEnv, tool: string, a: Record<string, unknow
     const startsAt = str(a.starts_at), endsAt = str(a.ends_at);
     if (!c) return { error: `No club called "${str(a.club)}".` };
     if (!c.canPost) return { error: `They cannot post events for ${c.name}. Only people with the events permission can.` };
-    if (!title || !place) return { error: "An event needs a title and a place." };
-    if (!isLocalDateTime(startsAt)) return { error: "Give the start as YYYY-MM-DDTHH:MM." };
+    if (!title || !place) return { error: "Ask the student where the event is. It needs a title and a place." };
+    if (!isLocalDateTime(startsAt)) return { error: "Ask the student when it starts, then give the start as YYYY-MM-DDTHH:MM." };
     if (endsAt && (!isLocalDateTime(endsAt) || new Date(endsAt) <= new Date(startsAt))) return { error: "The end must come after the start." };
     if (new Date(startsAt).getTime() < now.getTime() - 60_000) return { error: "That time has already passed." };
     return { summary: `Post "${title}" for ${c.name}, ${describeWhen(new Date(startsAt).toISOString(), now)} at ${place}${c.trusted ? "." : ". A coordinator approves it before everyone sees it."}`, args: { orgId: c.id, orgName: c.name, orgKind: c.orgKind, orgTrusted: c.trusted, title, place, description, startsAt, endsAt: endsAt || undefined } };
