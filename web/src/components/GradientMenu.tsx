@@ -10,6 +10,9 @@ export const GM = {
   pink: ["#ffc2e8", "#ef5fcf"],
 } as const;
 
+/** How wide an item's pill is once it is open. */
+const pill = (label: string) => Math.round(label.length * 8.4 + 44);
+
 export type GMItem = {
   key: string;
   label: string;
@@ -53,9 +56,10 @@ export default function GradientMenu({ items, label, className = "", quietOnScro
             aria-pressed={it.on === undefined ? undefined : it.on}
             aria-label={it.label}
             disabled={it.disabled}
-            style={{ ["--a" as string]: a, ["--b" as string]: b, ["--w" as string]: `${Math.round(it.label.length * 8.4 + 44)}px` }}
+            style={{ ["--a" as string]: a, ["--b" as string]: b, ["--w" as string]: `${pill(it.label)}px`, ["--slot" as string]: `${Math.round(44 + (pill(it.label) - 44) * 0.85)}px` }}
             onClick={it.onClick}
           >
+            <span className="gm-bg" aria-hidden="true" />
             <it.icon className="gm-ic" size={19} aria-hidden="true" />
             <span className="gm-label" aria-hidden="true">{it.label}</span>
             {it.badge && <span className="gm-badge">{it.badge}</span>}

@@ -3060,33 +3060,6 @@ body.chat-open .asst-fab{display:none}
 
 .merc-theme{position:absolute;z-index:2;top:16px;right:16px}
 
-/* ===== Gradient menu: round icon buttons that melt open into a coloured pill ===== */
-.gm{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.gm-item{position:relative;flex:none;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:999px;background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 6px 16px -10px rgba(40,25,110,.5);cursor:pointer;overflow:visible;transition:width .5s cubic-bezier(.22,1,.36,1),background .3s,box-shadow .4s,transform .2s var(--ease)}
-.gm-item::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(45deg,var(--a),var(--b));opacity:0;transition:opacity .35s}
-.gm-item::after{content:"";position:absolute;top:10px;left:0;right:0;height:100%;border-radius:inherit;background:linear-gradient(45deg,var(--a),var(--b));filter:blur(14px);opacity:0;z-index:-1;transition:opacity .4s}
-.gm-ic{position:relative;z-index:1;transition:transform .35s cubic-bezier(.22,1,.36,1),opacity .25s}
-.gm-label{position:absolute;inset:0;display:grid;place-items:center;z-index:1;padding:0 14px;color:#1b1140;font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;opacity:0;transform:scale(.6);transition:opacity .3s,transform .4s cubic-bezier(.22,1,.36,1)}
-.gm-badge{position:absolute;right:-4px;top:-4px;z-index:2;display:grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e0525c;color:#fff;font-size:.68rem;font-weight:700;box-shadow:0 0 0 2px var(--bg)}
-.gm-item[data-on],.gm-item:focus-visible{width:var(--w);box-shadow:none}
-.gm-item[data-on]::before,.gm-item:focus-visible::before,.gm-item[data-on]::after,.gm-item:focus-visible::after{opacity:1}
-.gm-item[data-on] .gm-ic,.gm-item:focus-visible .gm-ic{transform:scale(0);opacity:0}
-.gm-item[data-on] .gm-label,.gm-item:focus-visible .gm-label{opacity:1;transform:none}
-.gm-item:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
-@media (hover:hover){
-  .gm-item:hover{width:var(--w);box-shadow:none}
-  .gm-item:hover::before,.gm-item:hover::after{opacity:1}
-  .gm-item:hover .gm-ic{transform:scale(0);opacity:0}
-  .gm-item:hover .gm-label{opacity:1;transform:none}
-}
-.gm-item:active{transform:scale(.96)}
-.gm-item:disabled{opacity:.5;cursor:default}
-.gm.sm .gm-item{height:38px;width:38px}
-.gm.sm .gm-item[data-on],.gm.sm .gm-item:focus-visible{width:var(--w)}
-@media (hover:hover){.gm.sm .gm-item:hover{width:var(--w)}}
-.club-bar .gm{flex:none;flex-wrap:nowrap;gap:8px}
-.ev-actions .gm{margin-right:6px}
-@media (prefers-reduced-motion:reduce){.gm-item,.gm-ic,.gm-label,.gm-item::before,.gm-item::after{transition:none}}
 
 /* ===== Comments: heading with count, a box to write in, each comment its own bordered row ===== */
 .ct{display:grid;gap:16px;margin-top:6px;padding-top:16px;border-top:1px solid var(--line)}
@@ -3214,35 +3187,50 @@ body.chat-open .asst-fab{display:none}
 @media (hover:none){.arr-grip{opacity:.45}}
 @media (max-width:720px){.rail-clubs{flex-direction:row}.rail-item{touch-action:pan-x}}
 
-/* gentler: no big glow (it was clipped into hard-edged boxes), just a soft lift under the open pill */
-.gm-item::after{display:none}
-.gm-item[data-on],.gm-item:focus-visible{box-shadow:0 5px 12px -6px var(--b)}
-@media (hover:hover){.gm-item:hover{box-shadow:0 5px 12px -6px var(--b)}}
-.gm-bar{padding:6px 10px 14px;margin:-2px -6px -6px}
-.pills .gm-bar{padding:0 0 6px;margin:0}
-.gm,.gm-bar{transition:gap .3s}
-/* scrolling down: small icons, the chosen one ringed, and the bar goes quiet */
-.gm[data-quiet] .gm-item{width:34px;height:34px;box-shadow:0 0 0 1px var(--line)}
-.gm[data-quiet] .gm-item[data-on]{width:34px;box-shadow:0 0 0 2px var(--b)}
-.gm[data-quiet] .gm-item[data-on]::before{opacity:.28}
+.pills:has(.gm[data-quiet]){background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:999px;width:fit-content;margin-left:0;padding:5px 10px}
+
+
+/* ===== Gradient menu =====
+   Every icon has a fixed slot wide enough for its open pill. Pointing at one opens the pill in place, inside its own slot, so nothing next to it moves and
+   nothing slides out from under the pointer. Only the chosen item takes the room of its full pill (and only when you choose it). */
+.gm{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.gm-item{position:relative;flex:none;display:grid;place-items:center;width:var(--slot);height:44px;padding:0;border:0;background:none;color:var(--ink);cursor:pointer;transition:width .5s cubic-bezier(.22,1,.36,1)}
+.gm-item[data-on]{width:var(--w)}
+.gm-bg{position:absolute;left:50%;top:0;width:44px;height:44px;margin-left:-22px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 6px 16px -10px rgba(40,25,110,.5);transition:width .45s cubic-bezier(.22,1,.36,1) .05s,margin-left .45s cubic-bezier(.22,1,.36,1) .05s,box-shadow .35s,background .3s}
+.gm-bg::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(45deg,var(--a),var(--b));opacity:0;transition:opacity .35s .05s}
+.gm-ic{position:relative;z-index:1;transition:transform .35s cubic-bezier(.22,1,.36,1),opacity .25s}
+.gm-label{position:absolute;inset:0;display:grid;place-items:center;z-index:1;padding:0 12px;color:#1b1140;font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;opacity:0;transform:scale(.6);transition:opacity .3s,transform .4s cubic-bezier(.22,1,.36,1);pointer-events:none}
+.gm-badge{position:absolute;left:calc(50% + 8px);top:-4px;z-index:3;display:grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e0525c;color:#fff;font-size:.68rem;font-weight:700;box-shadow:0 0 0 2px var(--bg)}
+.gm-item[data-on] .gm-bg,.gm-item:focus-visible .gm-bg{width:var(--w);margin-left:calc(var(--w) / -2);box-shadow:0 5px 12px -6px var(--b)}
+.gm-item[data-on] .gm-bg::before,.gm-item:focus-visible .gm-bg::before{opacity:1}
+.gm-item[data-on] .gm-ic,.gm-item:focus-visible .gm-ic{transform:scale(0);opacity:0}
+.gm-item[data-on] .gm-label,.gm-item:focus-visible .gm-label{opacity:1;transform:none}
+.gm-item:focus-visible{outline:none}
+.gm-item:focus-visible .gm-bg{outline:2px solid var(--violet);outline-offset:3px}
+@media (hover:hover){
+  .gm-item:hover{z-index:5}
+  .gm-item:hover .gm-bg{width:var(--w);margin-left:calc(var(--w) / -2);box-shadow:0 5px 12px -6px var(--b);transition-delay:.06s}
+  .gm-item:hover .gm-bg::before{opacity:1}
+  .gm-item:hover .gm-ic{transform:scale(0);opacity:0}
+  .gm-item:hover .gm-label{opacity:1;transform:none;transition-delay:.1s}
+}
+.gm-item:active .gm-bg{transform:scale(.97)}
+.gm-item:disabled{opacity:.5;cursor:default}
+.club-bar .gm{flex:none;flex-wrap:nowrap;gap:4px}
+.ev-actions .gm{margin-right:6px}
+.cf-modes .gm-item{flex:none}
+.gm-bar{padding:6px 8px 12px;margin:-2px -4px -4px}
+.pills .gm-bar{padding:0 0 4px;margin:0;overflow-x:auto}
+/* scrolling down: small icons, the chosen one ringed, on a faint strip */
+.gm[data-quiet] .gm-item,.gm[data-quiet] .gm-item[data-on]{width:34px;height:34px}
+.gm[data-quiet] .gm-bg,.gm[data-quiet] .gm-item[data-on] .gm-bg{width:34px;height:34px;margin-left:-17px}
+.gm[data-quiet] .gm-item[data-on] .gm-bg{box-shadow:0 0 0 2px var(--b)}
+.gm[data-quiet] .gm-item[data-on] .gm-bg::before{opacity:.28}
 .gm[data-quiet] .gm-item[data-on] .gm-ic{transform:none;opacity:1}
 .gm[data-quiet] .gm-item[data-on] .gm-label{opacity:0;transform:scale(.6)}
 .gm[data-quiet] .gm-ic{width:16px;height:16px}
-.gm-item,.gm-ic{transition-property:width,height,background,box-shadow,transform,opacity}
-.pills:has(.gm[data-quiet]){background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;padding-top:4px;padding-bottom:4px}
-.pills:has(.gm[data-quiet]){background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:999px;width:fit-content;margin-left:0;padding:5px 10px}
-
-/* Pointing at an icon no longer opens it (that moved its neighbours out from under the pointer). It shows its name in a small pill above, after a short pause;
-   only the chosen one, or a click, opens a pill. */
 @media (hover:hover){
-  .gm .gm-item:not([data-on]):hover{width:44px;box-shadow:0 0 0 2px var(--b)}
-  .gm.sm .gm-item:not([data-on]):hover{width:38px}
-  .gm[data-quiet] .gm-item:not([data-on]):hover{width:34px}
-  .gm .gm-item:not([data-on]):hover::before{opacity:.3}
-  .gm .gm-item:not([data-on]):hover .gm-ic{transform:none;opacity:1}
-  .gm .gm-item:not([data-on]):hover .gm-label{opacity:0;transform:scale(.6)}
-  .gm-item:not([data-on])::after{display:block;content:attr(data-label);position:absolute;top:auto;right:auto;left:50%;bottom:calc(100% + 8px);height:auto;filter:none;z-index:30;padding:5px 12px;border-radius:999px;background:linear-gradient(45deg,var(--a),var(--b));color:#1b1140;font-size:.74rem;font-weight:700;letter-spacing:.04em;white-space:nowrap;box-shadow:0 8px 20px -10px rgba(0,0,0,.5);opacity:0;pointer-events:none;transform:translate(-50%,6px) scale(.92);transition:opacity .18s 0s,transform .22s 0s}
-  .gm-item:not([data-on]):hover::after{opacity:1;transform:translate(-50%,0) scale(1);transition:opacity .2s .28s,transform .25s .28s}
-  .gm-bar{flex-wrap:wrap;overflow:visible}
+  .gm[data-quiet] .gm-item:hover{width:var(--slot)}
+  .gm[data-quiet] .gm-item:hover .gm-bg{width:var(--w);margin-left:calc(var(--w) / -2)}
 }
-.gm-item{transition-duration:.45s}
+@media (prefers-reduced-motion:reduce){.gm-item,.gm-bg,.gm-bg::before,.gm-ic,.gm-label{transition:none}}
