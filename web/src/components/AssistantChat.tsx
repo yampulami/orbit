@@ -2,7 +2,10 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, ArrowUp, Menu, Plus, Trash2, X } from "lucide-react";
 import { groupChats, NEW_TITLE, type Chat, type Msg } from "../lib/assistantChats";
 import Orb from "./Orb";
-import DotOrb from "./DotOrb";
+import { ThinkingOrb, type OrbState } from "thinking-orbs";
+
+/** Which animation says what the assistant is doing: looking things up, getting something ready, or just thinking. */
+const orbFor = (step?: string): OrbState => (!step ? "working" : /event|club|people|feed|notification|inbox/i.test(step) ? "searching" : /schedule|reminder|group/i.test(step) ? "listening" : "solving");
 
 const SUGGESTIONS = ["What's on tonight?", "When is my next class?", "Which clubs am I in?", "Any unread messages?"];
 
@@ -130,7 +133,7 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, step
         <div className="ac-scroll" ref={scroller}>
           {messages.length === 0 ? (
             <div className="ac-empty">
-              <DotOrb size={96} />
+              <ThinkingOrb state="breathing" size={64} />
               <h2>How can I help?</h2>
               <p>Ask about tonight, a club, your classes or your reminders. I can also take you to a page.</p>
               <div className="ac-chips">
@@ -162,8 +165,7 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, step
               ))}
               {thinking && (
                 <li className="ac-msg assistant" aria-label="Orbit is thinking">
-                  <span className="ac-av" aria-hidden="true" />
-                  <div className="ac-body"><p className="ac-text ac-think"><DotOrb size={40} thinking />{step && <span className="ac-step">{step}</span>}</p></div>
+                  <div className="ac-body"><p className="ac-text ac-think"><ThinkingOrb state={orbFor(step)} size={64} />{step && <span className="ac-step">{step}</span>}</p></div>
                 </li>
               )}
             </ol>

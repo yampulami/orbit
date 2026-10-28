@@ -3469,8 +3469,7 @@ a.avs-face{text-decoration:none;cursor:pointer}
 /* the person who posts an event is going to it */
 .ev-hosting{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border-radius:999px;background:color-mix(in srgb,#1fa97a 16%,transparent);color:#1fa97a;font-size:.84rem;font-weight:700}
 
-/* the dotted ball in the chat */
-.dot-orb{display:block;flex:none}
-.ac-think{display:flex;align-items:center;gap:6px;height:auto;min-height:44px}
-.ac-think .dot-orb{margin-left:-6px}
-.ac-empty .dot-orb{margin-bottom:6px}
+/* the thinking orb in the chat */
+.ac-think{display:flex;align-items:center;gap:10px;height:auto;min-height:64px}
+.ac-think canvas{margin-left:-8px}
+.ac-empty canvas{margin-bottom:6px}
