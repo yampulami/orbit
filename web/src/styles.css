@@ -3449,3 +3449,9 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .club-search{display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line);color:var(--ink-soft);transition:box-shadow .2s}
 .club-search:focus-within{box-shadow:0 0 0 2px var(--violet)}
 .club-search input{flex:1;min-width:0;border:0;outline:0;background:none;color:var(--ink);font:inherit;font-size:.95rem}
+
+/* the feed composer is one calm box, not a box with a box inside */
+.feed-main .composer textarea{border:0;background:transparent;box-shadow:none;outline:0;padding:10px 2px;font-size:1.02rem}
+.feed-main .composer textarea:focus{border:0;box-shadow:none;outline:0}
+.feed-main .composer{padding:8px 18px;transition:box-shadow .25s,background .25s}
+.feed-main .composer:focus-within{box-shadow:0 0 0 2px var(--violet),0 14px 34px -22px var(--violet)}
