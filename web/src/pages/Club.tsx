@@ -88,7 +88,7 @@ export default function Club() {
 
   // The chat's channels sit in the sidebar with the rest, as in a server: Feed and Events first, then the channels, then the pods.
   const myPods = new Set(pods.pods.filter((p) => p.mine).map((p) => p.id));
-  const chatChans = inside ? chat.channels.filter((c) => (!c.teamOnly || org.mine) && (!c.podId || org.mine || myPods.has(c.podId))) : [];
+  const chatChans = inside ? chat.channels.filter((c) => !c.announceOnly && (!c.teamOnly || org.mine) && (!c.podId || org.mine || myPods.has(c.podId))) : [];
   const activeChan = chatChans.find((c) => c.id === chanId) ?? chatChans[0];
   const canChannels = org.owner || org.myPerms.includes("channels");
   const label = cur === "chat" ? `# ${activeChan?.name ?? "chat"}` : cur === "events" ? "Events" : cur === "pods" ? "Pods" : cur === "dashboard" ? "Manage" : "Feed";
@@ -113,11 +113,10 @@ export default function Club() {
         <div className="club-bar-text">
           <h1><RichText text={org.name} />{org.status === "active" && !circle && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
           <span className="club-bar-sub">
-            {org.status === "active" && <span className={"act " + act.level} title={act.line || undefined}><i aria-hidden="true" />{act.label}</span>}
             {org.status === "pending" && <><Clock size={12} aria-hidden="true" /> Waiting for approval</>}
             {org.status === "paused" && "Paused"}
             {org.status === "rejected" && <><X size={12} aria-hidden="true" /> Not approved</>}
-            {org.status === "active" && <span className="muted"> · {count} {count === 1 ? "person" : "people"}</span>}
+            {org.status === "active" && <span title={act.line || undefined}>{count} {count === 1 ? "person" : "people"}</span>}
           </span>
         </div>
         <JoinButton org={org} />

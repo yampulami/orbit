@@ -110,7 +110,7 @@ export default function Shell() {
   const tabs = items.filter((i) => ["/app/feed", "/app/messages", "/app/groups", "/app/plans", "/app/campus"].includes(i.to));
 
   return (
-    <div className={"shell" + (wide ? " wide" : "") + (hideTop ? " hide-top" : "")}>
+    <div className={"shell" + (wide && !/\/campus\/clubs\//.test(loc.pathname) ? " wide" : "") + (hideTop ? " hide-top" : "")}>
       <a className="skip" href="#main">Skip to content</a>
       <aside className="side">
         <div className="side-top">

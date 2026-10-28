@@ -26,7 +26,7 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
   // Team-only channels are for the team; the database hides them from everyone else, and so does the screen.
   // A pod's channel is for the pod's members and the team.
   const myPods = new Set(pods.filter((p) => p.mine).map((p) => p.id));
-  const channels = chat.channels.filter((c) => (!c.teamOnly || org.mine) && (!c.podId || org.mine || myPods.has(c.podId)));
+  const channels = chat.channels.filter((c) => !c.announceOnly && (!c.teamOnly || org.mine) && (!c.podId || org.mine || myPods.has(c.podId)));
   const controlled = channelId !== undefined;
   const [ownId, setOwnId] = useState(focusId);
   useEffect(() => { if (focusId) setOwnId(focusId); }, [focusId]);
