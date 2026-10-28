@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
-import { Hash, Lock, MessageSquare, Plus, Send, Trash2, X } from "lucide-react";
+import { Hash, Lock, Megaphone, MessageSquare, Plus, Send, Trash2, X } from "lucide-react";
 import type { Org } from "../lib/campusOrgs";
 import type { useClubChat } from "../lib/clubChat";
 import type { Pod } from "../lib/clubPods";
@@ -22,6 +22,7 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
   const inClub = org.myJoin === "officer" || org.myJoin === "member";
   const canManage = org.owner || org.myPerms.includes("channels");
   const canModerate = org.myPerms.includes("moderate") || reviewer;
+  const canAnnounce = org.owner || org.myPerms.includes("announce");
   // Team-only channels are for the team; the database hides them from everyone else, and so does the screen.
   // A pod's channel is for the pod's members and the team.
   const myPods = new Set(pods.filter((p) => p.mine).map((p) => p.id));
@@ -96,13 +97,13 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
         {active && (
           <>
             <header className="cc-head">
-              <div><h2>{active.teamOnly ? <Lock size={16} aria-hidden="true" /> : <Hash size={16} aria-hidden="true" />}{active.name}</h2>{active.description && <p className="muted">{active.description}</p>}</div>
-              {canManage && !active.isDefault && !active.podId && (sure
+              <div><h2>{active.announceOnly ? <Megaphone size={16} aria-hidden="true" /> : active.teamOnly ? <Lock size={16} aria-hidden="true" /> : <Hash size={16} aria-hidden="true" />}{active.name}</h2>{active.description && <p className="muted">{active.description}</p>}</div>
+              {canManage && !active.isDefault && !active.announceOnly && !active.podId && (sure
                 ? <span className="cevent-sure"><button type="button" className="btn danger" onClick={() => { void chat.actions.deleteChannel(active.id); setActiveId(""); setSure(false); }}>Delete channel</button><button type="button" className="btn" onClick={() => setSure(false)}>Keep</button></span>
                 : <button type="button" className="link-btn" aria-label={`Delete #${active.name}`} onClick={() => setSure(true)}><Trash2 size={14} aria-hidden="true" /></button>)}
             </header>
             <div className="cc-msgs" ref={scroller} role="log" aria-live="polite" aria-label={`Messages in ${active.name}`}>
-              {msgs.length === 0 && <EmptyState icon={MessageSquare} title={`Start #${active.name}`}>Say hello. Everyone in the {active.teamOnly ? "team" : "club"} can see this channel.</EmptyState>}
+              {msgs.length === 0 && <EmptyState icon={active.announceOnly ? Megaphone : MessageSquare} title={active.announceOnly ? "No announcements yet" : `Start #${active.name}`}>{active.announceOnly ? (canAnnounce ? "Post news for the whole club here." : "News from the officers shows up here.") : `Say hello. Everyone in the ${active.teamOnly ? "team" : "club"} can see this channel.`}</EmptyState>}
               {msgs.map((m) => {
                 const day = dayOf(m.at);
                 const at = new Date(m.at).getTime();
@@ -125,11 +126,11 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
                 );
               })}
             </div>
-            <form className="cc-compose" onSubmit={send}>
+            {active.announceOnly && !canAnnounce ? <p className="muted cc-readonly"><Megaphone size={14} aria-hidden="true" /> Only officers post here.</p> : <form className="cc-compose" onSubmit={send}>
               <input ref={input} aria-label={`Message #${active.name}`} value={text} maxLength={2000} placeholder={`Message #${active.name}`} onChange={(e) => setText(e.target.value)} />
               <EmojiButton value={text} onChange={setText} inputRef={input} max={2000} />
               <button className="btn primary" disabled={!text.trim()} aria-label="Send"><Send size={16} aria-hidden="true" /></button>
-            </form>
+            </form>}
           </>
         )}
       </div>

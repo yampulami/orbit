@@ -6,10 +6,10 @@ import { notice } from "./notice";
 
 /** Club chat: channels like a small Discord server. Every running club has #general; people with the "manage channels" permission add more, including
  *  team-only ones. Only the club's own people can read and write (the database enforces it). Unread dots come from a per-person read marker. */
-export type RawChannel = { id: string; org_id: string; name: string; description: string; team_only: boolean; is_default: boolean; position: number; pod_id?: string | null };
+export type RawChannel = { id: string; org_id: string; name: string; description: string; team_only: boolean; is_default: boolean; position: number; pod_id?: string | null; announce_only?: boolean };
 export type RawMsg = { id: string; channel_id: string; org_id: string; author_id: string; body: string; created_at: string };
 export type RawRead = { channel_id: string; last_read_at: string };
-export type Channel = { id: string; name: string; description: string; teamOnly: boolean; isDefault: boolean; podId?: string; unread: number; lastAt?: string };
+export type Channel = { id: string; name: string; description: string; teamOnly: boolean; isDefault: boolean; /** Only people who may announce can post; everyone else reads and reacts. */ announceOnly: boolean; podId?: string; unread: number; lastAt?: string };
 export type Message = { id: string; authorId: string; author: string; body: string; at: string; mine: boolean };
 
 /** Pure: what the user typed, as a channel name (lower case, letters, numbers and dashes). */
@@ -26,12 +26,12 @@ export function problemWithChannel(name: string, existing: string[]): string | n
 /** Pure: rows in, what the screen shows. Default channel first, then in order; unread counts what others wrote after your read marker. */
 export function buildChannels(channels: RawChannel[], messages: RawMsg[], reads: RawRead[], me: string): Channel[] {
   return [...channels]
-    .sort((a, b) => (a.is_default === b.is_default ? a.position - b.position || a.name.localeCompare(b.name) : a.is_default ? -1 : 1))
+    .sort((a, b) => (!!a.announce_only !== !!b.announce_only ? (a.announce_only ? -1 : 1) : a.is_default === b.is_default ? a.position - b.position || a.name.localeCompare(b.name) : a.is_default ? -1 : 1))
     .map((c) => {
       const mine = messages.filter((m) => m.channel_id === c.id);
       const readAt = reads.find((r) => r.channel_id === c.id)?.last_read_at ?? "";
       return {
-        id: c.id, name: c.name, description: c.description, teamOnly: c.team_only, isDefault: c.is_default, podId: c.pod_id ?? undefined,
+        id: c.id, name: c.name, description: c.description, teamOnly: c.team_only, isDefault: c.is_default, announceOnly: !!c.announce_only, podId: c.pod_id ?? undefined,
         unread: mine.filter((m) => m.author_id !== me && m.created_at > readAt).length,
         lastAt: mine.reduce<string | undefined>((a, m) => (!a || m.created_at > a ? m.created_at : a), undefined),
       };
@@ -49,6 +49,7 @@ const ago = (ms: number) => new Date(Date.now() - ms).toISOString();
 type Demo = { channels: RawChannel[]; messages: RawMsg[]; reads: RawRead[] };
 const demoStart = (): Demo => ({
   channels: [
+    { id: "ch0", org_id: "o1", name: "announcements", description: "News from the officers", team_only: false, is_default: false, position: -1, announce_only: true },
     { id: "ch1", org_id: "o1", name: "general", description: "Everyone in the club", team_only: false, is_default: true, position: 0 },
     { id: "ch2", org_id: "o1", name: "build-night", description: "Parts, plans and who is bringing snacks", team_only: false, is_default: false, position: 1 },
     { id: "ch3", org_id: "o1", name: "officers", description: "Team only", team_only: true, is_default: false, position: 2 },
@@ -56,6 +57,7 @@ const demoStart = (): Demo => ({
     { id: "ch-pd2", org_id: "o1", name: "pod-beginners", description: "New to robotics? Start here", team_only: false, is_default: false, position: 4, pod_id: "pd2" },
   ],
   messages: [
+    { id: "m0", channel_id: "ch0", org_id: "o1", author_id: "demo-sam", body: "Regionals are on Nov 14. Sign up for a pod by Friday so we can plan the build.", created_at: ago(26 * 3600_000) },
     { id: "m1", channel_id: "ch1", org_id: "o1", author_id: "demo-riley", body: "Welcome to the club chat! Say hi.", created_at: ago(30 * 3600_000) },
     { id: "m2", channel_id: "ch1", org_id: "o1", author_id: "demo-sam", body: "Build night is Thursday this week, same room.", created_at: ago(5 * 3600_000) },
     { id: "m3", channel_id: "ch2", org_id: "o1", author_id: "demo-maya", body: "I can bring the soldering kit.", created_at: ago(3 * 3600_000) },
@@ -99,11 +101,15 @@ export function useClubChat(orgId: string, enabled = true) {
       const d = readDemo();
       // A club or circle made in the demo gets its #general the first time its chat opens.
       if (!d.channels.some((c) => c.org_id === orgId)) { d.channels.push({ id: crypto.randomUUID(), org_id: orgId, name: "general", description: "Everyone in the club", team_only: false, is_default: true, position: 0 }); writeDemo(d); }
+      // Every club also has an announcements channel only its officers post in.
+      if (!d.channels.some((c) => c.org_id === orgId && c.announce_only)) { d.channels.push({ id: crypto.randomUUID(), org_id: orgId, name: "announcements", description: "News from the officers", team_only: false, is_default: false, position: -1, announce_only: true }); writeDemo(d); }
       setChannels(d.channels.filter((c) => c.org_id === orgId)); setMessages(d.messages.filter((m) => m.org_id === orgId)); setReads(d.reads); setNames(DEMO_NAMES); setReady(true);
       return;
     }
     try {
-      const withPod = await supabase!.from("campus_club_channels").select("id,org_id,name,description,team_only,is_default,position,pod_id").eq("org_id", orgId).order("position", { ascending: true }).limit(40);
+      const full = await supabase!.from("campus_club_channels").select("id,org_id,name,description,team_only,is_default,position,pod_id,announce_only").eq("org_id", orgId).order("position", { ascending: true }).limit(40);
+      // Before the announcements migration is applied the announce_only column is missing: ask without it.
+      const withPod = full.error ? await supabase!.from("campus_club_channels").select("id,org_id,name,description,team_only,is_default,position,pod_id").eq("org_id", orgId).order("position", { ascending: true }).limit(40) : full;
       // Before the pods migration is applied the pod_id column is missing: ask for the plain list.
       const ch: { data: unknown[] | null; error: unknown } = withPod.error ? await supabase!.from("campus_club_channels").select("id,org_id,name,description,team_only,is_default,position").eq("org_id", orgId).order("position", { ascending: true }).limit(40) : withPod;
       // Before the channels migration is applied the table is missing: show no channels, never an error.

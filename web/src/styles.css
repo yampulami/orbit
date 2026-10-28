@@ -3008,3 +3008,5 @@ body.chat-open .asst-fab{display:none}
 .look-ic{display:grid;place-items:center;width:38px;height:38px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font:inherit;font-size:1.1rem;font-weight:700;cursor:pointer;transition:border-color .2s,transform .2s var(--ease)}
 .look-ic:hover{border-color:var(--violet)}
 .look-ic[aria-checked=true]{border-color:var(--violet);background:color-mix(in srgb,var(--violet) 16%,var(--panel))}
+
+.cc-readonly{display:flex;align-items:center;gap:6px;margin:4px 0 0;font-size:.86rem}

@@ -139,7 +139,7 @@ export default function Club() {
           <ul>
             {chatChans.filter((c) => !c.podId).map((c) => (
               <li key={c.id}><button type="button" className="chan" aria-current={cur === "chat" && activeChan?.id === c.id ? "page" : undefined} onClick={() => openChan(c.id)}>
-                {c.teamOnly ? <Lock size={15} aria-hidden="true" /> : <Hash size={15} aria-hidden="true" />}<span>{c.name}</span>{c.unread > 0 && !(cur === "chat" && activeChan?.id === c.id) && <span className="rem-count">{c.unread > 9 ? "9+" : c.unread}</span>}
+                {c.announceOnly ? <Megaphone size={15} aria-hidden="true" /> : c.teamOnly ? <Lock size={15} aria-hidden="true" /> : <Hash size={15} aria-hidden="true" />}<span>{c.name}</span>{c.unread > 0 && !(cur === "chat" && activeChan?.id === c.id) && <span className="rem-count">{c.unread > 9 ? "9+" : c.unread}</span>}
               </button></li>
             ))}
             {canChannels && inside && <li><button type="button" className="chan add" onClick={() => { setMaking(true); pick("chat"); }}><Plus size={15} aria-hidden="true" /><span>New channel</span></button></li>}
