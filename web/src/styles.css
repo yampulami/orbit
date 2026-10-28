@@ -3473,3 +3473,7 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .ac-think{display:flex;align-items:center;gap:10px;height:auto;min-height:64px}
 .ac-think canvas{margin-left:-8px}
 .ac-empty canvas{margin-bottom:6px}
+
+/* waiting: the dotted thinking orb with its word */
+.ol-wait{display:inline-flex;align-items:center;gap:10px;padding:6px 22px 6px 8px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.ol-wait-t{color:var(--ink-soft);font-size:1rem}
