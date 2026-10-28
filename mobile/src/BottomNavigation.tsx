@@ -8,11 +8,10 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { theme } from "./theme";
+import { OrbitIcon, type OrbitIconName } from "./OrbitGraphics";
 
-type IconName = React.ComponentProps<typeof Ionicons>["name"];
-type Item<T extends string> = { page: T; icon: IconName };
+type Item<T extends string> = { page: T; icon: OrbitIconName };
 const ACTIVE = theme.active;
 const INACTIVE = "#a8afb0";
 
@@ -67,10 +66,10 @@ function NavigationItem<T extends string>({
             }),
           }}
         >
-          <Ionicons name={item.icon} size={23} color={INACTIVE} />
+          <OrbitIcon name={item.icon} size={23} color={INACTIVE} />
         </Animated.View>
         <Animated.View style={[s.iconOverlay, { opacity: progress }]}>
-          <Ionicons name={item.icon} size={23} color={ACTIVE} />
+          <OrbitIcon name={item.icon} size={23} color={ACTIVE} />
         </Animated.View>
         {!!badge && <View style={s.badge}><View style={s.badgeCore} /></View>}
       </View>

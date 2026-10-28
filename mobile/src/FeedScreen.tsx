@@ -34,6 +34,11 @@ import SearchField from "./SearchField";
 import FeedComposer from "./FeedComposer";
 import FeedMedia from "./FeedMedia";
 import { OrbitMark } from "./EntryUI";
+import {
+  CampusEventIllustration,
+  OrbitAvatar,
+  OrbitIcon,
+} from "./OrbitGraphics";
 import { useCurrentTime } from "./useCurrentTime";
 import { theme as t } from "./theme";
 import { validCampus } from "../../src/campus";
@@ -330,7 +335,7 @@ export default function FeedScreen({
           }}
           style={s.iconTouch}
         >
-          {icon(searching ? "close" : "search-outline", 23, t.text)}
+          <OrbitIcon name={searching ? "close" : "search"} size={23} color={t.text} />
         </Touch>
         <Touch
           accessibilityRole="button"
@@ -338,7 +343,7 @@ export default function FeedScreen({
           onPress={() => openPanel("notifications")}
           style={s.iconTouch}
         >
-          {icon("notifications-outline", 23, t.text)}
+          <OrbitIcon name="bell" size={23} color={t.text} />
           {unreadNotifications > 0 && <View style={s.notificationDot} />}
         </Touch>
       </View>
@@ -354,7 +359,7 @@ export default function FeedScreen({
             onPress={openComposer}
             style={s.newEvent}
           >
-            {icon("add", 24, t.text)}
+            <OrbitIcon name="plus" size={24} color={t.text} />
           </Touch>
         </View>
       ) : null}
@@ -476,16 +481,11 @@ export default function FeedScreen({
       {visible.map((post) => (
         <View key={post.id} style={s.post}>
           <View style={s.authorRow}>
-            <View
-              style={[
-                s.avatar,
-                post.kind === "event" && { backgroundColor: t.teal },
-              ]}
-            >
+            <View style={s.avatar}>
               {post.kind === "event" ? (
-                icon("calendar-outline", 20, t.text)
+                <OrbitIcon name="event" size={20} color={t.text} />
               ) : (
-                <Text style={s.initial}>{post.author[0]?.toUpperCase()}</Text>
+                <OrbitAvatar variant={(post.author.length % 2) + 1} size={37} />
               )}
             </View>
             <View style={{ flex: 1, gap: 3 }}>
@@ -520,9 +520,14 @@ export default function FeedScreen({
               </View>
             )}
             {!post.mine && live && post.authorId && (
-              <Touch accessibilityRole="button" accessibilityLabel={`More options for ${post.author}'s post`} onPress={() => openPanel("report", post.id)} style={s.iconTouch}>{icon("ellipsis-horizontal", 20)}</Touch>
+              <Touch accessibilityRole="button" accessibilityLabel={`More options for ${post.author}'s post`} onPress={() => openPanel("report", post.id)} style={s.iconTouch}><OrbitIcon name="more" size={20} /></Touch>
             )}
           </View>
+          {post.event && !post.media && (
+            <View style={s.eventArt}>
+              <CampusEventIllustration />
+            </View>
+          )}
           {post.event && (
             <View style={s.eventHeading}>
               <View style={s.dateTile}>
@@ -579,7 +584,7 @@ export default function FeedScreen({
           )}
           {!!post.location && (
             <View style={s.location}>
-              {icon("location-outline", 15, t.active)}
+              <OrbitIcon name="location" size={15} color={t.active} />
               <Text style={s.caption}>
                 {post.location}
                 {post.listing ? ` · ${post.listing.delivery}` : ""}
@@ -710,11 +715,7 @@ export default function FeedScreen({
               }}
               style={s.action}
             >
-              {icon(
-                post.liked ? "heart" : "heart-outline",
-                20,
-                post.liked ? t.active : t.muted,
-              )}
+              <OrbitIcon name="heart" size={20} color={post.liked ? t.active : t.muted} filled={post.liked} />
               <Text style={s.caption}>{post.likes || "Like"}</Text>
             </Touch>
             <Touch
@@ -723,7 +724,7 @@ export default function FeedScreen({
               onPress={() => openPanel("comments", post.id)}
               style={s.action}
             >
-              {icon("chatbubble-outline", 19)}
+              <OrbitIcon name="comment" size={19} />
               <Text style={s.caption}>{post.comments.length || "Comment"}</Text>
             </Touch>
             <Touch
@@ -734,7 +735,7 @@ export default function FeedScreen({
               }}
               style={s.action}
             >
-              {icon("share-outline", 20)}
+              <OrbitIcon name="share" size={20} />
               <Text style={s.caption}>Share</Text>
             </Touch>
           </View>
@@ -749,7 +750,7 @@ export default function FeedScreen({
           onPress={openComposer}
           style={s.fab}
         >
-          {icon(draft.body ? "create" : "add", 28, t.text)}
+          <OrbitIcon name={draft.body ? "photo" : "plus"} size={27} color={t.onCream} />
         </Touch>
       )}
       {composing && (
@@ -952,7 +953,7 @@ const s = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: t.teal,
+    backgroundColor: t.cream,
     alignItems: "center",
     justifyContent: "center",
     ...Platform.select({
@@ -1012,6 +1013,12 @@ const s = StyleSheet.create({
     letterSpacing: -0.4,
   },
   eventHeading: { flexDirection: "row", alignItems: "center", gap: 15 },
+  eventArt: {
+    marginHorizontal: -10,
+    overflow: "hidden",
+    borderRadius: 18,
+    backgroundColor: t.surface,
+  },
   dateTile: {
     width: 62,
     paddingVertical: 10,

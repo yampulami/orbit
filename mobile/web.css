@@ -1,0 +1,57 @@
+:root {
+  color-scheme: dark;
+  background: #071619;
+  accent-color: #8bbbc4;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+  background: #071619;
+  color: #eeeae3;
+}
+
+html {
+  scrollbar-color: #396d78 #071619;
+  scrollbar-width: thin;
+}
+
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+button,
+input,
+textarea,
+select {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #071619;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid #071619;
+  border-radius: 999px;
+  background: #396d78;
+}
+
+::selection {
+  color: #101d20;
+  background: #8bbbc4;
+}

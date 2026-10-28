@@ -1,4 +1,5 @@
 import { registerRootComponent } from 'expo';
+import './webStyles';
 
 import App from './App';
 

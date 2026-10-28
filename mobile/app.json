@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "backgroundColor": "#071619",
     "scheme": "orbit",
     "ios": {
       "supportsTablet": true
@@ -13,7 +14,7 @@
       "predictiveBackGestureEnabled": true
     },
     "web": {
-      "name": "Orbit Mobile",
+      "name": "Orbit",
       "bundler": "metro"
     },
     "plugins": [

@@ -27,6 +27,7 @@ import {
   type Community,
 } from "../../src/feed";
 import { theme as t } from "./theme";
+import { OrbitAvatar, OrbitIcon } from "./OrbitGraphics";
 type Props = {
   initialTool?: string;
   draft: PostDraft;
@@ -132,7 +133,7 @@ export default function FeedComposer({
               style={s.close}
               hitSlop={8}
             >
-              <Ionicons name="close" size={24} color={t.text} />
+              <OrbitIcon name="close" size={24} color={t.text} />
             </Touch>
             <Text style={s.heading}>
               {d.kind === "event"
@@ -158,9 +159,7 @@ export default function FeedComposer({
             contentContainerStyle={s.content}
           >
             <View style={s.byline}>
-              <View style={s.avatar}>
-                <Text style={s.initial}>{author[0]?.toUpperCase()}</Text>
-              </View>
+              <View style={s.avatar}><OrbitAvatar variant={(author.length % 2) + 1} size={42} /></View>
               <View>
                 <Text style={s.name}>{author}</Text>
                 <Text style={s.caption}>Local preview</Text>
@@ -176,17 +175,7 @@ export default function FeedComposer({
                 }
                 style={s.choice}
               >
-                <Ionicons
-                  name={
-                    d.kind === "event"
-                      ? "calendar-outline"
-                      : d.kind === "marketplace"
-                        ? "pricetag-outline"
-                        : "document-text-outline"
-                  }
-                  size={15}
-                  color={t.active}
-                />
+                <OrbitIcon name={d.kind === "event" ? "event" : d.kind === "marketplace" ? "market" : "feed"} size={15} color={t.active} />
                 <Text style={s.choiceText}>
                   {d.kind === "post"
                     ? "Post"
@@ -206,7 +195,7 @@ export default function FeedComposer({
                   }
                   style={s.choice}
                 >
-                  <Ionicons name="people-outline" size={15} color={t.active} />
+                  <OrbitIcon name="roommates" size={15} color={t.active} />
                   <Text style={s.choiceText}>{d.community}</Text>
                   <Ionicons name="chevron-down" size={13} color={t.muted} />
                 </Touch>
@@ -447,7 +436,17 @@ export default function FeedComposer({
                   }}
                   style={s.icon}
                 >
-                  <Ionicons name={icon as any} size={23} color={t.active} />
+                  {label === "Photo or video" ? (
+                    <OrbitIcon name="photo" size={23} color={t.active} />
+                  ) : label === "Emoji" ? (
+                    <OrbitIcon name="smile" size={23} color={t.active} />
+                  ) : label === "Location" ? (
+                    <OrbitIcon name="location" size={23} color={t.active} />
+                  ) : label === "Poll" ? (
+                    <OrbitIcon name="poll" size={23} color={t.active} />
+                  ) : (
+                    <Ionicons name={icon as any} size={23} color={t.active} />
+                  )}
                 </Touch>
               ))}
               {busy && <ActivityIndicator color={t.active} />}

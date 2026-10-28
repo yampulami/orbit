@@ -17,6 +17,7 @@ import {
   StyleSheet,
   Switch,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -51,6 +52,8 @@ import FeedScreen from "./FeedScreen";
 import MessagesScreen from "./MessagesScreen";
 import { theme } from "./theme";
 import BottomNavigation from "./BottomNavigation";
+import { OrbitAvatar, OrbitIcon, type OrbitIconName } from "./OrbitGraphics";
+import { OrbitMark } from "./EntryUI";
 import { fetchDirectThreads, subscribeCampusSocial } from "./campusSocial";
 import { validCampus } from "../../src/campus";
 import {
@@ -63,6 +66,11 @@ import {
 type IconName = React.ComponentProps<typeof Ionicons>["name"];
 type SaveFeedback = { message?: string; undo?: (current: State) => State };
 type Page = "Feed" | "Roommates" | "Messages" | "Hangouts" | "Campus";
+const pageFromHash = (): Page => {
+  if (Platform.OS !== "web" || typeof window === "undefined") return "Feed";
+  const value = window.location.hash.replace(/^#\/?/, "").toLowerCase();
+  return nav.find((item) => item.page.toLowerCase() === value)?.page ?? "Feed";
+};
 const colors = {
   ink: theme.text,
   teal: theme.teal,
@@ -72,13 +80,128 @@ const colors = {
   line: theme.line,
   sage: theme.raised,
 };
-const nav: { page: Page; icon: IconName }[] = [
-  { page: "Feed", icon: "albums-outline" },
-  { page: "Roommates", icon: "people-outline" },
-  { page: "Messages", icon: "chatbubbles-outline" },
-  { page: "Hangouts", icon: "cafe-outline" },
-  { page: "Campus", icon: "compass-outline" },
+const nav: { page: Page; icon: OrbitIconName }[] = [
+  { page: "Feed", icon: "feed" },
+  { page: "Roommates", icon: "roommates" },
+  { page: "Messages", icon: "messages" },
+  { page: "Hangouts", icon: "hangouts" },
+  { page: "Campus", icon: "campus" },
 ];
+function DesktopNavigation({
+  value,
+  onChange,
+  unread,
+  name,
+  campus,
+  profile,
+}: {
+  value: Page;
+  onChange: (page: Page) => void;
+  unread: number;
+  name: string;
+  campus: string;
+  profile: () => void;
+}) {
+  return (
+    <View style={s.desktopNav}>
+      <View style={s.desktopBrand}>
+        <OrbitMark size={30} />
+        <Text style={s.desktopWordmark}>orbit</Text>
+      </View>
+      <Text style={s.desktopOverline}>CAMPUS</Text>
+      <View accessibilityRole="tablist" style={s.desktopLinks}>
+        {nav.map((item) => {
+          const active = item.page === value;
+          return (
+            <Pressable
+              key={item.page}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              onPress={() => onChange(item.page)}
+              style={({ pressed }) => [
+                s.desktopLink,
+                active && s.desktopLinkActive,
+                pressed && { opacity: 0.72 },
+              ]}
+            >
+              <OrbitIcon
+                name={item.icon}
+                size={21}
+                color={active ? theme.active : theme.muted}
+              />
+              <Text style={[s.desktopLinkText, active && s.desktopLinkTextActive]}>
+                {item.page}
+              </Text>
+              {item.page === "Messages" && unread > 0 && (
+                <View style={s.desktopBadge}>
+                  <Text style={s.desktopBadgeText}>{Math.min(unread, 99)}</Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={{ flex: 1 }} />
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open profile"
+        onPress={profile}
+        style={s.desktopProfile}
+      >
+        <OrbitAvatar variant={(name.length % 2) + 1} size={42} />
+        <View style={{ flex: 1, gap: 3 }}>
+          <Text numberOfLines={1} style={s.desktopProfileName}>{name}</Text>
+          <Text numberOfLines={1} style={s.desktopProfileCampus}>{campus || "Choose a campus"}</Text>
+        </View>
+        <OrbitIcon name="more" size={18} />
+      </Pressable>
+    </View>
+  );
+}
+
+function DesktopAside({
+  campus,
+  onCampus,
+  onMessages,
+  onRoommates,
+}: {
+  campus: string;
+  onCampus: () => void;
+  onMessages: () => void;
+  onRoommates: () => void;
+}) {
+  return (
+    <View style={s.desktopAside}>
+      <Text style={s.desktopOverline}>YOUR ORBIT</Text>
+      <Text style={s.asideTitle}>{campus || "Campus life"}</Text>
+      <Text style={s.asideBody}>People, plans, and conversations from your university.</Text>
+      <View style={s.asideCard}>
+        <View style={s.asideCardTop}>
+          <View style={s.asideGlyph}><OrbitIcon name="event" size={20} color={theme.active} /></View>
+          <Text style={s.asideCardLabel}>CAMPUS PULSE</Text>
+        </View>
+        <Text style={s.asideCardTitle}>See what’s happening nearby.</Text>
+        <Pressable accessibilityRole="button" onPress={onCampus} style={s.asideAction}>
+          <Text style={s.asideActionText}>Explore campus</Text>
+          <View style={{ transform: [{ rotate: "180deg" }] }}><OrbitIcon name="back" size={17} color={theme.active} /></View>
+        </Pressable>
+      </View>
+      <Text style={s.desktopOverline}>QUICK LINKS</Text>
+      <Pressable accessibilityRole="button" onPress={onMessages} style={s.asideLink}>
+        <OrbitIcon name="messages" size={19} color={theme.active} />
+        <Text style={s.asideLinkText}>Messages and groups</Text>
+      </Pressable>
+      <Pressable accessibilityRole="button" onPress={onRoommates} style={s.asideLink}>
+        <OrbitIcon name="roommates" size={19} color={theme.active} />
+        <Text style={s.asideLinkText}>Shared living</Text>
+      </Pressable>
+      <View style={s.asideNote}>
+        <Text style={s.asideNoteTitle}>Private to your campus</Text>
+        <Text style={s.asideBody}>Orbit uses your university profile to keep the feed relevant.</Text>
+      </View>
+    </View>
+  );
+}
 function Icon({
   name,
   color = "#99bec4",
@@ -204,6 +327,8 @@ export default function Orbit() {
   );
 }
 function OrbitApp({accountId, profile, editPreferences, signOut, security}: AccountControls) {
+  const { width } = useWindowDimensions();
+  const desktop = Platform.OS === "web" && width >= 1040;
   // The account key remounts OrbitApp on sign-in/out; state preserves this loaded store during Fast Refresh.
   const [store] = useState(() => createLocalStore(AsyncStorage, accountId));
   const { save: persist, load: restore, saveDrafts: persistDrafts } = store;
@@ -211,7 +336,7 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
     [ready, setReady] = useState(false),
     [loadError, setLoadError] = useState(false),
     [error, setError] = useState("");
-  const [page, setPage] = useState<Page>("Feed"),
+  const [page, setPage] = useState<Page>(pageFromHash),
     [section, setSection] = useState("Tasks");
   const [directPeer, setDirectPeer] = useState<{ id: string; name: string } | null>(null);
   const [messageUnread, setMessageUnread] = useState(0);
@@ -253,6 +378,17 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
   const [draftStatus, setDraftStatus] = useState("");
   const [recovered, setRecovered] = useState(false);
   const draftVersion = useRef(0);
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+    const syncPage = () => setPage(pageFromHash());
+    window.addEventListener("popstate", syncPage);
+    window.addEventListener("hashchange", syncPage);
+    if (!window.location.hash) window.history.replaceState(null, "", "#/feed");
+    return () => {
+      window.removeEventListener("popstate", syncPage);
+      window.removeEventListener("hashchange", syncPage);
+    };
+  }, []);
   useEffect(() => {
     if (!accountId || !validCampus(profile.campus)) { setMessageUnread(0); return; }
     let mounted = true;
@@ -429,6 +565,10 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
   function go(next: Page) {
     Keyboard.dismiss();
     setPage(next);
+    if (Platform.OS === "web" && typeof window !== "undefined") {
+      const hash = `#/${next.toLowerCase()}`;
+      if (window.location.hash !== hash) window.history.pushState(null, "", hash);
+    }
     scroll.current?.scrollTo({ y: 0, animated: false });
   }
   function open(kind: string) {
@@ -736,6 +876,18 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
       style={[s.safe, page === "Feed" && { backgroundColor: theme.background }]}
     >
       <StatusBar style="light" />
+      <View style={[s.appShell, desktop && s.appShellDesktop]}>
+      {desktop && (
+        <DesktopNavigation
+          value={page}
+          onChange={go}
+          unread={messageUnread}
+          name={profile.name || state.name}
+          campus={profile.campus}
+          profile={() => open("profile")}
+        />
+      )}
+      <View style={[s.appMain, desktop && s.appMainDesktop]}>
       {page !== "Feed" && page !== "Messages" && <View
         style={s.topbar}
       >
@@ -1185,7 +1337,17 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
           />
         </View>
       )}
-      <BottomNavigation items={nav} value={page} onChange={go} badges={{ Messages: messageUnread }} />
+      {!desktop && <BottomNavigation items={nav} value={page} onChange={go} badges={{ Messages: messageUnread }} />}
+      </View>
+      {desktop && (
+        <DesktopAside
+          campus={profile.campus}
+          onCampus={() => { setCampusCategory("Events"); go("Campus"); }}
+          onMessages={() => go("Messages")}
+          onRoommates={() => go("Roommates")}
+        />
+      )}
+      </View>
       <Modal
         visible={!!modal}
         animationType="slide"
@@ -1468,6 +1630,148 @@ function OrbitApp({accountId, profile, editPreferences, signOut, security}: Acco
 }
 
 const s = StyleSheet.create({
+  appShell: { flex: 1 },
+  appShellDesktop: {
+    flexDirection: "row",
+    width: "100%",
+    maxWidth: 1440,
+    alignSelf: "center",
+  },
+  appMain: { flex: 1, minWidth: 0 },
+  appMainDesktop: {
+    maxWidth: 760,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: theme.line,
+    backgroundColor: theme.background,
+  },
+  desktopNav: {
+    width: 212,
+    paddingHorizontal: 18,
+    paddingTop: 24,
+    paddingBottom: 20,
+    backgroundColor: theme.background,
+  },
+  desktopBrand: {
+    minHeight: 54,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    marginBottom: 28,
+    paddingHorizontal: 10,
+  },
+  desktopWordmark: {
+    color: theme.text,
+    fontSize: 25,
+    fontWeight: "600",
+    letterSpacing: -1,
+  },
+  desktopOverline: {
+    color: theme.active,
+    fontSize: 9,
+    fontWeight: "600",
+    letterSpacing: 1.4,
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
+  desktopLinks: { gap: 5 },
+  desktopLink: {
+    minHeight: 48,
+    borderRadius: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 12,
+  },
+  desktopLinkActive: { backgroundColor: theme.surface },
+  desktopLinkText: { flex: 1, color: theme.muted, fontSize: 14 },
+  desktopLinkTextActive: { color: theme.text, fontWeight: "600" },
+  desktopBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: theme.active,
+  },
+  desktopBadgeText: { color: theme.background, fontSize: 10, fontWeight: "700" },
+  desktopProfile: {
+    minHeight: 66,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 10,
+    borderTopWidth: 1,
+    borderColor: theme.line,
+    paddingTop: 15,
+  },
+  desktopProfileName: { color: theme.text, fontSize: 13, fontWeight: "600" },
+  desktopProfileCampus: { color: theme.muted, fontSize: 10 },
+  desktopAside: {
+    width: 280,
+    paddingHorizontal: 22,
+    paddingTop: 32,
+    paddingBottom: 22,
+    backgroundColor: theme.background,
+  },
+  asideTitle: {
+    color: theme.text,
+    fontSize: 21,
+    lineHeight: 28,
+    fontWeight: "500",
+    letterSpacing: -0.4,
+    marginBottom: 6,
+    paddingHorizontal: 10,
+  },
+  asideBody: { color: theme.muted, fontSize: 12, lineHeight: 19 },
+  asideCard: {
+    marginVertical: 24,
+    borderRadius: 20,
+    padding: 17,
+    gap: 13,
+    backgroundColor: theme.surface,
+  },
+  asideCardTop: { flexDirection: "row", alignItems: "center", gap: 9 },
+  asideGlyph: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: theme.raised,
+  },
+  asideCardLabel: { color: theme.active, fontSize: 9, letterSpacing: 1.1, fontWeight: "600" },
+  asideCardTitle: { color: theme.text, fontSize: 17, lineHeight: 24, fontWeight: "500" },
+  asideAction: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderColor: theme.line,
+    paddingTop: 11,
+  },
+  asideActionText: { color: theme.active, fontSize: 12, fontWeight: "600" },
+  asideLink: {
+    minHeight: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderColor: theme.line,
+  },
+  asideLinkText: { color: theme.text, fontSize: 12 },
+  asideNote: {
+    marginTop: 24,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: theme.line,
+    borderRadius: 16,
+    gap: 6,
+  },
+  asideNoteTitle: { color: theme.text, fontSize: 12, fontWeight: "600" },
   emptyState: { paddingVertical: 28, alignItems: "center", gap: 12 },
   splitPeople: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   splitPerson: { flex: 1, minWidth: 60, gap: 6 },
