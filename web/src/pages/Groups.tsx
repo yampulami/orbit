@@ -54,6 +54,8 @@ export default function Groups() {
 
   const scroller = useRef<HTMLDivElement>(null);
   const sets = usePeopleSets();
+  const { friends: myFriends } = useFriends();
+  const friendIds = new Map(myFriends.map((f) => [f.name, f.id]));
   const group = groups.find((g) => g.id === activeId) ?? groups[0];
   const showCreate = creating || (groups.length === 0 && status !== "loading" && status !== "idle");
   const messageCount = group?.messages.length ?? 0;
@@ -172,7 +174,7 @@ export default function Groups() {
         ) : group && (
           <div className="convo card">
             <div className="convo-head">
-              <div><h2>{group.name}</h2><p className="muted">{group.members.join(", ")}</p></div>
+              <div><h2>{group.name}</h2><div className="convo-people"><AvatarStack people={group.members.filter((m) => m !== YOU).map((m) => ({ name: m, id: friendIds.get(m) }))} max={5} size={30} expandable /><span className="muted">{group.members.length} {group.members.length === 1 ? "person" : "people"}</span></div></div>
               <div className="convo-actions">
                 <button className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setError(""); }} aria-expanded={adding}><UserPlus size={18} /> {hangLive ? "Add people" : "Add friends"}</button>
                 <button className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setError(""); }} aria-expanded={planning}><CalendarPlus size={18} /> Plan a hangout</button>

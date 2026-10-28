@@ -3232,3 +3232,11 @@ body.chat-open .asst-fab{display:none}
 .gm[data-quiet] .gm-ic{width:16px;height:16px}
 @media (hover:hover){.gm[data-quiet] .gm-item:hover{width:var(--w)}}
 @media (prefers-reduced-motion:reduce){.gm-item,.gm-bg,.gm-bg::before,.gm-ic,.gm-label{transition:none}}
+
+/* the group header's faces, links to profiles, and room so the menus are not clipped */
+.convo-people{display:flex;align-items:center;gap:10px;margin-top:4px}
+a.avs-face{text-decoration:none;cursor:pointer}
+.campus-main>.campus-head{justify-content:flex-start}
+.gm-bar{padding:8px 8px 14px;margin:-4px -4px -6px}
+.pills .gm-bar{padding:6px 8px 12px;margin:-4px -8px -6px}
+.thread-people{position:relative;z-index:1}

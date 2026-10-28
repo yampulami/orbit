@@ -120,7 +120,7 @@ export default function Club() {
             {org.status === "pending" && <><Clock size={12} aria-hidden="true" /> Waiting for approval</>}
             {org.status === "paused" && "Paused"}
             {org.status === "rejected" && <><X size={12} aria-hidden="true" /> Not approved</>}
-            {org.status === "active" && <span className="club-bar-people" title={act.line || undefined}><AvatarStack names={[...org.members.map((m) => m.name), ...org.clubMembers.map((m) => m.name)].filter((n, i, l) => l.indexOf(n) === i)} online={[...org.members, ...org.clubMembers].filter((m) => here.has(m.id)).map((m) => m.name)} max={4} size={22} expandable />{count} {count === 1 ? "person" : "people"}{here.size > 0 ? ` · ${here.size} online` : ""}</span>}
+            {org.status === "active" && <span className="club-bar-people" title={act.line || undefined}><AvatarStack people={[...org.members, ...org.clubMembers].filter((m, i, l) => l.findIndex((x) => x.id === m.id) === i && m.name !== "You").map((m) => ({ name: m.name, id: m.id }))} online={[...org.members, ...org.clubMembers].filter((m) => here.has(m.id)).map((m) => m.name)} max={4} size={22} expandable />{count} {count === 1 ? "person" : "people"}{here.size > 0 ? ` · ${here.size} online` : ""}</span>}
           </span>
         </div>
         <JoinButton org={org} />
