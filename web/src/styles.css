@@ -3178,3 +3178,14 @@ body.chat-open .asst-fab{display:none}
 .club-bar-people{display:inline-flex;align-items:center;gap:8px}
 .club-count .avs{margin-right:6px}
 .thread.on .thread-people .muted{color:rgba(255,255,255,.85)}
+
+/* stack: wider spread, a name pill above the face you point at, and an online dot */
+.avs-face::after{content:attr(data-name);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(-50%,6px) scale(.9);padding:5px 12px;border-radius:999px;background:#fff;color:#111;font-size:.76rem;font-weight:600;font-style:normal;white-space:nowrap;box-shadow:0 8px 22px -8px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .2s,transform .25s cubic-bezier(.22,1,.36,1);z-index:30}
+[data-theme=dark] .avs-face::after{background:#fff;color:#111}
+.avs-face:hover::after{opacity:1;transform:translate(-50%,0) scale(1)}
+.avs-face:hover{z-index:20!important;transform:translateY(-3px) scale(1.12)}
+.avs:hover .avs-face:not(:first-child),.thread:hover .avs-face:not(:first-child),.club-row:hover .avs-face:not(:first-child){margin-left:calc(var(--s) * .22)}
+.avs-on{position:absolute;right:-1px;bottom:-1px;width:30%;height:30%;min-width:7px;min-height:7px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9af5d0,#34d399 60%,#1fa97a);box-shadow:0 0 0 2px var(--surface),0 0 8px rgba(52,211,153,.7)}
+.avs-more::after{max-width:260px;white-space:normal;text-align:center}
+.club-bar-sub,.club-bar-text{overflow:visible;text-overflow:clip}
+.club-bar-sub{position:relative;z-index:6}
