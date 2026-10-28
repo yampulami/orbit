@@ -4,6 +4,7 @@ import { useClubFeed, type Post } from "../lib/clubFeed";
 import type { Org } from "../lib/campusOrgs";
 import EmptyState from "./EmptyState";
 import GradientMenu from "./GradientMenu";
+import ClubComments from "./ClubComments";
 import RichText from "./RichText";
 
 const initials = (n: string) => n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
@@ -32,6 +33,7 @@ export default function ClubFeed({ org, reviewer, feed }: { org: Org; reviewer: 
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const active = mode ?? modes[0]?.key ?? null;
+  const meName = org.members.find((m) => m.name === "You")?.name ?? "You";
   const titleOf = (id: string) => org.members.find((m) => m.id === id)?.title;
 
   async function submit(e: React.FormEvent) {
@@ -81,17 +83,16 @@ export default function ClubFeed({ org, reviewer, feed }: { org: Org; reviewer: 
         <EmptyState icon={Megaphone} title="Nothing posted yet">{inClub ? "Start the conversation, or wait for an officer to share the first announcement." : "When the club posts an announcement, it shows here."}</EmptyState>
       ) : (
         <ul className="cf-list">
-          {posts.map((p) => <PostCard key={p.id} p={p} title={titleOf(p.authorId)} inClub={inClub} canPin={can("announce") || can("moderate")} canModerate={can("moderate") || reviewer} actions={actions} />)}
+          {posts.map((p) => <PostCard key={p.id} p={p} title={titleOf(p.authorId)} inClub={inClub} canPin={can("announce") || can("moderate")} canModerate={can("moderate") || reviewer} actions={actions} me={meName} />)}
         </ul>
       )}
     </section>
   );
 }
 
-function PostCard({ p, title, inClub, canPin, canModerate, actions }: { p: Post; title?: string; inClub: boolean; canPin: boolean; canModerate: boolean; actions: ReturnType<typeof useClubFeed>["actions"] }) {
+function PostCard({ p, title, inClub, canPin, canModerate, actions, me }: { p: Post; title?: string; inClub: boolean; me: string; canPin: boolean; canModerate: boolean; actions: ReturnType<typeof useClubFeed>["actions"] }) {
   const [open, setOpen] = useState(false);
-  const [reply, setReply] = useState("");
-  const [sure, setSure] = useState(false);
+    const [sure, setSure] = useState(false);
   const top = p.options ? Math.max(1, ...p.options.map((o) => o.votes)) : 1;
   return (
     <li className={"cf-post " + p.kind + (p.pinned ? " pinned" : "")}>
@@ -126,7 +127,7 @@ function PostCard({ p, title, inClub, canPin, canModerate, actions }: { p: Post;
       )}
 
       <footer>
-        {p.kind !== "announcement" || inClub ? <button type="button" className="link-btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}><MessageCircle size={14} aria-hidden="true" /> {p.comments.length > 0 ? `${p.comments.length} ${p.comments.length === 1 ? "reply" : "replies"}` : inClub ? "Reply" : "Replies"}</button> : <span />}
+        {p.kind !== "announcement" || inClub ? <button type="button" className="link-btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}><MessageCircle size={14} aria-hidden="true" /> {p.comments.length > 0 ? `${p.comments.length} ${p.comments.length === 1 ? "comment" : "comments"}` : inClub ? "Comment" : "Comments"}</button> : <span />}
         <span className="cf-tools">
           {canPin && <button type="button" className="link-btn" onClick={() => void actions.pin(p.id, !p.pinned)}>{p.pinned ? <><PinOff size={13} aria-hidden="true" /> Unpin</> : <><Pin size={13} aria-hidden="true" /> Pin</>}</button>}
           {(p.mine || canModerate) && (sure
@@ -136,22 +137,7 @@ function PostCard({ p, title, inClub, canPin, canModerate, actions }: { p: Post;
       </footer>
 
       {open && (
-        <div className="cf-replies">
-          {p.comments.map((c) => (
-            <div key={c.id} className="cf-reply">
-              <i className="club-av sm" aria-hidden="true">{initials(c.author)}</i>
-              <div><strong>{c.author}</strong> <span className="muted">{ago(c.at)}</span><p><RichText text={c.body} /></p></div>
-              {(c.mine || canModerate) && <button type="button" className="link-btn" aria-label="Delete reply" onClick={() => void actions.removeComment(c.id)}><X size={13} aria-hidden="true" /></button>}
-            </div>
-          ))}
-          {inClub && (
-            <form className="cf-reply-form" onSubmit={async (e) => { e.preventDefault(); const r = await actions.comment(p.id, reply); if (!r) setReply(""); }}>
-              <label className="sr" htmlFor={`rp-${p.id}`}>Reply</label>
-              <input id={`rp-${p.id}`} value={reply} maxLength={500} placeholder="Write a reply" onChange={(e) => setReply(e.target.value)} />
-              <button className="btn" disabled={!reply.trim()}>Reply</button>
-            </form>
-          )}
-        </div>
+        <ClubComments id={p.id} comments={p.comments} canWrite={inClub} canModerate={canModerate} me={me} onPost={(body) => actions.comment(p.id, body)} onRemove={(cid) => void actions.removeComment(cid)} />
       )}
     </li>
   );

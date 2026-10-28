@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import EmojiButton from "./EmojiButton";
 import RichText from "./RichText";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import { ancestorsOf, directReplies, replyCount, topLevel } from "../lib/commentThread";
 import type { Comment } from "../lib/feedData";
 import { enter } from "../lib/motion";
@@ -18,7 +18,14 @@ const ago = (iso: string) => {
   if (m < 1440) return `${Math.round(m / 60)}h`;
   return `${Math.round(m / 1440)}d`;
 };
-const initial = (n: string) => n.trim().slice(0, 1).toUpperCase() || "?";
+/** A round avatar painted with a gradient taken from the name, so everyone keeps their own colours. */
+const paint = (name: string) => {
+  let h = 0;
+  for (const ch of name.toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const a = h % 360;
+  return `linear-gradient(135deg, hsl(${a} 78% 68%), hsl(${(a + 70) % 360} 70% 52%))`;
+};
+const Face = ({ name, size = 40 }: { name: string; size?: number }) => <i className="ct-av" aria-hidden="true" style={{ width: size, height: size, background: paint(name) }} />;
 
 type Props = {
   /** The post these comments are on (so a report can point at it). */
@@ -38,7 +45,7 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
   const reduce = useReducedMotion();
   const [focusId, setFocusId] = useState<string | null>(null);
   const [text, setText] = useState("");
-  const commentInput = useRef<HTMLInputElement>(null);
+  const commentInput = useRef<HTMLTextAreaElement>(null);
   const [sending, setSending] = useState(false);
 
   const focus = focusId ? comments.find((c) => c.id === focusId) : undefined;
@@ -65,15 +72,15 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
     return (
       <article key={c.id} className={"cmt-card" + (kind === "focus" ? " focus" : kind === "context" ? " context" : "")}>
         <div className="cmt-head">
-          <PersonLink id={c.user_id} className="who-link"><span className="who-av" aria-hidden="true">{initial(c.author_name)}</span></PersonLink>
-          <span className="cmt-who"><PersonLink id={c.user_id} className="who-link"><strong>{c.author_name}</strong></PersonLink>{isVerified(c.user_id) && <VerifiedBadge label="Verified campus staff" />} · <span className="cmt-when">{ago(c.created_at)}</span></span>
+          <PersonLink id={c.user_id} className="who-link"><Face name={c.author_name} /></PersonLink>
+          <span className="cmt-who"><PersonLink id={c.user_id} className="who-link"><strong>{c.author_name}</strong></PersonLink>{isVerified(c.user_id) && <VerifiedBadge label="Verified campus staff" />}<span className="cmt-dot" aria-hidden="true">•</span><span className="cmt-when">{ago(c.created_at)}</span></span>
           <SafetyMenu userId={c.user_id} name={c.author_name} postId={postId} commentId={c.id} context="comment" />
         </div>
         <p className="cmt-body"><RichText text={c.body} /></p>
         {kind !== "focus" && (
           <div className="cmt-actions">
-            <button type="button" className="iconbtn" aria-label={n === 0 ? `Reply to ${c.author_name}` : `${n} ${n === 1 ? "reply" : "replies"} to ${c.author_name}. Open the thread`} onClick={() => open(c.id)}>
-              <MessageCircle size={16} />{n}
+            <button type="button" className="cmt-reply" aria-label={n === 0 ? `Reply to ${c.author_name}` : `${n} ${n === 1 ? "reply" : "replies"} to ${c.author_name}. Open the thread`} onClick={() => open(c.id)}>
+              <ChevronDown size={15} aria-hidden="true" />{n === 0 ? "reply" : n === 1 ? "reply (1)" : `replies (${n})`}
             </button>
           </div>
         )}
@@ -85,10 +92,13 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
   const slide = reduce ? { initial: { opacity: 0 }, animate: { opacity: 1 } } : { initial: { opacity: 0, x: 14 }, animate: { opacity: 1, x: 0, transition: enter } };
 
   const composer = (
-    <form className="comment-form" onSubmit={submit}>
-      <input ref={commentInput} aria-label={focus ? `Reply to ${focus.author_name}` : "Write a comment"} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} placeholder={focus ? `Reply to ${focus.author_name}…` : "Write a comment…"} />
-      <EmojiButton value={text} onChange={setText} inputRef={commentInput} max={500} />
-      <button className="btn primary" disabled={!text.trim() || sending}>{focus ? "Reply" : "Comment"}</button>
+    <form className="ct-compose" onSubmit={submit}>
+      <Face name="You" />
+      <div className="ct-box">
+        <textarea ref={commentInput} rows={2} aria-label={focus ? `Reply to ${focus.author_name}` : "Write a comment"} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(e as unknown as FormEvent); } }} placeholder={focus ? `Reply to ${focus.author_name}…` : "Enter your comment"} />
+        <EmojiButton value={text} onChange={setText} inputRef={commentInput} max={500} />
+      </div>
+      <button className="ct-post" data-ready={text.trim() && !sending ? "" : undefined} disabled={!text.trim() || sending}>{sending ? "Posting…" : focus ? "Post reply" : "Post comment"}</button>
     </form>
   );
 
@@ -108,8 +118,9 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
           </>
         ) : (
           <>
-            {shown.length > 0 && <section className="cmt-list" aria-label="Comments">{shown.map((c) => card(c))}</section>}
+            <h4 className="ct-title">Comments{comments.length > 0 && <span>{comments.length}</span>}</h4>
             {composer}
+            {shown.length > 0 && <section className="cmt-list" aria-label="Comments">{shown.map((c) => card(c))}</section>}
           </>
         )}
     </motion.div>
