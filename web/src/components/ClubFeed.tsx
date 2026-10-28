@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { BarChart3, Check, MessageCircle, Megaphone, Pin, PinOff, Plus, Trash2, X } from "lucide-react";
+import { BarChart3, Check, MessageCircle, Megaphone, PenLine, Pin, PinOff, Plus, Trash2, X } from "lucide-react";
 import { useClubFeed, type Post } from "../lib/clubFeed";
 import type { Org } from "../lib/campusOrgs";
 import EmptyState from "./EmptyState";
+import GradientMenu from "./GradientMenu";
 import RichText from "./RichText";
 
 const initials = (n: string) => n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
@@ -48,9 +49,16 @@ export default function ClubFeed({ org, reviewer, feed }: { org: Org; reviewer: 
       {active && (
         <form className="cf-compose" onSubmit={submit}>
           {modes.length > 1 && (
-            <div className="segment cf-modes" role="tablist" aria-label="What to post">
-              {modes.map((m) => <button key={m.key} type="button" role="tab" aria-selected={active === m.key} onClick={() => { setMode(m.key); setError(""); }}>{m.label}</button>)}
-            </div>
+            <GradientMenu
+              className="cf-modes"
+              label="What to post"
+              items={modes.map((m) => ({
+                key: m.key, label: m.label, on: active === m.key,
+                icon: m.key === "announcement" ? Megaphone : m.key === "poll" ? BarChart3 : PenLine,
+                tone: m.key === "announcement" ? ("orange" as const) : m.key === "poll" ? ("blue" as const) : ("purple" as const),
+                onClick: () => { setMode(m.key); setError(""); },
+              }))}
+            />
           )}
           {(active === "announcement" || active === "poll") && (
             <input aria-label={active === "poll" ? "Question" : "Headline"} value={title} maxLength={120} placeholder={active === "poll" ? "Ask the club a question" : "Headline"} onChange={(e) => { setTitle(e.target.value); setError(""); }} />
