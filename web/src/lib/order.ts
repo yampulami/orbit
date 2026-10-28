@@ -20,3 +20,8 @@ export function useSavedOrder(key: string): [string[], (ids: string[]) => void] 
   }, [key]);
   return [order, save];
 }
+
+/** Pure: you rearranged some of the items (`subset`, in their new order). Put them first, in that order, and keep where everything else was. */
+export function mergeOrder(previous: string[], subset: string[]): string[] {
+  return [...subset, ...previous.filter((id) => !subset.includes(id))];
+}

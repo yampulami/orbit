@@ -5,6 +5,8 @@ import { YOU } from "../../lib/hangouts";
 import { POINTS, removeWithUndo, roomActions, type Points, type Space } from "../../lib/roommates";
 import { fromYmd, ymd } from "../../lib/reminders";
 import { memberOptions } from "./Avatar";
+import { ArrangeItem, ArrangeList } from "../../components/Arrange";
+import { applyOrder, mergeOrder, useSavedOrder } from "../../lib/order";
 
 type Filter = "open" | "mine" | "done" | "all";
 const FILTERS: { value: Filter; label: string }[] = [
@@ -18,6 +20,7 @@ const ago = (iso?: string) => {
 };
 
 export default function Tasks({ space }: { space: Space }) {
+  const [order, setOrder] = useSavedOrder("orbit-chore-order");
   const [filter, setFilter] = useState<Filter>("open");
   const [q, setQ] = useState("");
   const [title, setTitle] = useState("");
@@ -36,6 +39,7 @@ export default function Tasks({ space }: { space: Space }) {
     if (filter === "done" && !t.done) return false;
     return !q.trim() || t.title.toLowerCase().includes(q.trim().toLowerCase());
   });
+  const ordered = applyOrder(shown, order);
 
   function add(e: FormEvent) {
     e.preventDefault();
@@ -68,9 +72,9 @@ export default function Tasks({ space }: { space: Space }) {
       {shown.length === 0 ? (
         <p className="rm-empty">{space.tasks.length === 0 ? "No chores yet. Add the first one above." : "Nothing matches this view."}</p>
       ) : (
-        <ul className="rm-list">
-          {shown.map((t) => (
-            <li key={t.id} className={"rm-row" + (t.done ? " done" : "")}>
+        <ArrangeList ids={ordered.map((t) => t.id)} onChange={(ids) => setOrder(mergeOrder(order, ids))} className="rm-list">
+          {ordered.map((t) => (
+            <ArrangeItem key={t.id} id={t.id} handle label={t.title} className={"rm-row" + (t.done ? " done" : "")}>
               <button type="button" className="check" role="checkbox" aria-checked={t.done} aria-label={`${t.done ? "Reopen" : "Complete"} ${t.title}`} onClick={() => roomActions.setTaskDone(t.id, !t.done)}><Check size={16} strokeWidth={2.4} aria-hidden="true" /></button>
               <div className="rm-main">
                 <strong>{t.title}</strong>
@@ -78,9 +82,9 @@ export default function Tasks({ space }: { space: Space }) {
               </div>
               <Picker compact value={t.assignee} options={people} onChange={(v) => roomActions.reassign(t.id, v)} label={`Assigned to, ${t.title}`} />
               <button type="button" className="ghost-btn" aria-label={`Delete ${t.title}`} onClick={() => removeWithUndo("tasks", t.id, `“${t.title}”`)}><Trash2 size={16} aria-hidden="true" /></button>
-            </li>
+            </ArrangeItem>
           ))}
-        </ul>
+        </ArrangeList>
       )}
       <p className="rm-foot">Effort points count bigger chores more, so “fair” means similar points, not similar numbers of chores.</p>
     </div>

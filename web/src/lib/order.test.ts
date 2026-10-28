@@ -12,3 +12,11 @@ describe("applyOrder", () => {
     expect(applyOrder(list, []).map((x) => x.id)).toEqual(["a", "b", "c", "d"]);
   });
 });
+
+import { mergeOrder } from "./order";
+describe("mergeOrder", () => {
+  it("puts the rearranged ones first and keeps the rest", () => {
+    expect(mergeOrder(["a", "b", "c"], ["c", "a"])).toEqual(["c", "a", "b"]);
+    expect(mergeOrder([], ["x", "y"])).toEqual(["x", "y"]);
+  });
+});

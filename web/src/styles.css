@@ -3231,3 +3231,18 @@ body.chat-open .asst-fab{display:none}
 .gm-item,.gm-ic{transition-property:width,height,background,box-shadow,transform,opacity}
 .pills:has(.gm[data-quiet]){background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;padding-top:4px;padding-bottom:4px}
 .pills:has(.gm[data-quiet]){background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-radius:999px;width:fit-content;margin-left:0;padding:5px 10px}
+
+/* Pointing at an icon no longer opens it (that moved its neighbours out from under the pointer). It shows its name in a small pill above, after a short pause;
+   only the chosen one, or a click, opens a pill. */
+@media (hover:hover){
+  .gm .gm-item:not([data-on]):hover{width:44px;box-shadow:0 0 0 2px var(--b)}
+  .gm.sm .gm-item:not([data-on]):hover{width:38px}
+  .gm[data-quiet] .gm-item:not([data-on]):hover{width:34px}
+  .gm .gm-item:not([data-on]):hover::before{opacity:.3}
+  .gm .gm-item:not([data-on]):hover .gm-ic{transform:none;opacity:1}
+  .gm .gm-item:not([data-on]):hover .gm-label{opacity:0;transform:scale(.6)}
+  .gm-item:not([data-on])::after{display:block;content:attr(data-label);position:absolute;top:auto;right:auto;left:50%;bottom:calc(100% + 8px);height:auto;filter:none;z-index:30;padding:5px 12px;border-radius:999px;background:linear-gradient(45deg,var(--a),var(--b));color:#1b1140;font-size:.74rem;font-weight:700;letter-spacing:.04em;white-space:nowrap;box-shadow:0 8px 20px -10px rgba(0,0,0,.5);opacity:0;pointer-events:none;transform:translate(-50%,6px) scale(.92);transition:opacity .18s 0s,transform .22s 0s}
+  .gm-item:not([data-on]):hover::after{opacity:1;transform:translate(-50%,0) scale(1);transition:opacity .2s .28s,transform .25s .28s}
+  .gm-bar{flex-wrap:wrap;overflow:visible}
+}
+.gm-item{transition-duration:.45s}

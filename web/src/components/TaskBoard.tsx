@@ -4,6 +4,8 @@ import type { Org } from "../lib/campusOrgs";
 import { isOverdue, NEXT, PREV, STATUS_LABEL, type Task, type TaskStatus, type useClubTasks } from "../lib/clubTasks";
 import DateTimeField from "./DateTimeField";
 import EmptyState from "./EmptyState";
+import { ArrangeItem, ArrangeList } from "./Arrange";
+import { applyOrder, mergeOrder, useSavedOrder } from "../lib/order";
 
 const STATUSES: TaskStatus[] = ["todo", "doing", "done"];
 const when = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -18,6 +20,7 @@ export default function TaskBoard({ org, board }: { org: Org; board: ReturnType<
   const [due, setDue] = useState("");
   const [error, setError] = useState("");
   const [onlyMine, setOnlyMine] = useState(false);
+  const [order, setOrder] = useSavedOrder("orbit-task-order:" + org.id);
   const now = new Date();
   // Anyone who belongs to the club can be given a task: the team and the members.
   const people = [...org.members.map((m) => ({ id: m.id, name: m.name })), ...org.clubMembers.filter((c) => !org.members.some((m) => m.id === c.id))];
@@ -60,14 +63,15 @@ export default function TaskBoard({ org, board }: { org: Org; board: ReturnType<
       ) : (
         <div className="tb-cols">
           {STATUSES.map((s) => {
-            const list = shown.filter((t) => t.status === s);
+            const list = applyOrder(shown.filter((t) => t.status === s), order);
             return (
               <div key={s} className={"tb-col " + s}>
                 <h3>{STATUS_LABEL[s]} <span className="rem-count">{list.length}</span></h3>
-                <ul>
-                  {list.length === 0 && <li className="tb-empty muted">Nothing here</li>}
-                  {list.map((t) => <TaskCard key={t.id} t={t} overdue={isOverdue(t, now)} canManage={canManage} people={people} board={board} />)}
-                </ul>
+                {list.length === 0 ? <ul><li className="tb-empty muted">Nothing here</li></ul> : (
+                  <ArrangeList ids={list.map((t) => t.id)} onChange={(ids) => setOrder(mergeOrder(order, ids))}>
+                    {list.map((t) => <TaskCard key={t.id} t={t} overdue={isOverdue(t, now)} canManage={canManage} people={people} board={board} arrange />)}
+                  </ArrangeList>
+                )}
               </div>
             );
           })}
@@ -77,12 +81,13 @@ export default function TaskBoard({ org, board }: { org: Org; board: ReturnType<
   );
 }
 
-export function TaskCard({ t, overdue, canManage, people, board }: { t: Task; overdue: boolean; canManage: boolean; people: { id: string; name: string }[]; board: ReturnType<typeof useClubTasks> }) {
+export function TaskCard({ t, overdue, canManage, people, board, arrange = false }: { t: Task; overdue: boolean; canManage: boolean; people: { id: string; name: string }[]; board: ReturnType<typeof useClubTasks>; /** Inside an ArrangeList: the card can be dragged by its grip. */ arrange?: boolean }) {
   const [sure, setSure] = useState(false);
   const canMove = canManage || t.mine;
   const prev = PREV[t.status], next = NEXT[t.status];
-  return (
-    <li className={"tb-card" + (overdue ? " overdue" : "") + (t.mine ? " mine" : "")}>
+  const cls = "tb-card" + (overdue ? " overdue" : "") + (t.mine ? " mine" : "");
+  const body = (
+    <>
       <strong>{t.title}</strong>
       {t.details && <p className="muted">{t.details}</p>}
       <div className="tb-meta">
@@ -102,6 +107,7 @@ export function TaskCard({ t, overdue, canManage, people, board }: { t: Task; ov
             : <button type="button" className="link-btn" aria-label={`Delete ${t.title}`} onClick={() => setSure(true)}><Trash2 size={13} aria-hidden="true" /></button>)}
         </div>
       )}
-    </li>
+    </>
   );
+  return arrange ? <ArrangeItem id={t.id} handle label={t.title} className={cls}>{body}</ArrangeItem> : <li className={cls}>{body}</li>;
 }

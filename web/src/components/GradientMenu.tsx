@@ -48,6 +48,7 @@ export default function GradientMenu({ items, label, className = "", quietOnScro
             key={it.key}
             type="button"
             className="gm-item"
+            data-label={it.label}
             data-on={it.on ? "" : undefined}
             aria-pressed={it.on === undefined ? undefined : it.on}
             aria-label={it.label}
