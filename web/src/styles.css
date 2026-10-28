@@ -3189,3 +3189,9 @@ body.chat-open .asst-fab{display:none}
 .avs-more::after{max-width:260px;white-space:normal;text-align:center}
 .club-bar-sub,.club-bar-text{overflow:visible;text-overflow:clip}
 .club-bar-sub{position:relative;z-index:6}
+
+.avs-btn{border:0;padding:0;font:inherit;cursor:pointer}
+.avs-btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.avs-in{animation:avs-in .4s cubic-bezier(.22,1,.36,1) both}
+@keyframes avs-in{from{opacity:0;transform:scale(.4)}}
+@media (prefers-reduced-motion:reduce){.avs-in{animation:none}}
