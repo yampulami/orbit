@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, ChevronDown, Clock, ClipboardList, Info, Megaphone, MessageSquare, Orbit, Plus, Users, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, ChevronDown, Clock, ClipboardList, Hash, Info, Lock, Megaphone, Orbit, Plus, Users, X } from "lucide-react";
 import { isOpen, useCampusEvents } from "../lib/campusEvents";
 import { canHostEvents, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
 import { useClubFeed, lastPostAt } from "../lib/clubFeed";
@@ -27,6 +27,7 @@ import MyTasks from "../components/MyTasks";
 import CohostInvites from "../components/CohostInvites";
 
 type View = "feed" | "chat" | "dashboard" | "events" | "pods";
+const EVENTS_NOTE = "Every event this club posts shows up here, with RSVP and check-in.";
 
 /** One club, office or circle, laid out like a server: channels down the left, the conversation or feed in the middle, members on the right. The club's own
  *  colour tints the header and the active channel; the (i) button opens everything about it. On a phone the two side panels are drawers (swipe, or tap). */
@@ -40,6 +41,8 @@ export default function Club() {
   const [people, setPeople] = useState(false);
   const [chans, setChans] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [chanId, setChanId] = useState("");
+  const [making, setMaking] = useState(false);
   const [past, setPast] = useState(false);
   const org = orgs.find((o) => o.id === id);
   const inside = !!org && org.status === "active" && (org.myJoin === "officer" || org.myJoin === "member");
@@ -82,14 +85,13 @@ export default function Club() {
   const cur: View = view === "dashboard" && !org.mine ? "feed" : view === "events" && circle ? "feed" : view;
   const pick = (v: View) => { setView(v); setChans(false); };
 
-  const channels: { v: View; label: string; icon: typeof Megaphone; badge?: string; hide?: boolean }[] = [
-    { v: "feed", label: "Feed", icon: Megaphone },
-    { v: "chat", label: "Chat", icon: MessageSquare, badge: chat.unread > 0 ? (chat.unread > 9 ? "9+" : String(chat.unread)) : undefined },
-    { v: "events", label: "Events", icon: CalendarDays, badge: upcoming.length > 0 ? String(upcoming.length) : undefined, hide: circle },
-    { v: "pods", label: "Pods", icon: Orbit, hide: org.status !== "active" },
-    { v: "dashboard", label: "Manage", icon: ClipboardList, badge: overdue ? "!" : undefined, hide: !(org.mine && org.status === "active") },
-  ];
-  const label = channels.find((c) => c.v === cur)?.label ?? "Feed";
+  // The chat's channels sit in the sidebar with the rest, as in a server: Feed and Events first, then the channels, then the pods.
+  const myPods = new Set(pods.pods.filter((p) => p.mine).map((p) => p.id));
+  const chatChans = inside ? chat.channels.filter((c) => (!c.teamOnly || org.mine) && (!c.podId || org.mine || myPods.has(c.podId))) : [];
+  const activeChan = chatChans.find((c) => c.id === chanId) ?? chatChans[0];
+  const canChannels = org.owner || org.myPerms.includes("channels");
+  const label = cur === "chat" ? `# ${activeChan?.name ?? "chat"}` : cur === "events" ? "Events" : cur === "pods" ? "Pods" : cur === "dashboard" ? "Manage" : "Feed";
+  const openChan = (id: string) => { setChanId(id); pick("chat"); };
 
   // On a phone, swipe right for the channels and left for the members.
   const onTouchStart = (e: React.TouchEvent) => { const t = e.touches[0]; touch.current = { x: t.clientX, y: t.clientY }; };
@@ -130,13 +132,30 @@ export default function Club() {
       <div className="club-shell" data-members={people ? "" : undefined} data-chans={chans ? "" : undefined} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <nav className="club-chans" aria-label="Channels">
           <ul>
-            {channels.filter((c) => !c.hide).map((c) => (
-              <li key={c.v}>
-                <button type="button" className="chan" aria-current={cur === c.v ? "page" : undefined} onClick={() => pick(c.v)}>
-                  <c.icon size={16} aria-hidden="true" /><span>{c.label}</span>{c.badge && <span className="rem-count">{c.badge}</span>}
-                </button>
-              </li>
+            <li><button type="button" className="chan" aria-current={cur === "feed" ? "page" : undefined} onClick={() => pick("feed")}><Megaphone size={16} aria-hidden="true" /><span>Feed</span></button></li>
+            {!circle && <li><button type="button" className="chan" aria-current={cur === "events" ? "page" : undefined} onClick={() => pick("events")}><CalendarDays size={16} aria-hidden="true" /><span>Events</span>{upcoming.length > 0 && <span className="rem-count">{upcoming.length}</span>}</button></li>}
+          </ul>
+          {chatChans.some((c) => !c.podId) && <h3 className="chan-label">Channels</h3>}
+          <ul>
+            {chatChans.filter((c) => !c.podId).map((c) => (
+              <li key={c.id}><button type="button" className="chan" aria-current={cur === "chat" && activeChan?.id === c.id ? "page" : undefined} onClick={() => openChan(c.id)}>
+                {c.teamOnly ? <Lock size={15} aria-hidden="true" /> : <Hash size={15} aria-hidden="true" />}<span>{c.name}</span>{c.unread > 0 && !(cur === "chat" && activeChan?.id === c.id) && <span className="rem-count">{c.unread > 9 ? "9+" : c.unread}</span>}
+              </button></li>
             ))}
+            {canChannels && inside && <li><button type="button" className="chan add" onClick={() => { setMaking(true); pick("chat"); }}><Plus size={15} aria-hidden="true" /><span>New channel</span></button></li>}
+          </ul>
+          {chatChans.some((c) => c.podId) && <h3 className="chan-label">Pod chats</h3>}
+          <ul>
+            {chatChans.filter((c) => c.podId).map((c) => (
+              <li key={c.id}><button type="button" className="chan" aria-current={cur === "chat" && activeChan?.id === c.id ? "page" : undefined} onClick={() => openChan(c.id)}>
+                <Hash size={15} aria-hidden="true" /><span>{c.name}</span>{c.unread > 0 && !(cur === "chat" && activeChan?.id === c.id) && <span className="rem-count">{c.unread > 9 ? "9+" : c.unread}</span>}
+              </button></li>
+            ))}
+          </ul>
+          <h3 className="chan-label">Club</h3>
+          <ul>
+            {org.status === "active" && <li><button type="button" className="chan" aria-current={cur === "pods" ? "page" : undefined} onClick={() => pick("pods")}><Orbit size={16} aria-hidden="true" /><span>Pods</span></button></li>}
+            {org.mine && org.status === "active" && <li><button type="button" className="chan" aria-current={cur === "dashboard" ? "page" : undefined} onClick={() => pick("dashboard")}><ClipboardList size={16} aria-hidden="true" /><span>Manage</span>{overdue && <span className="rem-count" aria-label="Overdue tasks">!</span>}</button></li>}
           </ul>
         </nav>
         <button type="button" className="club-scrim" aria-label="Close panels" tabIndex={-1} onClick={() => { setChans(false); setPeople(false); }} />
@@ -145,14 +164,14 @@ export default function Club() {
           <button type="button" className="club-chan-title" aria-haspopup="true" onClick={() => setChans(true)}>{label}<ChevronDown size={15} aria-hidden="true" /></button>
 
           {cur === "feed" && <><MyTasks board={tasks} /><ClubFeed org={org} reviewer={reviewer} feed={feed} /></>}
-          {cur === "chat" && <ClubChat org={org} reviewer={reviewer} chat={chat} pods={pods.pods} focusId={chatFocus} />}
+          {cur === "chat" && <ClubChat org={org} reviewer={reviewer} chat={chat} pods={pods.pods} focusId={chatFocus} channelId={activeChan?.id ?? ""} creating={making} onPick={setChanId} onCloseCreate={() => setMaking(false)} />}
           {cur === "dashboard" && org.mine && <ClubDashboard org={org} events={events} board={tasks} reviewer={reviewer} go={(t) => (t === "people" ? setPeople(true) : pick("events"))} />}
-          {cur === "pods" && org.status === "active" && <PodsPanel org={org} pods={pods} openChat={(pid) => { void chat.reload(); setChatFocus(pid); pick("chat"); }} />}
+          {cur === "pods" && org.status === "active" && <PodsPanel org={org} pods={pods} openChat={(pid) => { void chat.reload(); setChatFocus(pid); openChan(pid); }} />}
 
           {cur === "events" && !circle && (
             <section className="club-section" aria-label="Events">
+              <header className="chan-head"><h2><CalendarDays size={16} aria-hidden="true" /> events</h2><p className="muted">{EVENTS_NOTE}</p></header>
               {canPost && waits && !posting && <p className="muted">New events from this club wait for a coordinator before everyone sees them.</p>}
-              {canPost && !posting && <div><button type="button" className="btn sm primary" onClick={() => setPosting(true)}><Plus size={15} aria-hidden="true" /> Post an event</button></div>}
               {posting && canPost && <EventForm org={org} onDone={() => setPosting(false)} />}
               {!posting && <CohostInvites orgId={org.id} />}
               {!(posting && canPost) && (upcoming.length === 0
@@ -165,6 +184,7 @@ export default function Club() {
                     ))}
                   </>
                 ))}
+              {canPost && !posting && <button type="button" className="chan-compose" onClick={() => setPosting(true)}><Plus size={16} aria-hidden="true" /> Post an event to #events</button>}
               {gone.length > 0 && !(posting && canPost) && (
                 <div className="ev-past">
                   <button type="button" className="link-btn" aria-expanded={past} onClick={() => setPast((v) => !v)}>{past ? "Hide" : "Show"} past and declined events ({gone.length})</button>

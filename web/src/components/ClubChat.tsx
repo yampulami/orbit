@@ -16,7 +16,9 @@ const dayOf = (iso: string) => {
 };
 
 /** A club's chat: channels down the side (or across the top on a phone), the conversation, and a box to write in. */
-export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "" }: { org: Org; reviewer: boolean; chat: ReturnType<typeof useClubChat>; pods?: Pod[]; focusId?: string }) {
+export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "", channelId, creating = false, onPick, onCloseCreate }: { org: Org; reviewer: boolean; chat: ReturnType<typeof useClubChat>; pods?: Pod[]; focusId?: string;
+  /** When the sidebar picks the channel, the chat shows it and hides its own channel list. */
+  channelId?: string; creating?: boolean; onPick?: (id: string) => void; onCloseCreate?: () => void }) {
   const inClub = org.myJoin === "officer" || org.myJoin === "member";
   const canManage = org.owner || org.myPerms.includes("channels");
   const canModerate = org.myPerms.includes("moderate") || reviewer;
@@ -24,11 +26,15 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "" 
   // A pod's channel is for the pod's members and the team.
   const myPods = new Set(pods.filter((p) => p.mine).map((p) => p.id));
   const channels = chat.channels.filter((c) => (!c.teamOnly || org.mine) && (!c.podId || org.mine || myPods.has(c.podId)));
-  const [activeId, setActiveId] = useState(focusId);
-  useEffect(() => { if (focusId) setActiveId(focusId); }, [focusId]);
+  const controlled = channelId !== undefined;
+  const [ownId, setOwnId] = useState(focusId);
+  useEffect(() => { if (focusId) setOwnId(focusId); }, [focusId]);
+  const activeId = controlled ? channelId : ownId;
+  const setActiveId = (id: string) => { if (controlled) onPick?.(id); else setOwnId(id); };
   const active = channels.find((c) => c.id === activeId) ?? channels[0];
   const [text, setText] = useState("");
-  const [making, setMaking] = useState(false);
+  const [makingOwn, setMaking] = useState(false);
+  const making = controlled ? creating : makingOwn;
   const [name, setName] = useState("");
   const [about, setAbout] = useState("");
   const [teamOnly, setTeamOnly] = useState(false);
@@ -61,13 +67,13 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "" 
     e.preventDefault();
     const err = await chat.actions.createChannel(name, about, teamOnly);
     if (err) { setError(err); return; }
-    setMaking(false); setName(""); setAbout(""); setTeamOnly(false); setError("");
+    setMaking(false); onCloseCreate?.(); setName(""); setAbout(""); setTeamOnly(false); setError("");
   }
 
   let lastDay = "", lastAuthor = "", lastAt = 0;
   return (
-    <section className="cc" aria-label="Club chat">
-      <nav className="cc-channels" aria-label="Channels">
+    <section className={"cc" + (controlled ? " solo" : "")} aria-label="Club chat">
+      {!controlled && <nav className="cc-channels" aria-label="Channels">
         {channels.map((c, i) => (
           <Fragment key={c.id}>{c.podId && !channels[i - 1]?.podId && <p className="cc-group">Pods</p>}<button type="button" className={"cc-chan" + (c.id === active?.id ? " on" : "")} aria-current={c.id === active?.id} onClick={() => { setActiveId(c.id); setSure(false); }}>
             {c.teamOnly ? <Lock size={14} aria-hidden="true" /> : <Hash size={14} aria-hidden="true" />}<span>{c.name}</span>
@@ -75,7 +81,7 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "" 
           </button></Fragment>
         ))}
         {canManage && !making && <button type="button" className="cc-chan new" onClick={() => setMaking(true)}><Plus size={14} aria-hidden="true" /><span>New channel</span></button>}
-      </nav>
+      </nav>}
 
       <div className="cc-pane">
         {making && (
@@ -84,7 +90,7 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "" 
             <label className="field">What is it for? (optional)<input value={about} maxLength={120} onChange={(e) => setAbout(e.target.value)} /></label>
             <label className="check-line"><input type="checkbox" checked={teamOnly} onChange={(e) => setTeamOnly(e.target.checked)} /> Team only (only the president and people with a role can see it)</label>
             {error && <p className="error" role="alert">{error}</p>}
-            <div className="about-actions"><button className="btn primary" disabled={!name.trim()}>Create channel</button><button type="button" className="btn" onClick={() => { setMaking(false); setError(""); }}>Cancel</button></div>
+            <div className="about-actions"><button className="btn primary" disabled={!name.trim()}>Create channel</button><button type="button" className="btn" onClick={() => { setMaking(false); onCloseCreate?.(); setError(""); }}>Cancel</button></div>
           </form>
         )}
         {active && (
