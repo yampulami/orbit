@@ -3455,3 +3455,13 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .feed-main .composer textarea:focus{border:0;box-shadow:none;outline:0}
 .feed-main .composer{padding:8px 18px;transition:box-shadow .25s,background .25s}
 .feed-main .composer:focus-within{box-shadow:0 0 0 2px var(--violet),0 14px 34px -22px var(--violet)}
+
+/* club header on a phone: smaller buttons so the club's name has room, and it may use two lines */
+@media (max-width:520px){
+  .club-bar{gap:6px}
+  .club-planet.sm{width:34px;height:34px;font-size:.9rem}
+  .club-bar .gm-item{width:38px;height:38px}
+  .club-bar .gm{gap:2px}
+  .club-bar h1{white-space:normal;font-size:1.08rem;line-height:1.1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .club-bar-sub{font-size:.74rem}
+}
