@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
 import { eventActions, isOpen, useCampusEvents } from "../lib/campusEvents";
-import { canHostEvents, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
+import { canHostEvents, eventsNeedApproval, orgActions, useCampusOrgs } from "../lib/campusOrgs";
 import { hangActions, useHang } from "../lib/hangouts";
 import { useFriends } from "../lib/friends";
 import { searchPeople } from "../lib/peopleSearch";
@@ -13,6 +13,8 @@ import { converse, performAction, type AiEnv, type AiTurn, type ModelMsg, type P
 import { AiProblem, askModel } from "../lib/assistantModel";
 import { useClasses } from "../lib/classes";
 import { reminderActions, useReminders } from "../lib/reminders";
+import { classActions } from "../lib/classes";
+import { feedApi } from "../lib/feedData";
 import { unreadDms, useDms } from "../lib/dms";
 import { useNotifs } from "../lib/notifs";
 import { useAuth } from "../lib/auth";
@@ -231,7 +233,17 @@ export default function Assistant() {
       events: events.filter((e) => e.status === "published" && !e.canceled && isOpen(e, nowD)).map((e) => ({ id: e.id, title: e.title, description: e.description, startsAt: e.startsAt, endsAt: e.endsAt, place: e.place, host: e.host, going: e.going, mine: e.mine, orgId: e.orgId })),
       clubs: orgs.filter((o) => o.status === "active").map((o) => ({ id: o.id, name: o.name, kind: o.kind, description: o.description, people: o.memberCount + o.members.length, mine: o.mine || o.myJoin === "member", category: o.application.category, meeting: o.application.meeting, canPost: o.mine && canHostEvents(o) && o.myPerms.includes("events"), orgKind: o.kind, trusted: !eventsNeedApproval(o) })),
       classes,
-      reminders: reminders as { title: string; date: string; time?: string; done: boolean }[],
+      reminders: reminders as { id: string; title: string; date: string; time?: string; done: boolean }[],
+      notifications: notifs.map((n) => ({ title: n.title, sub: n.sub, at: n.at, unread: n.unread })),
+      profile: { name: session?.user.user_metadata?.name ?? session?.user.email?.split("@")[0] ?? "Student" },
+      recentPosts: async () => (await feedApi.list()).filter((r) => !r.payload.repostOf).map((r) => ({ author: r.author_name, text: r.payload.body ?? r.payload.text ?? r.payload.title ?? "", at: r.created_at, likes: r.post_likes.length, comments: r.post_comments.length })),
+      rsvpEvent: (id, answer) => eventActions.respond(id, answer),
+      requestJoin: (orgId, message) => orgActions.requestJoin(orgId, message),
+      addClass: (c) => classActions.add(c),
+      setReminderDone: (id, done) => reminderActions.setDone(id, done),
+      removeReminder: (id) => reminderActions.remove(id),
+      cancelHangout: (id, canceled) => hangActions.setCanceled(id, canceled),
+      rsvpHangout: (id, answer) => hangActions.setRsvp(id, answer),
       groups: groups.map((g) => ({ id: g.id, name: g.name, members: g.members })),
       hangouts: hangouts.map((h) => ({ id: h.id, groupId: h.groupId, title: h.title, place: h.place, when: h.when, canceled: h.canceled })),
       friends: friends.map((f) => ({ id: f.id, name: f.name, username: f.username, relation: "Friend" })),

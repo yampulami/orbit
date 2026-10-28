@@ -1,6 +1,6 @@
 import { describeWhen } from "./assistant";
 import type { ClassSlot } from "./classes";
-import { clockLabel } from "./classes";
+import { clockLabel, DAY_NAMES, problemWith } from "./classes";
 
 /** The AI side of the assistant. A language model (reached through the `assistant` edge function) reads the conversation and may ask for "tools": things the app does on the
  *  student's behalf. Reading tools run at once. Tools that create or send something do not run: the student gets a confirm card first. Pure apart from the model call
@@ -14,12 +14,22 @@ export type AiEnv = {
   events: { id: string; title: string; description: string; startsAt: string; endsAt?: string; place: string; host: string; going: number; mine?: string; orgId?: string }[];
   clubs: { id: string; name: string; kind: string; description: string; people: number; mine: boolean; category: string; meeting: string; canPost: boolean; orgKind: string; trusted: boolean }[];
   classes: ClassSlot[];
-  reminders: { title: string; date: string; time?: string; done: boolean }[];
+  reminders: { id?: string; title: string; date: string; time?: string; done: boolean }[];
+  notifications?: { title: string; sub?: string; at: string; unread: boolean }[];
+  profile?: { name: string; campus?: string };
   groups: { id: string; name: string; members: string[] }[];
   hangouts: { id: string; groupId: string; title: string; place: string; when: string; canceled?: boolean }[];
   friends: Person[];
   unread: { messages: number; notifs: number };
   findPeople(q: string): Promise<Person[]>;
+  recentPosts?(): Promise<{ author: string; text: string; at: string; likes: number; comments: number }[]>;
+  rsvpEvent?(id: string, answer: "going" | "interested" | null): void;
+  requestJoin?(orgId: string, message: string): Promise<string | null>;
+  addClass?(c: { name: string; days: number[]; start: string; end: string; place: string }): string | null;
+  setReminderDone?(id: string, done: boolean): void;
+  removeReminder?(id: string): void;
+  cancelHangout?(id: string, canceled: boolean): void;
+  rsvpHangout?(id: string, answer: "yes" | "no"): void;
   addReminder(title: string, date: string, time?: string): void;
   createHangout(groupId: string, h: { title: string; place: string; when: string }): void;
   createGroup(name: string, members: string[]): void;
@@ -65,7 +75,21 @@ export const TOOLS = [
   fn("create_event", "Post an event for a club the student runs. The student confirms it first.", { club: s("The club's name."), title: s("Event title."), description: s("A sentence or two."), place: s("Where."), starts_at: s("YYYY-MM-DDTHH:MM"), ends_at: s("YYYY-MM-DDTHH:MM. Optional.") }, ["club", "title", "place", "starts_at"]),
   fn("send_message", "Send a direct message to someone. The student confirms it first. Find the person with find_people first.", { person_id: s("The id from find_people."), person_name: s("Their name."), text: s("The message.") }, ["person_id", "person_name", "text"]),
 ];
-const WRITES = new Set(["create_reminder", "create_hangout", "create_group", "create_event", "send_message"]);
+TOOLS.push(
+  fn("my_reminders", "All of the student's open reminders, with their ids."),
+  fn("my_clubs", "The clubs and circles the student belongs to."),
+  fn("notifications", "The student's recent notifications (replies, requests, invites)."),
+  fn("recent_posts", "The newest posts on the campus feed, to catch the student up on what people are saying."),
+  fn("event_details", "Everything about one event: description, time, place, host, how many are going.", { event_id: s("The id from search_events.") }, ["event_id"]),
+  fn("rsvp_event", "Say the student is going, interested, or no longer going to an event. The student confirms it first.", { event_id: s("The id from search_events."), answer: { type: "string", enum: ["going", "interested", "none"] } }, ["event_id", "answer"]),
+  fn("join_club", "Ask to join a club or circle. The student confirms it first.", { club: s("The club's name."), message: s("A short note to the officers. Optional.") }, ["club"]),
+  fn("add_class", "Add a class to the student's weekly schedule. The student confirms it first.", { name: s("Class name."), days: { type: "array", items: { type: "string" }, description: "Weekday names, like Monday." }, start: s("HH:MM, 24 hour."), end: s("HH:MM, 24 hour."), place: s("Room or building. Optional.") }, ["name", "days", "start", "end"]),
+  fn("complete_reminder", "Mark one of the student's reminders as done. The student confirms it first.", { reminder_id: s("The id from my_reminders.") }, ["reminder_id"]),
+  fn("delete_reminder", "Delete one of the student's reminders. The student confirms it first.", { reminder_id: s("The id from my_reminders.") }, ["reminder_id"]),
+  fn("cancel_hangout", "Cancel a hangout in one of the student's groups. The student confirms it first.", { hangout_id: s("The id of the hangout.") }, ["hangout_id"]),
+  fn("rsvp_hangout", "Answer yes or no to a hangout. The student confirms it first.", { hangout_id: s("The id of the hangout."), answer: { type: "string", enum: ["yes", "no"] } }, ["hangout_id", "answer"]),
+);
+const WRITES = new Set(["create_reminder", "create_hangout", "create_group", "create_event", "send_message", "rsvp_event", "join_club", "add_class", "complete_reminder", "delete_reminder", "cancel_hangout", "rsvp_hangout"]);
 export const isWrite = (tool: string) => WRITES.has(tool);
 
 /* ---------- reading ---------- */
@@ -81,7 +105,7 @@ async function read(env: AiEnv, tool: string, a: Record<string, unknown>): Promi
       .filter((e) => !isYmd(date) || ymd(new Date(e.startsAt)) === date)
       .filter((e) => !q || norm(`${e.title} ${e.host} ${e.place} ${e.description}`).includes(q) || q.split(" ").some((w) => w.length > 2 && norm(`${e.title} ${e.host} ${e.description}`).includes(w)))
       .sort((x, y) => x.startsAt.localeCompare(y.startsAt)).slice(0, 8);
-    return { result: list.length ? list.map((e) => ({ id: e.id, title: e.title, when: describeWhen(e.startsAt, now), place: e.place, host: e.host, going: e.going, you: e.mine ?? null })) : "No upcoming events match." };
+    return { result: list.length ? list.map((e) => ({ id: e.id, title: e.title, when: describeWhen(e.startsAt, now), place: e.place, host: e.host, going: e.going, you: e.mine ?? null, about: e.description.slice(0, 140) })) : "No upcoming events match." };
   }
   if (tool === "search_clubs") {
     const q = norm(str(a.query));
@@ -112,12 +136,32 @@ async function read(env: AiEnv, tool: string, a: Record<string, unknown>): Promi
     return { result: out, go: "/app/plans", goLabel: "Open plans" };
   }
   if (tool === "my_groups") {
-    return { result: env.groups.length ? env.groups.map((g) => ({ name: g.name, members: g.members, upcoming: env.hangouts.filter((h) => h.groupId === g.id && !h.canceled && new Date(h.when).getTime() > now.getTime()).map((h) => `${h.title} ${describeWhen(h.when, now)} at ${h.place}`) })) : "The student is not in any groups yet.", go: "/app/groups", goLabel: "Open groups" };
+    return { result: env.groups.length ? env.groups.map((g) => ({ name: g.name, members: g.members, upcoming: env.hangouts.filter((h) => h.groupId === g.id && !h.canceled && new Date(h.when).getTime() > now.getTime()).map((h) => ({ id: h.id, what: `${h.title} ${describeWhen(h.when, now)} at ${h.place}` })) })) : "The student is not in any groups yet.", go: "/app/groups", goLabel: "Open groups" };
   }
   if (tool === "inbox_summary") return { result: { unreadMessages: env.unread.messages, unreadNotifications: env.unread.notifs }, ...(env.unread.messages > 0 ? { go: "/app/messages", goLabel: "Open messages" } : {}) };
   if (tool === "open_page") {
     const p = PAGES[str(a.page)];
     return p ? { result: `Ready: ${p.label}.`, go: p.to, goLabel: p.label } : { result: "That page does not exist." };
+  }
+  if (tool === "my_reminders") {
+    const open = env.reminders.filter((r) => !r.done).sort((x, y) => `${x.date}${x.time ?? ""}`.localeCompare(`${y.date}${y.time ?? ""}`)).slice(0, 20);
+    return { result: open.length ? open.map((r) => ({ id: r.id, title: r.title, date: r.date, time: r.time ?? null })) : "No open reminders.", go: "/app/plans", goLabel: "Open plans" };
+  }
+  if (tool === "my_clubs") {
+    const mine = env.clubs.filter((c) => c.mine);
+    return { result: mine.length ? mine.map((c) => ({ id: c.id, name: c.name, kind: c.kind, meets: c.meeting || null })) : "The student is not in any clubs yet." };
+  }
+  if (tool === "notifications") {
+    const list = (env.notifications ?? []).slice(0, 10);
+    return { result: list.length ? list.map((n) => ({ what: n.title, detail: n.sub ?? null, when: describeWhen(n.at, now), unread: n.unread })) : "No notifications." };
+  }
+  if (tool === "recent_posts") {
+    const list = env.recentPosts ? (await env.recentPosts()).slice(0, 8) : [];
+    return { result: list.length ? list.map((p) => ({ by: p.author, text: p.text.slice(0, 220), when: describeWhen(p.at, now), likes: p.likes, comments: p.comments })) : "Nothing on the feed yet.", go: "/app/feed", goLabel: "Open the feed" };
+  }
+  if (tool === "event_details") {
+    const e = env.events.find((x) => x.id === str(a.event_id));
+    return { result: e ? { id: e.id, title: e.title, about: e.description, when: describeWhen(e.startsAt, now), place: e.place, host: e.host, going: e.going, you: e.mine ?? null } : "No event with that id." };
   }
   return { result: "Unknown tool." };
 }
@@ -172,6 +216,40 @@ export function prepareAction(env: AiEnv, tool: string, a: Record<string, unknow
     if (!id || !name || !text) return { error: "Need who to message and what to say." };
     return { summary: `Message ${name}: "${text.length > 120 ? text.slice(0, 119) + "…" : text}"`, args: { personId: id, name, text } };
   }
+  if (tool === "rsvp_event") {
+    const e = env.events.find((x) => x.id === str(a.event_id));
+    const ans = str(a.answer);
+    if (!e) return { error: "No event with that id. Search for it first." };
+    if (!["going", "interested", "none"].includes(ans)) return { error: "The answer is going, interested or none." };
+    return { summary: ans === "none" ? `Take back your answer for "${e.title}".` : `Mark you as ${ans} for "${e.title}", ${describeWhen(e.startsAt, now)}.`, args: { eventId: e.id, answer: ans } };
+  }
+  if (tool === "join_club") {
+    const c = named(env.clubs, str(a.club));
+    if (!c) return { error: `No club called "${str(a.club)}".` };
+    if (c.mine) return { error: `The student is already in ${c.name}.` };
+    return { summary: `Ask to join ${c.name}.`, args: { orgId: c.id, name: c.name, message: str(a.message).slice(0, 200) } };
+  }
+  if (tool === "add_class") {
+    const name = str(a.name).slice(0, 60), start = str(a.start), end = str(a.end), place = str(a.place).slice(0, 60);
+    const days = (Array.isArray(a.days) ? a.days : []).map((d) => DAY_NAMES.findIndex((n) => n.toLowerCase().startsWith(str(d).toLowerCase().slice(0, 3)))).filter((i, k, all) => i >= 0 && all.indexOf(i) === k);
+    if (!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) return { error: "Give the times as HH:MM." };
+    const bad = problemWith({ name, days, start, end });
+    if (bad) return { error: bad };
+    return { summary: `Add "${name}" on ${days.map((d) => DAY_NAMES[d].slice(0, 3)).join(", ")}, ${clockLabel(start)} to ${clockLabel(end)}${place ? ` in ${place}` : ""}.`, args: { name, days, start, end, place } };
+  }
+  if (tool === "complete_reminder" || tool === "delete_reminder") {
+    const r = env.reminders.find((x) => x.id && x.id === str(a.reminder_id));
+    if (!r) return { error: "No reminder with that id. Use my_reminders first." };
+    return { summary: tool === "complete_reminder" ? `Mark "${r.title}" as done.` : `Delete the reminder "${r.title}".`, args: { id: r.id, title: r.title } };
+  }
+  if (tool === "cancel_hangout" || tool === "rsvp_hangout") {
+    const h = env.hangouts.find((x) => x.id === str(a.hangout_id));
+    if (!h) return { error: "No hangout with that id. Use my_groups first." };
+    if (tool === "cancel_hangout") return { summary: `Cancel "${h.title}".`, args: { id: h.id } };
+    const ans = str(a.answer);
+    if (ans !== "yes" && ans !== "no") return { error: "The answer is yes or no." };
+    return { summary: `Answer ${ans} to "${h.title}".`, args: { id: h.id, answer: ans } };
+  }
   return { error: "Unknown action." };
 }
 
@@ -190,13 +268,20 @@ export async function performAction(env: AiEnv, p: Pending): Promise<{ ok: boole
       const err = await env.sendMessage(String(a.personId), String(a.text));
       return err ? { ok: false, note: err } : { ok: true, note: `Sent to ${a.name}.`, go: "/app/messages", goLabel: "Open messages" };
     }
+    if (p.tool === "rsvp_event" && env.rsvpEvent) { env.rsvpEvent(String(a.eventId), a.answer === "none" ? null : (a.answer as "going" | "interested")); return { ok: true, note: a.answer === "none" ? "Answer removed." : `Marked ${a.answer}.`, go: "/app/campus", goLabel: "Open Campus" }; }
+    if (p.tool === "join_club" && env.requestJoin) { const err = await env.requestJoin(String(a.orgId), String(a.message ?? "")); return err ? { ok: false, note: err } : { ok: true, note: `Asked to join ${a.name}.`, go: `/app/campus/clubs/${a.orgId}`, goLabel: `Open ${a.name}` }; }
+    if (p.tool === "add_class" && env.addClass) { const err = env.addClass({ name: String(a.name), days: a.days as number[], start: String(a.start), end: String(a.end), place: String(a.place ?? "") }); return err ? { ok: false, note: err } : { ok: true, note: "Class added.", go: "/app/plans", goLabel: "Open plans" }; }
+    if (p.tool === "complete_reminder" && env.setReminderDone) { env.setReminderDone(String(a.id), true); return { ok: true, note: "Marked done." }; }
+    if (p.tool === "delete_reminder" && env.removeReminder) { env.removeReminder(String(a.id)); return { ok: true, note: "Reminder deleted." }; }
+    if (p.tool === "cancel_hangout" && env.cancelHangout) { env.cancelHangout(String(a.id), true); return { ok: true, note: "Hangout canceled.", go: "/app/groups", goLabel: "Open groups" }; }
+    if (p.tool === "rsvp_hangout" && env.rsvpHangout) { env.rsvpHangout(String(a.id), a.answer as "yes" | "no"); return { ok: true, note: `Answered ${a.answer}.`, go: "/app/groups", goLabel: "Open groups" }; }
   } catch { return { ok: false, note: "That did not work. Try again in a moment." }; }
   return { ok: false, note: "I do not know how to do that." };
 }
 
 /* ---------- the conversation ---------- */
 
-const LABELS: Record<string, string> = { search_events: "Checking events", search_clubs: "Looking at clubs", find_people: "Finding people", my_schedule: "Checking your schedule", my_groups: "Looking at your groups", inbox_summary: "Checking your inbox", open_page: "Getting that ready" };
+const LABELS: Record<string, string> = { my_reminders: "Checking your reminders", my_clubs: "Looking at your clubs", notifications: "Reading your notifications", recent_posts: "Reading the feed", event_details: "Looking at that event", search_events: "Checking events", search_clubs: "Looking at clubs", find_people: "Finding people", my_schedule: "Checking your schedule", my_groups: "Looking at your groups", inbox_summary: "Checking your inbox", open_page: "Getting that ready" };
 
 export async function converse(opts: { history: ModelMsg[]; env: AiEnv; model: (messages: ModelMsg[]) => Promise<ModelMsg>; onStep?: (label: string) => void }): Promise<AiTurn> {
   const { env, model, onStep } = opts;

@@ -114,3 +114,48 @@ describe("checking requests", () => {
     expect(sendMessage).toHaveBeenCalledWith("f1", "see you at 5");
   });
 });
+
+describe("more things it can do", () => {
+  it("answers an event with going, after confirming", async () => {
+    const rsvpEvent = vi.fn();
+    const e = env({ rsvpEvent });
+    const ok = prepareAction(e, "rsvp_event", { event_id: "e1", answer: "going" });
+    expect("summary" in ok && ok.summary).toMatch(/Study skills workshop/);
+    expect(prepareAction(e, "rsvp_event", { event_id: "nope", answer: "going" })).toHaveProperty("error");
+    if ("summary" in ok) await performAction(e, { id: "p", tool: "rsvp_event", summary: ok.summary, args: ok.args, state: "pending" });
+    expect(rsvpEvent).toHaveBeenCalledWith("e1", "going");
+  });
+  it("asks to join a club it is not in, but not one it is in", () => {
+    const e = env();
+    expect(prepareAction(e, "join_club", { club: "chess" })).toHaveProperty("summary");
+    expect(prepareAction(e, "join_club", { club: "Robotics Club" })).toHaveProperty("error");
+  });
+  it("adds a class from weekday names and rejects bad times", async () => {
+    const addClass = vi.fn(() => null);
+    const e = env({ addClass });
+    const ok = prepareAction(e, "add_class", { name: "Calc", days: ["Monday", "wed"], start: "09:00", end: "10:15", place: "Hall A" });
+    expect("args" in ok && ok.args.days).toEqual([1, 3]);
+    expect(prepareAction(e, "add_class", { name: "Calc", days: ["Monday"], start: "10:00", end: "09:00" })).toHaveProperty("error");
+    if ("summary" in ok) await performAction(e, { id: "p", tool: "add_class", summary: ok.summary, args: ok.args, state: "pending" });
+    expect(addClass).toHaveBeenCalledWith({ name: "Calc", days: [1, 3], start: "09:00", end: "10:15", place: "Hall A" });
+  });
+  it("finishes and deletes reminders by id", async () => {
+    const setReminderDone = vi.fn(), removeReminder = vi.fn();
+    const e = env({ reminders: [{ id: "r1", title: "Lab report", date: "2026-10-28", done: false }], setReminderDone, removeReminder });
+    const done = prepareAction(e, "complete_reminder", { reminder_id: "r1" });
+    const del = prepareAction(e, "delete_reminder", { reminder_id: "r1" });
+    expect(prepareAction(e, "delete_reminder", { reminder_id: "zz" })).toHaveProperty("error");
+    if ("args" in done) await performAction(e, { id: "a", tool: "complete_reminder", summary: "", args: done.args, state: "pending" });
+    if ("args" in del) await performAction(e, { id: "b", tool: "delete_reminder", summary: "", args: del.args, state: "pending" });
+    expect(setReminderDone).toHaveBeenCalledWith("r1", true);
+    expect(removeReminder).toHaveBeenCalledWith("r1");
+  });
+  it("reads the feed and notifications", async () => {
+    const seen: string[] = [];
+    const e = env({ recentPosts: async () => [{ author: "Maya", text: "Study group at 5", at: at(0, 9), likes: 3, comments: 1 }], notifications: [{ title: "Sam replied to you", at: at(0, 8), unread: true }] });
+    const model = async (m: ModelMsg[]) => { const t = m.filter((x) => x.role === "tool"); if (t.length === 2) { seen.push(...t.map((x) => x.content!)); return say("done"); } return use(call("recent_posts", {}, "a"), call("notifications", {}, "b")); };
+    await converse({ history: [user("catch me up")], env: e, model });
+    expect(seen[0]).toMatch(/Study group/);
+    expect(seen[1]).toMatch(/Sam replied/);
+  });
+});
