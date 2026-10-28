@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BadgeCheck, CalendarDays, ChevronDown, Info, UserRound, Users } from "lucide-react";
+import { BadgeCheck, CalendarDays, ChevronDown, Compass, Info, Plus, ShieldCheck, UserRound, Users } from "lucide-react";
 import { isOpen, setDemoRole, useCampusEvents, type Role } from "../lib/campusEvents";
 import { useCampusOrgs, type Org } from "../lib/campusOrgs";
 import { dayLabel, hueFor } from "../lib/look";
@@ -17,45 +17,94 @@ import EmptyState from "../components/EmptyState";
 import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
 
-type Tab = "events" | "clubs" | "review";
+type Tab = "events" | "clubs";
+type View = "discover" | "review";
 
-/** Campus: the public side of Orbit. Events everyone on campus can see, and the clubs and offices that put them on. A club is set up first (a coordinator
- *  approves it), and its events are posted from inside the club. Coordinators also get a Review tab. */
+/** Campus: your clubs down a rail on the left, like servers, and Discover beside it: the events and clubs open to everyone on campus. A club is set up first
+ *  (a coordinator approves it), and its events are posted from inside the club. Coordinators also get Review on the rail. */
 export default function Campus() {
+  const nav = useNavigate();
   const { events, pending, reported, isHost, role, canReview: reviewer, hostLabel, ready } = useCampusEvents();
   const { orgs, mine } = useCampusOrgs();
   const [tab, setTab] = useState<Tab>("events");
+  const [view, setView] = useState<View>("discover");
+  const [menu, setMenu] = useState(false);
+  const [creating, setCreating] = useState<"club" | "circle" | null>(null);
   const waitingOrgs = orgs.filter((o) => o.status === "pending");
   const reviewCount = reviewer ? pending.length + reported.length + waitingOrgs.length : 0;
-  const current: Tab = tab === "review" && !reviewer ? "events" : tab;
+  const current: View = view === "review" && !reviewer ? "discover" : view;
+  const go = (v: View) => { setCreating(null); setView(v); };
 
   return (
     <div className="page campus">
-      <header className="campus-head">
-        <div>
-          <h1 className="campus-title">Campus</h1>
-          <p className="muted">Events and clubs across the university.</p>
-        </div>
-        <div className="segment campus-seg" role="tablist" aria-label="Campus sections">
-          <button type="button" role="tab" aria-selected={current === "events"} onClick={() => setTab("events")}>Events</button>
-          <button type="button" role="tab" aria-selected={current === "clubs"} onClick={() => setTab("clubs")}>Clubs</button>
-          {reviewer && <button type="button" role="tab" aria-selected={current === "review"} onClick={() => setTab("review")}>Review{reviewCount > 0 && <span className="rem-count">{reviewCount}</span>}</button>}
-        </div>
-      </header>
+      <div className="campus-shell">
+        <nav className="crail" aria-label="Your clubs">
+          <button type="button" className="rail-ico rail-home" aria-label="Discover" aria-current={current === "discover" && !creating ? "page" : undefined} data-tip="Discover" onClick={() => go("discover")}><Compass size={22} aria-hidden="true" /></button>
+          {reviewer && (
+            <button type="button" className="rail-ico rail-home" aria-label="Review" aria-current={current === "review" && !creating ? "page" : undefined} data-tip="Review" onClick={() => go("review")}>
+              <ShieldCheck size={22} aria-hidden="true" />{reviewCount > 0 && <span className="rail-badge">{reviewCount}</span>}
+            </button>
+          )}
+          <span className="rail-sep" aria-hidden="true" />
+          {mine.map((o) => (
+            <Link key={o.id} to={`/app/campus/clubs/${o.id}`} className="rail-ico" style={{ ["--h" as string]: hueFor(o.name) }} aria-label={o.name} data-tip={o.name}>
+              {o.name.slice(0, 1).toUpperCase()}
+              {o.status === "pending" && <span className="rail-badge wait" aria-hidden="true" />}
+            </Link>
+          ))}
+          <span className="rail-add">
+            <button type="button" className="rail-ico rail-plus" aria-label="Start a club or circle" aria-expanded={menu} data-tip="Start something" onClick={() => setMenu((v) => !v)}><Plus size={22} aria-hidden="true" /></button>
+            {menu && (
+              <span className="rail-menu" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); setCreating("club"); }}>{reviewer ? "Set up a club" : "Start a club"}</button>
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); setCreating("circle"); }}>Start a circle</button>
+              </span>
+            )}
+          </span>
+        </nav>
 
-      {!supabase && (
-        <label className="cevent-demo">Preview as
-          <select value={role ?? "coordinator"} onChange={(e) => setDemoRole(e.target.value as Role)}>
-            <option value="coordinator">Coordinator (approves clubs and events)</option>
-            <option value="staff">Staff (publishes Official events)</option>
-            <option value="student">Student (a club officer)</option>
-          </select>
-        </label>
-      )}
-
-      {current === "events" && <EventsView events={events} ready={ready} isHost={isHost} role={role} hostLabel={hostLabel} reviewer={reviewer} />}
-      {current === "clubs" && <ClubsView mine={mine} all={orgs} reviewer={reviewer} />}
-      {current === "review" && reviewer && <ReviewPanel />}
+        <div className="campus-main">
+          {creating ? (
+            <section className="clubs" aria-label="Start something new">
+              <ClubApplication reviewer={reviewer} mode={creating} onCancel={() => setCreating(null)} onSent={(r) => {
+                notice.show(creating === "circle"
+                  ? { icon: "calendar", title: "Your circle is live", message: "Anyone can join it now. Share it, post to its feed, and give people roles.", ms: 5000 }
+                  : r.status === "pending"
+                    ? { icon: "calendar", title: "Application sent", message: "The coordinators have it now. You will get a notification when they decide. You can add people to the team while you wait.", ms: 6500 }
+                    : { icon: "calendar", title: "Created", message: "You can post events from inside it now.", ms: 4000 });
+                setCreating(null);
+                if (r.id) nav(`/app/campus/clubs/${r.id}`);
+              }} />
+            </section>
+          ) : current === "review" && reviewer ? (
+            <>
+              <h1 className="campus-title">Review</h1>
+              <ReviewPanel />
+            </>
+          ) : (
+            <>
+              <header className="campus-head">
+                <h1 className="campus-title">Discover</h1>
+                <div className="segment campus-seg" role="tablist" aria-label="Discover">
+                  <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}>Events</button>
+                  <button type="button" role="tab" aria-selected={tab === "clubs"} onClick={() => setTab("clubs")}>Clubs</button>
+                </div>
+              </header>
+              {!supabase && (
+                <label className="cevent-demo">Preview as
+                  <select value={role ?? "coordinator"} onChange={(e) => setDemoRole(e.target.value as Role)}>
+                    <option value="coordinator">Coordinator (approves clubs and events)</option>
+                    <option value="staff">Staff (publishes Official events)</option>
+                    <option value="student">Student (a club officer)</option>
+                  </select>
+                </label>
+              )}
+              {tab === "events" && <EventsView events={events} ready={ready} isHost={isHost} role={role} hostLabel={hostLabel} reviewer={reviewer} />}
+              {tab === "clubs" && <ClubsView mine={mine} all={orgs} />}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -145,59 +194,28 @@ function ClubRow({ o }: { o: Org }) {
   );
 }
 
-function ClubsView({ mine, all, reviewer }: { mine: Org[]; all: Org[]; reviewer: boolean }) {
-  const nav = useNavigate();
-  const [creating, setCreating] = useState<"club" | "circle" | null>(null);
+/** Clubs to find. The ones you are in are on the rail, so they are not repeated here. */
+function ClubsView({ mine, all }: { mine: Org[]; all: Org[] }) {
   const mineIds = new Set(mine.map((o) => o.id));
   const others = all.filter((o) => !mineIds.has(o.id) && o.status === "active");
   const clubs = others.filter((o) => o.kind !== "circle");
   const circles = others.filter((o) => o.kind === "circle");
 
-  // Starting a club or circle takes over the page: one question at a time, nothing else competing.
-  if (creating) {
-    return (
-      <section className="clubs" aria-label="Start something new">
-        <ClubApplication reviewer={reviewer} mode={creating} onCancel={() => setCreating(null)} onSent={(r) => {
-          notice.show(creating === "circle"
-            ? { icon: "calendar", title: "Your circle is live", message: "Anyone can join it now. Share it, post to its feed, and give people roles.", ms: 5000 }
-            : r.status === "pending"
-              ? { icon: "calendar", title: "Application sent", message: "The coordinators have it now. You will get a notification when they decide. You can add people to the team while you wait.", ms: 6500 }
-              : { icon: "calendar", title: "Created", message: "You can post events from inside it now.", ms: 4000 });
-          setCreating(null);
-          if (r.id) nav(`/app/campus/clubs/${r.id}`);
-        }} />
-      </section>
-    );
-  }
-
   return (
     <section className="clubs" aria-label="Clubs">
-      <div className="toolbar">
-        <p className="muted">Find your people, or start something.</p>
-        <span className="toolbar-actions">
-          <button type="button" className="link-btn" onClick={() => setCreating("circle")}>Start a circle</button>
-          <button type="button" className="btn sm primary" onClick={() => setCreating("club")}>{reviewer ? "Set up a club" : "Start a club"}</button>
-        </span>
-      </div>
-
-      {mine.length > 0 && (
+      {clubs.length > 0 && (
         <div className="rows-block">
-          <h2>Yours</h2>
-          <ul className="club-rows">{mine.map((o) => <ClubRow key={o.id} o={o} />)}</ul>
+          <h2>Clubs and offices</h2>
+          <ul className="club-rows">{clubs.map((o) => <ClubRow key={o.id} o={o} />)}</ul>
         </div>
       )}
-      <div className="rows-block">
-        <h2>Clubs and offices</h2>
-        {clubs.length === 0
-          ? <p className="rows-empty">{mine.length ? "No other clubs yet." : "No clubs yet. Start the first one, and once a coordinator approves it you can post its events to the whole campus."}</p>
-          : <ul className="club-rows">{clubs.map((o) => <ClubRow key={o.id} o={o} />)}</ul>}
-      </div>
-      <div className="rows-block">
-        <h2>Student circles</h2>
-        {circles.length === 0
-          ? <p className="rows-empty">Circles are casual groups anyone can start and join, like a study group or a weekly run. Nobody has started one yet.</p>
-          : <ul className="club-rows">{circles.map((o) => <ClubRow key={o.id} o={o} />)}</ul>}
-      </div>
+      {circles.length > 0 && (
+        <div className="rows-block">
+          <h2>Student circles</h2>
+          <ul className="club-rows">{circles.map((o) => <ClubRow key={o.id} o={o} />)}</ul>
+        </div>
+      )}
+      {others.length === 0 && <p className="rows-empty">{mine.length ? "You are in everything there is. Tap + on the left to start something." : "Nothing here yet. Tap + on the left to start the first club or circle."}</p>}
     </section>
   );
 }

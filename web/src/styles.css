@@ -2887,3 +2887,39 @@ body.chat-open .asst-fab{display:none}
   .ac-empty h2{font-size:1.5rem}
 }
 @media (prefers-reduced-motion:reduce){.ac-msg,.ac-think i{animation:none}.ac-side,.ac-scrim,.asst-fab[data-settle]{transition:none}}
+
+/* ===== Campus: a rail of your clubs, like servers, beside Discover ===== */
+.campus-shell{display:grid;grid-template-columns:60px minmax(0,1fr);gap:22px;align-items:start}
+.campus-main{display:grid;gap:16px;align-content:start;min-width:0}
+.crail{position:sticky;top:12px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:4px 0}
+.rail-ico{--bg-i:hsl(var(--h,262) 70% 93%);--ink-i:hsl(var(--h,262) 45% 30%);--solid-i:hsl(var(--h,262) 52% 46%);position:relative;flex:none;display:grid;place-items:center;width:48px;height:48px;border:0;border-radius:50%;background:var(--bg-i);color:var(--ink-i);font:inherit;font-size:1.1rem;font-weight:700;text-decoration:none;cursor:pointer;transition:border-radius .28s var(--ease),background .2s,color .2s,transform .2s var(--ease)}
+[data-theme=dark] .rail-ico{--bg-i:hsl(var(--h,262) 32% 22%);--ink-i:hsl(var(--h,262) 70% 86%);--solid-i:hsl(var(--h,262) 52% 56%)}
+.rail-ico:hover{border-radius:16px;background:var(--solid-i);color:#fff}
+.rail-ico:active{transform:scale(.94)}
+.rail-ico:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+.rail-ico[aria-current]{border-radius:16px}
+.rail-ico[aria-current]::before{content:"";position:absolute;left:-12px;top:50%;width:4px;height:22px;margin-top:-11px;border-radius:0 4px 4px 0;background:var(--ink)}
+.rail-home{--bg-i:var(--panel);--ink-i:var(--ink);--solid-i:var(--violet)}
+[data-theme=dark] .rail-home{--bg-i:var(--panel);--ink-i:var(--ink);--solid-i:var(--violet)}
+.rail-home[aria-current]{background:var(--violet);color:#fff}
+.rail-sep{width:28px;height:2px;border-radius:2px;background:var(--line)}
+.rail-badge{position:absolute;right:-4px;top:-4px;display:grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e0525c;color:#fff;font-size:.68rem;font-weight:700;box-shadow:0 0 0 2px var(--bg)}
+.rail-badge.wait{min-width:0;width:12px;height:12px;padding:0;background:#e0a23a}
+.rail-add{position:relative}
+.rail-plus{--bg-i:transparent;--ink-i:var(--ink-soft);box-shadow:inset 0 0 0 2px var(--line)}
+.rail-plus:hover{box-shadow:none}
+.rail-ico[data-tip]:hover::after{content:attr(data-tip);position:absolute;left:calc(100% + 14px);top:50%;transform:translateY(-50%);padding:6px 12px;border-radius:10px;background:var(--ink);color:var(--on-ink);font-size:.8rem;font-weight:600;white-space:nowrap;pointer-events:none;z-index:40}
+.rail-menu{position:absolute;left:calc(100% + 12px);top:0;z-index:50;display:grid;min-width:176px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 22px 44px -18px rgba(30,20,60,.45)}
+.rail-menu button{padding:10px 12px;border:0;border-radius:10px;background:none;color:var(--ink);font:inherit;font-size:.9rem;font-weight:600;text-align:left;cursor:pointer}
+.rail-menu button:hover{background:var(--panel)}
+@media (max-width:720px){
+  .campus-shell{grid-template-columns:minmax(0,1fr);gap:12px}
+  .crail{position:static;flex-direction:row;align-items:center;gap:10px;padding:4px 2px 6px;overflow-x:auto;scrollbar-width:none}
+  .crail::-webkit-scrollbar{display:none}
+  .rail-ico{width:44px;height:44px}
+  .rail-sep{width:2px;height:26px}
+  .rail-ico[aria-current]::before{left:50%;top:auto;bottom:-8px;width:22px;height:4px;margin:0 0 0 -11px;border-radius:4px 4px 0 0}
+  .rail-ico[data-tip]:hover::after{display:none}
+  .rail-menu{position:fixed;z-index:70;left:16px;right:16px;top:auto;bottom:calc(92px + env(safe-area-inset-bottom))}
+}
+@media (prefers-reduced-motion:reduce){.rail-ico{transition:none}}
