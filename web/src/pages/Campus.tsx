@@ -15,6 +15,9 @@ import CohostInvites from "../components/CohostInvites";
 import AttendedList from "../components/AttendedList";
 import EmptyState from "../components/EmptyState";
 import AvatarStack from "../components/AvatarStack";
+import { ArrangeItem, ArrangeList } from "../components/Arrange";
+import { applyOrder, useSavedOrder } from "../lib/order";
+import { useIsPhone } from "../lib/phone";
 import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
 
@@ -30,6 +33,9 @@ export default function Campus() {
   const [tab, setTab] = useState<Tab>("events");
   const [view, setView] = useState<View>("discover");
   const [menu, setMenu] = useState(false);
+  const [clubOrder, setClubOrder] = useSavedOrder("orbit-club-rail");
+  const phone = useIsPhone();
+  const railClubs = applyOrder(mine, clubOrder);
   const [creating, setCreating] = useState<"club" | "circle" | null>(null);
   const waitingOrgs = orgs.filter((o) => o.status === "pending");
   const reviewCount = reviewer ? pending.length + reported.length + waitingOrgs.length : 0;
@@ -47,12 +53,16 @@ export default function Campus() {
             </button>
           )}
           <span className="rail-sep" aria-hidden="true" />
-          {mine.map((o) => (
-            <Link key={o.id} to={`/app/campus/clubs/${o.id}`} className="rail-ico" style={{ ["--h" as string]: orgHue(o) }} aria-label={o.name} data-tip={o.name}>
-              {o.icon || o.name.slice(0, 1).toUpperCase()}
-              {o.status === "pending" && <span className="rail-badge wait" aria-hidden="true" />}
-            </Link>
-          ))}
+          <ArrangeList as="div" axis={phone ? "x" : "y"} ids={railClubs.map((o) => o.id)} onChange={setClubOrder} className="rail-clubs">
+            {railClubs.map((o) => (
+              <ArrangeItem key={o.id} as="div" id={o.id} className="rail-item">
+                <Link to={`/app/campus/clubs/${o.id}`} className="rail-ico" style={{ ["--h" as string]: orgHue(o) }} aria-label={o.name} data-tip={o.name} draggable={false}>
+                  {o.icon || o.name.slice(0, 1).toUpperCase()}
+                  {o.status === "pending" && <span className="rail-badge wait" aria-hidden="true" />}
+                </Link>
+              </ArrangeItem>
+            ))}
+          </ArrangeList>
           <span className="rail-add">
             <button type="button" className="rail-ico rail-plus" aria-label="Start a club or circle" aria-expanded={menu} data-tip="Start something" onClick={() => setMenu((v) => !v)}><Plus size={22} aria-hidden="true" /></button>
             {menu && (

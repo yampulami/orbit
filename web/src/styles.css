@@ -3201,3 +3201,15 @@ body.chat-open .asst-fab{display:none}
 .gm-bar::-webkit-scrollbar{display:none}
 
 .pills .gm-bar{overflow:visible;padding:0;margin:0}
+
+/* rearranging: your clubs down the rail, and a club's channels */
+.rail-clubs{display:flex;flex-direction:column;align-items:center;gap:10px}
+.rail-item{display:block;touch-action:pan-y}
+.rail-item .rail-ico{-webkit-user-drag:none}
+.club-chans ul.arr,.club-chans .chan-row{list-style:none}
+.chan-row{display:block;border-radius:10px;background:transparent}
+.arr-grip{position:absolute;left:-2px;top:50%;z-index:2;display:grid;place-items:center;width:18px;height:28px;margin-top:-14px;color:var(--ink-soft);opacity:0;cursor:grab;touch-action:none;transition:opacity .15s}
+.chan-row:hover .arr-grip,.arr-grip:focus-visible{opacity:.8}
+.chan-row .chan{padding-left:20px}
+@media (hover:none){.arr-grip{opacity:.45}}
+@media (max-width:720px){.rail-clubs{flex-direction:row}.rail-item{touch-action:pan-x}}

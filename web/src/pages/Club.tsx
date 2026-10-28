@@ -26,6 +26,8 @@ import ClubInfoSheet from "../components/ClubInfoSheet";
 import MyTasks from "../components/MyTasks";
 import GradientMenu from "../components/GradientMenu";
 import AvatarStack from "../components/AvatarStack";
+import { ArrangeItem, ArrangeList } from "../components/Arrange";
+import { applyOrder, useSavedOrder } from "../lib/order";
 import CohostInvites from "../components/CohostInvites";
 
 type View = "feed" | "chat" | "dashboard" | "events" | "pods";
@@ -44,6 +46,7 @@ export default function Club() {
   const [chans, setChans] = useState(false);
   const [posting, setPosting] = useState(false);
   const [chanId, setChanId] = useState("");
+  const [chanOrder, setChanOrder] = useSavedOrder("orbit-chan-order:" + (id ?? ""));
   const [making, setMaking] = useState(false);
   const [past, setPast] = useState(false);
   const org = orgs.find((o) => o.id === id);
@@ -142,12 +145,14 @@ export default function Club() {
             {!circle && <li><button type="button" className="chan" aria-current={cur === "events" ? "page" : undefined} onClick={() => pick("events")}><CalendarDays size={16} aria-hidden="true" /><span>Events</span>{upcoming.length > 0 && <span className="rem-count">{upcoming.length}</span>}</button></li>}
           </ul>
           {chatChans.some((c) => !c.podId) && <h3 className="chan-label">Channels</h3>}
-          <ul>
-            {chatChans.filter((c) => !c.podId).map((c) => (
-              <li key={c.id}><button type="button" className="chan" aria-current={cur === "chat" && activeChan?.id === c.id ? "page" : undefined} onClick={() => openChan(c.id)}>
+          <ArrangeList ids={applyOrder(chatChans.filter((c) => !c.podId), chanOrder).map((c) => c.id)} onChange={setChanOrder}>
+            {applyOrder(chatChans.filter((c) => !c.podId), chanOrder).map((c) => (
+              <ArrangeItem key={c.id} id={c.id} handle label={`#${c.name}`} className="chan-row"><button type="button" className="chan" aria-current={cur === "chat" && activeChan?.id === c.id ? "page" : undefined} onClick={() => openChan(c.id)}>
                 {c.announceOnly ? <Megaphone size={15} aria-hidden="true" /> : c.teamOnly ? <Lock size={15} aria-hidden="true" /> : <Hash size={15} aria-hidden="true" />}<span>{c.name}</span>{c.unread > 0 && !(cur === "chat" && activeChan?.id === c.id) && <span className="rem-count">{c.unread > 9 ? "9+" : c.unread}</span>}
-              </button></li>
+              </button></ArrangeItem>
             ))}
+          </ArrangeList>
+          <ul>
             {canChannels && inside && <li><button type="button" className="chan add" onClick={() => { setMaking(true); pick("chat"); }}><Plus size={15} aria-hidden="true" /><span>New channel</span></button></li>}
           </ul>
           {chatChans.some((c) => c.podId) && <h3 className="chan-label">Pod chats</h3>}
