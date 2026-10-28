@@ -176,6 +176,7 @@ export default function Assistant() {
       const r = answerFor(q, ctx.current);
       return { text: r.text, go: r.go, goLabel: r.goLabel };
     } catch (e) {
+      if (!(e instanceof AiProblem)) console.warn("The assistant hit a problem:", e);
       const r = answerFor(q, ctx.current);
       const why = e instanceof AiProblem && e.code !== "off" ? `${e.message} Here is what Orbit can tell you directly. ` : "";
       return { text: why + r.text, go: r.go, goLabel: r.goLabel };

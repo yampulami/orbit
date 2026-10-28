@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     if (role === "tool") return [{ role, tool_call_id: clean(m.tool_call_id, 80), content: clean(m.content, 6000) }];
     return [];
   });
-  const tools = Array.isArray(body.tools) ? body.tools.slice(0, 16) : [];
+  const tools = Array.isArray(body.tools) ? body.tools.slice(0, 40) : [];
 
   const base = (env("AI_BASE_URL") || "https://api.groq.com/openai/v1").replace(/\/$/, "");
   const model = env("AI_MODEL") || "llama-3.3-70b-versatile";
