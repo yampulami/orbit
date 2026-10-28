@@ -1,54 +1,55 @@
-import { useState, type FormEvent } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, BadgeCheck, CalendarDays, Check, Clock, MapPin, ClipboardList, Megaphone, MessageSquare, Pause, Play, Plus, ShieldCheck, UserPlus, UserRound, Users, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, CalendarDays, ChevronDown, Clock, ClipboardList, Info, Megaphone, MessageSquare, Orbit, Plus, Users, X } from "lucide-react";
 import { isOpen, useCampusEvents } from "../lib/campusEvents";
-import { canHostEvents, orgActions, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
+import { canHostEvents, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
 import { useClubFeed, lastPostAt } from "../lib/clubFeed";
 import { useClubChat } from "../lib/clubChat";
 import { useClubPods } from "../lib/clubPods";
 import { useClubTasks, isOverdue } from "../lib/clubTasks";
+import { useClubPresence } from "../lib/clubPresence";
+import { useAuth } from "../lib/auth";
 import { activityOf } from "../lib/activity";
 import { dayLabel, hueFor } from "../lib/look";
-import { notice } from "../lib/notice";
 import EventCard from "../components/EventCard";
 import EventForm from "../components/EventForm";
 import EmptyState from "../components/EmptyState";
 import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
-import ApplicationDetails from "../components/ApplicationDetails";
-import { JoinButton, JoinRequests } from "../components/JoinPanel";
+import { JoinButton } from "../components/JoinPanel";
 import ClubFeed from "../components/ClubFeed";
-import ClubAbout from "../components/ClubAbout";
 import ClubChat from "../components/ClubChat";
 import PodsPanel from "../components/PodsPanel";
 import ClubDashboard from "../components/ClubDashboard";
+import ClubMembers from "../components/ClubMembers";
+import ClubInfoSheet from "../components/ClubInfoSheet";
 import MyTasks from "../components/MyTasks";
-import RolesPanel from "../components/RolesPanel";
 import CohostInvites from "../components/CohostInvites";
 
-type Tab = "feed" | "chat" | "dashboard" | "events" | "people" | "about";
-const initials = (n: string) => n.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("") || "?";
+type View = "feed" | "chat" | "dashboard" | "events" | "pods";
 
-/** One club, office or circle: a header in its own colour, then Feed, Events, People and About one tap apart so nothing needs a long scroll. */
+/** One club, office or circle, laid out like a server: channels down the left, the conversation or feed in the middle, members on the right. The club's own
+ *  colour tints the header and the active channel; the (i) button opens everything about it. On a phone the two side panels are drawers (swipe, or tap). */
 export default function Club() {
   const { id } = useParams();
-  const nav = useNavigate();
+  const { session } = useAuth();
   const { orgs, ready } = useCampusOrgs();
   const { events, canReview: reviewer } = useCampusEvents();
-  const [tab, setTab] = useState<Tab>("feed");
-  const [roleFor, setRoleFor] = useState("");
+  const [view, setView] = useState<View>("feed");
+  const [info, setInfo] = useState(false);
+  const [people, setPeople] = useState(false);
+  const [chans, setChans] = useState(false);
   const [posting, setPosting] = useState(false);
   const [past, setPast] = useState(false);
-  const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
-  const [declining, setDeclining] = useState(false);
-  const [reason, setReason] = useState("");
   const org = orgs.find((o) => o.id === id);
+  const inside = !!org && org.status === "active" && (org.myJoin === "officer" || org.myJoin === "member");
   const feed = useClubFeed(org?.id ?? "", !!org && (org.status === "active" || org.mine || reviewer));
-  const pods = useClubPods(org?.id ?? "", !!org && org.status === "active" && (org.myJoin === "officer" || org.myJoin === "member"));
+  const pods = useClubPods(org?.id ?? "", inside);
   const [chatFocus, setChatFocus] = useState("");
-  const tasks = useClubTasks(org?.id ?? "", !!org && org.status === "active" && (org.myJoin === "officer" || org.myJoin === "member"));
-  const chat = useClubChat(org?.id ?? "", !!org && org.status === "active" && (org.myJoin === "officer" || org.myJoin === "member"));
+  const tasks = useClubTasks(org?.id ?? "", inside);
+  const chat = useClubChat(org?.id ?? "", inside);
+  const here = useClubPresence(org?.id ?? "", session?.user.id, !!org && org.status === "active");
+  const touch = useRef<{ x: number; y: number } | null>(null);
 
   if (!org) {
     return (
@@ -74,156 +75,110 @@ export default function Club() {
   const canRoles = org.owner || org.myPerms.includes("roles");
   const canMembers = org.myPerms.includes("members") || reviewer;
   const waits = eventsNeedApproval(org);
-  const people = org.memberCount + org.members.length;
+  const count = org.members.length + org.clubMembers.filter((m) => !org.members.some((t) => t.id === m.id)).length;
   const requests = canMembers ? org.requests.length : 0;
   const seesApplication = (reviewer || org.mine) && (org.status !== "active" || !!org.application.advisorName);
+  const overdue = tasks.tasks.some((t) => isOverdue(t, now));
+  const cur: View = view === "dashboard" && !org.mine ? "feed" : view === "events" && circle ? "feed" : view;
+  const pick = (v: View) => { setView(v); setChans(false); };
 
-  async function addOfficer(e: FormEvent) {
-    e.preventDefault();
-    const r = await orgActions.addMember(org!.id, username, roleFor || undefined);
-    if (r) { setError(r); return; }
-    setUsername("");
-    notice.show({ icon: "calendar", title: "Added to the team", message: roleFor ? "They have the role you picked." : "They can help run the club now.", ms: 3500 });
-  }
+  const channels: { v: View; label: string; icon: typeof Megaphone; badge?: string; hide?: boolean }[] = [
+    { v: "feed", label: "Feed", icon: Megaphone },
+    { v: "chat", label: "Chat", icon: MessageSquare, badge: chat.unread > 0 ? (chat.unread > 9 ? "9+" : String(chat.unread)) : undefined },
+    { v: "events", label: "Events", icon: CalendarDays, badge: upcoming.length > 0 ? String(upcoming.length) : undefined, hide: circle },
+    { v: "pods", label: "Pods", icon: Orbit, hide: org.status !== "active" },
+    { v: "dashboard", label: "Manage", icon: ClipboardList, badge: overdue ? "!" : undefined, hide: !(org.mine && org.status === "active") },
+  ];
+  const label = channels.find((c) => c.v === cur)?.label ?? "Feed";
+
+  // On a phone, swipe right for the channels and left for the members.
+  const onTouchStart = (e: React.TouchEvent) => { const t = e.touches[0]; touch.current = { x: t.clientX, y: t.clientY }; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = touch.current; touch.current = null;
+    if (!s) return;
+    const t = e.changedTouches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
+    if (Math.abs(dx) < 70 || Math.abs(dy) > 45) return;
+    if (dx > 0) { if (people) setPeople(false); else setChans(true); }
+    else { if (chans) setChans(false); else setPeople(true); }
+  };
 
   return (
-    <div className="page club-page" style={{ ["--h" as string]: hueFor(org.name) }}>
-      <Link className="back-link" to="/app/campus"><ArrowLeft size={15} aria-hidden="true" /> Campus</Link>
-
-      <header className="club-hero">
-        <div className="club-orbits" aria-hidden="true"><i /><i /><i /></div>
-        <span className="club-planet" aria-hidden="true">{org.name.slice(0, 1).toUpperCase()}<span className="club-moon" /></span>
-        <div className="club-hero-text">
+    <div className="page club-page club-wide" style={{ ["--h" as string]: hueFor(org.name) }}>
+      <header className="club-bar">
+        <Link className="club-back" to="/app/campus" aria-label="Back to Campus"><ArrowLeft size={18} aria-hidden="true" /></Link>
+        <span className="club-planet sm" aria-hidden="true">{org.name.slice(0, 1).toUpperCase()}</span>
+        <div className="club-bar-text">
           <h1><RichText text={org.name} />{org.status === "active" && !circle && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
-          <div className="club-tags">
-            <span className={"ebadge " + (org.kind === "official" ? "official" : circle ? "group" : "student")}>{org.kind === "official" ? <><BadgeCheck size={12} aria-hidden="true" /> Official</> : circle ? <><Users size={12} aria-hidden="true" /> Student circle</> : <><UserRound size={12} aria-hidden="true" /> Student club</>}</span>
+          <span className="club-bar-sub">
             {org.status === "active" && <span className={"act " + act.level} title={act.line || undefined}><i aria-hidden="true" />{act.label}</span>}
-            {org.status === "pending" && <span className="ebadge wait"><Clock size={12} aria-hidden="true" /> Waiting for approval</span>}
-            {org.status === "paused" && <span className="ebadge no">Paused</span>}
-            {org.status === "rejected" && <span className="ebadge no"><X size={12} aria-hidden="true" /> Not approved</span>}
-            {org.application.category && org.status === "active" && <span className="ev-flavor">{org.application.category}</span>}
-          </div>
-          {org.description && <p className="club-about"><RichText text={org.description} /></p>}
-          {org.status === "active" && (
-            <div className="club-faces">
-              <span className="faces" aria-hidden="true">{org.members.slice(0, 4).map((m) => <i key={m.id}>{initials(m.name)}</i>)}{org.memberCount > 0 && <i className="more">+{org.memberCount}</i>}</span>
-              <span className="muted">{people} {people === 1 ? "person" : "people"}{org.application.meeting ? <> · <MapPin size={12} aria-hidden="true" /> {org.application.meeting}</> : null}</span>
-            </div>
-          )}
-          <div className="club-cta">
-            <JoinButton org={org} />
-            {canPost && <button type="button" className="btn primary" aria-expanded={posting} onClick={() => { setTab("events"); setPosting((v) => !v); }}><Plus size={16} aria-hidden="true" /> Post an event</button>}
-          </div>
+            {org.status === "pending" && <><Clock size={12} aria-hidden="true" /> Waiting for approval</>}
+            {org.status === "paused" && "Paused"}
+            {org.status === "rejected" && <><X size={12} aria-hidden="true" /> Not approved</>}
+            {org.status === "active" && <span className="muted"> · {count} {count === 1 ? "person" : "people"}</span>}
+          </span>
         </div>
+        <JoinButton org={org} />
+        {canPost && <button type="button" className="btn sm primary club-post" onClick={() => { setView("events"); setPosting(true); }}><Plus size={15} aria-hidden="true" /> <span>Post</span></button>}
+        <button type="button" className="ac-icon" aria-label={`About ${org.name}`} title="About" onClick={() => setInfo(true)}><Info size={19} aria-hidden="true" /></button>
+        <button type="button" className="ac-icon club-ppl" aria-label="Members" aria-pressed={people} title="Members" onClick={() => setPeople((v) => !v)}><Users size={19} aria-hidden="true" />{requests > 0 && <span className="rail-badge">{requests}</span>}</button>
       </header>
 
       {org.status === "pending" && <p className="cevent-note" role="status">A coordinator needs to approve this club before it can post events. You can add officers while you wait.</p>}
       {org.status === "rejected" && <p className="cevent-note" role="status">Not approved{org.note ? `: ${org.note}` : "."}</p>}
       {org.status === "paused" && <p className="cevent-note" role="status">A coordinator paused this club. It cannot post new events for now.</p>}
 
-      {circle && org.status === "active" && <p className="muted club-circle-note">A student circle is a casual, unofficial group. It is not an approved club, so it cannot post campus events.</p>}
-      {act.line && org.status === "active" && <p className="muted club-act-line">{act.label}: {act.line}</p>}
+      <div className="club-shell" data-members={people ? "" : undefined} data-chans={chans ? "" : undefined} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <nav className="club-chans" aria-label="Channels">
+          <ul>
+            {channels.filter((c) => !c.hide).map((c) => (
+              <li key={c.v}>
+                <button type="button" className="chan" aria-current={cur === c.v ? "page" : undefined} onClick={() => pick(c.v)}>
+                  <c.icon size={16} aria-hidden="true" /><span>{c.label}</span>{c.badge && <span className="rem-count">{c.badge}</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <button type="button" className="club-scrim" aria-label="Close panels" tabIndex={-1} onClick={() => { setChans(false); setPeople(false); }} />
 
-      <div className="segment club-seg" role="tablist" aria-label="Club sections">
-        <button type="button" role="tab" aria-selected={tab === "feed"} onClick={() => setTab("feed")}><Megaphone size={15} aria-hidden="true" /> Feed</button>
-        {org.mine && org.status === "active" && <button type="button" role="tab" aria-selected={tab === "dashboard"} onClick={() => setTab("dashboard")}><ClipboardList size={15} aria-hidden="true" /> Dashboard{tasks.tasks.some((t) => isOverdue(t, now)) && <span className="rem-count" aria-label="Overdue tasks">!</span>}</button>}
-        <button type="button" role="tab" aria-selected={tab === "chat"} onClick={() => setTab("chat")}><MessageSquare size={15} aria-hidden="true" /> Chat{chat.unread > 0 && <span className="rem-count">{chat.unread > 9 ? "9+" : chat.unread}</span>}</button>
-        {!circle && <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}><CalendarDays size={15} aria-hidden="true" /> Events{upcoming.length > 0 && <span className="rem-count">{upcoming.length}</span>}</button>}
-        <button type="button" role="tab" aria-selected={tab === "people"} onClick={() => setTab("people")}><Users size={15} aria-hidden="true" /> People{requests > 0 && <span className="rem-count">{requests}</span>}</button>
-        <button type="button" role="tab" aria-selected={tab === "about"} onClick={() => setTab("about")}>About</button>
+        <main className="club-view">
+          <button type="button" className="club-chan-title" aria-haspopup="true" onClick={() => setChans(true)}>{label}<ChevronDown size={15} aria-hidden="true" /></button>
+
+          {cur === "feed" && <><MyTasks board={tasks} /><ClubFeed org={org} reviewer={reviewer} feed={feed} /></>}
+          {cur === "chat" && <ClubChat org={org} reviewer={reviewer} chat={chat} pods={pods.pods} focusId={chatFocus} />}
+          {cur === "dashboard" && org.mine && <ClubDashboard org={org} events={events} board={tasks} reviewer={reviewer} go={(t) => (t === "people" ? setPeople(true) : pick("events"))} />}
+          {cur === "pods" && org.status === "active" && <PodsPanel org={org} pods={pods} openChat={(pid) => { void chat.reload(); setChatFocus(pid); pick("chat"); }} />}
+
+          {cur === "events" && !circle && (
+            <section className="club-section" aria-label="Events">
+              {canPost && waits && !posting && <p className="muted">New events from this club wait for a coordinator before everyone sees them.</p>}
+              {canPost && !posting && <div><button type="button" className="btn sm primary" onClick={() => setPosting(true)}><Plus size={15} aria-hidden="true" /> Post an event</button></div>}
+              {posting && canPost && <EventForm org={org} onDone={() => setPosting(false)} />}
+              {!posting && <CohostInvites orgId={org.id} />}
+              {!(posting && canPost) && (upcoming.length === 0
+                ? <EmptyState icon={CalendarDays} title="Nothing coming up">{canPost ? "Post the first event. It shows to the whole campus once it is live." : org.status === "active" ? "When this club posts one, it shows here." : "Events can be posted once a coordinator approves the club."}</EmptyState>
+                : (
+                  <>
+                    {next && <div className="club-next"><h2>Up next</h2><ul className="ev-list"><EventCard e={next} reviewer={reviewer} featured /></ul></div>}
+                    {groups.map(([lbl, list]) => (
+                      <div key={lbl} className="ev-day"><h3>{lbl}</h3><ul className="ev-list">{list.map((e) => <EventCard key={e.id} e={e} reviewer={reviewer} />)}</ul></div>
+                    ))}
+                  </>
+                ))}
+              {gone.length > 0 && !(posting && canPost) && (
+                <div className="ev-past">
+                  <button type="button" className="link-btn" aria-expanded={past} onClick={() => setPast((v) => !v)}>{past ? "Hide" : "Show"} past and declined events ({gone.length})</button>
+                  {past && <ul className="ev-list">{gone.slice().reverse().map((e) => <EventCard key={e.id} e={e} reviewer={reviewer} />)}</ul>}
+                </div>
+              )}
+            </section>
+          )}
+        </main>
+
+        {people && <ClubMembers org={org} here={here} canRoles={canRoles} canMembers={canMembers} onClose={() => setPeople(false)} />}
       </div>
 
-      {tab === "feed" && <><MyTasks board={tasks} /><ClubFeed org={org} reviewer={reviewer} feed={feed} /></>}
-
-      {tab === "dashboard" && org.mine && <ClubDashboard org={org} events={events} board={tasks} reviewer={reviewer} go={setTab} />}
-
-      {tab === "chat" && <ClubChat org={org} reviewer={reviewer} chat={chat} pods={pods.pods} focusId={chatFocus} />}
-
-      {tab === "events" && !circle && (
-        <section className="club-section" aria-label="Events">
-          {canPost && waits && !posting && <p className="muted">New events from this club wait for a coordinator before everyone sees them.</p>}
-          {posting && canPost && <EventForm org={org} onDone={() => setPosting(false)} />}
-          {!posting && <CohostInvites orgId={org.id} />}
-          {!(posting && canPost) && (upcoming.length === 0
-            ? <EmptyState icon={CalendarDays} title="Nothing coming up">{canPost ? "Post the first event. It shows to the whole campus once it is live." : org.status === "active" ? "When this club posts one, it shows here." : "Events can be posted once a coordinator approves the club."}</EmptyState>
-            : (
-              <>
-                {next && <div className="club-next"><h2>Up next</h2><ul className="ev-list"><EventCard e={next} reviewer={reviewer} featured /></ul></div>}
-                {groups.map(([label, list]) => (
-                  <div key={label} className="ev-day"><h3>{label}</h3><ul className="ev-list">{list.map((e) => <EventCard key={e.id} e={e} reviewer={reviewer} />)}</ul></div>
-                ))}
-              </>
-            ))}
-          {gone.length > 0 && !(posting && canPost) && (
-            <div className="ev-past">
-              <button type="button" className="link-btn" aria-expanded={past} onClick={() => setPast((v) => !v)}>{past ? "Hide" : "Show"} past and declined events ({gone.length})</button>
-              {past && <ul className="ev-list">{gone.slice().reverse().map((e) => <EventCard key={e.id} e={e} reviewer={reviewer} />)}</ul>}
-            </div>
-          )}
-        </section>
-      )}
-
-      {tab === "people" && (
-        <>
-          <section className="club-section" aria-label="People">
-            {canMembers && <JoinRequests org={org} />}
-            <h2>Team</h2>
-            <ul className="club-people">
-              {org.members.map((m) => (
-                <li key={m.id}>
-                  <i className="club-av" aria-hidden="true">{initials(m.name)}</i>
-                  <span className="club-member-name">{m.name}</span>
-                  {m.title ? <span className="cf-title-chip">{m.title}</span> : <span className="muted">{m.role === "owner" ? "President" : "Officer"}</span>}
-                  {canRoles && m.role !== "owner" && org.roles.length > 0 && (
-                    <select className="role-pick" aria-label={`Role for ${m.name}`} value={m.roleId ?? ""} onChange={(e) => e.target.value && void orgActions.setMemberRole(org.id, m.id, e.target.value)}>
-                      <option value="">{m.roleId ? "" : "Choose role"}</option>{org.roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                    </select>
-                  )}
-                  {(org.owner || org.myPerms.includes("roles")) && m.role !== "owner" && <button type="button" className="link-btn" onClick={() => void orgActions.removeMember(org.id, m.id)}>Remove</button>}
-                  {m.name === "You" && m.role !== "owner" && <button type="button" className="link-btn" onClick={async () => { await orgActions.removeMember(org.id, m.id); nav("/app/campus"); }}>Leave</button>}
-                </li>
-              ))}
-            </ul>
-            {org.memberCount > 0 && <p className="muted">{org.memberCount} {org.memberCount === 1 ? "member" : "members"} besides the team.</p>}
-            {canRoles && (
-              <form className="club-add" onSubmit={addOfficer}>
-                <label className="sr" htmlFor="club-add-user">Username of the person to add</label>
-                <input id="club-add-user" value={username} maxLength={40} placeholder="Add to the team by username" onChange={(e) => { setUsername(e.target.value); setError(""); }} />
-                {org.roles.length > 0 && <select className="role-pick" aria-label="Role" value={roleFor} onChange={(e) => setRoleFor(e.target.value)}><option value="">No role</option>{org.roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>}
-                <button className="btn" disabled={!username.trim()}><UserPlus size={15} aria-hidden="true" /> Add</button>
-              </form>
-            )}
-            {error && <p className="error" role="alert">{error}</p>}
-          </section>
-          {org.status === "active" && <PodsPanel org={org} pods={pods} openChat={(id) => { void chat.reload(); setChatFocus(id); setTab("chat"); }} />}
-          {canRoles && org.status === "active" && <RolesPanel org={org} />}
-        </>
-      )}
-
-      {tab === "about" && (
-        <section className="club-section" aria-label="About">
-          <ClubAbout key={org.id + org.about + org.description + org.application.meeting + org.application.category} org={org} canEdit={org.owner} />
-          {seesApplication && <><h3 className="about-sub">The application</h3><ApplicationDetails org={org} /></>}
-          {reviewer && !org.mine && (
-            <div className="club-review" role="group" aria-label="Coordinator controls">
-              {org.status === "pending" && (declining ? (
-                <form className="htools-row" onSubmit={(e) => { e.preventDefault(); void orgActions.decline(org.id, reason); setDeclining(false); }}>
-                  <input aria-label="Reason (optional)" autoFocus value={reason} maxLength={200} placeholder="Reason (optional)" onChange={(e) => setReason(e.target.value)} />
-                  <button className="btn danger">Decline</button><button type="button" className="btn" onClick={() => setDeclining(false)}>Back</button>
-                </form>
-              ) : (
-                <>
-                  <button type="button" className="btn primary" onClick={() => { void orgActions.approve(org.id); notice.show({ icon: "calendar", title: `${org.name} approved`, message: "Its officers can post events now.", ms: 4000 }); }}><Check size={15} aria-hidden="true" /> Approve club</button>
-                  <button type="button" className="btn" onClick={() => setDeclining(true)}>Decline</button>
-                </>
-              ))}
-              {org.status === "active" && org.kind === "student" && <button type="button" className="btn" aria-pressed={org.trusted} onClick={() => void orgActions.setTrusted(org.id, !org.trusted)}><ShieldCheck size={14} aria-hidden="true" /> {org.trusted ? "Stop trusting" : "Trust this club"}</button>}
-              {org.status === "active" && <button type="button" className="btn" onClick={() => void orgActions.setPaused(org.id, true)}><Pause size={14} aria-hidden="true" /> Pause</button>}
-              {org.status === "paused" && <button type="button" className="btn" onClick={() => void orgActions.setPaused(org.id, false)}><Play size={14} aria-hidden="true" /> Resume</button>}
-            </div>
-          )}
-        </section>
-      )}
+      {info && <ClubInfoSheet org={org} reviewer={reviewer} canRoles={canRoles} seesApplication={seesApplication} onClose={() => setInfo(false)} />}
     </div>
   );
 }
