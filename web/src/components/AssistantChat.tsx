@@ -25,6 +25,10 @@ type Props = {
   /** The answer being written out right now. */
   freshId: string | null;
   thinking: boolean;
+  /** What the assistant is doing while it works ("Checking events"). */
+  step?: string;
+  /** The student answered a confirm card. */
+  onDecide: (messageId: string, yes: boolean) => void;
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
@@ -35,7 +39,7 @@ type Props = {
 };
 
 /** A ChatGPT-style dialog for the Orbit assistant: history on the left, the conversation on the right, a composer at the bottom. */
-export default function AssistantChat({ chats, activeId, freshId, thinking, onSelect, onNew, onDelete, onClear, onSend, onGo, onClose }: Props) {
+export default function AssistantChat({ chats, activeId, freshId, thinking, step, onDecide, onSelect, onNew, onDelete, onClear, onSend, onGo, onClose }: Props) {
   const [draft, setDraft] = useState("");
   const [drawer, setDrawer] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -79,7 +83,7 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, onSe
       <aside className="ac-side" aria-label="Chat history">
         <div className="ac-brand">
           <span className="ac-logo" aria-hidden="true"><Orb size={30} variant="violet" poke={false} /></span>
-          <span className="ac-brand-t"><b>Orbit assistant</b><small>Answers from what Orbit knows</small></span>
+          <span className="ac-brand-t"><b>Orbit assistant</b><small>Ask anything, plan anything</small></span>
         </div>
         <button type="button" className="ac-new" onClick={() => { onNew(); setDrawer(false); }}>
           <Plus size={16} aria-hidden="true" /> New chat
@@ -134,6 +138,16 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, onSe
                   {m.role === "assistant" && <span className="ac-av" aria-hidden="true" />}
                   <div className="ac-body">
                     <p className="ac-text">{m.role === "assistant" ? <Reveal text={m.text} live={m.id === freshId} onGrow={toEnd} /> : m.text}</p>
+                    {m.role === "assistant" && m.pending && (
+                      <div className="ac-confirm" data-state={m.pending.state}>
+                        <p>{m.pending.summary}</p>
+                        {m.pending.state === "pending" ? (
+                          <div className="ac-confirm-row"><button type="button" className="btn sm primary" onClick={() => onDecide(m.id, true)}>Confirm</button><button type="button" className="btn sm" onClick={() => onDecide(m.id, false)}>Cancel</button></div>
+                        ) : (
+                          <span className="ac-confirm-state">{m.pending.state === "done" ? "✓ " : m.pending.state === "cancelled" ? "Cancelled" : "Could not do that. "}{m.pending.note ?? ""}</span>
+                        )}
+                      </div>
+                    )}
                     {m.role === "assistant" && m.go && (
                       <button type="button" className="btn sm ac-go" onClick={() => onGo(m.go!)}>{m.goLabel ?? "Open"} <ArrowRight size={14} aria-hidden="true" /></button>
                     )}
@@ -143,7 +157,7 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, onSe
               {thinking && (
                 <li className="ac-msg assistant" aria-label="Orbit is thinking">
                   <span className="ac-av" aria-hidden="true" />
-                  <div className="ac-body"><p className="ac-text ac-think"><i /><i /><i /></p></div>
+                  <div className="ac-body"><p className="ac-text ac-think"><i /><i /><i />{step && <span className="ac-step">{step}</span>}</p></div>
                 </li>
               )}
             </ol>

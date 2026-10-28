@@ -3,15 +3,21 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
-import { isOpen, useCampusEvents } from "../lib/campusEvents";
-import { useCampusOrgs } from "../lib/campusOrgs";
+import { eventActions, isOpen, useCampusEvents } from "../lib/campusEvents";
+import { canHostEvents, eventsNeedApproval, useCampusOrgs } from "../lib/campusOrgs";
+import { hangActions, useHang } from "../lib/hangouts";
+import { useFriends } from "../lib/friends";
+import { searchPeople } from "../lib/peopleSearch";
+import { dmActions } from "../lib/dms";
+import { converse, performAction, type AiEnv, type AiTurn, type ModelMsg, type Pending } from "../lib/assistantAi";
+import { AiProblem, askModel } from "../lib/assistantModel";
 import { useClasses } from "../lib/classes";
-import { useReminders } from "../lib/reminders";
+import { reminderActions, useReminders } from "../lib/reminders";
 import { unreadDms, useDms } from "../lib/dms";
 import { useNotifs } from "../lib/notifs";
 import { useAuth } from "../lib/auth";
 import { answerFor, type AssistantCtx, type Reply } from "../lib/assistant";
-import { makeMsg, useChatHistory } from "../lib/assistantChats";
+import { makeMsg, useChatHistory, type Msg } from "../lib/assistantChats";
 import AssistantChat from "./AssistantChat";
 import MorphOrb from "./MorphOrb";
 import Orb from "./Orb";
@@ -58,7 +64,10 @@ export default function Assistant() {
   const [freshId, setFreshId] = useState<string | null>(null);
   const [thinking, setThinking] = useState(false);
   const timers = useRef<number[]>([]);
-  const lastReply = useRef<Reply | null>(null);
+  const lastReply = useRef<(Reply & { pending?: Pending }) | null>(null);
+  const { groups, hangouts } = useHang();
+  const { friends } = useFriends();
+  const [step, setStep] = useState("");
 
   // The answer is made from the newest of everything at the moment you ask.
   const ctx = useRef<AssistantCtx>({ now: new Date(), events: [], clubs: [], classes: [], reminders: [], unreadMessages: 0, unreadNotifs: 0 });
@@ -149,10 +158,28 @@ export default function Assistant() {
   }, [mode, close]);
 
   /* ── the first question, in the morphing pill ── */
-  const ask = (q: string) => {
-    const r = answerFor(q, ctx.current);
-    lastReply.current = r;
-    return r.text;
+  /** The assistant's own answer: the AI when it is switched on (with Orbit's data as tools), otherwise the built-in rules. */
+  const think = async (history: Msg[], q: string): Promise<AiTurn> => {
+    const nowD = new Date();
+    const env = aiEnv();
+    const past: ModelMsg[] = history.slice(-10).map((m) => ({ role: m.role, content: m.text }));
+    try {
+      return await converse({
+        history: [...past, { role: "user", content: q }],
+        env,
+        onStep: setStep,
+        model: (messages) => askModel(messages, { name: session?.user.user_metadata?.name ?? session?.user.email?.split("@")[0] ?? "Student", now: nowD.toString(), timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+      });
+    } catch (e) {
+      const r = answerFor(q, ctx.current);
+      const why = e instanceof AiProblem && e.code !== "off" ? `${e.message} Here is what Orbit can tell you directly. ` : "";
+      return { text: why + r.text, go: r.go, goLabel: r.goLabel };
+    } finally { setStep(""); }
+  };
+  const ask = async (q: string) => {
+    const t = await think([], q);
+    lastReply.current = t;
+    return t.text;
   };
   // Once the answer has settled, give it a moment to be read, then open the conversation around it.
   const answered = (q: string, a: string) => {
@@ -160,7 +187,7 @@ export default function Assistant() {
     const r = lastReply.current;
     const t = window.setTimeout(() => {
       if (!document.querySelector('.mo-root[data-phase="answered"]')) return; // they went back to the pill
-      const id = history.startWith(q, a, r?.go ? { go: r.go, goLabel: r.goLabel } : {});
+      const id = history.startWith(q, a, { ...(r?.go ? { go: r.go, goLabel: r.goLabel } : {}), ...(r?.pending ? { pending: r.pending } : {}) });
       setActiveId(id);
       setMode("chat");
     }, calm ? 600 : 1500);
@@ -174,15 +201,46 @@ export default function Assistant() {
     history.add(id, makeMsg("user", text));
     setThinking(true);
     const chatId = id;
-    const t = window.setTimeout(() => {
-      const r = answerFor(text, ctx.current);
-      const m = makeMsg("assistant", r.text, r.go ? { go: r.go, goLabel: r.goLabel } : {});
+    const before = history.chats.find((c) => c.id === chatId)?.messages ?? [];
+    void think(before, text).then((r) => {
+      const m = makeMsg("assistant", r.text, { ...(r.go ? { go: r.go, goLabel: r.goLabel } : {}), ...(r.pending ? { pending: r.pending } : {}) });
       history.add(chatId, m);
       setFreshId(m.id);
       setThinking(false);
-    }, calm ? 120 : 650);
-    timers.current.push(t);
+    });
   };
+  /** The student answers a confirm card: do the change, or leave it. */
+  const decide = async (msgId: string, yes: boolean) => {
+    const chat = history.chats.find((c) => c.id === activeId);
+    const msg = chat?.messages.find((m) => m.id === msgId);
+    if (!chat || !msg?.pending || msg.pending.state !== "pending") return;
+    if (!yes) { history.patch(chat.id, msgId, { pending: { ...msg.pending, state: "cancelled" } }); return; }
+    const out = await performAction(aiEnv(), msg.pending);
+    history.patch(chat.id, msgId, { pending: { ...msg.pending, state: out.ok ? "done" : "failed", note: out.note } });
+    if (out.go) history.patch(chat.id, msgId, { go: out.go, goLabel: out.goLabel });
+  };
+  /** Everything the AI may look at, and the changes it may ask to make (each one is confirmed first). */
+  function aiEnv(): AiEnv {
+    const nowD = new Date();
+    const me = session?.user.id ?? "";
+    return {
+      now: nowD,
+      events: events.filter((e) => e.status === "published" && !e.canceled && isOpen(e, nowD)).map((e) => ({ id: e.id, title: e.title, description: e.description, startsAt: e.startsAt, endsAt: e.endsAt, place: e.place, host: e.host, going: e.going, mine: e.mine, orgId: e.orgId })),
+      clubs: orgs.filter((o) => o.status === "active").map((o) => ({ id: o.id, name: o.name, kind: o.kind, description: o.description, people: o.memberCount + o.members.length, mine: o.mine || o.myJoin === "member", category: o.application.category, meeting: o.application.meeting, canPost: o.mine && canHostEvents(o) && o.myPerms.includes("events"), orgKind: o.kind, trusted: !eventsNeedApproval(o) })),
+      classes,
+      reminders: reminders as { title: string; date: string; time?: string; done: boolean }[],
+      groups: groups.map((g) => ({ id: g.id, name: g.name, members: g.members })),
+      hangouts: hangouts.map((h) => ({ id: h.id, groupId: h.groupId, title: h.title, place: h.place, when: h.when, canceled: h.canceled })),
+      friends: friends.map((f) => ({ id: f.id, name: f.name, username: f.username, relation: "Friend" })),
+      unread: { messages: unreadDms(dms.threads), notifs: notifs.filter((n) => n.unread).length },
+      findPeople: async (q) => (await searchPeople(q, me, 6)).map((p) => ({ id: p.id, name: p.name, username: p.username, relation: friends.some((f) => f.id === p.id) ? "Friend" : "Student" })),
+      addReminder: (t, d, tm) => reminderActions.add(t, d, tm),
+      createHangout: (gid, h) => { hangActions.createHangout(gid, h); },
+      createGroup: (name, members) => { hangActions.createGroup(name, members); },
+      createEvent: async (d) => (await eventActions.create({ ...d, orgKind: d.orgKind as never })).error,
+      sendMessage: async (pid, text) => { const t = await dmActions.start(pid); if (!t) return "Could not open that chat."; dmActions.send(t, text); return null; },
+    };
+  }
   const newChat = () => { setActiveId(null); setFreshId(null); setThinking(false); };
   const select = (id: string) => { setActiveId(id); setFreshId(null); setThinking(false); };
   const remove = (id: string) => { history.remove(id); if (id === activeId) newChat(); };
@@ -250,6 +308,8 @@ export default function Assistant() {
                       activeId={activeId}
                       freshId={freshId}
                       thinking={thinking}
+                      step={step}
+                      onDecide={(id, yes) => void decide(id, yes)}
                       onSelect={select}
                       onNew={newChat}
                       onDelete={remove}

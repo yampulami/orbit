@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import type { Pending } from "./assistantAi";
 
 /** The assistant's chat history, kept on this device (per person). Each chat is a list of messages; the newest chat is first. */
-export type Msg = { id: string; role: "user" | "assistant"; text: string; at: string; /** A page the answer can open, and what to call the button. */ go?: string; goLabel?: string };
+export type Msg = { id: string; role: "user" | "assistant"; text: string; at: string; /** A page the answer can open, and what to call the button. */ go?: string; goLabel?: string; /** A change the assistant wants to make, waiting for a yes. */ pending?: Pending };
 export type Chat = { id: string; title: string; updatedAt: string; messages: Msg[] };
 
 export const MAX_CHATS = 30;
@@ -33,6 +34,10 @@ export function addMessage(chats: Chat[], chatId: string, msg: Msg, now = new Da
       return { ...c, messages, title: c.title === NEW_TITLE && msg.role === "user" ? titleFor(msg.text) : c.title, updatedAt: now.toISOString() };
     })
     .sort(byNewest);
+}
+/** Pure: change one message in place (for example, a confirm card turning from waiting to done). */
+export function patchMessage(chats: Chat[], chatId: string, msgId: string, patch: Partial<Msg>): Chat[] {
+  return chats.map((c) => (c.id !== chatId ? c : { ...c, messages: c.messages.map((m) => (m.id === msgId ? { ...m, ...patch } : m)) }));
 }
 export const removeChat = (chats: Chat[], id: string) => chats.filter((c) => c.id !== id);
 
@@ -78,6 +83,7 @@ export function useChatHistory(user: string) {
       return r.id;
     },
     add: (chatId: string, msg: Msg) => commit(addMessage(read(user), chatId, msg)),
+    patch: (chatId: string, msgId: string, patch: Partial<Msg>) => commit(patchMessage(read(user), chatId, msgId, patch)),
     remove: (id: string) => commit(removeChat(read(user), id)),
     clear: () => commit([]),
   };

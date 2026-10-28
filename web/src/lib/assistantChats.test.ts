@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addMessage, groupChats, makeMsg, MAX_MSGS, NEW_TITLE, removeChat, startChat, titleFor, type Chat } from "./assistantChats";
+import { addMessage, patchMessage, groupChats, makeMsg, MAX_MSGS, NEW_TITLE, removeChat, startChat, titleFor, type Chat } from "./assistantChats";
 
 const day = (n: number, h = 12) => new Date(2026, 9, 27 + n, h, 0);
 
@@ -39,5 +39,16 @@ describe("chats", () => {
     expect(groups.map((g) => g.label)).toEqual(["Today", "Yesterday", "Earlier"]);
     expect(groups[0].chats.map((c) => c.id)).toEqual(["t2", "t"]);
     expect(groupChats([mk("t", day(0))], day(0)).map((g) => g.label)).toEqual(["Today"]);
+  });
+});
+
+describe("patching a message", () => {
+  it("changes just that message", () => {
+    const a = startChat([], day(0, 9));
+    const m = makeMsg("assistant", "Confirm?");
+    const chats = addMessage(a.chats, a.id, m, day(0, 10));
+    const next = patchMessage(chats, a.id, m.id, { text: "Done." });
+    expect(next[0].messages[0].text).toBe("Done.");
+    expect(patchMessage(chats, "other", m.id, { text: "x" })[0].messages[0].text).toBe("Confirm?");
   });
 });

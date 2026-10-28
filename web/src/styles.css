@@ -3416,3 +3416,12 @@ a.avs-face{text-decoration:none;cursor:pointer}
 
 .posts .post.flash{animation:post-flash 2.4s ease-out}
 @keyframes post-flash{0%,60%{box-shadow:0 0 0 3px var(--violet),0 0 30px -4px var(--violet)}100%{box-shadow:none}}
+
+/* the assistant asks before it changes anything */
+.ac-step{margin-left:10px;font-size:.84rem;color:var(--ink-soft)}
+.ac-confirm{display:grid;gap:10px;margin-top:10px;padding:12px 14px;max-width:460px;border-radius:14px;background:var(--panel);box-shadow:0 0 0 1px var(--line)}
+.ac-confirm p{margin:0;font-size:.92rem;line-height:1.45}
+.ac-confirm-row{display:flex;gap:8px}
+.ac-confirm-state{font-size:.84rem;font-weight:600;color:var(--ink-soft)}
+.ac-confirm[data-state=done] .ac-confirm-state{color:#1fa97a}
+.ac-confirm[data-state=failed] .ac-confirm-state{color:#e0525c}
