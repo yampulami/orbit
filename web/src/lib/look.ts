@@ -55,3 +55,11 @@ export function dayLabel(iso: string, now: Date): string {
   if (days === 1) return "Tomorrow";
   return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 }
+
+/** A round avatar's colours, taken from the name: two hues that go well together, the same every time for the same person. */
+export function gradientFor(name: string): string {
+  let h = 0;
+  for (const ch of name.trim().toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const a = h % 360;
+  return `linear-gradient(135deg, hsl(${a} 78% 68%), hsl(${(a + 70) % 360} 70% 52%))`;
+}

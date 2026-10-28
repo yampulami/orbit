@@ -14,6 +14,7 @@ import ClubApplication from "../components/ClubApplication";
 import CohostInvites from "../components/CohostInvites";
 import AttendedList from "../components/AttendedList";
 import EmptyState from "../components/EmptyState";
+import AvatarStack from "../components/AvatarStack";
 import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
 
@@ -186,7 +187,7 @@ function ClubRow({ o }: { o: Org }) {
         </span>
         <span className="club-meta">
           {o.status === "active"
-            ? <><span className={"act " + act.level} title={act.line || undefined}><i aria-hidden="true" />{act.label}</span><span className="club-count">{people} {people === 1 ? "person" : "people"}</span></>
+            ? <><span className={"act " + act.level} title={act.line || undefined}><i aria-hidden="true" />{act.label}</span><span className="club-count"><AvatarStack names={[...o.members.map((m) => m.name), ...o.clubMembers.map((m) => m.name)].filter((n, i, l) => l.indexOf(n) === i)} max={3} size={22} />{people} {people === 1 ? "person" : "people"}</span></>
             : <span className={"ebadge " + (o.status === "paused" ? "no" : "wait")}>{o.status === "pending" ? "Waiting for approval" : o.status === "paused" ? "Paused" : "Not approved"}</span>}
         </span>
       </Link>

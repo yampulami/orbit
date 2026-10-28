@@ -3128,3 +3128,53 @@ body.chat-open .asst-fab{display:none}
 .ct-box{position:relative}
 .ct-box textarea{padding-right:44px}
 .ct-box .emoji-btn,.ct-box>button{position:absolute;right:6px;bottom:6px}
+
+/* ===== Member picker: round faces; in = colour and bold name, could-add = dimmed with a plus ===== */
+.mp{display:grid;gap:14px}
+.mp-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.mp-head h3{display:flex;align-items:center;gap:8px;margin:0;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.mp-head h3 span{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--panel);color:var(--ink);font-size:.72rem;letter-spacing:0}
+.mp-sets{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.mp-sets::-webkit-scrollbar{display:none}
+.mp-sets button{flex:none;min-height:30px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:none;color:var(--ink-soft);font:inherit;font-size:.8rem;font-weight:600;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.mp-sets button[aria-selected=true]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.mp-row{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:14px 12px}
+.mp-person{display:grid;justify-items:center;gap:8px;width:68px;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
+.mp-person:disabled{cursor:default}
+.mp-face{position:relative;display:grid;place-items:center;width:56px;height:56px;border-radius:50%;box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--line);transition:filter .35s,opacity .35s,transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s}
+.mp-face b{font-size:1.15rem;font-weight:700;color:#1b1140;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.mp-person:not([data-on]) .mp-face{filter:grayscale(1) brightness(.75);opacity:.7}
+.mp-person:not([data-on]):not(.mp-add):hover .mp-face{filter:grayscale(.4);opacity:.95;transform:scale(1.05)}
+.mp-person[data-on] .mp-face{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--violet)}
+.mp-person:active:not(:disabled) .mp-face{transform:scale(.94)}
+.mp-name{max-width:100%;font-size:.82rem;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s,font-weight .2s}
+.mp-person[data-on] .mp-name{color:var(--ink);font-weight:700}
+.mp-plus,.mp-tick{position:absolute;right:-3px;bottom:-3px;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;box-shadow:0 0 0 2px var(--surface)}
+.mp-plus{background:#fff;color:#111}
+.mp-tick{background:var(--violet);color:#fff;animation:mp-pop .3s cubic-bezier(.22,1,.36,1) both}
+@keyframes mp-pop{from{transform:scale(0)}}
+.mp-add .mp-face{background:none;box-shadow:none;border:2px dashed var(--line);color:var(--ink-soft);filter:none;opacity:1;transition:border-color .2s,color .2s}
+.mp-add:hover .mp-face,.mp-add[aria-expanded=true] .mp-face{border-color:var(--violet);color:var(--violet)}
+.mp-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mp-form input{flex:1;min-width:140px;height:40px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;outline:0}
+.mp-form input:focus{border-color:var(--violet)}
+.mp-form .error{flex-basis:100%;margin:0}
+.mp-none{margin:0;font-size:.88rem}
+@media (prefers-reduced-motion:reduce){.mp-face,.mp-tick{transition:none;animation:none}}
+
+/* ===== Avatar stack: overlapping faces that spread out when you point at them ===== */
+.avs{display:inline-flex;align-items:center;flex:none}
+.avs-face{position:relative;display:grid;place-items:center;width:var(--s);height:var(--s);margin-left:calc(var(--s) * -.32);border-radius:50%;box-shadow:0 0 0 2px var(--surface);color:#1b1140;font-style:normal;transition:margin .35s cubic-bezier(.22,1,.36,1),transform .25s var(--ease)}
+.avs-face:first-child{margin-left:0}
+.avs-face b{font-size:calc(var(--s) * .42);font-weight:700}
+.avs-more{background:var(--panel);color:var(--ink-soft);font-size:calc(var(--s) * .38);font-weight:700}
+.avs:hover .avs-face:not(:first-child),.thread:hover .avs-face:not(:first-child),.club-row:hover .avs-face:not(:first-child){margin-left:calc(var(--s) * .1)}
+.avs-face:hover{transform:translateY(-3px) scale(1.08)}
+.thread .avs{margin-top:4px}
+.thread.on .avs-face{box-shadow:0 0 0 2px var(--violet)}
+@media (prefers-reduced-motion:reduce){.avs-face{transition:none}}
+
+.thread-people{display:flex;align-items:center;gap:8px}
+.club-bar-people{display:inline-flex;align-items:center;gap:8px}
+.club-count .avs{margin-right:6px}
+.thread.on .thread-people .muted{color:rgba(255,255,255,.85)}

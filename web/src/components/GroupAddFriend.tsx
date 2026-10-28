@@ -3,6 +3,7 @@ import { UserPlus } from "lucide-react";
 import { friendActions, useFriends } from "../lib/friends";
 import { notice } from "../lib/notice";
 import { checkUsername, findByUsername, normalizeUsername } from "../lib/username";
+import MemberPicker, { everyone, usePeopleSets } from "./MemberPicker";
 
 /** Add one of your friends to this group, by username or from your list. Friends only: someone you have not befriended is asked to be a friend first. */
 export default function GroupAddFriend({ groupId, groupName, memberNames }: { groupId: string; groupName: string; memberNames: string[] }) {
@@ -13,6 +14,8 @@ export default function GroupAddFriend({ groupId, groupName, memberNames }: { gr
   const [notFriend, setNotFriend] = useState<{ id: string; name: string } | null>(null);
 
   const addable = friends.filter((f) => !memberNames.includes(f.name));
+  const sets = usePeopleSets();
+  const friendIds = new Map(friends.map((f) => [f.name, f.id]));
 
   async function add(friendId: string, name: string) {
     setBusy(true);
@@ -61,18 +64,21 @@ export default function GroupAddFriend({ groupId, groupName, memberNames }: { gr
           <button type="button" className="btn" disabled={busy} onClick={() => void befriend()}><UserPlus size={16} aria-hidden="true" />Send friend request</button>
         </p>
       )}
-      {addable.length > 0 && (
-        <>
-          <p className="muted">Or pick from your friends:</p>
-          <ul className="friend-list">
-            {addable.map((f) => (
-              <li key={f.id} className="friend-row">
-                <span className="grow"><strong>{f.name}</strong>{f.username && <span className="muted"> @{f.username}</span>}</span>
-                <button type="button" className="btn" disabled={busy} onClick={() => void add(f.id, f.name)}>Add</button>
-              </li>
-            ))}
-          </ul>
-        </>
+      {(addable.length > 0 || memberNames.length > 0) && (
+        <MemberPicker
+          label={`In ${groupName}`}
+          people={[
+            ...memberNames.filter((n) => n !== "You").map((n) => ({ id: friendIds.get(n) ?? n, name: n })),
+            ...everyone(sets).filter((p) => !memberNames.includes(p.name)),
+          ]}
+          sets={sets}
+          isOn={(p) => memberNames.includes(p.name)}
+          locked={(p) => memberNames.includes(p.name)}
+          onToggle={(p) => {
+            if (friendIds.has(p.name)) void add(p.id, p.name);
+            else setError(`${p.name} is not your friend yet. Add them by username above to send a friend request.`);
+          }}
+        />
       )}
       {friends.length === 0 && <p className="muted">You have no friends on Orbit yet. Find people in the Friends tab, then add them here.</p>}
     </div>

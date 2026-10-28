@@ -10,6 +10,8 @@ import RichText from "../components/RichText";
 import HangoutCard from "../components/HangoutCard";
 import FriendsPanel from "../components/FriendsPanel";
 import GroupAddFriend from "../components/GroupAddFriend";
+import AvatarStack from "../components/AvatarStack";
+import MemberPicker, { everyone, usePeopleSets } from "../components/MemberPicker";
 import { useFriends } from "../lib/friends";
 import { findConflict, hangActions, hangLive, useHang, useHangStatus, YOU } from "../lib/hangouts";
 import { notice } from "../lib/notice";
@@ -35,14 +37,15 @@ export default function Groups() {
   useChatOpenClass(phone && paneOpen);
   const [creating, setCreating] = useState(false);
   const [gName, setGName] = useState("");
-  const [gMembers, setGMembers] = useState("");
+  const [gPicked, setGPicked] = useState<string[]>([]);
+  const [gExtra, setGExtra] = useState<string[]>([]);
+  const [aExtra, setAExtra] = useState<string[]>([]);
   const [planning, setPlanning] = useState(false);
   const [title, setTitle] = useState("");
   const [place, setPlace] = useState("");
   const [when, setWhen] = useState("");
   const [openToCampus, setOpenToCampus] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [friends, setFriends] = useState("");
   const [joining, setJoining] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const { incoming: friendRequests } = useFriends();
@@ -50,6 +53,7 @@ export default function Groups() {
   const [error, setError] = useState("");
 
   const scroller = useRef<HTMLDivElement>(null);
+  const sets = usePeopleSets();
   const group = groups.find((g) => g.id === activeId) ?? groups[0];
   const showCreate = creating || (groups.length === 0 && status !== "loading" && status !== "idle");
   const messageCount = group?.messages.length ?? 0;
@@ -61,9 +65,9 @@ export default function Groups() {
     e.preventDefault();
     const name = gName.trim();
     if (!name) { notice.show({ title: "Name your group", message: "Give the group a name so everyone knows which chat it is." }); return; }
-    const members = [...new Set(gMembers.split(",").map((m) => m.trim()).filter((m) => m && m !== YOU))];
+    const members = [...new Set(gPicked.filter((m) => m && m !== YOU))];
     setActiveId(hangActions.createGroup(name, members));
-    setGName(""); setGMembers(""); setCreating(false); setError("");
+    setGName(""); setGPicked([]); setGExtra([]); setCreating(false); setError("");
     if (hangLive) { setAdding(true); setPlanning(false); } // show the invite code right away
   }
 
@@ -93,15 +97,6 @@ export default function Groups() {
     if (!group || !t) return;
     hangActions.send(group.id, t);
     setText("");
-  }
-
-  function addFriends(e: FormEvent) {
-    e.preventDefault();
-    if (!group) return;
-    const names = [...new Set(friends.split(",").map((m) => m.trim()).filter((m) => m && m !== YOU))];
-    if (names.length === 0) { notice.show({ title: "Who are you adding?", message: "Type at least one name, separated by commas." }); return; }
-    hangActions.addMembers(group.id, names);
-    setFriends(""); setAdding(false); setError("");
   }
 
   function plan(e: FormEvent) {
@@ -134,7 +129,7 @@ export default function Groups() {
             <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate && !friendsOpen ? " on" : "")} aria-current={g.id === group?.id && !showCreate && !friendsOpen} onClick={() => { setActiveId(g.id); setFriendsOpen(false); setCreating(false); setPlanning(false); setAdding(false); setError(""); setPaneOpen(true); }}>
               {g.id === group?.id && !showCreate && !friendsOpen && <motion.span layoutId="group-indicator" className="threadpill" transition={slide} />}
               <strong>{g.name}</strong>
-              <span className="muted">{g.members.length} people</span>
+              <span className="thread-people"><AvatarStack names={g.members.filter((m) => m !== YOU)} max={4} size={24} /><span className="muted">{g.members.length} people</span></span>
             </button>
           ))}
           <button className="thread new" onClick={() => { setCreating(true); setFriendsOpen(false); setError(""); setPaneOpen(true); }}><Plus size={16} /> New group</button>
@@ -150,7 +145,16 @@ export default function Groups() {
               <label className="field">Group name<input value={gName} onChange={(e) => setGName(e.target.value)} placeholder="e.g. Coffee crew" /></label>
               {hangLive
                 ? <p className="muted">After it is made, add friends by username. Only members can see the group.</p>
-                : <label className="field">Friends (names, separated by commas)<input value={gMembers} onChange={(e) => setGMembers(e.target.value)} placeholder="Maya, Jordan, Priya" /></label>}
+                : (
+                  <MemberPicker
+                    label="Who is in?"
+                    people={[...everyone(sets), ...gExtra.filter((n) => !everyone(sets).some((p) => p.name === n)).map((n) => ({ id: n, name: n }))]}
+                    sets={sets}
+                    isOn={(p) => gPicked.includes(p.name)}
+                    onToggle={(p) => setGPicked((l) => (l.includes(p.name) ? l.filter((x) => x !== p.name) : [...l, p.name]))}
+                    onAddNew={(t) => { const n = t.trim().replace(/^@/, ""); setGExtra((l) => (l.includes(n) ? l : [...l, n])); setGPicked((l) => (l.includes(n) ? l : [...l, n])); }}
+                  />
+                )}
               {error && <p className="error" role="alert">{error}</p>}
               {hangLive && (joining ? (
                 <div className="join-code quiet">
@@ -194,11 +198,21 @@ export default function Groups() {
               </div>
             )}
             {adding && !hangLive && (
-              <form className="plan-form" onSubmit={addFriends}>
-                <label className="field">Friends (names, separated by commas)<input autoFocus value={friends} onChange={(e) => setFriends(e.target.value)} placeholder="Sam, Riley" /></label>
-                {error && <p className="error" role="alert">{error}</p>}
-                <button className="btn primary">Add to {group.name}</button>
-              </form>
+              <div className="plan-form">
+                <MemberPicker
+                  label={`In ${group.name}`}
+                  people={[
+                    ...group.members.filter((n) => n !== YOU).map((n) => ({ id: n, name: n })),
+                    ...everyone(sets).filter((p) => !group.members.includes(p.name)),
+                    ...aExtra.filter((n) => !group.members.includes(n) && !everyone(sets).some((p) => p.name === n)).map((n) => ({ id: n, name: n })),
+                  ]}
+                  sets={sets}
+                  isOn={(p) => group.members.includes(p.name)}
+                  locked={(p) => group.members.includes(p.name)}
+                  onToggle={(p) => { hangActions.addMembers(group.id, [p.name]); notice.show({ icon: "pin", title: `${p.name} is in ${group.name}`, message: "They can see the chat now.", ms: 3000 }); }}
+                  onAddNew={(t) => { const n = t.trim().replace(/^@/, ""); hangActions.addMembers(group.id, [n]); setAExtra((l) => [...l, n]); }}
+                />
+              </div>
             )}
             {planning && (
               <form className="plan-form" onSubmit={plan}>

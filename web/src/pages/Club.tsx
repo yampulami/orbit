@@ -25,6 +25,7 @@ import ClubMembers from "../components/ClubMembers";
 import ClubInfoSheet from "../components/ClubInfoSheet";
 import MyTasks from "../components/MyTasks";
 import GradientMenu from "../components/GradientMenu";
+import AvatarStack from "../components/AvatarStack";
 import CohostInvites from "../components/CohostInvites";
 
 type View = "feed" | "chat" | "dashboard" | "events" | "pods";
@@ -116,7 +117,7 @@ export default function Club() {
             {org.status === "pending" && <><Clock size={12} aria-hidden="true" /> Waiting for approval</>}
             {org.status === "paused" && "Paused"}
             {org.status === "rejected" && <><X size={12} aria-hidden="true" /> Not approved</>}
-            {org.status === "active" && <span title={act.line || undefined}>{count} {count === 1 ? "person" : "people"}</span>}
+            {org.status === "active" && <span className="club-bar-people" title={act.line || undefined}><AvatarStack names={[...org.members.map((m) => m.name), ...org.clubMembers.map((m) => m.name)].filter((n, i, l) => l.indexOf(n) === i)} max={4} size={20} />{count} {count === 1 ? "person" : "people"}</span>}
           </span>
         </div>
         <JoinButton org={org} />
