@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BadgeCheck, CalendarDays, ChevronDown, Compass, Info, Plus, ShieldCheck, UserRound, Users } from "lucide-react";
 import { isOpen, setDemoRole, useCampusEvents, type Role } from "../lib/campusEvents";
-import { orgHue, useCampusOrgs, type Org } from "../lib/campusOrgs";
+import { CATEGORIES, orgHue, useCampusOrgs, type Org } from "../lib/campusOrgs";
 import { dayLabel } from "../lib/look";
 import { activityOf } from "../lib/activity";
 import { supabase } from "../lib/supabase";
@@ -16,6 +16,7 @@ import AttendedList from "../components/AttendedList";
 import EmptyState from "../components/EmptyState";
 import AvatarStack from "../components/AvatarStack";
 import { ArrangeItem, ArrangeList } from "../components/Arrange";
+import { Search } from "lucide-react";
 import { applyOrder, useSavedOrder } from "../lib/order";
 import { useIsPhone } from "../lib/phone";
 import RichText from "../components/RichText";
@@ -138,10 +139,23 @@ function Explainer() {
 function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { events: ReturnType<typeof useCampusEvents>["events"]; ready: boolean; isHost: boolean; role: Role | null; hostLabel: string | null; reviewer: boolean }) {
   const [form, setForm] = useState(false);
   const [all, setAll] = useState(false);
+  const [when, setWhen] = useState<"all" | "today" | "week" | "going" | "official">("all");
   const now = new Date();
   const live = events.filter((e) => isOpen(e, now) && e.status === "published");
   const mineElsewhere = events.filter((e) => e.mineHost && !e.orgId && e.status !== "published" && isOpen(e, now));
-  const list = [...mineElsewhere, ...live].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const everything = [...mineElsewhere, ...live].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  const dayKey = (iso: string) => new Date(iso).toDateString();
+  const inWeek = (iso: string) => new Date(iso).getTime() - now.getTime() < 7 * 24 * 3600_000;
+  type Ev = (typeof everything)[number];
+  const base: { id: typeof when; label: string; keep: (e: Ev) => boolean }[] = [
+    { id: "all", label: "All", keep: () => true },
+    { id: "today", label: "Today", keep: (e) => dayKey(e.startsAt) === now.toDateString() },
+    { id: "week", label: "This week", keep: (e) => inWeek(e.startsAt) },
+    { id: "going", label: "I am going", keep: (e) => e.mine === "going" || e.mine === "interested" },
+    { id: "official", label: "Official", keep: (e) => e.kind === "official" },
+  ];
+  const filters = base.map((f) => ({ ...f, count: everything.filter(f.keep).length }));
+  const list = everything.filter(filters.find((f) => f.id === when)!.keep);
   const next = list.find((e) => e.status === "published" && !e.canceled);
   const rest = list.filter((e) => e !== next);
   const shown = all ? rest : rest.slice(0, 6);
@@ -159,10 +173,18 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
       </div>
       <CohostInvites />
 
+      {ready && everything.length > 0 && (
+        <div className="chip-row" role="group" aria-label="Which events">
+          {filters.map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={when === f.id} onClick={() => { setWhen(f.id); setAll(false); }}>{f.label}{f.id !== "all" && <span className="chip-n">{f.count}</span>}</button>)}
+        </div>
+      )}
+
       {!ready ? (
         <div aria-busy="true" aria-label="Loading campus events"><div className="skeleton sk-tile" /></div>
-      ) : list.length === 0 ? (
+      ) : everything.length === 0 ? (
         <EmptyState icon={CalendarDays} title="No campus events yet">When a department or club posts one, it shows up here and in your bell.</EmptyState>
+      ) : list.length === 0 ? (
+        <EmptyState icon={CalendarDays} title="Nothing here">No events match this filter. Try All.</EmptyState>
       ) : (
         <>
           {next && <div className="club-next"><h2>Up next</h2><ul className="ev-list"><EventCard e={next} reviewer={reviewer} featured /></ul></div>}
@@ -206,13 +228,29 @@ function ClubRow({ o }: { o: Org }) {
 
 /** Clubs to find. The ones you are in are on the rail, so they are not repeated here. */
 function ClubsView({ mine, all }: { mine: Org[]; all: Org[] }) {
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("");
   const mineIds = new Set(mine.map((o) => o.id));
-  const others = all.filter((o) => !mineIds.has(o.id) && o.status === "active");
+  const needle = q.trim().toLowerCase();
+  const everyone = all.filter((o) => !mineIds.has(o.id) && o.status === "active");
+  const cats = CATEGORIES.filter((c) => everyone.some((o) => o.application.category === c));
+  const others = everyone.filter((o) => (!cat || o.application.category === cat) && (!needle || `${o.name} ${o.description} ${o.application.category}`.toLowerCase().includes(needle)));
   const clubs = others.filter((o) => o.kind !== "circle");
   const circles = others.filter((o) => o.kind === "circle");
 
   return (
     <section className="clubs" aria-label="Clubs">
+      {everyone.length > 0 && (
+        <div className="club-find">
+          <label className="club-search"><Search size={16} aria-hidden="true" /><input value={q} maxLength={40} placeholder="Find a club or circle" aria-label="Find a club or circle" onChange={(e) => setQ(e.target.value)} /></label>
+          {cats.length > 1 && (
+            <div className="chip-row" role="group" aria-label="Category">
+              <button type="button" className="chip-btn" aria-pressed={!cat} onClick={() => setCat("")}>All</button>
+              {cats.map((c) => <button key={c} type="button" className="chip-btn" aria-pressed={cat === c} onClick={() => setCat(cat === c ? "" : c)}>{c}</button>)}
+            </div>
+          )}
+        </div>
+      )}
       {clubs.length > 0 && (
         <div className="rows-block">
           <h2>Clubs and offices</h2>
@@ -225,7 +263,8 @@ function ClubsView({ mine, all }: { mine: Org[]; all: Org[] }) {
           <ul className="club-rows">{circles.map((o) => <ClubRow key={o.id} o={o} />)}</ul>
         </div>
       )}
-      {others.length === 0 && <p className="rows-empty">{mine.length ? "You are in everything there is. Tap + on the left to start something." : "Nothing here yet. Tap + on the left to start the first club or circle."}</p>}
+      {others.length === 0 && everyone.length > 0 && <p className="rows-empty">Nothing matches. Try a different word or category.</p>}
+      {everyone.length === 0 && <p className="rows-empty">{mine.length ? "You are in everything there is. Tap + on the left to start something." : "Nothing here yet. Tap + on the left to start the first club or circle."}</p>}
     </section>
   );
 }

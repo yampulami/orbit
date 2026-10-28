@@ -19,6 +19,7 @@ import CommunityPicker from "../components/CommunityPicker";
 import { communityIcon } from "../lib/communityUi";
 import GradientMenu, { type GMItem } from "../components/GradientMenu";
 import ReactionBar from "../components/ReactionBar";
+import AvatarStack from "../components/AvatarStack";
 import ShareMenu from "../components/ShareMenu";
 import { siteUrl } from "../lib/siteUrl";
 import { usePins } from "../lib/pins";
@@ -305,7 +306,7 @@ export default function Feed() {
                   {p.payload.repostOf && <p className="repost-note"><Repeat2 size={14} aria-hidden="true" /> Reposted from {p.payload.repostName ?? "someone"}</p>}
                   <p className="body" style={{ whiteSpace: "pre-wrap" }}><RichText text={p.payload.body ?? p.payload.text ?? ""} /></p>
                   <div className="foot">
-                    {people.length > 0 && <span className="avatars" aria-hidden="true">{people.map((n) => <span key={n}>{initials(n)}</span>)}</span>}
+                    {people.length > 0 && <AvatarStack names={people} max={3} size={26} label={`${people.join(", ")} commented`} />}
                     <ReactionBar
                       liked={liked} likes={p.post_likes.length} onLike={() => like(p)}
                       commentsOpen={expanded} comments={p.post_comments.length} onComment={() => setOpen(expanded ? null : p.id)}
@@ -350,3 +351,4 @@ export default function Feed() {
     </div>
   );
 }
+

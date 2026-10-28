@@ -3425,3 +3425,27 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .ac-confirm-state{font-size:.84rem;font-weight:600;color:var(--ink-soft)}
 .ac-confirm[data-state=done] .ac-confirm-state{color:#1fa97a}
 .ac-confirm[data-state=failed] .ac-confirm-state{color:#e0525c}
+
+/* a post never grows wider than its card, however long the name or the title is */
+.posts .post.tile{grid-template-columns:minmax(0,1fr)}
+.posts .post .meta{flex-wrap:wrap;gap:6px 10px}
+.posts .post .who,.posts .post .meta>span{min-width:0}
+.posts .post h3,.posts .post .body{overflow-wrap:anywhere}
+@media (max-width:520px){
+  .rb{gap:0;padding:4px 6px;max-width:100%}
+  .rb-item{padding:0 10px;gap:6px;font-size:.9rem}
+  .posts .post .foot{flex-wrap:wrap;gap:8px}
+}
+
+/* ===== Campus: filters for events and clubs ===== */
+.chip-row{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none}
+.chip-row::-webkit-scrollbar{display:none}
+.chip-row .chip-btn{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink-soft);font:inherit;font-size:.86rem;font-weight:600;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.chip-row .chip-btn:hover{color:var(--ink);border-color:var(--violet)}
+.chip-row .chip-btn[aria-pressed=true]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+.chip-n{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--panel);color:var(--ink-soft);font-size:.72rem;font-weight:700}
+.chip-btn[aria-pressed=true] .chip-n{background:color-mix(in srgb,var(--on-ink) 22%,transparent);color:var(--on-ink)}
+.club-find{display:grid;gap:10px;margin-bottom:6px}
+.club-search{display:flex;align-items:center;gap:10px;height:46px;padding:0 16px;border-radius:999px;background:var(--surface);box-shadow:0 0 0 1px var(--line);color:var(--ink-soft);transition:box-shadow .2s}
+.club-search:focus-within{box-shadow:0 0 0 2px var(--violet)}
+.club-search input{flex:1;min-width:0;border:0;outline:0;background:none;color:var(--ink);font:inherit;font-size:.95rem}
