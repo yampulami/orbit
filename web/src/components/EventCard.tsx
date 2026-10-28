@@ -89,7 +89,8 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
         )}
         {live && (
           <div className="ev-actions">
-            {!e.canceled && (
+            {!e.canceled && e.mineHost && <span className="ev-hosting"><Check size={13} aria-hidden="true" /> You are hosting</span>}
+            {!e.canceled && !e.mineHost && (
               <GradientMenu
                 label={`Your answer for ${e.title}`}
                 items={[

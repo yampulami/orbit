@@ -3465,3 +3465,12 @@ a.avs-face{text-decoration:none;cursor:pointer}
   .club-bar h1{white-space:normal;font-size:1.08rem;line-height:1.1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .club-bar-sub{font-size:.74rem}
 }
+
+/* the person who posts an event is going to it */
+.ev-hosting{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border-radius:999px;background:color-mix(in srgb,#1fa97a 16%,transparent);color:#1fa97a;font-size:.84rem;font-weight:700}
+
+/* the dotted ball in the chat */
+.dot-orb{display:block;flex:none}
+.ac-think{display:flex;align-items:center;gap:6px;height:auto;min-height:44px}
+.ac-think .dot-orb{margin-left:-6px}
+.ac-empty .dot-orb{margin-bottom:6px}

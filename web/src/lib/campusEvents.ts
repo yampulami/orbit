@@ -34,12 +34,14 @@ export function buildEvents(events: RawEvent[], answers: RawAnswer[], me: string
   return [...events]
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
     .map((e) => {
-      const mine = answers.find((a) => a.event_id === e.id && a.user_id === me)?.answer;
       const of = answers.filter((a) => a.event_id === e.id);
+      // Whoever posts an event is going to it, unless they say otherwise.
+      const hostSaid = of.some((a) => a.user_id === e.host_id);
+      const mine = answers.find((a) => a.event_id === e.id && a.user_id === me)?.answer ?? (e.host_id === me ? "going" : undefined);
       return {
         id: e.id, orgId: e.org_id ?? undefined, hostId: e.host_id, host: e.host_label, title: e.title, description: e.description, place: e.place_name,
         startsAt: e.starts_at, endsAt: e.ends_at ?? undefined, canceled: !!e.canceled_at,
-        going: of.filter((a) => a.answer === "going").length, interested: of.filter((a) => a.answer === "interested").length,
+        going: of.filter((a) => a.answer === "going").length + (hostSaid ? 0 : 1), interested: of.filter((a) => a.answer === "interested").length,
         mine, mineHost: e.host_id === me, kind: e.kind ?? "official", status: e.status ?? "published", note: e.review_note ?? undefined,
         cohosts: cohosts.filter((c) => c.event_id === e.id).map((c) => ({ orgId: c.org_id, name: names[c.org_id] ?? "A club", status: c.status })),
       };

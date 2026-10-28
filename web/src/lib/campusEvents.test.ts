@@ -12,8 +12,16 @@ describe("campus events", () => {
   it("lists events soonest first with counts and your own answer", () => {
     const list = buildEvents([ev("b", "2026-10-30T10:00:00Z"), ev("a", "2026-10-28T10:00:00Z")], [ans("a", "me", "going"), ans("a", "u2", "going"), ans("a", "u3", "interested")], "me");
     expect(list.map((e) => e.id)).toEqual(["a", "b"]);
-    expect(list[0]).toMatchObject({ going: 2, interested: 1, mine: "going", host: "Library", mineHost: false });
-    expect(list[1]).toMatchObject({ going: 0, interested: 0, mine: undefined });
+    // the host (h1) counts as going without answering
+    expect(list[0]).toMatchObject({ going: 3, interested: 1, mine: "going", host: "Library", mineHost: false });
+    expect(list[1]).toMatchObject({ going: 1, interested: 0, mine: undefined });
+  });
+
+  it("counts the person who posted an event as going unless they say otherwise", () => {
+    const [mine] = buildEvents([ev("a", "2026-10-28T10:00:00Z", { host_id: "me" })], [], "me");
+    expect(mine).toMatchObject({ mine: "going", going: 1, mineHost: true });
+    const [said] = buildEvents([ev("a", "2026-10-28T10:00:00Z", { host_id: "me" })], [ans("a", "me", "interested")], "me");
+    expect(said).toMatchObject({ mine: "interested", going: 0, interested: 1 });
   });
 
   it("knows which events are yours as the host, and which are cancelled", () => {

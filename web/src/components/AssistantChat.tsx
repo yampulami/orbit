@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, ArrowUp, Menu, Plus, Trash2, X } from "lucide-react";
 import { groupChats, NEW_TITLE, type Chat, type Msg } from "../lib/assistantChats";
 import Orb from "./Orb";
+import DotOrb from "./DotOrb";
 
 const SUGGESTIONS = ["What's on tonight?", "When is my next class?", "Which clubs am I in?", "Any unread messages?"];
 
@@ -129,7 +130,7 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, step
         <div className="ac-scroll" ref={scroller}>
           {messages.length === 0 ? (
             <div className="ac-empty">
-              <Orb size={84} variant="violet" />
+              <DotOrb size={96} />
               <h2>How can I help?</h2>
               <p>Ask about tonight, a club, your classes or your reminders. I can also take you to a page.</p>
               <div className="ac-chips">
@@ -162,7 +163,7 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, step
               {thinking && (
                 <li className="ac-msg assistant" aria-label="Orbit is thinking">
                   <span className="ac-av" aria-hidden="true" />
-                  <div className="ac-body"><p className="ac-text ac-think"><i /><i /><i />{step && <span className="ac-step">{step}</span>}</p></div>
+                  <div className="ac-body"><p className="ac-text ac-think"><DotOrb size={40} thinking />{step && <span className="ac-step">{step}</span>}</p></div>
                 </li>
               )}
             </ol>
