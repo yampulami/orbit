@@ -7,6 +7,7 @@ import { notice } from "../lib/notice";
 import { roomActions, useSpace, useSpaceReady } from "../lib/roommates";
 import GroupAddFriend from "../components/GroupAddFriend";
 import { Avatar } from "./roommates/Avatar";
+import GradientMenu, { type GMItem } from "../components/GradientMenu";
 import Tasks from "./roommates/Tasks";
 import Groceries from "./roommates/Groceries";
 import Expenses from "./roommates/Expenses";
@@ -14,12 +15,12 @@ import Fairness from "./roommates/Fairness";
 import Notes from "./roommates/Notes";
 
 type Section = "tasks" | "groceries" | "expenses" | "fairness" | "notes";
-const SECTIONS: { id: Section; label: string; Icon: LucideIcon; ink: string }[] = [
-  { id: "tasks", label: "Tasks", Icon: ListChecks, ink: "var(--lav-ink)" },
-  { id: "groceries", label: "Groceries", Icon: ShoppingBasket, ink: "var(--mint-ink)" },
-  { id: "expenses", label: "Expenses", Icon: Receipt, ink: "var(--peach-ink)" },
-  { id: "fairness", label: "Fairness", Icon: Scale, ink: "var(--pink-ink)" },
-  { id: "notes", label: "House notes", Icon: StickyNote, ink: "var(--butter-ink)" },
+const SECTIONS: { id: Section; label: string; Icon: LucideIcon; tone: GMItem["tone"] }[] = [
+  { id: "tasks", label: "Tasks", Icon: ListChecks, tone: "purple" },
+  { id: "groceries", label: "Groceries", Icon: ShoppingBasket, tone: "green" },
+  { id: "expenses", label: "Expenses", Icon: Receipt, tone: "orange" },
+  { id: "fairness", label: "Fairness", Icon: Scale, tone: "pink" },
+  { id: "notes", label: "House notes", Icon: StickyNote, tone: "blue" },
 ];
 
 const names = (s: string) => [...new Set(s.split(",").map((m) => m.trim()).filter((m) => m && m !== YOU))];
@@ -148,13 +149,11 @@ export default function Roommates() {
         )
       )}
 
-      <div className="pills" role="group" aria-label="Household sections">
-        {SECTIONS.map(({ id, label, Icon, ink }) => (
-          <button key={id} type="button" className="pill" aria-pressed={section === id} onClick={() => setSection(id)}>
-            <span className="dot" style={{ color: ink }}><Icon size={16} strokeWidth={1.9} aria-hidden="true" /></span>{label}
-          </button>
-        ))}
-      </div>
+      <GradientMenu
+        className="gm-bar"
+        label="Household sections"
+        items={SECTIONS.map(({ id, label, Icon, tone }): GMItem => ({ key: id, label, icon: Icon, tone, on: section === id, onClick: () => setSection(id) }))}
+      />
 
       {section === "tasks" && <Tasks space={space} />}
       {section === "groceries" && <Groceries space={space} />}

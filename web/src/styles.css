@@ -3195,3 +3195,9 @@ body.chat-open .asst-fab{display:none}
 .avs-in{animation:avs-in .4s cubic-bezier(.22,1,.36,1) both}
 @keyframes avs-in{from{opacity:0;transform:scale(.4)}}
 @media (prefers-reduced-motion:reduce){.avs-in{animation:none}}
+
+/* a gradient menu used as a bar: one line, scrolls sideways on a narrow screen, room for the glow */
+.gm-bar{flex-wrap:nowrap;overflow-x:auto;padding:4px 4px 16px;margin-bottom:-8px;scrollbar-width:none}
+.gm-bar::-webkit-scrollbar{display:none}
+
+.pills .gm-bar{overflow:visible;padding:0;margin:0}

@@ -17,6 +17,7 @@ const Calendar = lazy(() => import("../components/Calendar"));
 import UpcomingList from "../components/UpcomingList";
 import CommunityPicker from "../components/CommunityPicker";
 import { communityIcon } from "../lib/communityUi";
+import GradientMenu, { type GMItem } from "../components/GradientMenu";
 import { usePins } from "../lib/pins";
 import { notice } from "../lib/notice";
 import HangoutCard from "../components/HangoutCard";
@@ -250,15 +251,15 @@ export default function Feed() {
           </div>
         </form>}
         <h2 className="sr">Campus feed at {campus.name}</h2>
-        <div className="pills" role="group" aria-label="Filter by community">
-          {(["All", ...communities] as const).map((c) => {
-            const { Icon, ink } = communityIcon[c];
-            return (
-              <button key={c} type="button" className="pill" aria-pressed={filter === c} onClick={() => setFilter(c)}>
-                <span className="dot" style={{ color: ink }}><Icon size={16} strokeWidth={1.9} aria-hidden="true" /></span>{c}
-              </button>
-            );
-          })}
+        <div className="pills">
+        <GradientMenu
+          className="gm-bar"
+          label="Filter by community"
+          items={(["All", ...communities] as const).map((c): GMItem => ({
+            key: c, label: c, icon: communityIcon[c].Icon, on: filter === c, onClick: () => setFilter(c),
+            tone: ({ All: "purple", Everyone: "pink", Commuters: "orange", Residents: "green", Roommates: "blue", Marketplace: "orange" } as Record<string, GMItem["tone"]>)[c] ?? "purple",
+          }))}
+        />
         </div>
         {error && <p className="error" role="alert">{error}</p>}
         <div className="posts">
