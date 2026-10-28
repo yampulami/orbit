@@ -80,10 +80,15 @@ Deno.serve(async (req) => {
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({ model, messages: [{ role: "system", content: system(body.context ?? {}) }, ...messages], ...(tools.length ? { tools, tool_choice: "auto" } : {}), temperature: 0.4, max_tokens: 700 }),
     });
-  } catch { return reply({ error: "unreachable" }, 502); }
+  } catch (e) { console.error("assistant: could not reach the model", String(e)); return reply({ error: "unreachable" }, 502); }
 
   if (res.status === 429) return reply({ error: "busy" }, 429);
-  if (!res.ok) return reply({ error: "model_error", status: res.status }, 502);
+  if (!res.ok) {
+    // Say why in the function's logs, so a wrong key or model name is easy to find.
+    const why = (await res.text().catch(() => "")).slice(0, 400);
+    console.error("assistant: the model refused", res.status, why);
+    return reply({ error: "model_error", status: res.status, detail: why }, 502);
+  }
   const data = await res.json().catch(() => null);
   const message = data?.choices?.[0]?.message;
   if (!message) return reply({ error: "model_error" }, 502);
