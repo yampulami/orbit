@@ -127,3 +127,29 @@ describe("weekly times", () => {
     expect(w.every((x) => x.missing.length === 0)).toBe(true);
   });
 });
+
+describe("attendance rules", () => {
+  const sam: Person = { id: "sam", name: "Sam", blocks: [{ d: 3, s: 540, e: 1080 }] }; // busy until 18:00
+  const jo: Person = { id: "jo", name: "Jo", blocks: [] };
+  const open = [me([]), sam, jo];
+
+  it("shows times with a minimum number of people, and who is missing", () => {
+    const r = suggestTimes(open, at(7), { days: 1, duration: 60, minAvailable: 2, max: 20 });
+    expect(r.some((s) => s.missing.includes("sam"))).toBe(true);
+    expect(r.every((s) => s.available.length >= 2)).toBe(true);
+  });
+  it("never shows a time a required person cannot make", () => {
+    const r = suggestTimes(open, at(7), { days: 1, duration: 60, minAvailable: 2, required: ["sam"], max: 20 });
+    expect(r.length).toBeGreaterThan(0);
+    expect(r.every((s) => s.available.includes("sam"))).toBe(true);
+  });
+  it("always needs the organizer", () => {
+    const busyMe = [{ id: "me", name: "You", blocks: [{ d: 3, s: 0, e: 1440 }] }, jo];
+    expect(suggestTimes(busyMe, at(7), { days: 1, duration: 60, minAvailable: 1 })).toEqual([]);
+  });
+  it("leaves out days you skip", () => {
+    const r = suggestTimes([me([])], at(7), { days: 3, duration: 60, skipDays: [4], max: 40 });
+    expect(r.some((s) => s.start.getDay() === 4)).toBe(false);
+    expect(r.some((s) => s.start.getDay() === 3)).toBe(true);
+  });
+});

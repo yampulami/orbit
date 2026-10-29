@@ -166,10 +166,20 @@ describe("finding free time", () => {
     let seen = "";
     const model = async (m: ModelMsg[]) => { const t = m.find((x) => x.role === "tool"); if (t) { seen = t.content!; return say("ok"); } return use(call("find_free_time", { friends: ["Maya", "Zed"], days: 3, duration_minutes: 120 })); };
     await converse({ history: [user("when are we free?")], env: env({ findFreeTime }), model });
-    expect(findFreeTime).toHaveBeenCalledWith(["Maya", "Zed"], { days: 3, duration: 120, everyone: true });
+    expect(findFreeTime).toHaveBeenCalledWith(["Maya", "Zed"], expect.objectContaining({ days: 3, duration: 120, everyone: true, skipDays: [] }));
     expect(seen).toMatch(/freeCount/);
     expect(seen).toMatch(/bestMatch/);
     expect(seen).toMatch(/Maya Lopez/);
     expect(seen).toMatch(/Zed/);
   });
 });
+
+describe("finding free time with rules", () => {
+  it("passes the minimum people, who must come, the hours and skipped days", async () => {
+    const findFreeTime = vi.fn(async () => ({ suggestions: [], notSharing: [], unknown: [] }));
+    const model = async (m: ModelMsg[]) => (m.some((x) => x.role === "tool") ? say("ok") : use(call("find_free_time", { friends: ["Maya"], minimum_people: 3, must_attend: ["Maya"], not_before_hour: 14, not_after_hour: 20, skip_weekdays: ["Friday", "sat"] })));
+    await converse({ history: [user("study after 2, not Friday or Saturday")], env: env({ findFreeTime }), model });
+    expect(findFreeTime).toHaveBeenCalledWith(["Maya"], expect.objectContaining({ minPeople: 3, mustAttend: ["Maya"], earliest: 14 * 60, latest: 20 * 60, skipDays: [5, 6] }));
+  });
+});
+

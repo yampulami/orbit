@@ -3734,3 +3734,11 @@ a.sl-row{text-decoration:none}
 .nw-head small{font-size:.78rem}
 .nw-friends{font-size:.82rem}
 .wb-scroll{max-height:min(360px,calc(100vh - 420px))}
+
+/* schedule sync: no-result alternatives, unknown people */
+.sync-none{display:grid;gap:8px;padding:10px 12px;border-radius:12px;background:var(--panel)}
+.sync-none p{margin:0;font-size:.86rem;line-height:1.4}
+.sync-alts{display:flex;flex-wrap:wrap;gap:6px}
+.sync-note b{color:var(--ink)}
+.sync-adv .sync-bar{margin-top:8px}
+.chip-btn svg{margin-right:4px;vertical-align:-1px}

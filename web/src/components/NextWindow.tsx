@@ -48,7 +48,9 @@ export default function NextWindow() {
             ? <><strong>You are free until {t(free.until)}</strong><small>Nothing is planned until then</small></>
             : <><strong>You have {span(free.minutes)} free</strong><small>until {t(free.until)}</small></>}
         </div>
-        <Link to="/app/plans" className="link-btn nw-find">Find a time</Link>
+        {alsoFree.length > 0
+          ? <Link to="/app/plans" state={{ syncWith: alsoFree.map((p) => p.id) }} className="link-btn nw-find">Plan with {alsoFree[0].name.split(" ")[0]}{alsoFree.length > 1 ? ` +${alsoFree.length - 1}` : ""}</Link>
+          : <Link to="/app/plans" className="link-btn nw-find">Find a time</Link>}
       </div>
       {alsoFree.length > 0 && (
         <p className="nw-friends"><Users size={14} aria-hidden="true" /> {alsoFree.slice(0, 3).map((p) => p.name.split(" ")[0]).join(", ")}{alsoFree.length > 3 ? ` and ${alsoFree.length - 3} more` : ""} {alsoFree.length === 1 ? "is" : "are"} free too</p>

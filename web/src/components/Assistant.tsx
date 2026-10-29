@@ -255,7 +255,8 @@ export default function Assistant() {
           reminders: reminders as { title: string; date: string; time?: string; done: boolean }[],
         }, nowD);
         const people = [mine, ...shared];
-        const suggestions = suggestTimes(people, nowD, { days: opts.days, duration: opts.duration, everyone: opts.everyone || people.length < 3, max: 5 })
+        const required = (opts.mustAttend ?? []).map((n) => chosen.find((f) => f.name.toLowerCase().includes(n.toLowerCase()))?.id).filter((x): x is string => !!x);
+        const suggestions = suggestTimes(people, nowD, { days: opts.days, duration: opts.duration, everyone: opts.everyone || people.length < 3, minAvailable: opts.minPeople, required, skipDays: opts.skipDays, earliest: opts.earliest, latest: opts.latest, max: 5 })
           .map((s) => ({ start: s.start.toISOString(), end: s.end.toISOString(), free: s.available.length, of: people.length, missing: s.missing.map((id) => people.find((p) => p.id === id)?.name.split(" ")[0] ?? "Someone"), best: s.best, why: s.reasons.join(", ") }));
         return { suggestions, notSharing, unknown };
       },

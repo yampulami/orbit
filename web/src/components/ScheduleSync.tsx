@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Sparkles, Users } from "lucide-react";
+import { Check, Sparkles, Star, Users } from "lucide-react";
 import StackedList from "./StackedList";
 import { gradientFor } from "../lib/look";
 import { useFriends } from "../lib/friends";
-import { hangActions } from "../lib/hangouts";
+import { findConflict, hangActions } from "../lib/hangouts";
 import { useCampusEvents } from "../lib/campusEvents";
 import { loadFriendFree } from "../lib/availability";
 import { busySpans, suggestTimes, timeLabel, weeklyTimes, type Person, type Suggestion, type WeeklySlot } from "../lib/freeTime";
@@ -20,6 +20,19 @@ import { notice } from "../lib/notice";
 const LENGTHS = [{ m: 30, l: "30 min" }, { m: 60, l: "1 hr" }, { m: 90, l: "1.5 hr" }, { m: 120, l: "2 hr" }, { m: 180, l: "3 hr" }];
 const WINDOWS = [{ d: 1, l: "Today" }, { d: 3, l: "3 days" }, { d: 7, l: "This week" }, { d: 14, l: "2 weeks" }];
 const GRID_FROM = 8 * 60, GRID_TO = 22 * 60;
+
+/** What the plan is for: it sets a sensible length and title, and the hours that suit it. */
+const KINDS = [
+  { id: "hangout", label: "Hangout", title: "Hang out", minutes: 90, from: 10 * 60, to: 22 * 60 },
+  { id: "study", label: "Study session", title: "Study session", minutes: 120, from: 9 * 60, to: 21 * 60 },
+  { id: "meal", label: "Meal", title: "Grab food", minutes: 60, from: 11 * 60, to: 20 * 60 },
+  { id: "club", label: "Club meeting", title: "Club meeting", minutes: 60, from: 12 * 60, to: 21 * 60 },
+  { id: "custom", label: "Something else", title: "Plan", minutes: 60, from: 9 * 60, to: 21 * 60 + 30 },
+] as const;
+type KindId = (typeof KINDS)[number]["id"];
+const NOT_BEFORE = [{ m: 8 * 60, l: "Any time" }, { m: 10 * 60, l: "10 AM" }, { m: 12 * 60, l: "Noon" }, { m: 14 * 60, l: "2 PM" }, { m: 17 * 60, l: "5 PM" }];
+const NOT_AFTER = [{ m: 22 * 60, l: "Any time" }, { m: 20 * 60, l: "8 PM" }, { m: 18 * 60, l: "6 PM" }, { m: 16 * 60, l: "4 PM" }];
+const WEEK = [1, 2, 3, 4, 5, 6, 0];
 
 const dayLabel = (d: Date) => d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 const clock = (d: Date) => timeLabel(d.getHours() * 60 + d.getMinutes());
@@ -38,7 +51,7 @@ function nextOccurrence(weekday: number, minute: number, now: Date): Date {
  * Schedule Sync: pick people, say how long you need and how soon, and see the best times ranked, with who can make each and why it was picked.
  * Inside a group (`groupId`) a chosen time becomes a hangout in that group; otherwise it makes a private group and messages the friends a link.
  */
-export default function ScheduleSync({ groupId, people: given, title = "Find a time" }: { groupId?: string; /** A fixed set of people (a group or a household), instead of picking friends. Only those who share with you count. */ people?: { id: string; name: string }[]; title?: string }) {
+export default function ScheduleSync({ groupId, people: given, initialPicked, title = "Find a time" }: { groupId?: string; /** Friends already ticked when it opens. */ initialPicked?: string[]; /** A fixed set of people (a group or a household), instead of picking friends. Only those who share with you count. */ people?: { id: string; name: string }[]; title?: string }) {
   const { friends } = useFriends();
   const nav = useNavigate();
   const { events } = useCampusEvents();
@@ -46,12 +59,17 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
   const { me: base, input } = useMyBusy(now);
   const { live: places } = useMapPlaces();
   const [whereId, setWhereId] = useState("");
-  const [picked, setPicked] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string[]>(initialPicked ?? []);
   const [shared, setShared] = useState<Person[]>([]);
   const [notSharing, setNotSharing] = useState<string[]>([]);
   const [duration, setDuration] = useState(60);
   const [days, setDays] = useState(7);
-  const [everyone, setEveryone] = useState(true);
+  const [kind, setKind] = useState<KindId>("hangout");
+  const [attend, setAttend] = useState<string>("all"); // "all", "half" or a number of people
+  const [required, setRequired] = useState<string[]>([]);
+  const [notBefore, setNotBefore] = useState(9 * 60);
+  const [notAfter, setNotAfter] = useState(21 * 60 + 30);
+  const [skipDays, setSkipDays] = useState<number[]>([]);
   const [buffer, setBuffer] = useState(false);
   const [weekly, setWeekly] = useState(false);
   const [dayIdx, setDayIdx] = useState(0);
@@ -78,14 +96,24 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
   const nameOf = (id: string) => people.find((p) => p.id === id)?.name ?? "Someone";
   const first = (id: string) => (id === "me" ? "You" : nameOf(id).split(" ")[0]);
 
+  const crowd0 = people.length;
+  const minAvailable = attend === "all" || crowd0 < 3 ? crowd0 : attend === "half" ? Math.max(2, Math.ceil(crowd0 / 2)) : Math.min(crowd0, Math.max(2, Number(attend) || crowd0));
   const suggestions: Suggestion[] = useMemo(
-    () => (weekly ? [] : suggestTimes(people, now, { duration, days, everyone: everyone || people.length < 3, buffer: buffer ? 15 : 0, max: 6 })),
-    [people, now, duration, days, everyone, buffer, weekly],
+    () => (weekly ? [] : suggestTimes(people, now, { duration, days, buffer: buffer ? 15 : 0, minAvailable, required, skipDays, earliest: notBefore, latest: notAfter, max: 6 })),
+    [people, now, duration, days, buffer, weekly, minAvailable, required, skipDays, notBefore, notAfter],
   );
   const weeklySlots: WeeklySlot[] = useMemo(
-    () => (weekly ? weeklyTimes(people, { duration, everyone: everyone || people.length < 3, buffer: buffer ? 15 : 0, max: 6 }) : []),
-    [people, duration, everyone, buffer, weekly],
+    () => (weekly ? weeklyTimes(people, { duration, everyone: minAvailable >= crowd0, buffer: buffer ? 15 : 0, earliest: notBefore, latest: notAfter, max: 6 }) : []),
+    [people, duration, minAvailable, crowd0, buffer, weekly, notBefore, notAfter],
   );
+  const kindOf = KINDS.find((k) => k.id === kind)!;
+  const pickKind = (id: KindId) => {
+    const k = KINDS.find((x) => x.id === id)!;
+    setKind(id); setDuration(k.minutes); setNotBefore(Math.max(k.from, 8 * 60)); setNotAfter(k.to);
+  };
+  const toggleRequired = (id: string) => setRequired((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]));
+  const toggleDay = (d: number) => setSkipDays((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d]));
+  const restricted = notBefore > 8 * 60 || notAfter < 22 * 60 || skipDays.length > 0;
 
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id].slice(0, 8)));
 
@@ -93,17 +121,21 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
   const eventAt = (start: Date, end: Date) => events.find((e) => e.status === "published" && !e.canceled && new Date(e.startsAt) < end && new Date(e.endsAt ?? new Date(new Date(e.startsAt).getTime() + 2 * 3600000)) > start);
 
   async function plan(start: Date, id: string) {
-    setMaking(true); setError("");
+    setError("");
     const when = toLocalInput(start);
+    // Things change while you read the list, so check once more that you are not already booked then.
+    const clash = findConflict(when);
+    if (clash) { setError(`You already have "${clash.title}" at that time. Pick another.`); setConfirm(null); return; }
+    setMaking(true);
     if (groupId) {
-      hangActions.createHangout(groupId, { title: "Hang out", place: spot?.name ?? "Pick a spot", when });
+      hangActions.createHangout(groupId, { title: kindOf.title, place: spot?.name ?? "Pick a spot", when });
       setMaking(false); setConfirm(null);
       haptic("success");
       notice.show({ icon: "calendar", title: "Hangout planned", message: "Everyone in the group can answer it now. Pick a place in the chat.", ms: 4000 });
       return;
     }
     const label = chosen.map((f) => f.name.split(" ")[0]).slice(0, 3).join(", ");
-    const out = await makeGroupAndInvite({ name: label ? `Hangout with ${label}` : "Hangout", friends: chosen, hangout: { title: "Hang out", place: spot?.name ?? "Pick a spot", when } });
+    const out = await makeGroupAndInvite({ name: label ? `${kindOf.title} with ${label}` : kindOf.title, friends: chosen, hangout: { title: kindOf.title, place: spot?.name ?? "Pick a spot", when } });
     setMaking(false); setConfirm(null);
     if (out.error) { setError(out.error); return; }
     haptic("success");
@@ -143,27 +175,48 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
           )}
         />
       )}
-      {notSharing.length > 0 && <p className="muted sync-note">{notSharing.join(", ")} {notSharing.length === 1 ? "has" : "have"} not turned on free-time sharing, so {notSharing.length === 1 ? "they are" : "they are"} left out.</p>}
+      {notSharing.length > 0 && <p className="muted sync-note"><b>Unknown:</b> {notSharing.join(", ")} {notSharing.length === 1 ? "has" : "have"} not shared free time, so Orbit cannot tell when they are free and leaves them out. Ask them to turn on sharing, or plan it and let them answer.</p>}
 
       <div className="sync-opts">
         <div className="sync-bar">
+          <label>What<select value={kind} onChange={(e) => pickKind(e.target.value as KindId)}>{KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</select></label>
           <label>How long<select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>{LENGTHS.map((l) => <option key={l.m} value={l.m}>{l.l}</option>)}</select></label>
           {!weekly && <label>How soon<select value={days} onChange={(e) => setDays(Number(e.target.value))}>{WINDOWS.map((w) => <option key={w.d} value={w.d}>{w.l}</option>)}</select></label>}
         </div>
         <details className="sync-adv">
-          <summary>More</summary>
-        <div className="sync-opt"><span id="sy-where">Where (optional)</span>
-          <select className="sync-where" aria-labelledby="sy-where" value={whereId} onChange={(e) => setWhereId(e.target.value)}>
-            <option value="">Anywhere</option>
-            {places.filter((p) => p.category !== "transit").slice(0, 80).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          {spot && <small className="muted">{travel && travel.longest > 0 ? `Leaves up to ${travel.longest} min around your classes to walk to ${spot.name}.` : `Your classes are close to ${spot.name}.`}</small>}
-        </div>
-        <div className="sync-toggles">
-          <label><input type="checkbox" checked={weekly} onChange={(e) => setWeekly(e.target.checked)} /> Repeats every week</label>
-          {crowd > 2 && <label><input type="checkbox" checked={everyone} onChange={(e) => setEveryone(e.target.checked)} /> Everyone must be free</label>}
-          <label><input type="checkbox" checked={buffer} onChange={(e) => setBuffer(e.target.checked)} /> Leave 15 min around classes</label>
-        </div>
+          <summary>More{restricted || attend !== "all" || required.length > 0 ? " (set)" : ""}</summary>
+          {crowd > 2 && (
+            <div className="sync-opt"><span id="sy-att">Who has to be free</span>
+              <select className="sync-where" aria-labelledby="sy-att" value={attend} onChange={(e) => setAttend(e.target.value)}>
+                <option value="all">Everyone</option>
+                <option value="half">At least half</option>
+                {Array.from({ length: Math.max(0, crowd - 2) }, (_, i) => i + 2).map((n) => <option key={n} value={String(n)}>At least {n} people</option>)}
+              </select>
+            </div>
+          )}
+          {!given && picked.length > 0 && (
+            <div className="sync-opt"><span id="sy-req">Must be there</span>
+              <div className="chip-row" role="group" aria-labelledby="sy-req">{chosen.map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={required.includes(f.id)} onClick={() => toggleRequired(f.id)}>{required.includes(f.id) && <Star size={11} aria-hidden="true" />}{f.name.split(" ")[0]}</button>)}</div>
+            </div>
+          )}
+          <div className="sync-bar">
+            <label>Not before<select value={notBefore} onChange={(e) => setNotBefore(Number(e.target.value))}>{[...NOT_BEFORE, ...(NOT_BEFORE.some((o) => o.m === notBefore) ? [] : [{ m: notBefore, l: timeLabel(notBefore) }])].map((o) => <option key={o.m} value={o.m}>{o.l}</option>)}</select></label>
+            <label>Not after<select value={notAfter} onChange={(e) => setNotAfter(Number(e.target.value))}>{[...NOT_AFTER, ...(NOT_AFTER.some((o) => o.m === notAfter) ? [] : [{ m: notAfter, l: timeLabel(notAfter) }])].map((o) => <option key={o.m} value={o.m}>{o.l}</option>)}</select></label>
+          </div>
+          <div className="sync-opt"><span id="sy-skip">Skip days</span>
+            <div className="chip-row" role="group" aria-labelledby="sy-skip">{WEEK.map((d) => <button key={d} type="button" className="chip-btn" aria-pressed={skipDays.includes(d)} aria-label={DAY_NAMES[d]} onClick={() => toggleDay(d)}>{DAY_NAMES[d].slice(0, 3)}</button>)}</div>
+          </div>
+          <div className="sync-opt"><span id="sy-where">Where (optional)</span>
+            <select className="sync-where" aria-labelledby="sy-where" value={whereId} onChange={(e) => setWhereId(e.target.value)}>
+              <option value="">Anywhere</option>
+              {places.filter((p) => p.category !== "transit").slice(0, 80).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            {spot && <small className="muted">{travel && travel.longest > 0 ? `Leaves up to ${travel.longest} min around your classes to walk to ${spot.name}.` : `Your classes are close to ${spot.name}.`}</small>}
+          </div>
+          <div className="sync-toggles">
+            <label><input type="checkbox" checked={weekly} onChange={(e) => setWeekly(e.target.checked)} /> Repeats every week</label>
+            <label><input type="checkbox" checked={buffer} onChange={(e) => setBuffer(e.target.checked)} /> Leave 15 min around classes</label>
+          </div>
         </details>
       </div>
 
@@ -171,7 +224,18 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
 
       {!weekly && (
         suggestions.length === 0
-          ? <p className="muted">No {duration >= 60 ? span(duration) : `${duration} min`} stretch works{crowd > 1 ? " for everyone" : ""} in this time. Try a shorter length, a longer window{crowd > 2 ? ", or untick \"Everyone must be free\"" : ""}.</p>
+          ? (
+            <div className="sync-none">
+              <p><b>No {duration >= 60 ? span(duration) : `${duration} min`} time works{crowd > 1 ? " for everyone" : ""} in this window.</b> Try one of these:</p>
+              <div className="sync-alts">
+                {duration > 30 && <button type="button" className="btn sm" onClick={() => setDuration(duration > 60 ? 60 : 30)}>Shorten to {duration > 60 ? "1 hr" : "30 min"}</button>}
+                {days < 14 && <button type="button" className="btn sm" onClick={() => setDays(days < 7 ? 7 : 14)}>Look {days < 7 ? "a week" : "two weeks"} ahead</button>}
+                {crowd > 2 && attend === "all" && <button type="button" className="btn sm" onClick={() => setAttend("half")}>Allow some to miss it</button>}
+                {restricted && <button type="button" className="btn sm" onClick={() => { setNotBefore(8 * 60); setNotAfter(22 * 60); setSkipDays([]); }}>Drop the time limits</button>}
+                {required.length > 0 && <button type="button" className="btn sm" onClick={() => setRequired([])}>Nobody is a must</button>}
+              </div>
+            </div>
+          )
           : <ul className="sync-list">
               {(showAll ? suggestions : suggestions.slice(0, 3)).map((s) => {
                 const ev = eventAt(s.start, s.end);

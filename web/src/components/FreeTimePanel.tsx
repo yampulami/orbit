@@ -10,13 +10,13 @@ import { supabase } from "../lib/supabase";
 import ScheduleSync from "./ScheduleSync";
 
 /** Schedule Sync on the Plans page: the sharing switch, how it works, and finding a time with friends. */
-export default function FreeTimePanel() {
+export default function FreeTimePanel({ preselect }: { /** Friends to start with (from the "you are both free" card). Opens the panel. */ preselect?: string[] }) {
   const classes = useClasses();
   const sharing = useSharing();
   const { today } = useMyBusy(new Date());
   const { friends } = useFriends();
   const [error, setError] = useState("");
-  const [shown, setShown] = useState(false);
+  const [shown, setShown] = useState(!!preselect?.length);
 
   async function flip(on: boolean) {
     setError("");
@@ -76,7 +76,7 @@ export default function FreeTimePanel() {
         {today.length === 0 ? <p className="muted">Nothing today, so the whole day is free.</p> : <ul>{today.map((t, i) => <li key={i}>{describeBusy(t)} <small>({t.kind})</small></li>)}</ul>}
       </details>
 
-      <ScheduleSync />
+      <ScheduleSync initialPicked={preselect} />
       </>}
     </section>
   );

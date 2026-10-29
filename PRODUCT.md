@@ -111,3 +111,14 @@ Orbit now answers "what can I do right now, and with whom?". Pure logic is in `w
 - **Travel time:** choose where you will meet and your classes get walking time added around them (`web/src/lib/travel.ts`, straight-line distance at walking pace, classes matched to campus places by name).
 - **Calendar import:** on the class schedule, Import reads a .ics file (Google, Apple, Outlook) and offers the weekly repeating events as classes to add (`web/src/lib/icsImport.ts`). One-off events are left out.
 - **Not built yet:** live calendar sync (Google Calendar API), friends' travel time (places of their classes are not shared), and per-person availability for clubs beyond the numbers.
+
+### Schedule Sync as a planning engine (2026-10-31)
+
+- **What it is for:** a plan type (hangout, study session, meal, club meeting, other) sets a sensible length, the hours that suit it, and the plan's title.
+- **Attendance rules** (`suggestTimes`): everyone, at least half, at least N people, and "must be there" people who rule a time out if they cannot come. The organizer always has to be free. **Time preferences:** not before, not after, skip weekdays. All deterministic and tested; the assistant passes the same rules (`minimum_people`, `must_attend`, `not_before_hour`, `not_after_hour`, `skip_weekdays`).
+- **Unknown is not free:** a friend who has not shared is shown as "Unknown", never assumed free.
+- **When nothing works,** Orbit offers the next step with one tap: shorten the plan, look further ahead, allow some people to miss it, drop the time limits, or stop treating anyone as a must.
+- **Before a plan is made,** it checks again that the organizer is not already booked then. Plans become hangouts in a group chat with Yes/No answers; people who have not answered stay pending, nobody is assumed to accept.
+- **Proactive prompt:** when friends who share are free at the same time as you, the "you are free until" card offers "Plan with Cam", which opens Schedule sync with them picked.
+- **Not built:** polls with several candidate times, "suggest another time" replies, a flexible/movable flag on commitments, live external calendar sync and its staleness handling, change notices when someone's class moves, and per-person preferred hours stored on the account.
+

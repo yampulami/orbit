@@ -116,6 +116,12 @@ export type SyncOpts = {
   buffer?: number;
   /** Only times when everybody is free. When false, times that most people can make are shown too, with who is missing. Default true. */
   everyone?: boolean;
+  /** At least this many people (you included) must be free. Overrides `everyone`. */
+  minAvailable?: number;
+  /** People who must be free for a time to count at all (you always are one of them). */
+  required?: string[];
+  /** Weekdays to leave out, 0 (Sunday) to 6. */
+  skipDays?: number[];
   /** How many suggestions to return. Default 6. */
   max?: number;
 };
@@ -135,13 +141,16 @@ const fmt = (m: number) => { const h = Math.floor(m / 60), mm = m % 60; return n
 
 /** Rank the times that work for a group. Pure: no clock, no database. Scores favour more people free, daytime and meal times, comfortable gaps and sooner. */
 export function suggestTimes(people: Person[], now: Date, opts: SyncOpts = {}): Suggestion[] {
-  const { duration = 60, days = 7, earliest = 9 * 60, latest = 21 * 60 + 30, buffer = 0, everyone = true, max = 6 } = opts;
+  const { duration = 60, days = 7, earliest = 9 * 60, latest = 21 * 60 + 30, buffer = 0, everyone = true, max = 6, minAvailable, required = [], skipDays = [] } = opts;
   if (people.length === 0 || duration < 15) return [];
-  const need = everyone ? people.length : Math.max(2, Math.ceil(people.length / 2));
+  const need = Math.max(1, Math.min(people.length, minAvailable ?? (everyone ? people.length : Math.max(2, Math.ceil(people.length / 2)))));
+  // The organizer ("me") has to be able to come, so they are always required.
+  const must = new Set(["me", ...required]);
   const out: Suggestion[] = [];
 
   for (let i = 0; i < days; i++) {
     const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    if (skipDays.includes(day.getDay())) continue;
     const spans = people.map((p) => busySpans(p, day));
     const nowMin = i === 0 ? now.getHours() * 60 + now.getMinutes() : -1;
     const first = Math.max(earliest, nowMin < 0 ? 0 : Math.ceil((nowMin + 5) / STEP) * STEP);
@@ -162,6 +171,7 @@ export function suggestTimes(people: Person[], now: Date, opts: SyncOpts = {}): 
         else if (gap >= 30) comfort += 1.5;
       });
       if (available.length < need) continue;
+      if (missing.some((id) => must.has(id))) continue;
       let score = (available.length / people.length) * 100 + comfort;
       if (t >= 10 * 60 && end <= 20 * 60) score += 8;
       if ((t >= 11 * 60 + 30 && t <= 13 * 60) || (t >= 17 * 60 && t <= 19 * 60)) score += 5; // lunch and dinner are natural times to meet
