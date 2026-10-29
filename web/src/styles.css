@@ -3858,3 +3858,13 @@ body.chat-open .chats-switch{display:none}
 .moment.row .moment-draft{flex-basis:100%;margin-top:2px}
 .momentsbar .moment.row{position:static;padding:8px 10px}
 .mb-body{gap:6px}
+
+/* bars round their own corners, so a hover tint never pokes past the outline */
+.sl-bar{border-radius:20px}
+.sl[data-open] .sl-bar{border-radius:20px 20px 0 0}
+.mb-head{border-radius:16px}
+.momentsbar.group .mb-head{border-radius:14px}
+.nowstrip .nextwin:has(+ .momentsbar){border-radius:16px 16px 0 0}
+.nowstrip .nextwin+.momentsbar .mb-head{border-radius:0 0 16px 16px}
+.momentsbar[data-open] .mb-head{border-radius:16px 16px 0 0}
+.nowstrip .nextwin+.momentsbar[data-open] .mb-head{border-radius:0}
