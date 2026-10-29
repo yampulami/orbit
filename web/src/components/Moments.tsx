@@ -120,13 +120,15 @@ export default function Moments({ limit = 4 }: { limit?: number }) {
 export function MomentsBar({ always = false, limit = 3 }: { /** Show it even when "show on the feed" is off (the Sync page). */ always?: boolean; limit?: number }) {
   const prefs = useMomentPrefs();
   const { moments, loading } = useMoments(limit);
+  // On the feed the open/closed choice is remembered; on the Sync page it always starts folded, so finding a time comes first.
+  const [openHere, setOpenHere] = useState(false);
   if (!prefs.enabled || (!always && !prefs.showOnFeed)) return null;
   if (moments.length === 0) return always ? <p className="muted moments-empty" role="status">{loading ? "Looking at your groups…" : "Nothing lines up yet. Suggestions appear when people in your groups share their free time and a good time opens up."}</p> : null;
-  const open = !prefs.collapsed;
+  const open = always ? openHere : !prefs.collapsed;
   const faces = [...new Map(moments.flatMap((m) => m.people).map((p) => [p.id, p])).values()];
   return (
     <section className="momentsbar" data-open={open ? "" : undefined} aria-label="Orbit Moments">
-      <button type="button" className="mb-head" aria-expanded={open} onClick={() => momentActions.setCollapsed(open)}>
+      <button type="button" className="mb-head" aria-expanded={open} onClick={() => (always ? setOpenHere(!open) : momentActions.setCollapsed(open))}>
         <Sparkles size={15} aria-hidden="true" />
         <span className="mb-t"><b>{moments.length === 1 ? "A plan may line up" : `${moments.length} plans may line up`}</b>{!open && <small>{moments[0].event ? moments[0].event.title : "Free together"} · {whenLabel(moments[0])}</small>}</span>
         {!open && <AvatarStack people={faces.map((p) => ({ name: p.name }))} max={3} size={22} />}
