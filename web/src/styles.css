@@ -3699,3 +3699,12 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .sl-row:focus-visible{outline:2px solid var(--violet);outline-offset:2px;border-radius:10px}
 a.sl-row{text-decoration:none}
 @media (prefers-reduced-motion:reduce){.sl-ic,.sl-bar{transition:none}}
+
+/* StackedList: let the name pill above a face show, and keep the bar its own width in headers */
+.sl{overflow:visible}
+.sl[data-open] .sl-bar{border-radius:20px 20px 0 0}
+.sl-body{border-radius:0 0 20px 20px}
+.sl-faces{position:relative;z-index:4}
+.rm-head>div:first-child{display:grid;gap:10px;min-width:0;flex:1 1 320px}
+.rm-head .sl{width:min(460px,100%)}
+.rm-sync .btn{justify-self:start}
