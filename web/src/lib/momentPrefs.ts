@@ -26,6 +26,8 @@ const without = <T,>(list: T[], x: T) => list.filter((y) => y !== x);
 
 export const momentActions = {
   setEnabled(enabled: boolean) { set({ ...state, enabled }); },
+  setShowOnFeed(showOnFeed: boolean) { set({ ...state, showOnFeed }); },
+  setCollapsed(collapsed: boolean) { set({ ...state, collapsed }); },
   toggleInterest(i: Interest) { set({ ...state, interests: state.interests.includes(i) ? without(state.interests, i) : [...state.interests, i] }); },
   /** "Interested": a small nudge toward this kind of thing. */
   interested(m: Moment) { set({ ...state, liked: { ...state.liked, [m.category]: (state.liked[m.category] ?? 0) + 1 } }); },

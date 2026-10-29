@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, Sparkles } from "lucide-react";
+import { ChevronDown, MapPin, Sparkles } from "lucide-react";
 import AvatarStack from "./AvatarStack";
 import { findConflict, hangActions } from "../lib/hangouts";
 import { headline, INTERESTS, lengthLabel, whenLabel, type Moment } from "../lib/moments";
-import { momentActions } from "../lib/momentPrefs";
+import { momentActions, useMomentPrefs } from "../lib/momentPrefs";
 import { useMoments } from "../lib/useMoments";
 import { haptic } from "../lib/haptics";
 import { notice } from "../lib/notice";
@@ -13,13 +13,25 @@ const toLocalInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() *
 const labelOf = (c: Moment["category"]) => INTERESTS.find((i) => i.id === c)?.label.toLowerCase() ?? c;
 
 /** One suggestion. "Make a plan" opens an editable draft first: nothing is sent to anyone until the student confirms it. */
-export function MomentCard({ m, compact = false }: { m: Moment; compact?: boolean }) {
+export function MomentCard({ m }: { m: Moment }) {
   const nav = useNavigate();
   const [drafting, setDrafting] = useState(false);
   const [title, setTitle] = useState(m.event?.title ?? "Hang out");
   const [place, setPlace] = useState(m.event?.place ?? "");
   const [error, setError] = useState("");
   const [menu, setMenu] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  // The "Not now" menu closes when you press outside it, press Escape, or choose something.
+  useEffect(() => {
+    if (!menu) return;
+    const out = (e: PointerEvent) => { if (box.current && !box.current.contains(e.target as Node)) setMenu(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setMenu(false); };
+    document.addEventListener("pointerdown", out);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", out); document.removeEventListener("keydown", esc); };
+  }, [menu]);
+  const pick = (fn: () => void) => () => { fn(); setMenu(false); };
 
   function send() {
     const when = toLocalInput(m.start);
@@ -35,18 +47,18 @@ export function MomentCard({ m, compact = false }: { m: Moment; compact?: boolea
   }
 
   return (
-    <article className="moment" data-compact={compact ? "" : undefined} aria-label="A suggestion from Orbit">
+    <article className="moment" aria-label="A suggestion from Orbit">
       <header>
         <span className="moment-tag"><Sparkles size={12} aria-hidden="true" /> Your schedules line up</span>
         {!drafting && (
-          <div className="moment-more">
-            <button type="button" className="link-btn" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>Not now</button>
+          <div className="moment-more" ref={box}>
+            <button type="button" className="link-btn" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu((v) => !v)}>Not now</button>
             {menu && (
               <ul className="moment-menu" role="menu">
-                <li><button type="button" role="menuitem" onClick={() => { momentActions.dismiss(m); }}>Not interested</button></li>
-                <li><button type="button" role="menuitem" onClick={() => { momentActions.dismiss(m); notice.show({ icon: "calendar", title: "Okay", message: "Try Find a time to pick a different one.", ms: 3500 }); }}>Prefer another time</button></li>
-                <li><button type="button" role="menuitem" onClick={() => { momentActions.muteType(m.category); momentActions.dismiss(m); }}>Do not suggest {labelOf(m.category)}</button></li>
-                <li><button type="button" role="menuitem" onClick={() => { momentActions.hideCircle(m.circleId); }}>Hide suggestions for {m.circleName}</button></li>
+                <li><button type="button" role="menuitem" onClick={pick(() => momentActions.dismiss(m))}>Not interested</button></li>
+                <li><button type="button" role="menuitem" onClick={pick(() => { momentActions.dismiss(m); notice.show({ icon: "calendar", title: "Okay", message: "Try Find a time to pick a different one.", ms: 3500 }); })}>Prefer another time</button></li>
+                <li><button type="button" role="menuitem" onClick={pick(() => { momentActions.muteType(m.category); momentActions.dismiss(m); })}>Do not suggest {labelOf(m.category)}</button></li>
+                <li><button type="button" role="menuitem" onClick={pick(() => momentActions.hideCircle(m.circleId))}>Hide {m.circleName}</button></li>
               </ul>
             )}
           </div>
@@ -55,7 +67,7 @@ export function MomentCard({ m, compact = false }: { m: Moment; compact?: boolea
       <h3>{headline(m)}</h3>
       <p className="moment-when"><b>{whenLabel(m)}</b> <span>· {lengthLabel(m)}</span>{m.event?.place && <span className="moment-place"><MapPin size={12} aria-hidden="true" /> {m.event.place}</span>}</p>
       <div className="moment-who">
-        <AvatarStack people={m.people.map((p) => ({ name: p.name }))} max={4} size={26} />
+        <AvatarStack people={m.people.map((p) => ({ name: p.name }))} max={4} size={24} />
         <small>{m.why.slice(0, 2).join(" · ")}</small>
       </div>
 
@@ -70,20 +82,17 @@ export function MomentCard({ m, compact = false }: { m: Moment; compact?: boolea
       ) : (
         <div className="moment-btns">
           <button type="button" className="btn primary sm" onClick={() => setDrafting(true)}>Make a plan</button>
-          {!compact && <Link to="/app/sync" className="link-btn">Other times</Link>}
         </div>
       )}
     </article>
   );
 }
 
-/** The suggestions for right now. On the feed it shows nothing unless Moments is on and something lines up; on the Sync page it explains itself. */
-export default function Moments({ limit = 2, page = false }: { limit?: number; page?: boolean }) {
+/** On the Sync page: the suggestions, open. */
+export default function Moments({ limit = 4 }: { limit?: number }) {
   const { moments, loading, enabled } = useMoments(limit);
   if (!enabled) return null;
-  if (moments.length === 0) {
-    return page ? <p className="muted moments-empty" role="status">{loading ? "Looking at your groups…" : "Nothing lines up yet. Moments appear when people in your groups share their free time and a good time opens up."}</p> : null;
-  }
+  if (moments.length === 0) return <p className="muted moments-empty" role="status">{loading ? "Looking at your groups…" : "Nothing lines up yet. Suggestions appear when people in your groups share their free time and a good time opens up."}</p>;
   return (
     <section className="moments" aria-label="Orbit Moments">
       {moments.map((m) => <MomentCard key={m.id} m={m} />)}
@@ -91,9 +100,45 @@ export default function Moments({ limit = 2, page = false }: { limit?: number; p
   );
 }
 
-/** Inside a group chat: if this group has a shared opening, say so right there. */
+/** On the feed: one line (how many plans may line up, with faces). Open it to see them, fold it away again. Shows nothing when there is nothing to show. */
+export function MomentsBar() {
+  const prefs = useMomentPrefs();
+  const { moments } = useMoments(3);
+  if (!prefs.enabled || !prefs.showOnFeed || moments.length === 0) return null;
+  const open = !prefs.collapsed;
+  const faces = [...new Map(moments.flatMap((m) => m.people).map((p) => [p.id, p])).values()];
+  return (
+    <section className="momentsbar" data-open={open ? "" : undefined} aria-label="Orbit Moments">
+      <button type="button" className="mb-head" aria-expanded={open} onClick={() => momentActions.setCollapsed(open)}>
+        <Sparkles size={15} aria-hidden="true" />
+        <span className="mb-t"><b>{moments.length === 1 ? "A plan may line up" : `${moments.length} plans may line up`}</b>{!open && <small>{moments[0].event ? moments[0].event.title : "Free together"} · {whenLabel(moments[0])}</small>}</span>
+        {!open && <AvatarStack people={faces.map((p) => ({ name: p.name }))} max={3} size={22} />}
+        <ChevronDown size={16} className="mb-chev" aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="mb-body">
+          {moments.map((m) => <MomentCard key={m.id} m={m} />)}
+          <Link to="/app/sync" className="link-btn mb-more">All suggestions and settings</Link>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/** Inside a group chat: one line if this group has a shared opening, which opens into the card. */
 export function GroupMoment({ groupId }: { groupId: string }) {
   const { moments } = useMoments(8);
+  const [open, setOpen] = useState(false);
   const m = moments.find((x) => x.circleId === groupId);
-  return m ? <MomentCard m={m} compact /> : null;
+  if (!m) return null;
+  return (
+    <div className="momentsbar group" data-open={open ? "" : undefined}>
+      <button type="button" className="mb-head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <Sparkles size={15} aria-hidden="true" />
+        <span className="mb-t"><b>Free together {whenLabel(m)}</b></span>
+        <ChevronDown size={16} className="mb-chev" aria-hidden="true" />
+      </button>
+      {open && <div className="mb-body"><MomentCard m={m} /></div>}
+    </div>
+  );
 }

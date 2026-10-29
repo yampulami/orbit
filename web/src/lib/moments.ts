@@ -7,8 +7,8 @@ import { commonFree, span, timeLabel, type Person } from "./freeTime";
  */
 export type Interest = "food" | "study" | "social" | "sports" | "gaming" | "creative" | "club" | "outdoors";
 export const INTERESTS: { id: Interest; label: string }[] = [
-  { id: "food", label: "Food and coffee" }, { id: "study", label: "Study groups" }, { id: "social", label: "Hanging out" }, { id: "sports", label: "Sports" },
-  { id: "gaming", label: "Gaming" }, { id: "creative", label: "Creative" }, { id: "club", label: "Club meetups" }, { id: "outdoors", label: "Outdoors" },
+  { id: "food", label: "Food" }, { id: "study", label: "Study" }, { id: "social", label: "Social" }, { id: "sports", label: "Sports" },
+  { id: "gaming", label: "Gaming" }, { id: "creative", label: "Creative" }, { id: "club", label: "Clubs" }, { id: "outdoors", label: "Outdoors" },
 ];
 
 /** What kind of thing an event is, from its words. Simple on purpose: it only ever uses what the event itself says. */
@@ -38,7 +38,12 @@ export type Circle = {
 export type MomentEvent = { id: string; title: string; description?: string; place: string; startsAt: string; endsAt?: string; status: string; canceled: boolean; verified: boolean };
 
 export type MomentPrefs = {
+  /** The feature itself: Orbit looks for openings. Off by default. */
   enabled: boolean;
+  /** Show the suggestions bar on the feed. They are still on the Sync page, in group chats and from the assistant. */
+  showOnFeed: boolean;
+  /** The bar on the feed is folded (one line) until opened. */
+  collapsed: boolean;
   interests: Interest[];
   /** Kinds of thing the student said not to suggest. */
   muted: Interest[];
@@ -164,4 +169,4 @@ export function whenLabel(m: Moment): string {
 
 export const lengthLabel = (m: Moment) => span(Math.round((m.end.getTime() - m.start.getTime()) / 60000));
 
-export const EMPTY_PREFS: MomentPrefs = { enabled: false, interests: [], muted: [], hiddenCircles: [], dismissed: [], liked: {} };
+export const EMPTY_PREFS: MomentPrefs = { enabled: false, showOnFeed: true, collapsed: true, interests: [], muted: [], hiddenCircles: [], dismissed: [], liked: {} };

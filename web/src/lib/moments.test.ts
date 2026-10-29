@@ -8,6 +8,12 @@ const at = (h: number, m = 0, day = 29) => new Date(2026, 9, day, h, m);
 const person = (id: string, name: string, busy: [number, number][] = []): Person => ({ id, name, blocks: busy.map(([s, e]) => ({ d: 4, s, e })) });
 const me = person("me", "You", [[9 * 60, 12 * 60 + 30]]); // in class until 12:30
 const on: MomentPrefs = { ...EMPTY_PREFS, enabled: true };
+
+describe("defaults", () => {
+  it("starts off, shown on the feed and folded", () => {
+    expect(EMPTY_PREFS).toMatchObject({ enabled: false, showOnFeed: true, collapsed: true });
+  });
+});
 const circle = (members: Person[], over: Partial<Circle> = {}): Circle => ({ id: "c1", name: "Campus Friends", members, unknown: [], total: members.length + 1, ...over });
 const ev = (id: string, title: string, start: Date, end: Date, over: Partial<MomentEvent> = {}): MomentEvent => ({ id, title, place: "Student Center", startsAt: start.toISOString(), endsAt: end.toISOString(), status: "published", canceled: false, verified: true, ...over });
 const run = (c: Circle[], events: MomentEvent[] = [], prefs = on) => detectMoments({ now, me, circles: c, events, prefs, days: 1 });
