@@ -3664,5 +3664,4 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .agenda-extra span{flex:1;min-width:0;display:grid;gap:1px;font-weight:600;overflow-wrap:anywhere;line-height:1.25}
 .agenda-extra span small{font-weight:500;font-size:.78rem;color:var(--ink-soft)}
 .agenda-extra em{flex:none;font-style:normal;font-size:.7rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--violet) 18%,transparent);color:var(--violet)}
-.agenda-extra .x-class{box-shadow:inset 3px 0 0 var(--violet)}
 @media (max-width:700px){.agenda-extra b{min-width:70px}}
