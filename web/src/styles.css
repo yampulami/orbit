@@ -3975,3 +3975,13 @@ body.chat-open .chats-switch{display:none}
 .confirm-box p{margin:0;font-size:.84rem;line-height:1.35;flex:1 1 200px}
 .confirm-box span{display:flex;gap:6px}
 .convo-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+/* Pointing at a pill opens it over its neighbours instead of pushing them aside, so nothing slides out from under the pointer (that was the jitter).
+   Only a chosen pill (data-on) takes room in the row. */
+@media (hover:hover),(any-hover:hover),(min-width:701px){
+  .gm .gm-item:hover:not([data-on]){width:44px;z-index:3}
+  .gm[data-quiet] .gm-item:hover:not([data-on]){width:34px}
+  .gm .gm-item .gm-bg,.gm .gm-item .gm-label{right:auto;width:100%;transition-property:width,box-shadow,background,opacity,transform}
+  .gm .gm-item:hover:not([data-on]) .gm-bg,.gm .gm-item:hover:not([data-on]) .gm-label{width:var(--w)}
+  .gm .gm-item:hover:not([data-on]) .gm-label{left:0;right:auto}
+}
