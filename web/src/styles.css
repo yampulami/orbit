@@ -3708,3 +3708,6 @@ a.sl-row{text-decoration:none}
 .rm-head>div:first-child{display:grid;gap:10px;min-width:0;flex:1 1 320px}
 .rm-head .sl{width:min(460px,100%)}
 .rm-sync .btn{justify-self:start}
+
+.sl[data-open] .sl-bar{cursor:pointer}
+.sl[data-open] .sl-bar:hover{background:color-mix(in srgb,var(--violet) 6%,transparent)}

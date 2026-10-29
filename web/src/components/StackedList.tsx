@@ -35,24 +35,25 @@ export default function StackedList<T>({ title, subtitle, icon, people, items, g
     const n = q.trim().toLowerCase();
     return n && itemText ? items.filter((i) => itemText(i).toLowerCase().includes(n)) : items;
   }, [items, q, itemText]);
-  const flip = (e: KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!open) setOpen(true); } };
+  const toggle = () => { setOpen((v) => !v); if (open) setQ(""); };
+  const key = (e: KeyboardEvent) => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); toggle(); } };
 
   return (
     <section className="sl" data-open={open ? "" : undefined} aria-label={title}>
       <div
         className="sl-bar"
-        role={open ? undefined : "button"}
-        tabIndex={open ? undefined : 0}
-        aria-expanded={open ? undefined : false}
-        aria-label={open ? undefined : `${title}, ${subtitle ?? `${items.length}`}. Open the list`}
-        onClick={() => { if (!open) setOpen(true); }}
-        onKeyDown={open ? undefined : flip}
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-label={`${title}, ${subtitle ?? `${items.length}`}. ${open ? "Close" : "Open"} the list`}
+        onClick={toggle}
+        onKeyDown={key}
       >
         <span className="sl-ic" aria-hidden="true">{icon ?? <Users size={18} />}</span>
         <span className="sl-t"><b>{title}</b>{subtitle && <small>{subtitle}</small>}</span>
         {!open && people && people.length > 0 && <span className="sl-faces"><AvatarStack people={people.map((p) => ({ name: p.name }))} max={maxFaces} size={28} /></span>}
         {open
-          ? <button type="button" className="sl-x" aria-label={`Close ${title}`} onClick={(e) => { e.stopPropagation(); setOpen(false); setQ(""); }}><X size={16} aria-hidden="true" /></button>
+          ? <button type="button" className="sl-x" aria-label={`Close ${title}`} tabIndex={-1} onClick={(e) => { e.stopPropagation(); setOpen(false); setQ(""); }}><X size={16} aria-hidden="true" /></button>
           : <ChevronDown size={16} className="sl-chev" aria-hidden="true" />}
       </div>
 
