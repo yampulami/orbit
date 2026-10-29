@@ -3965,3 +3965,13 @@ body.chat-open .chats-switch{display:none}
 .cf-tools{gap:8px}
 
 .sl-quick{display:flex;gap:14px;font-size:.84rem;font-weight:600}
+
+/* removing, leaving and deleting: a pill that asks once */
+.cf-act{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 13px;border:0;border-radius:999px;background:var(--panel);color:var(--ink-soft);font:inherit;font-size:.84rem;font-weight:600;cursor:pointer;text-decoration:none;transition:background .2s,color .2s}
+.cf-act:hover{color:var(--ink);background:color-mix(in srgb,var(--violet) 12%,var(--panel))}
+.cf-act[data-danger]:hover{color:#e0525c;background:color-mix(in srgb,#e0525c 12%,var(--panel))}
+.cf-act:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.confirm-box{display:inline-flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:8px 12px;border-radius:14px;background:var(--panel);box-shadow:0 0 0 1px var(--line);max-width:100%}
+.confirm-box p{margin:0;font-size:.84rem;line-height:1.35;flex:1 1 200px}
+.confirm-box span{display:flex;gap:6px}
+.convo-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}

@@ -4,7 +4,7 @@ export const YOU = "You";
 export type Rsvp = "yes" | "no";
 export type Msg = { id: string; author: string; text?: string; hangoutId?: string; at: string };
 /** `members` are display names, with "You" for the signed-in student. `code` is the invite code, which only members can see. */
-export type Group = { id: string; name: string; members: string[]; messages: Msg[]; code?: string };
+export type Group = { id: string; name: string; members: string[]; messages: Msg[]; code?: string; /** I made this group, so I can delete it for everyone. */ mine?: boolean };
 export type Hangout = {
   id: string; groupId: string; title: string; place: string; when: string; by: string; rsvps: Record<string, Rsvp>; canceled?: boolean;
   /** "group" (the default) is seen only by the group. "campus" is a public hangout anyone at the university can see and answer. */

@@ -2,7 +2,8 @@ import Orb from "../components/Orb";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, MessageCircle, Plus, Send } from "lucide-react";
+import { ArrowLeft, MessageCircle, Plus, Send, Trash2 } from "lucide-react";
+import ConfirmButton from "../components/ConfirmButton";
 import { useChatOpenClass, useIsPhone } from "../lib/phone";
 import EmptyState from "../components/EmptyState";
 import EmojiButton from "../components/EmojiButton";
@@ -130,7 +131,7 @@ function LiveMessages() {
             </div>
           ) : current ? (
             <>
-              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link>{onlineNow.has(current.otherId) && <Orb size={16} variant="green" poke={false} className="active-orb" />}</h2><p className="muted">{onlineNow.has(current.otherId) ? "Active now" : "Direct message"}</p></div><SafetyMenu userId={current.otherId} name={current.name} context="direct message" /></div>
+              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link>{onlineNow.has(current.otherId) && <Orb size={16} variant="green" poke={false} className="active-orb" />}</h2><p className="muted">{onlineNow.has(current.otherId) ? "Active now" : "Direct message"}</p></div><div className="convo-tools"><ConfirmButton icon={<Trash2 size={14} aria-hidden="true" />} label="Remove" question="Remove this conversation from your messages? They keep their copy." confirm="Remove" onConfirm={() => { dmActions.removeConversation(current.id); setActive(""); setChatOpen(false); }} /><SafetyMenu userId={current.otherId} name={current.name} context="direct message" /></div></div>
               <div className="bubbles" ref={scroller} aria-live="polite">
                 {current.messages.length === 0 && <p className="rm-empty">Say hello to {current.name}.</p>}
                 {current.messages.map((m) => (

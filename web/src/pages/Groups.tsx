@@ -2,7 +2,8 @@ import { siteUrl } from "../lib/siteUrl";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarClock, CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, CalendarClock, CalendarPlus, Copy, KeyRound, LogOut, Plus, Send, Trash2, UserPlus, Users } from "lucide-react";
+import ConfirmButton from "../components/ConfirmButton";
 import GroupSync from "../components/GroupSync";
 import { GroupMoment } from "../components/Moments";
 import EmojiButton from "../components/EmojiButton";
@@ -182,6 +183,9 @@ export default function Groups() {
                 <button className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setError(""); }} aria-expanded={adding}><UserPlus size={18} /> {hangLive ? "Add people" : "Add friends"}</button>
                 <button className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setError(""); }} aria-expanded={planning}><CalendarPlus size={18} /> Plan a hangout</button>
                 <button className="btn" onClick={() => { setSyncing((v) => !v); setAdding(false); setPlanning(false); setError(""); }} aria-expanded={syncing}><CalendarClock size={18} /> Find a time</button>
+                {group.mine
+                  ? <ConfirmButton icon={<Trash2 size={15} aria-hidden="true" />} label="Delete group" question={`Delete ${group.name} for everyone? Its chat, hangouts and invite link go too.`} confirm="Delete" onConfirm={() => { void hangActions.deleteGroup(group.id); setPaneOpen(false); }} />
+                  : <ConfirmButton icon={<LogOut size={15} aria-hidden="true" />} label="Leave group" question={`Leave ${group.name}? It leaves your list. The others keep it.`} confirm="Leave" onConfirm={() => { void hangActions.leaveGroup(group.id); setPaneOpen(false); }} />}
               </div>
             </div>
             {!syncing && !planning && !adding && <GroupMoment groupId={group.id} />}

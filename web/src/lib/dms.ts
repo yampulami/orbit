@@ -15,8 +15,16 @@ export const dmLive = !!supabase;
 
 let state: State = { threads: [], people: [], status: "idle" };
 const subs = new Set<() => void>();
+
+/** Conversations the student removed from their own list: id to the time of the newest message then. The other person still has it, and it comes back if they write again. */
+const HIDDEN = "orbit-dm-hidden-v1:";
+let hidden: Record<string, string> = {};
+const newest = (t: DmThread) => t.messages.reduce((m, x) => (x.at > m ? x.at : m), "");
+const shown = (t: DmThread) => { const h = hidden[t.id]; return !h || newest(t) > h; };
 function set(next: State) {
-  state = next;
+  const threads = next.threads.filter(shown);
+  state = threads.length === next.threads.length ? next : { ...next, threads };
+  next = state;
   if (who && next.status === "ready") writeCache("dms", who, next.threads);
   subs.forEach((f) => f());
 }
@@ -60,6 +68,7 @@ export function bindDms(userId: string) {
   if (!dmLive || who === userId) return;
   unbindDms();
   who = userId;
+  try { hidden = JSON.parse(localStorage.getItem(HIDDEN + userId) ?? "{}") as Record<string, string>; } catch { hidden = {}; }
   const kept = readCache<DmThread[]>("dms", userId);
   set(kept ? { threads: kept, people: [], status: "ready" } : { threads: [], people: [], status: "loading" }); // last time's chats show straight away
   void reload();
@@ -82,13 +91,21 @@ export function bindDms(userId: string) {
 export function unbindDms() {
   if (!dmLive) return;
   stop?.(); stop = null; stopReturn?.(); stopReturn = null;
-  who = null; loadId++; reading.clear(); listenRooms("dms", [], onNudge); syncActive(null, []);
+  who = null; hidden = {}; loadId++; reading.clear(); listenRooms("dms", [], onNudge); syncActive(null, []);
   set({ threads: [], people: [], status: "idle" });
 }
 
 const patchThread = (id: string, fn: (t: DmThread) => DmThread) => set({ ...state, threads: state.threads.map((t) => (t.id === id ? fn(t) : t)) });
 
 export const dmActions = {
+  /** Take a conversation out of my messages. Only on my side: the other person keeps it, and it returns if they send something new. */
+  removeConversation(threadId: string) {
+    const t = state.threads.find((x) => x.id === threadId);
+    if (!t || !who) return;
+    hidden = { ...hidden, [threadId]: newest(t) || new Date().toISOString() };
+    try { localStorage.setItem(HIDDEN + who, JSON.stringify(hidden)); } catch { /* it just will not be remembered */ }
+    set({ ...state });
+  },
   /** Send a message. It shows at once and is saved in the background; if saving fails you are told and the real list comes back. */
   send(threadId: string, text: string) {
     const body = text.trim().slice(0, 2000);

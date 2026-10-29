@@ -4,7 +4,7 @@ import { loadNames, makeLabeler, watchTables, type ChangeEvent } from "./people"
 
 /** Groups, chat, hangouts and answers in the database. The rows are turned into the same shapes the screens already use (people are shown by
  *  display name, and the signed-in student is "You"), so nothing on screen has to know where the data lives. */
-export type RawGroup = { id: string; name: string };
+export type RawGroup = { id: string; name: string; created_by?: string };
 export type RawMember = { group_id: string; user_id: string };
 export type RawCode = { group_id: string; code: string };
 export type RawMessage = { id: string; group_id: string; sender_id: string; sender_name: string; body: string; hangout_id: string | null; created_at: string };
@@ -39,7 +39,7 @@ export function buildState(raw: Raw): HangState {
       .map((m) => (m.hangout_id
         ? { id: m.id, author: label(m.sender_id), hangoutId: m.hangout_id, at: m.created_at }
         : { id: m.id, author: label(m.sender_id), text: m.body, at: m.created_at }));
-    return { id: g.id, name: g.name, members, messages, code: raw.codes.find((c) => c.group_id === g.id)?.code };
+    return { id: g.id, name: g.name, members, messages, code: raw.codes.find((c) => c.group_id === g.id)?.code, mine: g.created_by === raw.me };
   });
 
   const hangouts = raw.hangouts.map((h) => {
@@ -67,7 +67,7 @@ export async function loadRaw(me: string): Promise<Raw> {
   const none = Promise.resolve({ data: [] as never[], error: null });
 
   const [groups, codes, messages, hangouts] = await Promise.all([
-    groupIds.length ? sb.from("campus_groups").select("id,name").in("id", groupIds) : none,
+    groupIds.length ? sb.from("campus_groups").select("id,name,created_by").in("id", groupIds) : none,
     groupIds.length ? sb.from("group_invites").select("group_id,code").in("group_id", groupIds) : none,
     groupIds.length ? sb.from("group_messages").select("id,group_id,sender_id,sender_name,body,hangout_id,created_at").in("group_id", groupIds).order("created_at", { ascending: true }).limit(1000) : none,
     sb.from("campus_hangouts").select("id,group_id,visibility,created_by,title,place_name,starts_at,duration_minutes,canceled_at").order("starts_at", { ascending: true }).limit(500),

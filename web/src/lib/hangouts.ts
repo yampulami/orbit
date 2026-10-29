@@ -195,6 +195,26 @@ export async function groupReady(id: string, ms = 8000): Promise<boolean> {
 }
 
 export const hangActions = {
+  /** Leave a group: it leaves my list and the others keep it. If I was the last one, it goes away. */
+  async leaveGroup(id: string) {
+    if (!state.groups.some((g) => g.id === id)) return;
+    const before = state;
+    set({ ...state, groups: state.groups.filter((g) => g.id !== id), hangouts: state.hangouts.filter((h) => h.groupId !== id) });
+    if (!live || !who) return;
+    const { error } = await supabase!.rpc("leave_group", { gid: id });
+    if (error) { set(before); notice.show({ icon: "alert", title: "Could not leave the group", message: /function|schema cache/i.test(error.message) ? "This is not switched on yet." : error.message }); return; }
+    void reload();
+  },
+  /** Delete a group for everyone (only whoever made it can): its chat, hangouts and invite code go with it. */
+  async deleteGroup(id: string) {
+    if (!state.groups.some((g) => g.id === id)) return;
+    const before = state;
+    set({ ...state, groups: state.groups.filter((g) => g.id !== id), hangouts: state.hangouts.filter((h) => h.groupId !== id) });
+    if (!live || !who) return;
+    const { error } = await supabase!.rpc("delete_group", { gid: id });
+    if (error) { set(before); notice.show({ icon: "alert", title: "Could not delete the group", message: /function|schema cache/i.test(error.message) ? "This is not switched on yet." : error.message }); return; }
+    void reload();
+  },
   createGroup(name: string, members: string[], household = false) {
     const id = crypto.randomUUID();
     set({ ...state, groups: [...state.groups, { id, name, members: [YOU, ...members], messages: [] }] });
