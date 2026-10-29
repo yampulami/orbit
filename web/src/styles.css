@@ -3868,3 +3868,7 @@ body.chat-open .chats-switch{display:none}
 .nowstrip .nextwin+.momentsbar .mb-head{border-radius:0 0 16px 16px}
 .momentsbar[data-open] .mb-head{border-radius:16px 16px 0 0}
 .nowstrip .nextwin+.momentsbar[data-open] .mb-head{border-radius:0}
+
+/* calendar days stay round circles, centred in their column */
+.plans-col .cal-day,.cal-day{width:32px;height:32px;aspect-ratio:auto;justify-self:center;display:grid;place-items:center;padding:0}
+@media (max-width:700px){.cal-day{width:38px;height:38px}}
