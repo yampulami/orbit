@@ -207,7 +207,7 @@ export function prepareAction(env: AiEnv, tool: string, a: Record<string, unknow
       if (!f) return { error: `"${m}" is not one of their friends yet, so they cannot be added. Friends: ${env.friends.map((x) => x.name).join(", ") || "none"}.` };
       people.push(f.name);
     }
-    return { summary: `Start the group "${name}"${people.length ? ` with ${people.join(", ")}` : ""}.`, args: { name, members: people } };
+    return { summary: `Start the group "${name}"${people.length ? ` and message ${people.join(", ")} a link to join` : ""}.`, args: { name, members: people } };
   }
   if (tool === "create_event") {
     const c = named(env.clubs, str(a.club));

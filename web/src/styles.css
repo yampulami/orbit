@@ -3521,3 +3521,5 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .ft-how p{margin:8px 0 0}
 .ft-how ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px}
 .ft-how small{color:var(--ink-soft)}
+
+.ft-confirm{display:flex;gap:6px}

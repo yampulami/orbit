@@ -5,7 +5,7 @@ import { useClasses } from "../lib/classes";
 import { useMyBusy } from "../lib/useMyBusy";
 import { describeBusy } from "../lib/myBusy";
 import { useFriends } from "../lib/friends";
-import { hangActions } from "../lib/hangouts";
+import { makeGroupAndInvite } from "../lib/groupInvite";
 import { availabilityActions, loadFriendFree, useSharing } from "../lib/availability";
 import { commonFree, span, type Window } from "../lib/freeTime";
 import { haptic } from "../lib/haptics";
@@ -49,14 +49,18 @@ export default function FreeTimePanel() {
     setBusy(false);
   }
 
-  function plan(w: Window) {
+  const [confirming, setConfirming] = useState<Window | null>(null);
+  const [making, setMaking] = useState(false);
+  async function plan(w: Window) {
     const chosen = friends.filter((f) => picked.includes(f.id));
-    const label = chosen.length ? chosen.map((f) => f.name.split(" ")[0]).slice(0, 3).join(", ") : "";
-    const gid = hangActions.createGroup(label ? `Hangout with ${label}` : "Hangout", chosen.map((f) => f.name));
+    const label = chosen.map((f) => f.name.split(" ")[0]).slice(0, 3).join(", ");
     const local = new Date(w.start.getTime() - w.start.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    hangActions.createHangout(gid, { title: "Hang out", place: "Pick a spot", when: local });
+    setMaking(true); setError("");
+    const out = await makeGroupAndInvite({ name: `Hangout with ${label}`, friends: chosen, hangout: { title: "Hang out", place: "Pick a spot", when: local } });
+    setMaking(false); setConfirming(null);
+    if (out.error) { setError(out.error); return; }
     haptic("success");
-    notice.show({ icon: "calendar", title: "Plan made", message: "Choose a place in the group chat.", ms: 4000 });
+    notice.show({ icon: "calendar", title: "Plan made", message: out.invited.length ? `${out.invited.join(", ")} got an invite link. Pick a place in the group chat.` : "Pick a place in the group chat.", ms: 4500 });
     nav("/app/groups");
   }
 
@@ -102,12 +106,15 @@ export default function FreeTimePanel() {
       {windows && (
         <div className="ft-out">
           {notSharing.length > 0 && <p className="muted">{notSharing.join(", ")} {notSharing.length === 1 ? "has" : "have"} not shared their free time, so {notSharing.length === 1 ? "they are" : "they are"} left out.</p>}
+          {windows.length > 0 && picked.length > 0 && confirming && <p className="muted">This makes a private group, plans a hangout at that time, and messages {friends.filter((f) => picked.includes(f.id)).map((f) => f.name.split(" ")[0]).join(", ")} a link to join.</p>}
           {windows.length === 0 ? <p className="muted">No time of an hour or more is free for everyone this week.</p> : (
             <ul className="ft-list">
               {windows.map((w) => (
                 <li key={w.start.toISOString()}>
                   <span><b>{when(w)}</b><small>{span(w.minutes)} free</small></span>
-                  {picked.length > 0 && <button type="button" className="btn sm" onClick={() => plan(w)}>Plan it</button>}
+                  {picked.length > 0 && (confirming?.start.getTime() === w.start.getTime()
+                    ? <span className="ft-confirm"><button type="button" className="btn sm primary" disabled={making} onClick={() => void plan(w)}>{making ? "Making it…" : "Confirm"}</button><button type="button" className="btn sm" disabled={making} onClick={() => setConfirming(null)}>Cancel</button></span>
+                    : <button type="button" className="btn sm" onClick={() => setConfirming(w)}>Plan it</button>)}
                 </li>
               ))}
             </ul>

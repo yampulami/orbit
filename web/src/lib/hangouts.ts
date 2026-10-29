@@ -180,6 +180,20 @@ export function findConflict(when: string, len = HANG_LEN): Hangout | undefined 
 /** Is this hangout something the person can see: one of their groups, or a public one open to the whole campus? Cancelled ones are never shown. */
 export const isVisible = (h: Hangout, groups: { id: string }[]) => !h.canceled && (h.visibility === "campus" || groups.some((g) => g.id === h.groupId));
 
+/** The groups and hangouts as they are right now (for code that is not a screen). */
+export const hangSnapshot = () => state;
+
+/** Resolves once a group you just made exists in the database (its invite code has arrived), or straight away without a database. False if it did not appear in time. */
+export async function groupReady(id: string, ms = 8000): Promise<boolean> {
+  if (!live) return true;
+  const end = Date.now() + ms;
+  while (Date.now() < end) {
+    if (state.groups.some((g) => g.id === id && g.code)) return true;
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  return false;
+}
+
 export const hangActions = {
   createGroup(name: string, members: string[], household = false) {
     const id = crypto.randomUUID();

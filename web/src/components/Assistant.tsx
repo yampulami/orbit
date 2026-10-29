@@ -15,6 +15,7 @@ import { useClasses } from "../lib/classes";
 import { reminderActions, useReminders } from "../lib/reminders";
 import { classActions } from "../lib/classes";
 import { loadFriendFree } from "../lib/availability";
+import { makeGroupAndInvite } from "../lib/groupInvite";
 import { commonFree } from "../lib/freeTime";
 import { buildMyBusy } from "../lib/myBusy";
 import { feedApi } from "../lib/feedData";
@@ -270,7 +271,10 @@ export default function Assistant() {
       findPeople: async (q) => (await searchPeople(q, me, 6)).map((p) => ({ id: p.id, name: p.name, username: p.username, relation: friends.some((f) => f.id === p.id) ? "Friend" : "Student" })),
       addReminder: (t, d, tm) => reminderActions.add(t, d, tm),
       createHangout: (gid, h) => { hangActions.createHangout(gid, h); },
-      createGroup: (name, members) => { hangActions.createGroup(name, members); },
+      createGroup: (name, members) => {
+        const chosen = members.map((m) => friends.find((f) => f.name === m)).filter((f): f is NonNullable<typeof f> => !!f);
+        void makeGroupAndInvite({ name, friends: chosen.map((f) => ({ id: f.id, name: f.name })) });
+      },
       createEvent: async (d) => (await eventActions.create({ ...d, orgKind: d.orgKind as never })).error,
       sendMessage: async (pid, text) => { const t = await dmActions.start(pid); if (!t) return "Could not open that chat."; dmActions.send(t, text); return null; },
     };
