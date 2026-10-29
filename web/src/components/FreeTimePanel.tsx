@@ -8,6 +8,8 @@ import { useFriends } from "../lib/friends";
 import { haptic } from "../lib/haptics";
 import { supabase } from "../lib/supabase";
 import ScheduleSync from "./ScheduleSync";
+import MomentSettings from "./MomentSettings";
+import Moments from "./Moments";
 
 /** Schedule Sync on the Plans page: the sharing switch, how it works, and finding a time with friends. */
 export default function FreeTimePanel({ preselect }: { /** Friends to start with (from the "you are both free" card). Opens the panel. */ preselect?: string[] }) {
@@ -63,6 +65,7 @@ export default function FreeTimePanel({ preselect }: { /** Friends to start with
         </div>
       )}
       {error && <p className="error" role="alert">{error}</p>}
+      {live && <MomentSettings />}
 
       <details className="ft-how">
         <summary>How this works</summary>
@@ -74,6 +77,7 @@ export default function FreeTimePanel({ preselect }: { /** Friends to start with
 
       </div>
       <div className="ft-main">
+        {live && <Moments page limit={4} />}
         <ScheduleSync initialPicked={preselect} />
       </div>
       </div>

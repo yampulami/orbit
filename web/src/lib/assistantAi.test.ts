@@ -183,3 +183,17 @@ describe("finding free time with rules", () => {
   });
 });
 
+
+describe("what lines up", () => {
+  it("reads Moments, and says so when it is off", async () => {
+    const on = env({ moments: () => ({ enabled: true, items: [{ circle: "Campus Friends", when: "Thu 1 PM", people: ["Alex"], notSharing: 1, activity: "Food Festival", place: "Student Center", score: 80 }] }) });
+    const off = env({ moments: () => ({ enabled: false, items: [] }) });
+    let seen = "";
+    const model = async (m: ModelMsg[]) => { const t = m.find((x) => x.role === "tool"); if (t) { seen = t.content!; return say("ok"); } return use(call("my_moments", {})); };
+    await converse({ history: [user("anything lining up?")], env: on, model });
+    expect(seen).toMatch(/Food Festival/);
+    expect(seen).toMatch(/notSharingSoNotCounted/);
+    await converse({ history: [user("anything lining up?")], env: off, model });
+    expect(seen).toMatch(/switched off/);
+  });
+});

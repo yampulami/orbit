@@ -23,6 +23,7 @@ export type AiEnv = {
   unread: { messages: number; notifs: number };
   findPeople(q: string): Promise<Person[]>;
   findFreeTime?(names: string[], opts: { days: number; duration: number; everyone: boolean; minPeople?: number; mustAttend?: string[]; earliest?: number; latest?: number; skipDays?: number[] }): Promise<{ suggestions: { start: string; end: string; free: number; of: number; missing: string[]; best: boolean; why: string }[]; notSharing: string[]; unknown: string[] }>;
+  moments?(): { enabled: boolean; items: { circle: string; when: string; people: string[]; notSharing: number; activity?: string; place?: string; score: number }[] };
   recentPosts?(): Promise<{ author: string; text: string; at: string; likes: number; comments: number }[]>;
   rsvpEvent?(id: string, answer: "going" | "interested" | null): void;
   requestJoin?(orgId: string, message: string): Promise<string | null>;
@@ -77,6 +78,7 @@ export const TOOLS = [
   fn("send_message", "Send a direct message to someone. The student confirms it first. Find the person with find_people first.", { person_id: s("The id from find_people."), person_name: s("Their name."), text: s("The message.") }, ["person_id", "person_name", "text"]),
 ];
 TOOLS.push(
+  fn("my_moments", "The suggestions Orbit Moments has for the student right now: times when people in their groups are free together, and what is on then. Use for \"what could I do with friends\", \"is anyone free\", \"any plans lining up\"."),
   fn("find_free_time", "Find the best times for the student and some friends to meet (friends who share their free time only). Ranked, with who can make each. Use for \"when are we free\", \"find a time\", \"when can we meet\". With no friends named it gives the student's own free time.", { friends: { type: "array", items: { type: "string" }, description: "Friends' names. Optional." }, duration_minutes: { type: "number", description: "How long the plan lasts, 15 to 480. Default 60." }, days: { type: "number", description: "How many days ahead, 1 to 14. Default 7." }, everyone_must_be_free: { type: "boolean", description: "Default true. False also shows times most people can make." }, minimum_people: { type: "number", description: "At least this many people (counting the student) must be free. Optional." }, must_attend: { type: "array", items: { type: "string" }, description: "Friends who must be able to come. Optional." }, not_before_hour: { type: "number", description: "Earliest hour of the day, 0 to 23. Optional." }, not_after_hour: { type: "number", description: "Latest hour the plan may end, 1 to 24. Optional." }, skip_weekdays: { type: "array", items: { type: "string" }, description: "Weekday names to leave out, like Friday. Optional." } }),
   fn("my_reminders", "All of the student's open reminders, with their ids."),
   fn("my_clubs", "The clubs and circles the student belongs to."),
@@ -176,6 +178,12 @@ async function read(env: AiEnv, tool: string, a: Record<string, unknown>): Promi
     });
     const suggestions = out.suggestions.slice(0, 6).map((s) => ({ start: s.start, when: describeWhen(s.start, now), minutes: duration, freeCount: `${s.free} of ${s.of}`, cantMake: s.missing, bestMatch: s.best, why: s.why }));
     return { result: { suggestions: suggestions.length ? suggestions : `Nothing of ${duration} minutes works in the next ${days} days.`, notSharingTheirFreeTime: out.notSharing, notFriends: out.unknown }, go: "/app/plans", goLabel: "Open plans" };
+  }
+  if (tool === "my_moments") {
+    const m = env.moments?.();
+    if (!m) return { result: "Moments is not available here." };
+    if (!m.enabled) return { result: "Orbit Moments is switched off. The student can turn it on under Sync, and nothing is looked at until they do.", go: "/app/sync", goLabel: "Open Schedule sync" };
+    return { result: m.items.length ? m.items.map((x) => ({ group: x.circle, when: x.when, freeTogether: x.people, notSharingSoNotCounted: x.notSharing, activity: x.activity ?? null, place: x.place ?? null })) : "Nothing lines up right now.", go: "/app/sync", goLabel: "Open Schedule sync" };
   }
   if (tool === "event_details") {
     const e = env.events.find((x) => x.id === str(a.event_id));
@@ -299,7 +307,7 @@ export async function performAction(env: AiEnv, p: Pending): Promise<{ ok: boole
 
 /* ---------- the conversation ---------- */
 
-const LABELS: Record<string, string> = { find_free_time: "Comparing free time", my_reminders: "Checking your reminders", my_clubs: "Looking at your clubs", notifications: "Reading your notifications", recent_posts: "Reading the feed", event_details: "Looking at that event", search_events: "Checking events", search_clubs: "Looking at clubs", find_people: "Finding people", my_schedule: "Checking your schedule", my_groups: "Looking at your groups", inbox_summary: "Checking your inbox", open_page: "Getting that ready" };
+const LABELS: Record<string, string> = { my_moments: "Checking what lines up", find_free_time: "Comparing free time", my_reminders: "Checking your reminders", my_clubs: "Looking at your clubs", notifications: "Reading your notifications", recent_posts: "Reading the feed", event_details: "Looking at that event", search_events: "Checking events", search_clubs: "Looking at clubs", find_people: "Finding people", my_schedule: "Checking your schedule", my_groups: "Looking at your groups", inbox_summary: "Checking your inbox", open_page: "Getting that ready" };
 
 export async function converse(opts: { history: ModelMsg[]; env: AiEnv; model: (messages: ModelMsg[]) => Promise<ModelMsg>; onStep?: (label: string) => void }): Promise<AiTurn> {
   const { env, model, onStep } = opts;

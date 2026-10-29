@@ -15,6 +15,8 @@ import { useClasses } from "../lib/classes";
 import { reminderActions, useReminders } from "../lib/reminders";
 import { classActions } from "../lib/classes";
 import { loadFriendFree } from "../lib/availability";
+import { useMoments } from "../lib/useMoments";
+import { whenLabel } from "../lib/moments";
 import { makeGroupAndInvite } from "../lib/groupInvite";
 import { suggestTimes } from "../lib/freeTime";
 import { buildMyBusy } from "../lib/myBusy";
@@ -74,6 +76,7 @@ export default function Assistant() {
   const { groups, hangouts } = useHang();
   const { friends } = useFriends();
   const [step, setStep] = useState("");
+  const momentsNow = useMoments(5);
 
   // The answer is made from the newest of everything at the moment you ask.
   const ctx = useRef<AssistantCtx>({ now: new Date(), events: [], clubs: [], classes: [], reminders: [], unreadMessages: 0, unreadNotifs: 0 });
@@ -260,6 +263,10 @@ export default function Assistant() {
           .map((s) => ({ start: s.start.toISOString(), end: s.end.toISOString(), free: s.available.length, of: people.length, missing: s.missing.map((id) => people.find((p) => p.id === id)?.name.split(" ")[0] ?? "Someone"), best: s.best, why: s.reasons.join(", ") }));
         return { suggestions, notSharing, unknown };
       },
+      moments: () => ({
+        enabled: momentsNow.enabled,
+        items: momentsNow.moments.map((m) => ({ circle: m.circleName, when: whenLabel(m), people: m.people.map((p) => p.name), notSharing: m.unknown.length, activity: m.event?.title, place: m.event?.place, score: m.score })),
+      }),
       rsvpEvent: (id, answer) => eventActions.respond(id, answer),
       requestJoin: (orgId, message) => orgActions.requestJoin(orgId, message),
       addClass: (c) => classActions.add(c),

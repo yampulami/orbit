@@ -21,6 +21,7 @@ import { bindFriends, unbindFriends } from "./lib/friends";
 import { bindNotifs, unbindNotifs } from "./lib/notifs";
 import { bindClasses, unbindClasses, useClasses } from "./lib/classes";
 import { bindSharing, pushBusy, unbindSharing, useSharing } from "./lib/availability";
+import { bindMomentPrefs, unbindMomentPrefs } from "./lib/momentPrefs";
 import { bindCampusEvents, unbindCampusEvents } from "./lib/campusEvents";
 import { bindCampusOrgs, unbindCampusOrgs } from "./lib/campusOrgs";
 import { clearVerified } from "./lib/verified";
@@ -90,6 +91,7 @@ function InApp({ children }: { children: ReactNode }) {
   const myClasses = useClasses();
   const sharing = useSharing();
   useEffect(() => { if (!classesFor) return; bindSharing(classesFor); return () => unbindSharing(); }, [classesFor]);
+  useEffect(() => { if (!classesFor) return; bindMomentPrefs(classesFor); return () => unbindMomentPrefs(); }, [classesFor]);
   useEffect(() => { if (!sharing.on) return; const t = window.setTimeout(() => void pushBusy(myClasses), 800); return () => window.clearTimeout(t); }, [sharing.on, myClasses]);
   const { state: done, campusKey } = useOnboarded(session?.user.id, nameFor(session));
   const uid = session?.user.id;

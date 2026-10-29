@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, CalendarClock, CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
 import GroupSync from "../components/GroupSync";
+import { GroupMoment } from "../components/Moments";
 import EmojiButton from "../components/EmojiButton";
 import DateTimeField from "../components/DateTimeField";
 import { useChatOpenClass, useIsPhone } from "../lib/phone";
@@ -183,6 +184,7 @@ export default function Groups() {
                 <button className="btn" onClick={() => { setSyncing((v) => !v); setAdding(false); setPlanning(false); setError(""); }} aria-expanded={syncing}><CalendarClock size={18} /> Find a time</button>
               </div>
             </div>
+            {!syncing && !planning && !adding && <GroupMoment groupId={group.id} />}
             {syncing && (
               <div className="plan-form">
                 <GroupSync key={group.id} groupId={group.id} title={`When is ${group.name} free?`} />
