@@ -2,7 +2,8 @@ import { siteUrl } from "../lib/siteUrl";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, CalendarClock, CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
+import ScheduleSync from "../components/ScheduleSync";
 import EmojiButton from "../components/EmojiButton";
 import DateTimeField from "../components/DateTimeField";
 import { useChatOpenClass, useIsPhone } from "../lib/phone";
@@ -41,6 +42,7 @@ export default function Groups() {
   const [gExtra, setGExtra] = useState<string[]>([]);
   const [aExtra, setAExtra] = useState<string[]>([]);
   const [planning, setPlanning] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [title, setTitle] = useState("");
   const [place, setPlace] = useState("");
   const [when, setWhen] = useState("");
@@ -128,7 +130,7 @@ export default function Groups() {
       <div className={"chat" + (phone ? (paneOpen ? " phone-chat" : " phone-list") : "")}>
         <div className="threads" aria-label="Your groups">
           {groups.map((g) => (
-            <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate && !friendsOpen ? " on" : "")} aria-current={g.id === group?.id && !showCreate && !friendsOpen} onClick={() => { setActiveId(g.id); setFriendsOpen(false); setCreating(false); setPlanning(false); setAdding(false); setError(""); setPaneOpen(true); }}>
+            <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate && !friendsOpen ? " on" : "")} aria-current={g.id === group?.id && !showCreate && !friendsOpen} onClick={() => { setActiveId(g.id); setFriendsOpen(false); setCreating(false); setPlanning(false); setSyncing(false); setAdding(false); setError(""); setPaneOpen(true); }}>
               {g.id === group?.id && !showCreate && !friendsOpen && <motion.span layoutId="group-indicator" className="threadpill" transition={slide} />}
               <strong>{g.name}</strong>
               <span className="muted">{g.members.length} people</span>
@@ -178,8 +180,14 @@ export default function Groups() {
               <div className="convo-actions">
                 <button className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setError(""); }} aria-expanded={adding}><UserPlus size={18} /> {hangLive ? "Add people" : "Add friends"}</button>
                 <button className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setError(""); }} aria-expanded={planning}><CalendarPlus size={18} /> Plan a hangout</button>
+                <button className="btn" onClick={() => { setSyncing((v) => !v); setAdding(false); setPlanning(false); setError(""); }} aria-expanded={syncing}><CalendarClock size={18} /> Find a time</button>
               </div>
             </div>
+            {syncing && (
+              <div className="plan-form">
+                <ScheduleSync key={group.id} groupId={group.id} title={`When is ${group.name} free?`} presetFriendIds={group.members.filter((m) => m !== YOU).map((m) => friendIds.get(m)).filter((x): x is string => !!x)} skipped={group.members.filter((m) => m !== YOU && !friendIds.has(m)).length} />
+              </div>
+            )}
             {adding && hangLive && (
               <div className="plan-form invite">
                 <h3>Add a friend</h3>

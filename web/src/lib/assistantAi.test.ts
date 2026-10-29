@@ -162,12 +162,13 @@ describe("more things it can do", () => {
 
 describe("finding free time", () => {
   it("asks the app for times with the named friends and reports who is not sharing", async () => {
-    const findFreeTime = vi.fn(async () => ({ windows: [{ start: at(1, 15), minutes: 120 }], notSharing: ["Maya Lopez"], unknown: ["Zed"] }));
+    const findFreeTime = vi.fn(async () => ({ suggestions: [{ start: at(1, 15), end: at(1, 17), free: 2, of: 3, missing: ["Zed"], best: true, why: "2 of 3 free" }], notSharing: ["Maya Lopez"], unknown: ["Zed"] }));
     let seen = "";
-    const model = async (m: ModelMsg[]) => { const t = m.find((x) => x.role === "tool"); if (t) { seen = t.content!; return say("ok"); } return use(call("find_free_time", { friends: ["Maya", "Zed"], days: 3 })); };
+    const model = async (m: ModelMsg[]) => { const t = m.find((x) => x.role === "tool"); if (t) { seen = t.content!; return say("ok"); } return use(call("find_free_time", { friends: ["Maya", "Zed"], days: 3, duration_minutes: 120 })); };
     await converse({ history: [user("when are we free?")], env: env({ findFreeTime }), model });
-    expect(findFreeTime).toHaveBeenCalledWith(["Maya", "Zed"], 3);
-    expect(seen).toMatch(/minutesFree/);
+    expect(findFreeTime).toHaveBeenCalledWith(["Maya", "Zed"], { days: 3, duration: 120, everyone: true });
+    expect(seen).toMatch(/freeCount/);
+    expect(seen).toMatch(/bestMatch/);
     expect(seen).toMatch(/Maya Lopez/);
     expect(seen).toMatch(/Zed/);
   });

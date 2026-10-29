@@ -98,3 +98,12 @@ Orbit now answers "what can I do right now, and with whom?". Pure logic is in `w
 - **Find a time.** Pick friends in Plans and see stretches of an hour or more when everyone is free in the next week (your own classes, hangouts and events you are going to count as busy), with a "Plan it" button that makes a group and a hangout. Friends who have not shared are named and left out. The assistant can do the same (`find_free_time`).
 - **Your next window.** On the feed, "You have 50 minutes free" with what is on in that gap and which sharing friends are free too. It shows nothing when there is no real gap.
 
+### Schedule Sync, fleshed out (2026-10-31)
+
+- **Ranked suggestions** (`suggestTimes` in `web/src/lib/freeTime.ts`, deterministic and tested): you choose how long (30 min to 3 hr) and how soon (today to two weeks); times are scored by how many people are free, daytime and mealtimes, comfortable gaps around classes (and a "leave 15 min" option) and sooner; the top one is "Best match", each says why it was picked. "Everyone must be free" can be turned off to see times most people can make, with who cannot.
+- **Repeats every week** (`weeklyTimes`): the best times that hold every week, from classes only, for a club or study group.
+- **Availability grid:** each person's busy hours on a day with the suggestions outlined on top.
+- **Where it lives:** Plans (pick friends), and a **Find a time** button inside every group chat (members who are not your friends are named and left out, because friends' shared times are all Orbit can read). Inside a group, "Plan it" makes a hangout there; elsewhere it makes a private group, plans the hangout and messages each friend a join link. Campus events on at the same time are mentioned.
+- **Assistant:** `find_free_time` takes friends, length, window and "everyone must be free", and returns the ranked list.
+- **Not built yet:** club-wide availability with aggregate-only counts (needs a database function with a minimum group size), roommate scheduling, travel time between places, importing outside calendars, and sharing with selected friends only.
+

@@ -16,7 +16,7 @@ import { reminderActions, useReminders } from "../lib/reminders";
 import { classActions } from "../lib/classes";
 import { loadFriendFree } from "../lib/availability";
 import { makeGroupAndInvite } from "../lib/groupInvite";
-import { commonFree } from "../lib/freeTime";
+import { suggestTimes } from "../lib/freeTime";
 import { buildMyBusy } from "../lib/myBusy";
 import { feedApi } from "../lib/feedData";
 import { unreadDms, useDms } from "../lib/dms";
@@ -243,7 +243,7 @@ export default function Assistant() {
       notifications: notifs.map((n) => ({ title: n.title, sub: n.sub, at: n.at, unread: n.unread })),
       profile: { name: session?.user.user_metadata?.name ?? session?.user.email?.split("@")[0] ?? "Student" },
       recentPosts: async () => (await feedApi.list()).filter((r) => !r.payload.repostOf).map((r) => ({ author: r.author_name, text: r.payload.body ?? r.payload.text ?? r.payload.title ?? "", at: r.created_at, likes: r.post_likes.length, comments: r.post_comments.length })),
-      findFreeTime: async (names, days) => {
+      findFreeTime: async (names, opts) => {
         const wanted = names.map((n) => friends.find((f) => f.name.toLowerCase() === n.toLowerCase() || (f.username ?? "").toLowerCase() === n.toLowerCase().replace(/^@/, "")) ?? friends.find((f) => f.name.toLowerCase().includes(n.toLowerCase())));
         const unknown = names.filter((_, i) => !wanted[i]);
         const chosen = wanted.filter((f): f is NonNullable<typeof f> => !!f);
@@ -254,8 +254,10 @@ export default function Assistant() {
           events,
           reminders: reminders as { title: string; date: string; time?: string; done: boolean }[],
         }, nowD);
-        const windows = commonFree([mine, ...shared], nowD, { days, min: 60 }).map((w) => ({ start: w.start.toISOString(), minutes: w.minutes }));
-        return { windows, notSharing, unknown };
+        const people = [mine, ...shared];
+        const suggestions = suggestTimes(people, nowD, { days: opts.days, duration: opts.duration, everyone: opts.everyone || people.length < 3, max: 5 })
+          .map((s) => ({ start: s.start.toISOString(), end: s.end.toISOString(), free: s.available.length, of: people.length, missing: s.missing.map((id) => people.find((p) => p.id === id)?.name.split(" ")[0] ?? "Someone"), best: s.best, why: s.reasons.join(", ") }));
+        return { suggestions, notSharing, unknown };
       },
       rsvpEvent: (id, answer) => eventActions.respond(id, answer),
       requestJoin: (orgId, message) => orgActions.requestJoin(orgId, message),

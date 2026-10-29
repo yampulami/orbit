@@ -22,7 +22,7 @@ export type AiEnv = {
   friends: Person[];
   unread: { messages: number; notifs: number };
   findPeople(q: string): Promise<Person[]>;
-  findFreeTime?(names: string[], days: number): Promise<{ windows: { start: string; minutes: number }[]; notSharing: string[]; unknown: string[] }>;
+  findFreeTime?(names: string[], opts: { days: number; duration: number; everyone: boolean }): Promise<{ suggestions: { start: string; end: string; free: number; of: number; missing: string[]; best: boolean; why: string }[]; notSharing: string[]; unknown: string[] }>;
   recentPosts?(): Promise<{ author: string; text: string; at: string; likes: number; comments: number }[]>;
   rsvpEvent?(id: string, answer: "going" | "interested" | null): void;
   requestJoin?(orgId: string, message: string): Promise<string | null>;
@@ -77,7 +77,7 @@ export const TOOLS = [
   fn("send_message", "Send a direct message to someone. The student confirms it first. Find the person with find_people first.", { person_id: s("The id from find_people."), person_name: s("Their name."), text: s("The message.") }, ["person_id", "person_name", "text"]),
 ];
 TOOLS.push(
-  fn("find_free_time", "Find times when the student and some of their friends are all free (friends who share their free time only). Use this for \"when are we free\", \"find a time\", \"when can we meet\". With no friends named it gives the student's own free time.", { friends: { type: "array", items: { type: "string" }, description: "Friends' names. Optional." }, days: { type: "number", description: "How many days ahead, 1 to 14. Default 7." } }),
+  fn("find_free_time", "Find the best times for the student and some friends to meet (friends who share their free time only). Ranked, with who can make each. Use for \"when are we free\", \"find a time\", \"when can we meet\". With no friends named it gives the student's own free time.", { friends: { type: "array", items: { type: "string" }, description: "Friends' names. Optional." }, duration_minutes: { type: "number", description: "How long the plan lasts, 15 to 480. Default 60." }, days: { type: "number", description: "How many days ahead, 1 to 14. Default 7." }, everyone_must_be_free: { type: "boolean", description: "Default true. False also shows times most people can make." } }),
   fn("my_reminders", "All of the student's open reminders, with their ids."),
   fn("my_clubs", "The clubs and circles the student belongs to."),
   fn("notifications", "The student's recent notifications (replies, requests, invites)."),
@@ -165,9 +165,10 @@ async function read(env: AiEnv, tool: string, a: Record<string, unknown>): Promi
     if (!env.findFreeTime) return { result: "Finding free time is not available here." };
     const names = Array.isArray(a.friends) ? a.friends.map(str).filter(Boolean).slice(0, 6) : [];
     const days = Math.max(1, Math.min(14, Math.round(Number(a.days) || 7)));
-    const out = await env.findFreeTime(names, days);
-    const windows = out.windows.slice(0, 8).map((w) => ({ start: w.start, when: describeWhen(w.start, now), minutesFree: w.minutes }));
-    return { result: { windows: windows.length ? windows : "No stretch of an hour or more is free for everyone.", notSharingTheirFreeTime: out.notSharing, notFriends: out.unknown }, go: "/app/plans", goLabel: "Open plans" };
+    const duration = Math.max(15, Math.min(480, Math.round(Number(a.duration_minutes) || 60)));
+    const out = await env.findFreeTime(names, { days, duration, everyone: a.everyone_must_be_free !== false });
+    const suggestions = out.suggestions.slice(0, 6).map((s) => ({ start: s.start, when: describeWhen(s.start, now), minutes: duration, freeCount: `${s.free} of ${s.of}`, cantMake: s.missing, bestMatch: s.best, why: s.why }));
+    return { result: { suggestions: suggestions.length ? suggestions : `Nothing of ${duration} minutes works in the next ${days} days.`, notSharingTheirFreeTime: out.notSharing, notFriends: out.unknown }, go: "/app/plans", goLabel: "Open plans" };
   }
   if (tool === "event_details") {
     const e = env.events.find((x) => x.id === str(a.event_id));
