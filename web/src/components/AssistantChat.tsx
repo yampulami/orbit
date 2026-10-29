@@ -5,7 +5,7 @@ import Orb from "./Orb";
 import { ThinkingOrb, type OrbState } from "thinking-orbs";
 
 /** Which animation says what the assistant is doing: looking things up, getting something ready, or just thinking. */
-const orbFor = (step?: string): OrbState => (!step ? "solving" : /event|club|people|feed|notification|inbox/i.test(step) ? "searching" : /schedule|reminder|group/i.test(step) ? "listening" : "solving");
+const orbFor = (step?: string): OrbState => (!step ? "solving" : /event|club|people|feed|notification|inbox/i.test(step) ? "searching" : /schedule|reminder|group/i.test(step) ? "listening" : "composing");
 
 const SUGGESTIONS = ["What's on tonight?", "When is my next class?", "Which clubs am I in?", "Any unread messages?"];
 

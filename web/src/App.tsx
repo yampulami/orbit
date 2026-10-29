@@ -48,7 +48,7 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 
 function Protected({ children }: { children: ReactNode }) {
   const { session, loading } = useAuth();
-  if (loading) return <div className="ol-page"><OrbLoader label="Loading" /></div>;
+  if (loading) return <div className="ol-page"><OrbLoader label="Connecting" state="connecting" look="stack" /></div>;
   return session ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
@@ -115,7 +115,7 @@ function InApp({ children }: { children: ReactNode }) {
     }
     return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); unbindCampusOrgs(); unbindCheckins(); clearVerified(); };
   }, [done, uid, campusKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (done === "checking") return <div className="ol-page"><OrbLoader label="Loading" /></div>;
+  if (done === "checking") return <div className="ol-page"><OrbLoader label="Finding your campus" state="searching" /></div>;
   return done === "yes" ? <>{children}</> : <Navigate to="/onboarding" replace />;
 }
 
@@ -123,7 +123,7 @@ function InApp({ children }: { children: ReactNode }) {
 function OnboardingGate() {
   const { session } = useAuth();
   const { state: done } = useOnboarded(session?.user.id);
-  if (done === "checking") return <div className="ol-page"><OrbLoader label="Loading" /></div>;
+  if (done === "checking") return <div className="ol-page"><OrbLoader label="Setting things up" state="weaving" look="stack" /></div>;
   return done === "yes" ? <Navigate to="/app" replace /> : <Onboarding />;
 }
 

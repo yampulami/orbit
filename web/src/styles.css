@@ -3479,3 +3479,9 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .wait-orb canvas{width:56px!important;height:56px!important}
 .wait-t{white-space:nowrap;font-size:1.05rem;line-height:1.5;color:var(--ink-soft)}
 @media (max-width:520px){.wait-pill{height:62px;padding-right:22px}.wait-orb,.wait-orb canvas{width:46px!important;height:46px!important}.wait-t{font-size:.95rem}}
+
+/* waiting, stacked: the orb with its word under it (full-screen loads) */
+.wait-stack{display:inline-grid;justify-items:center;gap:6px}
+.wait-stack .wait-orb{width:84px;height:84px}
+.wait-stack .wait-orb canvas{width:84px!important;height:84px!important}
+.wait-stack .wait-t{font-size:1rem;letter-spacing:.02em}
