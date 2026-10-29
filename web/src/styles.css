@@ -3985,3 +3985,20 @@ body.chat-open .chats-switch{display:none}
   .gm .gm-item:hover:not([data-on]) .gm-bg,.gm .gm-item:hover:not([data-on]) .gm-label{width:var(--w)}
   .gm .gm-item:hover:not([data-on]) .gm-label{left:0;right:auto}
 }
+
+/* Your orbit: groups circling you */
+.orbitview{display:grid;gap:8px}
+.ov-stage{position:relative;display:grid;place-items:center;overflow:hidden;border-radius:24px;background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--violet) 14%,transparent),transparent 62%),var(--surface);box-shadow:0 0 0 1px var(--line)}
+.ov-ring{position:absolute;border-radius:50%;border:1px dashed var(--line);pointer-events:none}
+.ov-core{position:absolute;width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#a96bff,#6f9cff);display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:0 0 0 8px color-mix(in srgb,var(--violet) 14%,transparent),0 0 0 18px color-mix(in srgb,var(--violet) 7%,transparent)}
+.ov-core i{width:5px;height:11px;border-radius:3px;background:#fff}
+.ov-node{position:absolute;display:grid;justify-items:center;gap:4px;padding:0;border:0;background:none;color:var(--ink);cursor:pointer;max-width:96px}
+.ov-dot{position:relative;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--surface);color:var(--t);box-shadow:0 0 0 2px var(--t),0 8px 18px -10px var(--t);transition:transform .25s}
+.ov-dot::after{content:"";position:absolute;inset:-6px;border-radius:50%;background:conic-gradient(var(--t) var(--e),transparent 0);-webkit-mask:radial-gradient(circle,transparent 21px,#000 22px,#000 23px,transparent 24px);mask:radial-gradient(circle,transparent 21px,#000 22px,#000 23px,transparent 24px);opacity:.8}
+.ov-node[data-live] .ov-dot{animation:ov-pulse 1.8s ease-in-out infinite}
+.ov-node[data-on] .ov-dot,.ov-node:hover .ov-dot{transform:scale(1.2)}
+.ov-name{font-size:.72rem;font-weight:600;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-card{padding:12px 14px;border-radius:18px;background:var(--surface);box-shadow:0 0 0 1px var(--line);display:grid;gap:6px;justify-items:start}
+.ov-card p{margin:0;font-size:.85rem}
+@keyframes ov-pulse{50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--t) 22%,transparent),0 0 0 2px var(--t)}}
+@media (prefers-reduced-motion:reduce){.ov-node[data-live] .ov-dot{animation:none}}
