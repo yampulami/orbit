@@ -31,7 +31,7 @@ export default function DayAgenda({ day }: { day: string }) {
       </header>
       {(classes.length > 0 || dayEvents.length > 0) && (
         <ul className="agenda-extra" aria-label="Classes and campus events that day">
-          {classes.map((c) => <li key={c.id} className="x-class"><b>{clockLabel(c.start)}</b><span>{c.name}{c.place ? ` · ${c.place}` : ""}</span><em>Class</em></li>)}
+          {classes.map((c) => <li key={c.id} className="x-class"><b>{clockLabel(c.start)}<small>to {clockLabel(c.end)}</small></b><span>{c.name}{c.place && <small>{c.place}</small>}</span><em>Class</em></li>)}
           {dayEvents.map((e) => <li key={e.id} className="x-event"><b>{new Date(e.startsAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</b><span>{e.title}{e.place ? ` · ${e.place}` : ""}</span><EventBadge e={e} /></li>)}
         </ul>
       )}

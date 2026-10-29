@@ -3654,3 +3654,15 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .sync-pick small{color:var(--ink-soft);font-size:.8rem;font-weight:500}
 .sync-pick[aria-expanded=true] .fold-chev{transform:rotate(180deg)}
 .sync-pick:focus-visible{outline:2px solid var(--violet);outline-offset:3px;border-radius:8px}
+
+/* the day's classes and campus events: one tidy row each, on every screen size */
+.agenda-extra{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:6px}
+.agenda-extra li{display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:12px;background:var(--panel);font-size:.9rem}
+.agenda-extra li::marker{content:""}
+.agenda-extra b{flex:none;display:grid;min-width:78px;font-weight:700;font-size:.88rem;line-height:1.2}
+.agenda-extra b small{font-weight:500;font-size:.74rem;color:var(--ink-soft)}
+.agenda-extra span{flex:1;min-width:0;display:grid;gap:1px;font-weight:600;overflow-wrap:anywhere;line-height:1.25}
+.agenda-extra span small{font-weight:500;font-size:.78rem;color:var(--ink-soft)}
+.agenda-extra em{flex:none;font-style:normal;font-size:.7rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--violet) 18%,transparent);color:var(--violet)}
+.agenda-extra .x-class{box-shadow:inset 3px 0 0 var(--violet)}
+@media (max-width:700px){.agenda-extra b{min-width:70px}}
