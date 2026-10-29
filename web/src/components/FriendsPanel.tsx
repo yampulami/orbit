@@ -1,3 +1,4 @@
+import StackedList from "./StackedList";
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check, MessageSquare, Search, UserPlus, X } from "lucide-react";
@@ -56,19 +57,25 @@ export default function FriendsPanel() {
         </section>
       )}
 
-      <section aria-label="Your friends">
-        <h3>Your friends{friends.length > 0 && <span className="muted"> · {friends.length}</span>}</h3>
-        {friends.length === 0 ? <p className="rm-empty">No friends yet. Tap someone's name on a post, or find them by username above.</p> : (
-          <ul className="friend-list">
-            {friends.map((f) => (
-              <li key={f.id} className="friend-row">
-                <Link to={`/app/people/${f.id}`} className="person-link grow"><strong>{f.name}</strong>{f.username && <span className="muted"> @{f.username}</span>}</Link>
-                <button type="button" className="btn" aria-label={`Message ${f.name}`} onClick={() => void message(f.id)}><MessageSquare size={16} aria-hidden="true" />Message</button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {friends.length === 0 ? (
+        <section aria-label="Your friends"><h3>Your friends</h3><p className="rm-empty">No friends yet. Tap someone's name on a post, or find them by username above.</p></section>
+      ) : (
+        <StackedList
+          title="Your friends"
+          subtitle={`${friends.length} ${friends.length === 1 ? "friend" : "friends"}`}
+          people={friends.map((f) => ({ name: f.name }))}
+          items={friends}
+          getKey={(f) => f.id}
+          itemText={(f) => `${f.name} ${f.username ?? ""}`}
+          defaultOpen={friends.length <= 4}
+          renderItem={(f) => (
+            <div className="friend-row">
+              <Link to={`/app/people/${f.id}`} className="person-link grow"><strong>{f.name}</strong>{f.username && <span className="muted"> @{f.username}</span>}</Link>
+              <button type="button" className="btn" aria-label={`Message ${f.name}`} onClick={() => void message(f.id)}><MessageSquare size={16} aria-hidden="true" />Message</button>
+            </div>
+          )}
+        />
+      )}
 
       {outgoing.length > 0 && (
         <section aria-label="Requests you sent">

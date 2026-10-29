@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronDown, Sparkles, Users } from "lucide-react";
+import { Check, Sparkles, Users } from "lucide-react";
+import StackedList from "./StackedList";
+import { gradientFor } from "../lib/look";
 import { useFriends } from "../lib/friends";
 import { hangActions } from "../lib/hangouts";
 import { useCampusEvents } from "../lib/campusEvents";
@@ -55,7 +57,6 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
   const [dayIdx, setDayIdx] = useState(0);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [pickOpen, setPickOpen] = useState(false);
   const [gridOpen, setGridOpen] = useState(false);
   const [making, setMaking] = useState(false);
   const [error, setError] = useState("");
@@ -125,19 +126,22 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
       {given ? (
         <h3 className="ft-h"><Users size={14} aria-hidden="true" /> {title}</h3>
       ) : (
-        <button type="button" className="sync-pick" aria-expanded={pickOpen} onClick={() => setPickOpen((v) => !v)}>
-          <Users size={14} aria-hidden="true" />
-          <span>{title}</span>
-          <small>{picked.length ? `with ${picked.length} ${picked.length === 1 ? "friend" : "friends"}` : "just you"}</small>
-          <ChevronDown size={14} className="fold-chev" aria-hidden="true" />
-        </button>
-      )}
-      {!given && pickOpen && (
-        friends.length === 0
-          ? <p className="muted">Add a friend first, then find a time that works for both of you.</p>
-          : <div className="chip-row" role="group" aria-label="Who to find a time with">
-              {friends.map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={picked.includes(f.id)} onClick={() => toggle(f.id)}>{f.name}</button>)}
-            </div>
+        <StackedList
+          title={title}
+          subtitle={picked.length ? `with ${picked.map((id) => friends.find((f) => f.id === id)?.name.split(" ")[0]).filter(Boolean).slice(0, 3).join(", ")}${picked.length > 3 ? ` +${picked.length - 3}` : ""}` : "just you · pick friends"}
+          people={chosen.map((f) => ({ name: f.name }))}
+          items={friends}
+          getKey={(f) => f.id}
+          itemText={(f) => `${f.name} ${f.username ?? ""}`}
+          empty="Add a friend first, then find a time that works for both of you."
+          renderItem={(f) => (
+            <button type="button" className="sl-row" aria-pressed={picked.includes(f.id)} onClick={() => toggle(f.id)}>
+              <span className="sl-face" style={{ background: gradientFor(f.name) }} aria-hidden="true">{f.name.trim().slice(0, 1).toUpperCase()}</span>
+              <span className="sl-name">{f.name}{f.username && <small>@{f.username}</small>}</span>
+              <span className="sl-tick" aria-hidden="true"><Check size={13} /></span>
+            </button>
+          )}
+        />
       )}
       {notSharing.length > 0 && <p className="muted sync-note">{notSharing.join(", ")} {notSharing.length === 1 ? "has" : "have"} not turned on free-time sharing, so {notSharing.length === 1 ? "they are" : "they are"} left out.</p>}
 

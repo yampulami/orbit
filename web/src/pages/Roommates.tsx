@@ -7,6 +7,7 @@ import { notice } from "../lib/notice";
 import { roomActions, useSpace, useSpaceReady } from "../lib/roommates";
 import GroupAddFriend from "../components/GroupAddFriend";
 import GroupSync from "../components/GroupSync";
+import StackedList from "../components/StackedList";
 import { Avatar } from "./roommates/Avatar";
 import GradientMenu, { type GMItem } from "../components/GradientMenu";
 import Tasks from "./roommates/Tasks";
@@ -119,10 +120,17 @@ export default function Roommates() {
       <header className="rm-head">
         <div>
           <h2>{space.name}</h2>
-          <div className="rm-members" aria-label="Roommates">
-            <span className="rm-stack">{space.members.slice(0, 6).map((m) => <Avatar key={m} name={m} members={space.members} size={30} />)}</span>
-            <span className="muted">{space.members.map((m) => (m === YOU ? "You" : m)).join(", ")}</span>
-          </div>
+          <StackedList
+            title="Roommates"
+            subtitle={space.members.map((m) => (m === YOU ? "You" : m.split(" ")[0])).slice(0, 4).join(", ") + (space.members.length > 4 ? ` +${space.members.length - 4}` : "")}
+            people={space.members.filter((m) => m !== YOU).map((m) => ({ name: m }))}
+            items={space.members}
+            getKey={(m) => m}
+            itemText={(m) => m}
+            renderItem={(m) => (
+              <div className="sl-row"><Avatar name={m} members={space.members} size={32} /><span className="sl-name">{m === YOU ? "You" : m}</span></div>
+            )}
+          />
         </div>
         <button type="button" className="btn" aria-expanded={adding} onClick={() => { setAdding((v) => !v); setError(""); }}><UserPlus size={18} aria-hidden="true" />Add roommates</button>
       </header>
