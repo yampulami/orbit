@@ -34,11 +34,11 @@ const KINDS = [
   { id: "study", label: "Study session", title: "Study session", minutes: 120, from: 9 * 60, to: 21 * 60 },
   { id: "meal", label: "Meal", title: "Grab food", minutes: 60, from: 11 * 60, to: 20 * 60 },
   { id: "club", label: "Club meeting", title: "Club meeting", minutes: 60, from: 12 * 60, to: 21 * 60 },
-  { id: "custom", label: "Something else", title: "Plan", minutes: 60, from: 9 * 60, to: 21 * 60 + 30 },
+  { id: "custom", label: "Something else", title: "Plan", minutes: 60, from: 9 * 60, to: 22 * 60 },
 ] as const;
 type KindId = (typeof KINDS)[number]["id"];
-const NOT_BEFORE = [{ m: 8 * 60, l: "Any time" }, { m: 10 * 60, l: "10 AM" }, { m: 12 * 60, l: "Noon" }, { m: 14 * 60, l: "2 PM" }, { m: 17 * 60, l: "5 PM" }];
-const NOT_AFTER = [{ m: 22 * 60, l: "Any time" }, { m: 20 * 60, l: "8 PM" }, { m: 18 * 60, l: "6 PM" }, { m: 16 * 60, l: "4 PM" }];
+const NOT_BEFORE = [{ m: 8 * 60, l: "Any time" }, { m: 9 * 60, l: "9 AM" }, { m: 10 * 60, l: "10 AM" }, { m: 11 * 60, l: "11 AM" }, { m: 12 * 60, l: "Noon" }, { m: 14 * 60, l: "2 PM" }, { m: 17 * 60, l: "5 PM" }];
+const NOT_AFTER = [{ m: 22 * 60, l: "Any time" }, { m: 21 * 60, l: "9 PM" }, { m: 20 * 60, l: "8 PM" }, { m: 18 * 60, l: "6 PM" }, { m: 16 * 60, l: "4 PM" }];
 const WEEK = [1, 2, 3, 4, 5, 6, 0];
 
 const dayLabel = (d: Date) => d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -74,8 +74,8 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
   const [kind, setKind] = useState<KindId>("hangout");
   const [attend, setAttend] = useState<string>("all"); // "all", "half" or a number of people
   const [required, setRequired] = useState<string[]>([]);
-  const [notBefore, setNotBefore] = useState(9 * 60);
-  const [notAfter, setNotAfter] = useState(21 * 60 + 30);
+  const [notBefore, setNotBefore] = useState(10 * 60); // the Hangout preset
+  const [notAfter, setNotAfter] = useState(22 * 60);
   const [skipDays, setSkipDays] = useState<number[]>([]);
   const [buffer, setBuffer] = useState(false);
   const [weekly, setWeekly] = useState(false);
