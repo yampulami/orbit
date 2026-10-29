@@ -1,3 +1,4 @@
+import { SweepLi, SweepUl } from "./Sweep";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Bell, Check, GraduationCap, ListChecks, Users } from "lucide-react";
@@ -38,11 +39,11 @@ export default function UpcomingList({ limit = 5, moreTo, hide = [], title = "Co
       {items.length === 0 ? (
         <p className="up-empty">Nothing here. Pick a day on the calendar to add a reminder, or plan a hangout.</p>
       ) : (
-        <ul>
+        <SweepUl>
           {shown.map((it, i) => {
             const Icon = ICON[it.kind];
             return (
-              <li key={it.id} data-kind={it.kind} className={[i >= visible ? "fold" : "", isPinned(it) ? "is-pinned" : "", leaving === it.id ? "leaving" : ""].join(" ").trim() || undefined} inert={i >= visible}>
+              <SweepLi key={it.id} data-kind={it.kind} className={[i >= visible ? "fold" : "", isPinned(it) ? "is-pinned" : "", leaving === it.id ? "leaving" : ""].join(" ").trim() || undefined} inert={i >= visible}>
                 <button type="button" className="up-main" title={`${it.title}, ${it.sub}`} onClick={() => nav(it.to, { state: it.state })}>
                   <span className="up-ico" aria-hidden="true"><Icon size={16} strokeWidth={1.9} /></span>
                   <span className="up-text"><strong>{it.title}</strong><span className="up-sub">{it.sub}</span></span>
@@ -52,10 +53,10 @@ export default function UpcomingList({ limit = 5, moreTo, hide = [], title = "Co
                 {it.reminderId && (
                   <button type="button" className="check" role="checkbox" aria-checked={leaving === it.id} aria-label={`Mark done: ${it.title}`} onClick={() => finish(it.id, it.reminderId!)}><Check size={14} strokeWidth={2.4} aria-hidden="true" /></button>
                 )}
-              </li>
+              </SweepLi>
             );
           })}
-        </ul>
+        </SweepUl>
       )}
       {items.length > limit && (moreTo
         ? <Link className="up-more" to={moreTo}>See all {items.length}</Link>

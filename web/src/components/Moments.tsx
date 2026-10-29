@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, MapPin, Sparkles } from "lucide-react";
 import AvatarStack from "./AvatarStack";
+import { SweepDiv, SweepItem } from "./Sweep";
 import { findConflict, hangActions } from "../lib/hangouts";
 import { headline, INTERESTS, lengthLabel, whenLabel, type Moment } from "../lib/moments";
 import { momentActions, useMomentPrefs } from "../lib/momentPrefs";
@@ -135,10 +136,10 @@ export function MomentsBar({ always = false, limit = 3 }: { /** Show it even whe
         <ChevronDown size={16} className="mb-chev" aria-hidden="true" />
       </button>
       {open && (
-        <div className="mb-body">
-          {moments.map((m) => <MomentCard key={m.id} m={m} row />)}
-          {!always && <Link to="/app/sync" className="link-btn mb-more">All suggestions and settings</Link>}
-        </div>
+        <SweepDiv className="mb-body">
+          {moments.map((m) => <SweepItem key={m.id}><MomentCard m={m} row /></SweepItem>)}
+          {!always && <SweepItem><Link to="/app/sync" className="link-btn mb-more">All suggestions and settings</Link></SweepItem>}
+        </SweepDiv>
       )}
     </section>
   );

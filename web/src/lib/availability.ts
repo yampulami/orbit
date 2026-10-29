@@ -31,12 +31,27 @@ export function bindSharing(userId: string) {
 }
 export function unbindSharing() { who = null; set({ ready: false, on: false, missing: false, who: DEFAULT_AUDIENCE }); }
 
+/** The same question asked from several places at once (the feed strip, a group chat, the assistant) is sent once and the answer is shared for a short while. */
+const asked = new Map<string, { at: number; value: Promise<unknown> }>();
+function once<T>(key: string, ttl: number, run: () => Promise<T>): Promise<T> {
+  const hit = asked.get(key);
+  if (hit && Date.now() - hit.at < ttl) return hit.value as Promise<T>;
+  const value = run().catch((e) => { asked.delete(key); throw e; });
+  asked.set(key, { at: Date.now(), value });
+  return value;
+}
+/** Forget what was remembered, because something changed (sharing turned on or off, who may see it, the classes). */
+const onForget = new Set<() => void>();
+export const whenForgotten = (f: () => void) => { onForget.add(f); };
+export const forgetAvailability = () => { asked.clear(); onForget.forEach((f) => f()); };
+
 const toRows = (blocks: Block[]) => blocks.map((b) => ({ d: b.d, s: b.s, e: b.e }));
 
 /** Send the student's own busy blocks (from their classes, no names) to the database. Only does anything while sharing is on. */
 export async function pushBusy(classes: ClassSlot[]): Promise<string | null> {
   if (!supabase || !state.on) return null;
   const { error } = await supabase.rpc("set_busy_blocks", { blocks: toRows(blocksFromClasses(classes)) });
+  forgetAvailability();
   return error ? error.message : null;
 }
 
@@ -44,6 +59,7 @@ export const availabilityActions = {
   async setSharing(on: boolean, classes: ClassSlot[]): Promise<string | null> {
     if (!supabase) return "Sharing needs an account.";
     const { error } = await supabase.rpc("set_free_time_sharing", { on_: on });
+    forgetAvailability();
     if (error) return error.message;
     set({ ...state, on, missing: false, ...(on ? {} : { who: DEFAULT_AUDIENCE }) });
     if (on) return pushBusy(classes);
@@ -55,13 +71,17 @@ export const availabilityActions = {
     const before = state.who;
     set({ ...state, who: next });
     const { error } = await supabase.rpc("set_free_time_audience", { aud: next.audience, allowed: next.allowed, housemates_: next.housemates, club_: next.clubCounts });
+    forgetAvailability();
     if (error) { set({ ...state, who: before }); return /function|does not exist|schema cache/i.test(error.message) ? "These settings are not available yet." : error.message; }
     return null;
   },
 };
 
 /** The members of a group or household, with names, so their free time can be looked up (only people who share it with you will have any). */
-export async function loadGroupPeople(groupId: string, me: string): Promise<{ id: string; name: string }[]> {
+export function loadGroupPeople(groupId: string, me: string): Promise<{ id: string; name: string }[]> {
+  return once(`group:${groupId}:${me}`, 120_000, () => fetchGroupPeople(groupId, me));
+}
+async function fetchGroupPeople(groupId: string, me: string): Promise<{ id: string; name: string }[]> {
   if (!supabase) return [];
   const m = await supabase.from("campus_group_memberships").select("user_id").eq("group_id", groupId);
   const ids = ((m.data ?? []) as { user_id: string }[]).map((r) => r.user_id).filter((id) => id !== me);
@@ -81,7 +101,11 @@ export async function clubFreeCounts(orgId: string): Promise<{ counts: ClubCount
 }
 
 /** The friends who are sharing, with their busy blocks, and the ones who are not. */
-export async function loadFriendFree(friends: { id: string; name: string }[]): Promise<{ sharing: Person[]; notSharing: string[] }> {
+export function loadFriendFree(friends: { id: string; name: string }[]): Promise<{ sharing: Person[]; notSharing: string[] }> {
+  const key = "free:" + friends.map((f) => f.id).sort().join(",");
+  return once(key, 60_000, () => fetchFriendFree(friends));
+}
+async function fetchFriendFree(friends: { id: string; name: string }[]): Promise<{ sharing: Person[]; notSharing: string[] }> {
   if (!supabase || friends.length === 0) return { sharing: [], notSharing: friends.map((f) => f.name) };
   const ids = friends.map((f) => f.id);
   const s = await supabase.rpc("free_time_sharers", { ids });

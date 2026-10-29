@@ -1,3 +1,4 @@
+import { SweepLi, SweepUl } from "./Sweep";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Bell, Check, Plus, Trash2 } from "lucide-react";
 import { QUICK_TIMES, fromYmd, reminderActions, useReminders, ymd } from "../lib/reminders";
@@ -57,17 +58,17 @@ export default function RemindersPanel({ day }: { day: string }) {
       {mine.length === 0 ? (
         <p className="rem-empty">Nothing set for this day.</p>
       ) : (
-        <ul>
+        <SweepUl>
           {mine.map((r) => (
-            <li key={r.id} className={r.done ? "done" : ""}>
+            <SweepLi key={r.id} className={r.done ? "done" : ""}>
               <button type="button" className="check" role="checkbox" aria-checked={r.done} aria-label={`${r.done ? "Mark not done" : "Mark done"}: ${r.title}`} onClick={() => reminderActions.setDone(r.id, !r.done)}><Check size={14} strokeWidth={2.4} aria-hidden="true" /></button>
               <span className="rem-title">{r.title}</span>
               {!r.done && <PinButton kind="reminder" id={r.id} title={r.title} />}
               <span className="rem-time">{r.time ? clock(r.time) : "Morning"}</span>
               <button type="button" className="ghost-btn" aria-label={`Delete reminder ${r.title}`} onClick={() => reminderActions.remove(r.id)}><Trash2 size={15} aria-hidden="true" /></button>
-            </li>
+            </SweepLi>
           ))}
-        </ul>
+        </SweepUl>
       )}
 
       <form ref={form} onSubmit={add} onFocus={() => setStarted(true)} onPointerDown={() => setStarted(true)} className={title.trim() || started || pick !== "" ? "has-text" : undefined}>

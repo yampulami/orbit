@@ -2,6 +2,7 @@ import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Search, Users, X } from "lucide-react";
 import AvatarStack, { type StackPerson } from "./AvatarStack";
+import { SweepLi, SweepUl } from "./Sweep";
 
 type Props<T> = {
   title: string;
@@ -69,13 +70,9 @@ export default function StackedList<T>({ title, subtitle, icon, people, items, g
             {shown.length === 0 ? (
               <p className="sl-empty muted">{q ? "Nobody matches that." : empty ?? "Nothing here yet."}</p>
             ) : (
-              <ul className="sl-list">
-                {shown.map((item, i) => (
-                  <motion.li key={getKey(item)} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: Math.min(i, 10) * 0.03 }}>
-                    {renderItem(item)}
-                  </motion.li>
-                ))}
-              </ul>
+              <SweepUl className="sl-list">
+                {shown.map((item) => <SweepLi key={getKey(item)}>{renderItem(item)}</SweepLi>)}
+              </SweepUl>
             )}
             {footer && <div className="sl-foot">{footer}</div>}
           </motion.div>

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown } from "lucide-react";
+import { SweepLi } from "./Sweep";
 
 export type DropOption<T extends string | number> = { value: T; label: string; hint?: string };
 
@@ -48,16 +49,16 @@ export default function Dropdown<T extends string | number>({ options, value, on
             role="listbox"
             aria-label={label}
             id={id}
-            initial={{ opacity: 0, y: -6, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ duration: 0.14 }}
+            initial="hidden"
+            animate="visible"
+            exit="gone"
+            variants={{ hidden: { opacity: 0, y: -6 }, visible: { opacity: 1, y: 0, transition: { duration: 0.14, staggerChildren: 0.025, delayChildren: 0.03 } }, gone: { opacity: 0, y: -6, transition: { duration: 0.1 } } }}
           >
             {options.map((o, i) => (
-              <li key={String(o.value)} role="option" aria-selected={o.value === value} data-active={i === active ? "" : undefined} onMouseEnter={() => setActive(i)} onClick={() => pick(o.value)}>
+              <SweepLi key={String(o.value)} role="option" aria-selected={o.value === value} data-active={i === active ? "" : undefined} onMouseEnter={() => setActive(i)} onClick={() => pick(o.value)}>
                 <span>{o.label}{o.hint && <small>{o.hint}</small>}</span>
                 {o.value === value && <Check size={14} aria-hidden="true" />}
-              </li>
+              </SweepLi>
             ))}
           </motion.ul>
         )}

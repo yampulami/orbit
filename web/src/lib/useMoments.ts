@@ -2,25 +2,31 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "./auth";
 import { useHang } from "./hangouts";
 import { useCampusEvents } from "./campusEvents";
-import { loadFriendFree, loadGroupPeople } from "./availability";
+import { loadFriendFree, loadGroupPeople, whenForgotten } from "./availability";
 import { useMyBusy } from "./useMyBusy";
 import { useMomentPrefs } from "./momentPrefs";
 import { detectMoments, type Circle, type Moment } from "./moments";
 import type { Person } from "./freeTime";
 
-/** Who in each of your groups shares their free time with you. Asked for rarely and remembered for a few minutes, because it is a small amount of data that changes slowly. */
-const cache = new Map<string, { at: number; circle: Circle }>();
+/** Who in each of your groups shares their free time with you. One lookup shared by everything on screen, remembered for a few minutes: it is a small amount of data that changes slowly. */
+const cache = new Map<string, { at: number; circle: Promise<Circle> }>();
 const FRESH = 5 * 60_000;
 
-async function loadCircle(g: { id: string; name: string }, me: string): Promise<Circle> {
+function loadCircle(g: { id: string; name: string }, me: string): Promise<Circle> {
   const hit = cache.get(g.id);
   if (hit && Date.now() - hit.at < FRESH) return hit.circle;
-  const people = await loadGroupPeople(g.id, me);
-  const { sharing, notSharing } = await loadFriendFree(people);
-  const circle: Circle = { id: g.id, name: g.name, members: sharing as Person[], unknown: notSharing, total: people.length + 1 };
+  const circle = (async (): Promise<Circle> => {
+    const people = await loadGroupPeople(g.id, me);
+    const { sharing, notSharing } = await loadFriendFree(people);
+    return { id: g.id, name: g.name, members: sharing as Person[], unknown: notSharing, total: people.length + 1 };
+  })();
   cache.set(g.id, { at: Date.now(), circle });
+  circle.catch(() => cache.delete(g.id));
   return circle;
 }
+/** Forget the circles (sharing or the groups changed). */
+export const forgetCircles = () => cache.clear();
+whenForgotten(forgetCircles);
 
 /** The suggestions for right now: nothing is looked up unless the student turned Moments on. */
 export function useMoments(limit = 5): { moments: Moment[]; loading: boolean; enabled: boolean; circles: Circle[] } {

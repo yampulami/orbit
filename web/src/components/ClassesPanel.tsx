@@ -1,3 +1,4 @@
+import { SweepLi, SweepUl } from "./Sweep";
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { ChevronDown, GraduationCap, MapPin, Plus, Trash2, Upload } from "lucide-react";
 import { parseIcs, type ImportedClass } from "../lib/icsImport";
@@ -72,11 +73,11 @@ export default function ClassesPanel() {
       {found && (
         <div className="class-import" role="group" aria-label="Classes found in the calendar">
           <p><b>{found.classes.length} weekly {found.classes.length === 1 ? "class" : "classes"} found.</b>{found.skipped > 0 ? ` ${found.skipped} one-off ${found.skipped === 1 ? "event was" : "events were"} left out.` : ""} Untick any you do not want.</p>
-          <ul>
+          <SweepUl>
             {found.classes.map((c, i) => (
-              <li key={i}><label><input type="checkbox" checked={found.keep[i]} onChange={() => setFound({ ...found, keep: found.keep.map((k, j) => (j === i ? !k : k)) })} /> <span><b>{c.name}</b> {WEEK_ORDER.filter((d) => c.days.includes(d)).map((d) => DAY_NAMES[d].slice(0, 3)).join(" ")} · {clockLabel(c.start)}–{clockLabel(c.end)}{c.place ? ` · ${c.place}` : ""}</span></label></li>
+              <SweepLi key={i}><label><input type="checkbox" checked={found.keep[i]} onChange={() => setFound({ ...found, keep: found.keep.map((k, j) => (j === i ? !k : k)) })} /> <span><b>{c.name}</b> {WEEK_ORDER.filter((d) => c.days.includes(d)).map((d) => DAY_NAMES[d].slice(0, 3)).join(" ")} · {clockLabel(c.start)}–{clockLabel(c.end)}{c.place ? ` · ${c.place}` : ""}</span></label></SweepLi>
             ))}
-          </ul>
+          </SweepUl>
           <div className="class-import-btns"><button type="button" className="btn primary" disabled={!found.keep.some(Boolean)} onClick={addFound}>Add {found.keep.filter(Boolean).length}</button><button type="button" className="btn" onClick={() => setFound(null)}>Cancel</button></div>
         </div>
       )}
@@ -98,18 +99,18 @@ export default function ClassesPanel() {
       {classes.length === 0 && !open ? (
         <EmptyState icon={GraduationCap} title="No classes yet">Add your classes once and Orbit shows them on your week and reminds you what is next.</EmptyState>
       ) : (
-        <ul className="class-list">
+        <SweepUl className="class-list">
           {[...classes].sort((a, b) => a.start.localeCompare(b.start)).map((c) => (
-            <li key={c.id}>
+            <SweepLi key={c.id}>
               <div>
                 <strong>{c.name}</strong>
                 <span>{WEEK_ORDER.filter((d) => c.days.includes(d)).map((d) => DAY_NAMES[d].slice(0, 3)).join(" ")} · {clockLabel(c.start)}–{clockLabel(c.end)}</span>
                 {c.place && <span><MapPin size={12} aria-hidden="true" /> {c.place}</span>}
               </div>
               <button type="button" className="ghost-btn" aria-label={`Remove ${c.name}`} onClick={() => remove(c.id, c.name)}><Trash2 size={15} aria-hidden="true" /></button>
-            </li>
+            </SweepLi>
           ))}
-        </ul>
+        </SweepUl>
       )}
       </>}
     </section>

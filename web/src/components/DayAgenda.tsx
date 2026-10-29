@@ -1,3 +1,4 @@
+import { SweepLi, SweepUl } from "./Sweep";
 import { Link } from "react-router-dom";
 import { MapPin, Users } from "lucide-react";
 import PinButton from "./PinButton";
@@ -30,10 +31,10 @@ export default function DayAgenda({ day }: { day: string }) {
           {asking > 0 && ` · ${asking} need${asking === 1 ? "s" : ""} your answer`}</p>
       </header>
       {(classes.length > 0 || dayEvents.length > 0) && (
-        <ul className="agenda-extra" aria-label="Classes and campus events that day">
-          {classes.map((c) => <li key={c.id} className="x-class"><b>{clockLabel(c.start)}<small>to {clockLabel(c.end)}</small></b><span>{c.name}{c.place && <small>{c.place}</small>}</span><em>Class</em></li>)}
-          {dayEvents.map((e) => <li key={e.id} className="x-event"><b>{new Date(e.startsAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</b><span>{e.title}{e.place ? ` · ${e.place}` : ""}</span><EventBadge e={e} /></li>)}
-        </ul>
+        <SweepUl className="agenda-extra" aria-label="Classes and campus events that day">
+          {classes.map((c) => <SweepLi key={c.id} className="x-class"><b>{clockLabel(c.start)}<small>to {clockLabel(c.end)}</small></b><span>{c.name}{c.place && <small>{c.place}</small>}</span><em>Class</em></SweepLi>)}
+          {dayEvents.map((e) => <SweepLi key={e.id} className="x-event"><b>{new Date(e.startsAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</b><span>{e.title}{e.place ? ` · ${e.place}` : ""}</span><EventBadge e={e} /></SweepLi>)}
+        </SweepUl>
       )}
       <div className="agenda-grid">
         <div className="agenda-hangs">
@@ -41,11 +42,11 @@ export default function DayAgenda({ day }: { day: string }) {
           {list.length === 0 ? (
             <p className="rem-empty">No hangouts. <Link to="/app/groups">Plan one</Link></p>
           ) : (
-            <ul>
+            <SweepUl>
               {list.map((h) => {
                 const mine = h.rsvps[YOU];
                 return (
-                  <li key={h.id} className={"a-" + (mine ?? "pending")}>
+                  <SweepLi key={h.id} className={"a-" + (mine ?? "pending")}>
                     <div className="agenda-info">
                       <strong>{h.title}</strong>
                       <span>{clock(h.when)} · <MapPin size={12} aria-hidden="true" />{h.place}</span>
@@ -55,10 +56,10 @@ export default function DayAgenda({ day }: { day: string }) {
                       <button type="button" data-a="yes" aria-pressed={mine === "yes"} onClick={() => hangActions.setRsvp(h.id, mine === "yes" ? null : "yes")}>Yes</button>
                       <button type="button" data-a="no" aria-pressed={mine === "no"} onClick={() => hangActions.setRsvp(h.id, mine === "no" ? null : "no")}>No</button>
                     </div>
-                  </li>
+                  </SweepLi>
                 );
               })}
-            </ul>
+            </SweepUl>
           )}
         </div>
         <RemindersPanel day={day} />

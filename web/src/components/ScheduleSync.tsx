@@ -1,3 +1,4 @@
+import { SweepLi, SweepUl } from "./Sweep";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, CalendarDays, Check, ChevronDown, ChevronUp, Flag, Sparkles, Star, Users, Utensils } from "lucide-react";
@@ -259,12 +260,12 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
               </div>
             </div>
           )
-          : <ul className="sync-list">
+          : <SweepUl className="sync-list">
               {(showAll ? suggestions : suggestions.slice(0, 3)).map((s) => {
                 const ev = eventAt(s.start, s.end);
                 const id = s.start.toISOString();
                 return (
-                  <li key={id} data-best={s.best ? "" : undefined}>
+                  <SweepLi key={id} data-best={s.best ? "" : undefined}>
                     <div className="sr-main">
                       <b>{s.best && <Sparkles size={12} className="sr-star" aria-label="Best match" />}{dayLabel(s.start)} · {clock(s.start)}–{clock(s.end)}</b>
                       <small>{[...(crowd > 1 && s.missing.length ? [`${s.missing.map(first).join(", ")} can't`] : []), ...s.reasons.filter((r) => !/^Everyone is free$|free$/.test(r)).slice(0, 2), ...(ev ? [`Also on: ${ev.title}`] : [])].join(" · ")}</small>
@@ -278,21 +279,21 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
                         <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
                       </div>
                     )}
-                  </li>
+                  </SweepLi>
                 );
               })}
-            </ul>
+            </SweepUl>
       )}
 
       {weekly && (
         weeklySlots.length === 0
           ? <p className="muted">No time repeats every week for everyone. Try a shorter length.</p>
-          : <ul className="sync-list">
+          : <SweepUl className="sync-list">
               {weeklySlots.map((w, i) => {
                 const start = nextOccurrence(w.weekday, w.start, now);
                 const id = `w${w.weekday}-${w.start}`;
                 return (
-                  <li key={id} data-best={i === 0 ? "" : undefined}>
+                  <SweepLi key={id} data-best={i === 0 ? "" : undefined}>
                     <div className="sr-main">
                       <b>{i === 0 && <Sparkles size={12} className="sr-star" aria-label="Best match" />}Every {DAY_NAMES[w.weekday]} · {timeLabel(w.start)}–{timeLabel(w.end)}</b>
                       <small>{[...(w.missing.length ? [`${w.missing.map(first).join(", ")} can't`] : []), "Classes only, holds every week"].join(" · ")}</small>
@@ -306,10 +307,10 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
                         <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
                       </div>
                     )}
-                  </li>
+                  </SweepLi>
                 );
               })}
-            </ul>
+            </SweepUl>
       )}
 
       {!weekly && (suggestions.length > 3 || crowd > 0) && (
