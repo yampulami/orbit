@@ -1,11 +1,12 @@
 import { SweepLi, SweepUl } from "./Sweep";
+import StackedList from "./StackedList";
 import { Link } from "react-router-dom";
-import { MapPin, Users } from "lucide-react";
+import { GraduationCap, MapPin, Users } from "lucide-react";
 import PinButton from "./PinButton";
 import RemindersPanel from "./RemindersPanel";
 import { hangActions, isVisible, useHang, YOU } from "../lib/hangouts";
 import { classesOn, clockLabel, useClasses } from "../lib/classes";
-import { useCampusEvents } from "../lib/campusEvents";
+import { useCampusEvents, type CampusEvent } from "../lib/campusEvents";
 import { EventBadge } from "./EventCard";
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
@@ -22,6 +23,15 @@ export default function DayAgenda({ day }: { day: string }) {
   const classes = classesOn(useClasses(), d);
   const dayEvents = useCampusEvents().events.filter((e) => e.status === "published" && !e.canceled && new Date(e.startsAt).toDateString() === day);
 
+  // The day's classes and campus events, in time order, folded into one bar like the other lists.
+  type Row = { key: string; at: number; time: string; end?: string; title: string; place?: string; kind: "class" | "event"; event?: CampusEvent };
+  const rows: Row[] = [
+    ...classes.map((c): Row => { const [h, m] = c.start.split(":").map(Number); return { key: c.id, at: new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m).getTime(), time: clockLabel(c.start), end: clockLabel(c.end), title: c.name, place: c.place, kind: "class" }; }),
+    ...dayEvents.map((e): Row => ({ key: e.id, at: new Date(e.startsAt).getTime(), time: clock(e.startsAt), title: e.title, place: e.place, kind: "event", event: e })),
+  ].sort((a, b) => a.at - b.at);
+  const next = isToday ? rows.find((r) => r.at > Date.now()) : undefined;
+  const summary = [classes.length ? `${classes.length} ${classes.length === 1 ? "class" : "classes"}` : "", dayEvents.length ? `${dayEvents.length} ${dayEvents.length === 1 ? "event" : "events"}` : ""].filter(Boolean).join(" · ") + (next ? ` · next ${next.time}` : "");
+
   return (
     <section className="agenda" aria-label="Selected day">
       <header>
@@ -30,11 +40,23 @@ export default function DayAgenda({ day }: { day: string }) {
           {list.length > 0 && ` · ${list.length} hangout${list.length === 1 ? "" : "s"}`}
           {asking > 0 && ` · ${asking} need${asking === 1 ? "s" : ""} your answer`}</p>
       </header>
-      {(classes.length > 0 || dayEvents.length > 0) && (
-        <SweepUl className="agenda-extra" aria-label="Classes and campus events that day">
-          {classes.map((c) => <SweepLi key={c.id} className="x-class"><b>{clockLabel(c.start)}<small>to {clockLabel(c.end)}</small></b><span>{c.name}{c.place && <small>{c.place}</small>}</span><em>Class</em></SweepLi>)}
-          {dayEvents.map((e) => <SweepLi key={e.id} className="x-event"><b>{new Date(e.startsAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</b><span>{e.title}{e.place ? ` · ${e.place}` : ""}</span><EventBadge e={e} /></SweepLi>)}
-        </SweepUl>
+      {rows.length > 0 && (
+        <StackedList
+          key={day}
+          title="Classes and events"
+          subtitle={summary}
+          icon={<GraduationCap size={18} />}
+          items={rows}
+          getKey={(r) => r.key}
+          defaultOpen={rows.length <= 2}
+          renderItem={(r) => (
+            <div className={"ag-row x-" + r.kind}>
+              <b>{r.time}{r.end && <small>to {r.end}</small>}</b>
+              <span>{r.title}{r.place && <small>{r.place}</small>}</span>
+              {r.kind === "class" ? <em>Class</em> : r.event && <EventBadge e={r.event} />}
+            </div>
+          )}
+        />
       )}
       <div className="agenda-grid">
         <div className="agenda-hangs">

@@ -3939,3 +3939,12 @@ body.chat-open .chats-switch{display:none}
 .event-post .ev-hosting{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border-radius:999px;background:color-mix(in srgb,#1fa97a 16%,transparent);color:#1fa97a;font-size:.84rem;font-weight:700}
 .event-post .ev-count{font-size:.82rem;color:var(--ink-soft)}
 .event-post .ev-all{margin-left:auto;font-size:.84rem;font-weight:600}
+
+/* a row in the folded classes-and-events list */
+.ag-row{display:flex;align-items:center;gap:12px;padding:9px 2px;font-size:.9rem}
+.ag-row b{flex:none;display:grid;min-width:78px;font-weight:700;font-size:.88rem;line-height:1.2}
+.ag-row b small{font-weight:500;font-size:.74rem;color:var(--ink-soft)}
+.ag-row span{flex:1;min-width:0;display:grid;gap:1px;font-weight:600;overflow-wrap:anywhere;line-height:1.25}
+.ag-row span small{font-weight:500;font-size:.78rem;color:var(--ink-soft)}
+.ag-row em{flex:none;font-style:normal;font-size:.7rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--violet) 18%,transparent);color:var(--violet)}
+.agenda>.sl{margin-bottom:10px}
