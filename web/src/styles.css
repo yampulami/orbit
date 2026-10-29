@@ -3948,3 +3948,18 @@ body.chat-open .chats-switch{display:none}
 .ag-row span small{font-weight:500;font-size:.78rem;color:var(--ink-soft)}
 .ag-row em{flex:none;font-style:normal;font-size:.7rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--violet) 18%,transparent);color:var(--violet)}
 .agenda>.sl{margin-bottom:10px}
+
+/* club posts: cards like the feed's posts, with pill actions */
+.cf-list{gap:10px}
+.cf-post{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;gap:8px;box-shadow:none}
+.cf-list>.cf-post:first-child{border-top:1px solid var(--line)}
+.cf-post.announcement{border-color:var(--line)}
+.cf-post.pinned{border-color:color-mix(in srgb,var(--violet) 55%,var(--line));box-shadow:0 0 0 1px color-mix(in srgb,var(--violet) 25%,transparent)}
+.cf-post header{align-items:flex-start}
+.cf-post footer{margin-top:2px;padding-top:2px}
+.cf-post footer .cf-act{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 13px;border:0;border-radius:999px;background:var(--panel);color:var(--ink-soft);font:inherit;font-size:.84rem;font-weight:600;cursor:pointer;text-decoration:none;transition:background .2s,color .2s}
+.cf-post footer .cf-act:hover{color:var(--ink);background:color-mix(in srgb,var(--violet) 12%,var(--panel))}
+.cf-post footer .cf-act[data-on]{color:var(--violet)}
+.cf-post footer .cf-act.icon{width:34px;padding:0;justify-content:center}
+.cf-post footer .cf-act:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.cf-tools{gap:8px}

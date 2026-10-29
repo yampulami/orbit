@@ -128,12 +128,12 @@ function PostCard({ p, title, inClub, canPin, canModerate, actions, me }: { p: P
       )}
 
       <footer>
-        {p.kind !== "announcement" || inClub ? <button type="button" className="link-btn" aria-expanded={open} onClick={() => setOpen((v) => !v)}><MessageCircle size={14} aria-hidden="true" /> {p.comments.length > 0 ? <><RollingNumber value={p.comments.length} /> {p.comments.length === 1 ? "comment" : "comments"}</> : inClub ? "Comment" : "Comments"}</button> : <span />}
+        {p.kind !== "announcement" || inClub ? <button type="button" className="cf-act" aria-expanded={open} onClick={() => setOpen((v) => !v)}><MessageCircle size={14} aria-hidden="true" /> {p.comments.length > 0 ? <><RollingNumber value={p.comments.length} /> {p.comments.length === 1 ? "comment" : "comments"}</> : inClub ? "Comment" : "Comments"}</button> : <span />}
         <span className="cf-tools">
-          {canPin && <button type="button" className="link-btn" onClick={() => void actions.pin(p.id, !p.pinned)}>{p.pinned ? <><PinOff size={13} aria-hidden="true" /> Unpin</> : <><Pin size={13} aria-hidden="true" /> Pin</>}</button>}
+          {canPin && <button type="button" className="cf-act" data-on={p.pinned ? "" : undefined} onClick={() => void actions.pin(p.id, !p.pinned)}>{p.pinned ? <><PinOff size={13} aria-hidden="true" /> Unpin</> : <><Pin size={13} aria-hidden="true" /> Pin</>}</button>}
           {(p.mine || canModerate) && (sure
             ? <span className="cevent-sure"><button type="button" className="btn danger" onClick={() => void actions.remove(p.id)}>Delete</button><button type="button" className="btn" onClick={() => setSure(false)}>Keep</button></span>
-            : <button type="button" className="link-btn" aria-label="Delete post" onClick={() => setSure(true)}><Trash2 size={13} aria-hidden="true" /></button>)}
+            : <button type="button" className="cf-act icon" aria-label="Delete post" onClick={() => setSure(true)}><Trash2 size={13} aria-hidden="true" /></button>)}
         </span>
       </footer>
 
