@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Clock } from "lucide-react";
+import { Clock, UserCheck, Users } from "lucide-react";
+import Segmented from "./Segmented";
 import { useClasses } from "../lib/classes";
 import { useMyBusy } from "../lib/useMyBusy";
 import { describeBusy } from "../lib/myBusy";
@@ -56,10 +57,7 @@ export default function FreeTimePanel({ preselect }: { /** Friends to start with
               </div>
               {sharing.on && (
                 <div className="ft-aud">
-                  <div role="radiogroup" aria-label="Who can see it" className="ft-aud-pick">
-                    <button type="button" role="radio" aria-checked={who.audience === "friends"} onClick={() => void audience({ ...who, audience: "friends" })}>All friends</button>
-                    <button type="button" role="radio" aria-checked={who.audience === "selected"} onClick={() => void audience({ ...who, audience: "selected" })}>Some friends</button>
-                  </div>
+                  <Segmented label="Who can see it" value={who.audience} onChange={(a) => void audience({ ...who, audience: a })} options={[{ value: "friends", label: "All friends", icon: <Users size={13} aria-hidden="true" /> }, { value: "selected", label: "Some friends", icon: <UserCheck size={13} aria-hidden="true" /> }]} />
                   {who.audience === "selected" && (
                     friends.length === 0
                       ? <p className="muted">Add a friend first, then choose who can see it.</p>

@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Sparkles, Star, Users } from "lucide-react";
+import { BookOpen, CalendarDays, Check, ChevronDown, ChevronUp, Flag, Sparkles, Star, Users, Utensils } from "lucide-react";
+import Segmented from "./Segmented";
+import Dropdown from "./Dropdown";
+import GradientMenu, { type GMItem } from "./GradientMenu";
 import StackedList from "./StackedList";
 import { gradientFor } from "../lib/look";
 import { useFriends } from "../lib/friends";
@@ -17,8 +20,12 @@ import { DAY_NAMES } from "../lib/classes";
 import { haptic } from "../lib/haptics";
 import { notice } from "../lib/notice";
 
-const LENGTHS = [{ m: 30, l: "30 min" }, { m: 60, l: "1 hr" }, { m: 90, l: "1.5 hr" }, { m: 120, l: "2 hr" }, { m: 180, l: "3 hr" }];
-const WINDOWS = [{ d: 1, l: "Today" }, { d: 3, l: "3 days" }, { d: 7, l: "This week" }, { d: 14, l: "2 weeks" }];
+const LENGTHS = [{ m: 30, l: "30m" }, { m: 60, l: "1h" }, { m: 90, l: "1.5h" }, { m: 120, l: "2h" }, { m: 180, l: "3h" }];
+const WINDOWS = [{ d: 1, l: "Today" }, { d: 3, l: "3 days" }, { d: 7, l: "Week" }, { d: 14, l: "2 wks" }];
+const KIND_LOOK: Record<string, { icon: typeof Users; tone: GMItem["tone"]; short: string }> = {
+  hangout: { icon: Users, tone: "pink", short: "Hangout" }, study: { icon: BookOpen, tone: "blue", short: "Study" }, meal: { icon: Utensils, tone: "orange", short: "Meal" },
+  club: { icon: Flag, tone: "green", short: "Club" }, custom: { icon: Sparkles, tone: "purple", short: "Other" },
+};
 const GRID_FROM = 8 * 60, GRID_TO = 22 * 60;
 
 /** What the plan is for: it sets a sensible length and title, and the hours that suit it. */
@@ -179,20 +186,34 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
       {notSharing.length > 0 && <p className="muted sync-note"><b>Unknown:</b> {notSharing.join(", ")} {notSharing.length === 1 ? "has" : "have"} not shared free time, so Orbit cannot tell when they are free and leaves them out. Ask them to turn on sharing, or plan it and let them answer.</p>}
 
       <div className="sync-opts">
-        <div className="sync-bar">
-          <label>What<select value={kind} onChange={(e) => pickKind(e.target.value as KindId)}>{KINDS.map((k) => <option key={k.id} value={k.id}>{k.label}</option>)}</select></label>
-          <label>How long<select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>{LENGTHS.map((l) => <option key={l.m} value={l.m}>{l.l}</option>)}</select></label>
-          {!weekly && <label>How soon<select value={days} onChange={(e) => setDays(Number(e.target.value))}>{WINDOWS.map((w) => <option key={w.d} value={w.d}>{w.l}</option>)}</select></label>}
+        <div className="sync-row">
+          <span className="sync-k" id="sy-what">What</span>
+          <GradientMenu
+            label="What you are planning"
+            className="sync-kinds"
+            items={KINDS.map((k): GMItem => ({ key: k.id, label: KIND_LOOK[k.id].short, icon: KIND_LOOK[k.id].icon, tone: KIND_LOOK[k.id].tone, on: kind === k.id, onClick: () => pickKind(k.id) }))}
+          />
         </div>
+        <div className="sync-row">
+          <span className="sync-k">How long</span>
+          <Segmented label="How long" options={LENGTHS.map((l) => ({ value: l.m, label: l.l }))} value={duration} onChange={setDuration} />
+        </div>
+        {!weekly && (
+          <div className="sync-row">
+            <span className="sync-k">How soon</span>
+            <Segmented label="How soon" options={WINDOWS.map((w) => ({ value: w.d, label: w.l }))} value={days} onChange={setDays} />
+          </div>
+        )}
         <details className="sync-adv">
           <summary>More{restricted || attend !== "all" || required.length > 0 ? " (set)" : ""}</summary>
           {crowd > 2 && (
             <div className="sync-opt"><span id="sy-att">Who has to be free</span>
-              <select className="sync-where" aria-labelledby="sy-att" value={attend} onChange={(e) => setAttend(e.target.value)}>
-                <option value="all">Everyone</option>
-                <option value="half">At least half</option>
-                {Array.from({ length: Math.max(0, crowd - 2) }, (_, i) => i + 2).map((n) => <option key={n} value={String(n)}>At least {n} people</option>)}
-              </select>
+              <Dropdown
+                label="Who has to be free"
+                value={attend}
+                onChange={setAttend}
+                options={[{ value: "all", label: "Everyone" }, { value: "half", label: "At least half" }, ...Array.from({ length: Math.max(0, crowd - 2) }, (_, i) => i + 2).map((n) => ({ value: String(n), label: `At least ${n} people` }))]}
+              />
             </div>
           )}
           {!given && picked.length > 0 && (
@@ -201,17 +222,18 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
             </div>
           )}
           <div className="sync-bar">
-            <label>Not before<select value={notBefore} onChange={(e) => setNotBefore(Number(e.target.value))}>{[...NOT_BEFORE, ...(NOT_BEFORE.some((o) => o.m === notBefore) ? [] : [{ m: notBefore, l: timeLabel(notBefore) }])].map((o) => <option key={o.m} value={o.m}>{o.l}</option>)}</select></label>
-            <label>Not after<select value={notAfter} onChange={(e) => setNotAfter(Number(e.target.value))}>{[...NOT_AFTER, ...(NOT_AFTER.some((o) => o.m === notAfter) ? [] : [{ m: notAfter, l: timeLabel(notAfter) }])].map((o) => <option key={o.m} value={o.m}>{o.l}</option>)}</select></label>
+            <div className="sync-opt"><span>Not before</span>
+              <Dropdown label="Not before" value={notBefore} onChange={setNotBefore} options={[...NOT_BEFORE, ...(NOT_BEFORE.some((o) => o.m === notBefore) ? [] : [{ m: notBefore, l: timeLabel(notBefore) }])].sort((x, y) => x.m - y.m).map((o) => ({ value: o.m, label: o.l }))} />
+            </div>
+            <div className="sync-opt"><span>Not after</span>
+              <Dropdown label="Not after" value={notAfter} onChange={setNotAfter} options={[...NOT_AFTER, ...(NOT_AFTER.some((o) => o.m === notAfter) ? [] : [{ m: notAfter, l: timeLabel(notAfter) }])].sort((x, y) => y.m - x.m).map((o) => ({ value: o.m, label: o.l }))} />
+            </div>
           </div>
           <div className="sync-opt"><span id="sy-skip">Skip days</span>
             <div className="chip-row" role="group" aria-labelledby="sy-skip">{WEEK.map((d) => <button key={d} type="button" className="chip-btn" aria-pressed={skipDays.includes(d)} aria-label={DAY_NAMES[d]} onClick={() => toggleDay(d)}>{DAY_NAMES[d].slice(0, 3)}</button>)}</div>
           </div>
           <div className="sync-opt"><span id="sy-where">Where (optional)</span>
-            <select className="sync-where" aria-labelledby="sy-where" value={whereId} onChange={(e) => setWhereId(e.target.value)}>
-              <option value="">Anywhere</option>
-              {places.filter((p) => p.category !== "transit").slice(0, 80).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            <Dropdown label="Where" value={whereId} onChange={setWhereId} options={[{ value: "", label: "Anywhere" }, ...places.filter((p) => p.category !== "transit").slice(0, 80).map((p) => ({ value: p.id, label: p.name }))]} />
             {spot && <small className="muted">{travel && travel.longest > 0 ? `Leaves up to ${travel.longest} min around your classes to walk to ${spot.name}.` : `Your classes are close to ${spot.name}.`}</small>}
           </div>
           <div className="sync-toggles">
@@ -261,7 +283,6 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
               })}
             </ul>
       )}
-      {!weekly && suggestions.length > 3 && <button type="button" className="link-btn sync-more" onClick={() => setShowAll((v) => !v)}>{showAll ? "Show fewer" : `Show ${suggestions.length - 3} more`}</button>}
 
       {weekly && (
         weeklySlots.length === 0
@@ -291,7 +312,20 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
             </ul>
       )}
 
-      {!weekly && crowd > 0 && <button type="button" className="link-btn sync-more" aria-expanded={gridOpen} onClick={() => setGridOpen((v) => !v)}>{gridOpen ? "Hide everyone's day" : "Show everyone's day"}</button>}
+      {!weekly && (suggestions.length > 3 || crowd > 0) && (
+        <div className="sync-pills">
+          {suggestions.length > 3 && (
+            <button type="button" className="pill-btn" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
+              {showAll ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}{showAll ? "Fewer times" : `${suggestions.length - 3} more times`}
+            </button>
+          )}
+          {crowd > 0 && (
+            <button type="button" className="pill-btn" aria-expanded={gridOpen} onClick={() => setGridOpen((v) => !v)}>
+              <CalendarDays size={14} aria-hidden="true" />{gridOpen ? "Hide the day" : "Everyone's day"}
+            </button>
+          )}
+        </div>
+      )}
       {!weekly && crowd > 0 && gridOpen && (
         <div className="sync-grid" aria-label="Everyone's day">
           <div className="chip-row" role="group" aria-label="Which day to show">

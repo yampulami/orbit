@@ -3872,3 +3872,46 @@ body.chat-open .chats-switch{display:none}
 /* calendar days stay round circles, centred in their column */
 .plans-col .cal-day,.cal-day{width:32px;height:32px;aspect-ratio:auto;justify-self:center;display:grid;place-items:center;padding:0}
 @media (max-width:700px){.cal-day{width:38px;height:38px}}
+
+/* ===== Orbit's own controls: sliding segments, a dropdown, pill buttons, a clear switch ===== */
+.sync-row{display:grid;gap:5px}
+.sync-k{font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.sync-kinds{gap:6px}
+.sync-bar{display:flex;gap:8px}
+.sync-bar>*{flex:1;min-width:0}
+
+.seg{position:relative;display:grid;grid-template-columns:repeat(var(--n,2),1fr);gap:2px;width:100%;padding:3px;border-radius:999px;background:var(--panel);box-shadow:inset 0 0 0 1px var(--line)}
+.seg-opt{position:relative;min-height:32px;padding:0 6px;border:0;border-radius:999px;background:none;color:var(--ink-soft);font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:color .2s}
+.seg-opt:hover{color:var(--ink)}
+.seg-opt[aria-checked=true],.seg-opt[aria-checked=true]:hover{color:#fff}
+.seg-pill{position:absolute;inset:0;border-radius:999px;background:linear-gradient(135deg,#8f6bff,#5a3fd8);box-shadow:0 5px 12px -5px rgba(90,63,216,.75)}
+.seg-lbl{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+.seg-opt:focus-visible{outline:2px solid var(--violet);outline-offset:1px}
+
+.dd{position:relative;min-width:0}
+.dd-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:38px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:.88rem;font-weight:600;cursor:pointer;transition:border-color .2s,box-shadow .2s}
+.dd-btn:hover{border-color:var(--violet)}
+.dd-btn[aria-expanded=true]{border-color:var(--violet);box-shadow:0 0 0 3px color-mix(in srgb,var(--violet) 22%,transparent)}
+.dd-btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.dd-val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dd-chev{flex:none;color:var(--ink-soft);transition:transform .2s}
+.dd-btn[aria-expanded=true] .dd-chev{transform:rotate(180deg)}
+.dd-list{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;margin:0;padding:5px;list-style:none;max-height:240px;overflow:auto;border-radius:14px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 16px 32px -12px rgba(0,0,0,.45)}
+.dd-list li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:9px;font-size:.88rem;cursor:pointer}
+.dd-list li[data-active]{background:color-mix(in srgb,var(--violet) 14%,transparent)}
+.dd-list li[aria-selected=true]{font-weight:700;color:var(--violet)}
+.dd-list small{display:block;color:var(--ink-soft);font-weight:500;font-size:.76rem}
+
+.sync-pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill-btn{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-size:.82rem;font-weight:600;cursor:pointer;transition:border-color .2s,background .2s}
+.pill-btn svg{color:var(--violet)}
+.pill-btn:hover{border-color:var(--violet);background:color-mix(in srgb,var(--violet) 8%,var(--surface))}
+.pill-btn[aria-expanded=true]{border-color:var(--violet);background:color-mix(in srgb,var(--violet) 14%,var(--surface))}
+.pill-btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+
+/* the switches here: clearly off, clearly on */
+.ft-share .switch{width:52px;height:30px;background:var(--panel);box-shadow:inset 0 0 0 1.5px var(--line)}
+.ft-share .switch span{display:grid;place-items:center;top:3px;left:3px;width:24px;height:24px;background:var(--ink-soft)}
+.ft-share .switch[aria-checked=true]{background:linear-gradient(135deg,#8f6bff,#5a3fd8);box-shadow:0 6px 14px -6px rgba(90,63,216,.8)}
+.ft-share .switch[aria-checked=true] span{transform:translateX(22px);background:#fff}
+.ft-share .switch[aria-checked=true] span::after{content:"";width:6px;height:11px;border:solid #5a3fd8;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
