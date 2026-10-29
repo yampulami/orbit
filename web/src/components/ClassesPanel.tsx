@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
-import { GraduationCap, MapPin, Plus, Trash2 } from "lucide-react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import { GraduationCap, MapPin, Plus, Trash2, Upload } from "lucide-react";
+import { parseIcs, type ImportedClass } from "../lib/icsImport";
 import { DAY_LETTERS, DAY_NAMES, WEEK_ORDER, classActions, clockLabel, useClasses } from "../lib/classes";
 import { undo } from "../lib/undo";
 import { notice } from "../lib/notice";
@@ -16,6 +17,27 @@ export default function ClassesPanel() {
   const [start, setStart] = useState("09:00");
   const [end, setEnd] = useState("10:15");
   const [error, setError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [found, setFound] = useState<{ classes: ImportedClass[]; skipped: number; keep: boolean[] } | null>(null);
+  const [importNote, setImportNote] = useState("");
+
+  async function pick(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    setImportNote("");
+    if (f.size > 2_000_000) { setImportNote("That file is too big to be a calendar."); return; }
+    const parsed = parseIcs(await f.text());
+    if (parsed.classes.length === 0) { setImportNote(parsed.skipped > 0 ? "That calendar has no weekly repeating events, so there are no classes to import." : "That does not look like a calendar file (.ics)."); setFound(null); return; }
+    setFound({ ...parsed, keep: parsed.classes.map((c) => !classes.some((x) => x.name === c.name && x.start === c.start && x.end === c.end)) });
+  }
+  function addFound() {
+    if (!found) return;
+    let added = 0;
+    found.classes.forEach((c, i) => { if (found.keep[i] && !classActions.add({ name: c.name, place: c.place, days: c.days, start: c.start, end: c.end })) added++; });
+    notice.show({ icon: "calendar", title: `${added} ${added === 1 ? "class" : "classes"} imported`, message: "They show on your week board and in Free time.", ms: 3500 });
+    setFound(null);
+  }
 
   function add(e: FormEvent) {
     e.preventDefault();
@@ -34,8 +56,24 @@ export default function ClassesPanel() {
     <section className="classes" aria-label="Class schedule">
       <header>
         <h3><GraduationCap size={15} aria-hidden="true" />Class schedule</h3>
-        <button type="button" className="btn" aria-expanded={open} onClick={() => { setOpen((v) => !v); setError(""); }}><Plus size={16} aria-hidden="true" />Add a class</button>
+        <span className="class-head-btns">
+          <button type="button" className="btn" onClick={() => fileRef.current?.click()}><Upload size={16} aria-hidden="true" />Import</button>
+          <button type="button" className="btn" aria-expanded={open} onClick={() => { setOpen((v) => !v); setError(""); }}><Plus size={16} aria-hidden="true" />Add a class</button>
+        </span>
+        <input ref={fileRef} type="file" accept=".ics,text/calendar" className="sr" tabIndex={-1} aria-label="Choose a calendar file to import" onChange={(e) => void pick(e)} />
       </header>
+      {importNote && <p className="error" role="alert">{importNote}</p>}
+      {found && (
+        <div className="class-import" role="group" aria-label="Classes found in the calendar">
+          <p><b>{found.classes.length} weekly {found.classes.length === 1 ? "class" : "classes"} found.</b>{found.skipped > 0 ? ` ${found.skipped} one-off ${found.skipped === 1 ? "event was" : "events were"} left out.` : ""} Untick any you do not want.</p>
+          <ul>
+            {found.classes.map((c, i) => (
+              <li key={i}><label><input type="checkbox" checked={found.keep[i]} onChange={() => setFound({ ...found, keep: found.keep.map((k, j) => (j === i ? !k : k)) })} /> <span><b>{c.name}</b> {WEEK_ORDER.filter((d) => c.days.includes(d)).map((d) => DAY_NAMES[d].slice(0, 3)).join(" ")} · {clockLabel(c.start)}–{clockLabel(c.end)}{c.place ? ` · ${c.place}` : ""}</span></label></li>
+            ))}
+          </ul>
+          <div className="class-import-btns"><button type="button" className="btn primary" disabled={!found.keep.some(Boolean)} onClick={addFound}>Add {found.keep.filter(Boolean).length}</button><button type="button" className="btn" onClick={() => setFound(null)}>Cancel</button></div>
+        </div>
+      )}
 
       {open && (
         <form className="class-form" onSubmit={add}>

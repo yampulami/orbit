@@ -3,7 +3,8 @@ import { Clock } from "lucide-react";
 import { useClasses } from "../lib/classes";
 import { useMyBusy } from "../lib/useMyBusy";
 import { describeBusy } from "../lib/myBusy";
-import { availabilityActions, useSharing } from "../lib/availability";
+import { availabilityActions, useSharing, type Audience } from "../lib/availability";
+import { useFriends } from "../lib/friends";
 import { haptic } from "../lib/haptics";
 import { supabase } from "../lib/supabase";
 import ScheduleSync from "./ScheduleSync";
@@ -13,6 +14,7 @@ export default function FreeTimePanel() {
   const classes = useClasses();
   const sharing = useSharing();
   const { today } = useMyBusy(new Date());
+  const { friends } = useFriends();
   const [error, setError] = useState("");
 
   async function flip(on: boolean) {
@@ -21,6 +23,14 @@ export default function FreeTimePanel() {
     const problem = await availabilityActions.setSharing(on, classes);
     if (problem) setError(problem);
   }
+
+  async function audience(next: Audience) {
+    setError("");
+    const problem = await availabilityActions.setAudience(next);
+    if (problem) setError(problem);
+  }
+  const who = sharing.who;
+  const togglePerson = (id: string) => void audience({ ...who, allowed: who.allowed.includes(id) ? who.allowed.filter((x) => x !== id) : [...who.allowed, id] });
 
   const live = !!supabase;
   return (
@@ -35,6 +45,21 @@ export default function FreeTimePanel() {
             <span>They see the hours you are busy, never what for. Off until you turn it on, and turning it off deletes it.</span>
           </div>
           <button type="button" role="switch" aria-checked={sharing.on} aria-labelledby="ft-share-l" className="switch" disabled={!sharing.ready} onClick={() => void flip(!sharing.on)}><span /></button>
+        </div>
+      )}
+      {live && !sharing.missing && sharing.on && (
+        <div className="ft-aud">
+          <div role="radiogroup" aria-label="Who can see it" className="ft-aud-pick">
+            <button type="button" role="radio" aria-checked={who.audience === "friends"} onClick={() => void audience({ ...who, audience: "friends" })}>All my friends</button>
+            <button type="button" role="radio" aria-checked={who.audience === "selected"} onClick={() => void audience({ ...who, audience: "selected" })}>Only some friends</button>
+          </div>
+          {who.audience === "selected" && (
+            friends.length === 0
+              ? <p className="muted">Add a friend first, then choose who can see it.</p>
+              : <div className="chip-row" role="group" aria-label="Friends who can see my free time">{friends.map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={who.allowed.includes(f.id)} onClick={() => togglePerson(f.id)}>{f.name}</button>)}</div>
+          )}
+          <label className="ft-check"><input type="checkbox" checked={who.housemates} onChange={(e) => void audience({ ...who, housemates: e.target.checked })} /> My housemates can see it too</label>
+          <label className="ft-check"><input type="checkbox" checked={who.clubCounts} onChange={(e) => void audience({ ...who, clubCounts: e.target.checked })} /> Count me in my clubs' meeting times <small>(officers see numbers only, like "12 of 18 free", never names)</small></label>
         </div>
       )}
       {error && <p className="error" role="alert">{error}</p>}

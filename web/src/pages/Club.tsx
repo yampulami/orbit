@@ -23,6 +23,7 @@ import PodsPanel from "../components/PodsPanel";
 import ClubDashboard from "../components/ClubDashboard";
 import ClubMembers from "../components/ClubMembers";
 import ClubInfoSheet from "../components/ClubInfoSheet";
+import ClubTimes from "../components/ClubTimes";
 import MyTasks from "../components/MyTasks";
 import GradientMenu from "../components/GradientMenu";
 import AvatarStack from "../components/AvatarStack";
@@ -195,6 +196,7 @@ export default function Club() {
                     ))}
                   </>
                 ))}
+              {canPost && <ClubTimes orgId={org.id} />}
               {canPost && !posting && <button type="button" className="chan-compose" onClick={() => setPosting(true)}><Plus size={16} aria-hidden="true" /> Post an event to #events</button>}
               {gone.length > 0 && !(posting && canPost) && (
                 <div className="ev-past">

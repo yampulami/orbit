@@ -1,11 +1,12 @@
 import { siteUrl } from "../lib/siteUrl";
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocation } from "react-router-dom";
-import { Receipt, Scale, ShoppingBasket, StickyNote, ListChecks, UserPlus, Copy, type LucideIcon } from "lucide-react";
+import { CalendarClock, Receipt, Scale, ShoppingBasket, StickyNote, ListChecks, UserPlus, Copy, type LucideIcon } from "lucide-react";
 import { hangActions, hangLive, useHang, YOU } from "../lib/hangouts";
 import { notice } from "../lib/notice";
 import { roomActions, useSpace, useSpaceReady } from "../lib/roommates";
 import GroupAddFriend from "../components/GroupAddFriend";
+import GroupSync from "../components/GroupSync";
 import { Avatar } from "./roommates/Avatar";
 import GradientMenu, { type GMItem } from "../components/GradientMenu";
 import Tasks from "./roommates/Tasks";
@@ -40,6 +41,7 @@ export default function Roommates() {
   const [houseName, setHouseName] = useState("");
   const [others, setOthers] = useState("");
   const [adding, setAdding] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [more, setMore] = useState("");
   const [error, setError] = useState("");
 
@@ -147,6 +149,13 @@ export default function Roommates() {
           <button className="btn primary">Add to {space.name}</button>
         </form>
         )
+      )}
+
+      {space.groupId && hangLive && (
+        <div className="rm-sync">
+          <button type="button" className="btn" aria-expanded={syncing} onClick={() => setSyncing((v) => !v)}><CalendarClock size={18} aria-hidden="true" />Find a time for the house</button>
+          {syncing && <div className="plan-form"><GroupSync groupId={space.groupId} title="When are we all free?" /></div>}
+        </div>
       )}
 
       <GradientMenu

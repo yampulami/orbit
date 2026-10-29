@@ -3561,3 +3561,34 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .sg-key{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin:2px 0 0;font-size:.76rem;color:var(--ink-soft)}
 .sg-key i{display:inline-block;position:static;width:14px;height:10px;border-radius:4px;vertical-align:middle}
 .sg-key .sg-pick{box-shadow:0 0 0 1.5px var(--violet)}
+
+/* importing classes from a calendar file */
+.class-head-btns{display:inline-flex;gap:8px;flex-wrap:wrap}
+.class-import{display:grid;gap:10px;padding:12px 14px;border-radius:14px;background:var(--panel)}
+.class-import p{margin:0;font-size:.9rem;line-height:1.45}
+.class-import ul{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.class-import label{display:flex;gap:8px;align-items:flex-start;font-size:.88rem;cursor:pointer}
+.class-import input{accent-color:var(--violet);margin-top:3px}
+.class-import-btns{display:flex;gap:8px}
+
+/* who can see my free time */
+.ft-aud{display:grid;gap:10px;padding:12px 14px;border-radius:14px;background:var(--panel)}
+.ft-aud-pick{display:inline-flex;padding:3px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);width:fit-content;max-width:100%}
+.ft-aud-pick button{border:0;background:none;color:var(--ink-soft);font:inherit;font-size:.86rem;font-weight:600;padding:7px 14px;border-radius:999px;cursor:pointer}
+.ft-aud-pick button[aria-checked=true]{background:var(--ink);color:var(--on-ink)}
+.ft-check{display:flex;align-items:flex-start;gap:8px;font-size:.88rem;line-height:1.4;cursor:pointer}
+.ft-check input{accent-color:var(--violet);margin-top:3px;width:16px;height:16px;flex:none}
+.ft-check small{color:var(--ink-soft)}
+.sync-where{height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;max-width:100%}
+
+/* club meeting times, roommates find-a-time */
+.club-times{display:grid;gap:8px}
+.ct-body{display:grid;gap:10px;padding:12px 14px;border-radius:14px;background:var(--panel)}
+.ct-body p{margin:0;font-size:.86rem;line-height:1.45}
+.ct-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.ct-list li{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--surface)}
+.ct-list li[data-best]{box-shadow:0 0 0 1.5px var(--violet)}
+.ct-list .ct-bar{grid-column:1/-1;height:6px;border-radius:3px;background:color-mix(in srgb,var(--ink) 12%,transparent);overflow:hidden}
+.ct-bar i{display:block;height:100%;border-radius:3px;background:var(--violet)}
+.ct-list small{grid-column:1/-1;color:var(--ink-soft)}
+.rm-sync{display:grid;gap:10px}

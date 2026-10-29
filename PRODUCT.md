@@ -105,5 +105,9 @@ Orbit now answers "what can I do right now, and with whom?". Pure logic is in `w
 - **Availability grid:** each person's busy hours on a day with the suggestions outlined on top.
 - **Where it lives:** Plans (pick friends), and a **Find a time** button inside every group chat (members who are not your friends are named and left out, because friends' shared times are all Orbit can read). Inside a group, "Plan it" makes a hangout there; elsewhere it makes a private group, plans the hangout and messages each friend a join link. Campus events on at the same time are mentioned.
 - **Assistant:** `find_free_time` takes friends, length, window and "everyone must be free", and returns the ranked list.
-- **Not built yet:** club-wide availability with aggregate-only counts (needs a database function with a minimum group size), roommate scheduling, travel time between places, importing outside calendars, and sharing with selected friends only.
-
+- **More control over who sees it** (`20261101200000_free_time_audiences.sql`): all friends or only friends you pick; housemates (people in your household) can see it too unless you turn that off; and you can agree to be counted in your clubs' meeting times.
+- **Club meeting times** (officers only): the best repeating times for a club as numbers only ("14 of 18 members free"), from members who agreed to be counted. Nothing shows until at least 5 members have agreed, and the database never returns who. Logic in `web/src/lib/clubTimes.ts`.
+- **Roommates:** "Find a time for the house" uses the same Schedule Sync with the household's members.
+- **Travel time:** choose where you will meet and your classes get walking time added around them (`web/src/lib/travel.ts`, straight-line distance at walking pace, classes matched to campus places by name).
+- **Calendar import:** on the class schedule, Import reads a .ics file (Google, Apple, Outlook) and offers the weekly repeating events as classes to add (`web/src/lib/icsImport.ts`). One-off events are left out.
+- **Not built yet:** live calendar sync (Google Calendar API), friends' travel time (places of their classes are not shared), and per-person availability for clubs beyond the numbers.

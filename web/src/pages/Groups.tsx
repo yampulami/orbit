@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, CalendarClock, CalendarPlus, Copy, KeyRound, Plus, Send, UserPlus, Users } from "lucide-react";
-import ScheduleSync from "../components/ScheduleSync";
+import GroupSync from "../components/GroupSync";
 import EmojiButton from "../components/EmojiButton";
 import DateTimeField from "../components/DateTimeField";
 import { useChatOpenClass, useIsPhone } from "../lib/phone";
@@ -185,7 +185,7 @@ export default function Groups() {
             </div>
             {syncing && (
               <div className="plan-form">
-                <ScheduleSync key={group.id} groupId={group.id} title={`When is ${group.name} free?`} presetFriendIds={group.members.filter((m) => m !== YOU).map((m) => friendIds.get(m)).filter((x): x is string => !!x)} skipped={group.members.filter((m) => m !== YOU && !friendIds.has(m)).length} />
+                <GroupSync key={group.id} groupId={group.id} title={`When is ${group.name} free?`} />
               </div>
             )}
             {adding && hangLive && (

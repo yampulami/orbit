@@ -7,6 +7,9 @@ import { useCampusEvents } from "../lib/campusEvents";
 import { loadFriendFree } from "../lib/availability";
 import { busySpans, suggestTimes, timeLabel, weeklyTimes, type Person, type Suggestion, type WeeklySlot } from "../lib/freeTime";
 import { useMyBusy } from "../lib/useMyBusy";
+import { useMapPlaces } from "../lib/mapPlaces";
+import { padForTravel } from "../lib/travel";
+import { blocksFromClasses } from "../lib/freeTime";
 import { makeGroupAndInvite } from "../lib/groupInvite";
 import { DAY_NAMES } from "../lib/classes";
 import { haptic } from "../lib/haptics";
@@ -33,13 +36,15 @@ function nextOccurrence(weekday: number, minute: number, now: Date): Date {
  * Schedule Sync: pick people, say how long you need and how soon, and see the best times ranked, with who can make each and why it was picked.
  * Inside a group (`groupId`) a chosen time becomes a hangout in that group; otherwise it makes a private group and messages the friends a link.
  */
-export default function ScheduleSync({ groupId, presetFriendIds, skipped = 0, title = "Find a time" }: { groupId?: string; presetFriendIds?: string[]; /** Group members who are not your friends, so their free time cannot be seen. */ skipped?: number; title?: string }) {
+export default function ScheduleSync({ groupId, people: given, title = "Find a time" }: { groupId?: string; /** A fixed set of people (a group or a household), instead of picking friends. Only those who share with you count. */ people?: { id: string; name: string }[]; title?: string }) {
   const { friends } = useFriends();
   const nav = useNavigate();
   const { events } = useCampusEvents();
   const [now] = useState(() => new Date());
-  const { me } = useMyBusy(now);
-  const [picked, setPicked] = useState<string[]>(presetFriendIds ?? []);
+  const { me: base, input } = useMyBusy(now);
+  const { live: places } = useMapPlaces();
+  const [whereId, setWhereId] = useState("");
+  const [picked, setPicked] = useState<string[]>([]);
   const [shared, setShared] = useState<Person[]>([]);
   const [notSharing, setNotSharing] = useState<string[]>([]);
   const [duration, setDuration] = useState(60);
@@ -52,7 +57,7 @@ export default function ScheduleSync({ groupId, presetFriendIds, skipped = 0, ti
   const [making, setMaking] = useState(false);
   const [error, setError] = useState("");
 
-  const chosen = useMemo(() => friends.filter((f) => picked.includes(f.id)), [friends, picked]);
+  const chosen = useMemo(() => given ?? friends.filter((f) => picked.includes(f.id)), [given, friends, picked]);
   const key = chosen.map((f) => f.id).join(",");
   useEffect(() => {
     let live = true;
@@ -61,6 +66,10 @@ export default function ScheduleSync({ groupId, presetFriendIds, skipped = 0, ti
     return () => { live = false; };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const spot = places.find((p) => p.id === whereId);
+  // Picking where you will meet makes room for the walk from the buildings your classes are in.
+  const travel = useMemo(() => (spot ? padForTravel(input.classes, places, spot) : null), [spot, input.classes, places]);
+  const me: Person = useMemo(() => (travel ? { ...base, blocks: blocksFromClasses(travel.classes) } : base), [base, travel]);
   const people: Person[] = useMemo(() => [me, ...shared], [me, shared]);
   const nameOf = (id: string) => people.find((p) => p.id === id)?.name ?? "Someone";
   const first = (id: string) => (id === "me" ? "You" : nameOf(id).split(" ")[0]);
@@ -83,14 +92,14 @@ export default function ScheduleSync({ groupId, presetFriendIds, skipped = 0, ti
     setMaking(true); setError("");
     const when = toLocalInput(start);
     if (groupId) {
-      hangActions.createHangout(groupId, { title: "Hang out", place: "Pick a spot", when });
+      hangActions.createHangout(groupId, { title: "Hang out", place: spot?.name ?? "Pick a spot", when });
       setMaking(false); setConfirm(null);
       haptic("success");
       notice.show({ icon: "calendar", title: "Hangout planned", message: "Everyone in the group can answer it now. Pick a place in the chat.", ms: 4000 });
       return;
     }
     const label = chosen.map((f) => f.name.split(" ")[0]).slice(0, 3).join(", ");
-    const out = await makeGroupAndInvite({ name: label ? `Hangout with ${label}` : "Hangout", friends: chosen, hangout: { title: "Hang out", place: "Pick a spot", when } });
+    const out = await makeGroupAndInvite({ name: label ? `Hangout with ${label}` : "Hangout", friends: chosen, hangout: { title: "Hang out", place: spot?.name ?? "Pick a spot", when } });
     setMaking(false); setConfirm(null);
     if (out.error) { setError(out.error); return; }
     haptic("success");
@@ -106,25 +115,31 @@ export default function ScheduleSync({ groupId, presetFriendIds, skipped = 0, ti
   const mark = suggestions.filter((s) => s.start.toDateString() === gridDay.toDateString());
 
   const crowd = people.length;
-  const canPlan = crowd > 1 || !!groupId;
+  const canPlan = (crowd > 1 || !!groupId) && (!given || !!groupId);
 
   return (
     <div className="sync">
       <h3 className="ft-h"><Users size={14} aria-hidden="true" /> {title}</h3>
 
-      {!presetFriendIds && (
+      {!given && (
         friends.length === 0
           ? <p className="muted">Add a friend first, then find a time that works for both of you.</p>
           : <div className="chip-row" role="group" aria-label="Who to find a time with">
               {friends.map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={picked.includes(f.id)} onClick={() => toggle(f.id)}>{f.name}</button>)}
             </div>
       )}
-      {skipped > 0 && <p className="muted sync-note">{skipped} {skipped === 1 ? "member is" : "members are"} not your {skipped === 1 ? "friend" : "friends"}, so their free time cannot be included. Add them as friends to include them.</p>}
       {notSharing.length > 0 && <p className="muted sync-note">{notSharing.join(", ")} {notSharing.length === 1 ? "has" : "have"} not turned on free-time sharing, so {notSharing.length === 1 ? "they are" : "they are"} left out.</p>}
 
       <div className="sync-opts">
         <div className="sync-opt"><span id="sy-len">How long</span>
           <div className="chip-row" role="group" aria-labelledby="sy-len">{LENGTHS.map((l) => <button key={l.m} type="button" className="chip-btn" aria-pressed={duration === l.m} onClick={() => setDuration(l.m)}>{l.l}</button>)}</div>
+        </div>
+        <div className="sync-opt"><span id="sy-where">Where (optional)</span>
+          <select className="sync-where" aria-labelledby="sy-where" value={whereId} onChange={(e) => setWhereId(e.target.value)}>
+            <option value="">Anywhere</option>
+            {places.filter((p) => p.category !== "transit").slice(0, 80).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          {spot && <small className="muted">{travel && travel.longest > 0 ? `Leaves up to ${travel.longest} min around your classes to walk to ${spot.name}.` : `Your classes are close to ${spot.name}.`}</small>}
         </div>
         {!weekly && <div className="sync-opt"><span id="sy-win">How soon</span>
           <div className="chip-row" role="group" aria-labelledby="sy-win">{WINDOWS.map((w) => <button key={w.d} type="button" className="chip-btn" aria-pressed={days === w.d} onClick={() => setDays(w.d)}>{w.l}</button>)}</div>
