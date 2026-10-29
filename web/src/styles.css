@@ -3919,3 +3919,23 @@ body.chat-open .chats-switch{display:none}
 /* the suggestions bar holds its place while it loads, so nothing shifts under the pointer */
 .momentsbar.holding .mb-head{cursor:default;opacity:.55}
 .momentsbar.holding .mb-t b{font-weight:500}
+
+/* ===== An event in the feed, written like a post ===== */
+.event-post .ev-date{display:grid;place-items:center;align-content:center;flex:none;width:38px;height:38px;border-radius:12px;background:color-mix(in srgb,var(--violet) 16%,var(--panel));line-height:1}
+.event-post .ev-date i{font-style:normal;font-size:.58rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--violet)}
+.event-post .ev-date b{font-size:1rem;font-weight:800;color:var(--ink)}
+.event-post .ev-chip{display:inline-flex;align-items:center;gap:4px}
+.event-post .ev-line{display:flex;flex-wrap:wrap;gap:4px 14px;margin:2px 0 0;color:var(--ink-soft);font-size:.88rem}
+.event-post .ev-line span{display:inline-flex;align-items:center;gap:5px}
+.event-post .ev-line svg{color:var(--violet);flex:none}
+.event-post .ev-desc2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:6px 0 0}
+.event-post .foot{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px}
+.ev-act{display:inline-flex;gap:8px}
+.ev-btn{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-size:.84rem;font-weight:600;cursor:pointer;transition:background .2s,border-color .2s,color .2s}
+.ev-btn:hover{border-color:var(--violet)}
+.ev-btn:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+.ev-btn[data-tone=going][aria-pressed=true]{background:color-mix(in srgb,#1fa97a 20%,var(--surface));border-color:#1fa97a;color:#1fa97a}
+.ev-btn[data-tone=maybe][aria-pressed=true]{background:color-mix(in srgb,#e0a13a 22%,var(--surface));border-color:#e0a13a;color:#b87a12}
+.event-post .ev-hosting{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 14px;border-radius:999px;background:color-mix(in srgb,#1fa97a 16%,transparent);color:#1fa97a;font-size:.84rem;font-weight:700}
+.event-post .ev-count{font-size:.82rem;color:var(--ink-soft)}
+.event-post .ev-all{margin-left:auto;font-size:.84rem;font-weight:600}
