@@ -93,7 +93,7 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
   useEffect(() => {
     const el = scroller.current;
     if (el) el.scrollTop = Math.max(0, (now.getHours() - FIRST - 1) * ROW);
-  }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view, FIRST]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const first = days[0], last = days[days.length - 1];
   const title = view === "day"

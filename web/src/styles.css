@@ -3837,3 +3837,24 @@ body.chat-open .chats-switch{display:none}
 .mo-grid button[aria-pressed=true]{background:var(--violet);border-color:var(--violet);color:#fff}
 .mo-grid button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
 .moment-set{gap:10px}
+
+/* suggestion cards, slimmer: the bar already says what they are */
+.momentsbar .moment{position:relative;padding:9px 12px;gap:4px}
+.momentsbar .moment-tag{display:none}
+.momentsbar .moment header{position:absolute;top:6px;right:8px;z-index:2}
+.momentsbar .moment h3{padding-right:68px;font-size:.92rem}
+.momentsbar .moment-when{font-size:.82rem}
+.momentsbar .moment-who small{font-size:.74rem}
+.momentsbar .moment-btns{margin-top:2px}
+.momentsbar .moment-draft{margin-top:2px}
+.nowstrip>.moments-empty{padding:10px 14px}
+
+/* suggestions as compact rows */
+.moment.row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 10px;border-radius:12px;background:var(--panel);box-shadow:none}
+.mr-main{flex:1 1 170px;min-width:0;display:grid;gap:0}
+.mr-main b{font-size:.86rem;line-height:1.25}
+.mr-main small{font-size:.76rem;color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mr-act{display:flex;align-items:center;gap:10px;flex:none}
+.moment.row .moment-draft{flex-basis:100%;margin-top:2px}
+.momentsbar .moment.row{position:static;padding:8px 10px}
+.mb-body{gap:6px}

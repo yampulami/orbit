@@ -13,7 +13,7 @@ const toLocalInput = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() *
 const labelOf = (c: Moment["category"]) => INTERESTS.find((i) => i.id === c)?.label.toLowerCase() ?? c;
 
 /** One suggestion. "Make a plan" opens an editable draft first: nothing is sent to anyone until the student confirms it. */
-export function MomentCard({ m }: { m: Moment }) {
+export function MomentCard({ m, row = false }: { m: Moment; /** A compact line instead of a full card. */ row?: boolean }) {
   const nav = useNavigate();
   const [drafting, setDrafting] = useState(false);
   const [title, setTitle] = useState(m.event?.title ?? "Hang out");
@@ -46,23 +46,47 @@ export function MomentCard({ m }: { m: Moment }) {
     nav("/app/chats?tab=groups");
   }
 
+  const notNow = !drafting && (
+    <div className="moment-more" ref={box}>
+      <button type="button" className="link-btn" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu((v) => !v)}>Not now</button>
+      {menu && (
+        <ul className="moment-menu" role="menu">
+          <li><button type="button" role="menuitem" onClick={pick(() => momentActions.dismiss(m))}>Not interested</button></li>
+          <li><button type="button" role="menuitem" onClick={pick(() => { momentActions.dismiss(m); notice.show({ icon: "calendar", title: "Okay", message: "Try Find a time to pick a different one.", ms: 3500 }); })}>Prefer another time</button></li>
+          <li><button type="button" role="menuitem" onClick={pick(() => { momentActions.muteType(m.category); momentActions.dismiss(m); })}>Do not suggest {labelOf(m.category)}</button></li>
+          <li><button type="button" role="menuitem" onClick={pick(() => momentActions.hideCircle(m.circleId))}>Hide {m.circleName}</button></li>
+        </ul>
+      )}
+    </div>
+  );
+  const draft = drafting && (
+    <form className="moment-draft" onSubmit={(e) => { e.preventDefault(); send(); }}>
+      <label>What<input value={title} maxLength={80} onChange={(e) => { setTitle(e.target.value); setError(""); }} /></label>
+      <label>Where<input value={place} maxLength={80} placeholder="Pick a spot" onChange={(e) => setPlace(e.target.value)} /></label>
+      {error && <p className="error" role="alert">{error}</p>}
+      <p className="muted">Nothing is sent until you press Send. It becomes a hangout in {m.circleName}, and everyone answers yes or no.</p>
+      <div className="moment-btns"><button className="btn primary sm">Send to {m.circleName}</button><button type="button" className="btn sm" onClick={() => { setDrafting(false); setError(""); }}>Cancel</button></div>
+    </form>
+  );
+
+  if (row) {
+    return (
+      <article className="moment row" aria-label="A suggestion from Orbit">
+        <div className="mr-main">
+          <b>{whenLabel(m)}</b>
+          <small>{headline(m)}{m.unknown.length ? ` · ${m.unknown.length} not sharing` : ""}</small>
+        </div>
+        {!drafting && <div className="mr-act"><button type="button" className="btn primary sm" onClick={() => setDrafting(true)}>Make a plan</button>{notNow}</div>}
+        {draft}
+      </article>
+    );
+  }
+
   return (
     <article className="moment" aria-label="A suggestion from Orbit">
       <header>
         <span className="moment-tag"><Sparkles size={12} aria-hidden="true" /> Your schedules line up</span>
-        {!drafting && (
-          <div className="moment-more" ref={box}>
-            <button type="button" className="link-btn" aria-expanded={menu} aria-haspopup="menu" onClick={() => setMenu((v) => !v)}>Not now</button>
-            {menu && (
-              <ul className="moment-menu" role="menu">
-                <li><button type="button" role="menuitem" onClick={pick(() => momentActions.dismiss(m))}>Not interested</button></li>
-                <li><button type="button" role="menuitem" onClick={pick(() => { momentActions.dismiss(m); notice.show({ icon: "calendar", title: "Okay", message: "Try Find a time to pick a different one.", ms: 3500 }); })}>Prefer another time</button></li>
-                <li><button type="button" role="menuitem" onClick={pick(() => { momentActions.muteType(m.category); momentActions.dismiss(m); })}>Do not suggest {labelOf(m.category)}</button></li>
-                <li><button type="button" role="menuitem" onClick={pick(() => momentActions.hideCircle(m.circleId))}>Hide {m.circleName}</button></li>
-              </ul>
-            )}
-          </div>
-        )}
+        {notNow}
       </header>
       <h3>{headline(m)}</h3>
       <p className="moment-when"><b>{whenLabel(m)}</b> <span>· {lengthLabel(m)}</span>{m.event?.place && <span className="moment-place"><MapPin size={12} aria-hidden="true" /> {m.event.place}</span>}</p>
@@ -71,15 +95,7 @@ export function MomentCard({ m }: { m: Moment }) {
         <small>{m.why.slice(0, 2).join(" · ")}</small>
       </div>
 
-      {drafting ? (
-        <form className="moment-draft" onSubmit={(e) => { e.preventDefault(); send(); }}>
-          <label>What<input value={title} maxLength={80} onChange={(e) => { setTitle(e.target.value); setError(""); }} /></label>
-          <label>Where<input value={place} maxLength={80} placeholder="Pick a spot" onChange={(e) => setPlace(e.target.value)} /></label>
-          {error && <p className="error" role="alert">{error}</p>}
-          <p className="muted">Nothing is sent until you press Send. It becomes a hangout in {m.circleName}, and everyone answers yes or no.</p>
-          <div className="moment-btns"><button className="btn primary sm">Send to {m.circleName}</button><button type="button" className="btn sm" onClick={() => { setDrafting(false); setError(""); }}>Cancel</button></div>
-        </form>
-      ) : (
+      {drafting ? draft : (
         <div className="moment-btns">
           <button type="button" className="btn primary sm" onClick={() => setDrafting(true)}>Make a plan</button>
         </div>
@@ -101,10 +117,11 @@ export default function Moments({ limit = 4 }: { limit?: number }) {
 }
 
 /** On the feed: one line (how many plans may line up, with faces). Open it to see them, fold it away again. Shows nothing when there is nothing to show. */
-export function MomentsBar() {
+export function MomentsBar({ always = false, limit = 3 }: { /** Show it even when "show on the feed" is off (the Sync page). */ always?: boolean; limit?: number }) {
   const prefs = useMomentPrefs();
-  const { moments } = useMoments(3);
-  if (!prefs.enabled || !prefs.showOnFeed || moments.length === 0) return null;
+  const { moments, loading } = useMoments(limit);
+  if (!prefs.enabled || (!always && !prefs.showOnFeed)) return null;
+  if (moments.length === 0) return always ? <p className="muted moments-empty" role="status">{loading ? "Looking at your groups…" : "Nothing lines up yet. Suggestions appear when people in your groups share their free time and a good time opens up."}</p> : null;
   const open = !prefs.collapsed;
   const faces = [...new Map(moments.flatMap((m) => m.people).map((p) => [p.id, p])).values()];
   return (
@@ -117,8 +134,8 @@ export function MomentsBar() {
       </button>
       {open && (
         <div className="mb-body">
-          {moments.map((m) => <MomentCard key={m.id} m={m} />)}
-          <Link to="/app/sync" className="link-btn mb-more">All suggestions and settings</Link>
+          {moments.map((m) => <MomentCard key={m.id} m={m} row />)}
+          {!always && <Link to="/app/sync" className="link-btn mb-more">All suggestions and settings</Link>}
         </div>
       )}
     </section>
@@ -138,7 +155,7 @@ export function GroupMoment({ groupId }: { groupId: string }) {
         <span className="mb-t"><b>Free together {whenLabel(m)}</b></span>
         <ChevronDown size={16} className="mb-chev" aria-hidden="true" />
       </button>
-      {open && <div className="mb-body"><MomentCard m={m} /></div>}
+      {open && <div className="mb-body"><MomentCard m={m} row /></div>}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { haptic } from "../lib/haptics";
 import { supabase } from "../lib/supabase";
 import ScheduleSync from "./ScheduleSync";
 import MomentSettings from "./MomentSettings";
-import Moments from "./Moments";
+import { MomentsBar } from "./Moments";
 
 /** Schedule Sync, as a page: finding a time first, and one card of settings (who sees your free time, Moments, how it works) beside it. */
 export default function FreeTimePanel({ preselect }: { /** Friends to start with (from the "you are both free" card). */ preselect?: string[] }) {
@@ -40,7 +40,7 @@ export default function FreeTimePanel({ preselect }: { /** Friends to start with
       <header><h2><Clock size={16} aria-hidden="true" /> Schedule sync</h2></header>
       <div className="ft-cols">
         <div className="ft-main">
-          {live && <Moments limit={4} />}
+          {live && <div className="nowstrip"><MomentsBar always limit={4} /></div>}
           <ScheduleSync initialPicked={preselect} />
         </div>
 
