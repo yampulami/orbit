@@ -45,8 +45,8 @@ export default function FreeTimePanel() {
       {live && !sharing.missing && (
         <div className="ft-share">
           <div>
-            <b id="ft-share-l">Let friends see when I am free</b>
-            <span>They see the hours you are busy, never what for. Off until you turn it on, and turning it off deletes it.</span>
+            <b id="ft-share-l">Share when I am free</b>
+            <span>Friends see only when you are busy, never why.</span>
           </div>
           <button type="button" role="switch" aria-checked={sharing.on} aria-labelledby="ft-share-l" className="switch" disabled={!sharing.ready} onClick={() => void flip(!sharing.on)}><span /></button>
         </div>
@@ -71,7 +71,7 @@ export default function FreeTimePanel() {
       <details className="ft-how">
         <summary>How this works</summary>
         <p>Orbit looks at your day and finds the hours with nothing on. It counts your <b>classes</b>, <b>hangouts</b> you have not turned down, <b>events</b> you are going to, interested in or hosting, and <b>reminders</b> that have a time.</p>
-        <p>Pick friends to see when <i>all of you</i> are free. Times are ranked: more people free is better, daytime and mealtimes score higher, and a time with room around it beats one squeezed against a class. A friend only counts if they turned on sharing, and they share just the hours they are busy.</p>
+        <p>Sharing is off until you turn it on, and turning it off deletes what was stored. Pick friends to see when <i>all of you</i> are free. Times are ranked: more people free is better, daytime and mealtimes score higher, and a time with room around it beats one squeezed against a class. A friend only counts if they turned on sharing, and they share just the hours they are busy.</p>
         <p><b>Counted today</b></p>
         {today.length === 0 ? <p className="muted">Nothing today, so the whole day is free.</p> : <ul>{today.map((t, i) => <li key={i}>{describeBusy(t)} <small>({t.kind})</small></li>)}</ul>}
       </details>

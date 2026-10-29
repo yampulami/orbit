@@ -133,14 +133,12 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
       {notSharing.length > 0 && <p className="muted sync-note">{notSharing.join(", ")} {notSharing.length === 1 ? "has" : "have"} not turned on free-time sharing, so {notSharing.length === 1 ? "they are" : "they are"} left out.</p>}
 
       <div className="sync-opts">
-        <div className="sync-opt"><span id="sy-len">How long</span>
-          <div className="chip-row" role="group" aria-labelledby="sy-len">{LENGTHS.map((l) => <button key={l.m} type="button" className="chip-btn" aria-pressed={duration === l.m} onClick={() => setDuration(l.m)}>{l.l}</button>)}</div>
+        <div className="sync-bar">
+          <label>How long<select value={duration} onChange={(e) => setDuration(Number(e.target.value))}>{LENGTHS.map((l) => <option key={l.m} value={l.m}>{l.l}</option>)}</select></label>
+          {!weekly && <label>How soon<select value={days} onChange={(e) => setDays(Number(e.target.value))}>{WINDOWS.map((w) => <option key={w.d} value={w.d}>{w.l}</option>)}</select></label>}
         </div>
-        {!weekly && <div className="sync-opt"><span id="sy-win">How soon</span>
-          <div className="chip-row" role="group" aria-labelledby="sy-win">{WINDOWS.map((w) => <button key={w.d} type="button" className="chip-btn" aria-pressed={days === w.d} onClick={() => setDays(w.d)}>{w.l}</button>)}</div>
-        </div>}
         <details className="sync-adv">
-          <summary>More options</summary>
+          <summary>More</summary>
         <div className="sync-opt"><span id="sy-where">Where (optional)</span>
           <select className="sync-where" aria-labelledby="sy-where" value={whereId} onChange={(e) => setWhereId(e.target.value)}>
             <option value="">Anywhere</option>
@@ -167,24 +165,19 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
                 const id = s.start.toISOString();
                 return (
                   <li key={id} data-best={s.best ? "" : undefined}>
-                    <div className="sync-when">
-                      {s.best && <span className="sync-best"><Sparkles size={12} aria-hidden="true" /> Best match</span>}
-                      <b>{dayLabel(s.start)}</b>
-                      <span>{clock(s.start)} to {clock(s.end)}</span>
+                    <div className="sr-main">
+                      <b>{s.best && <Sparkles size={12} className="sr-star" aria-label="Best match" />}{dayLabel(s.start)} · {clock(s.start)}–{clock(s.end)}</b>
+                      <small>{[...(crowd > 1 && s.missing.length ? [`${s.missing.map(first).join(", ")} can't`] : []), ...s.reasons.filter((r) => !/^Everyone is free$|free$/.test(r)).slice(0, 2), ...(ev ? [`Also on: ${ev.title}`] : [])].join(" · ")}</small>
                     </div>
-                    {crowd > 1 && <div className="sync-who">
-                      <span className="sync-count" data-all={s.missing.length === 0 ? "" : undefined}>{s.available.length} of {crowd} free</span>
-                      {s.missing.length > 0 && <small>{s.missing.map(first).join(", ")} can't</small>}
-                    </div>}
-                    <p className="sync-why">{s.reasons.join(" · ")}</p>
-                    {ev && <p className="sync-event">Also on: <b>{ev.title}</b>{ev.place ? ` · ${ev.place}` : ""}</p>}
-                    {canPlan && (confirm === id
-                      ? <div className="sync-confirm">
-                          <p className="muted">{groupId ? "This plans a hangout in this group." : `This makes a private group, plans a hangout, and messages ${chosen.map((f) => f.name.split(" ")[0]).join(", ")} a link to join.`}</p>
-                          <button type="button" className="btn sm primary" disabled={making} onClick={() => void plan(s.start, id)}>{making ? "Making it…" : "Confirm"}</button>
-                          <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
-                        </div>
-                      : <button type="button" className="btn sm" onClick={() => setConfirm(id)}>Plan it</button>)}
+                    {crowd > 1 && <span className="sync-count" data-all={s.missing.length === 0 ? "" : undefined}>{s.available.length}/{crowd}</span>}
+                    {canPlan && confirm !== id && <button type="button" className="btn sm" onClick={() => setConfirm(id)}>Plan</button>}
+                    {canPlan && confirm === id && (
+                      <div className="sync-confirm">
+                        <p className="muted">{groupId ? "Plans a hangout in this group." : `Makes a private group, plans it, and messages ${chosen.map((f) => f.name.split(" ")[0]).join(", ")} a link.`}</p>
+                        <button type="button" className="btn sm primary" disabled={making} onClick={() => void plan(s.start, id)}>{making ? "Making it…" : "Confirm"}</button>
+                        <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
+                      </div>
+                    )}
                   </li>
                 );
               })}
@@ -201,20 +194,19 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
                 const id = `w${w.weekday}-${w.start}`;
                 return (
                   <li key={id} data-best={i === 0 ? "" : undefined}>
-                    <div className="sync-when">
-                      {i === 0 && <span className="sync-best"><Sparkles size={12} aria-hidden="true" /> Best match</span>}
-                      <b>Every {DAY_NAMES[w.weekday]}</b>
-                      <span>{timeLabel(w.start)} to {timeLabel(w.end)}</span>
+                    <div className="sr-main">
+                      <b>{i === 0 && <Sparkles size={12} className="sr-star" aria-label="Best match" />}Every {DAY_NAMES[w.weekday]} · {timeLabel(w.start)}–{timeLabel(w.end)}</b>
+                      <small>{[...(w.missing.length ? [`${w.missing.map(first).join(", ")} can't`] : []), "Classes only, holds every week"].join(" · ")}</small>
                     </div>
-                    <div className="sync-who"><span className="sync-count" data-all={w.missing.length === 0 ? "" : undefined}>{w.available.length} of {crowd} free</span>{w.missing.length > 0 && <small>{w.missing.map(first).join(", ")} can't</small>}</div>
-                    <p className="sync-why">Classes only, so it holds every week.</p>
-                    {canPlan && (confirm === id
-                      ? <div className="sync-confirm">
-                          <p className="muted">This plans the first one, {dayLabel(start)}, and you can plan the next ones the same way.</p>
-                          <button type="button" className="btn sm primary" disabled={making} onClick={() => void plan(start, id)}>{making ? "Making it…" : "Confirm"}</button>
-                          <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
-                        </div>
-                      : <button type="button" className="btn sm" onClick={() => setConfirm(id)}>Plan the first one</button>)}
+                    {crowd > 1 && <span className="sync-count" data-all={w.missing.length === 0 ? "" : undefined}>{w.available.length}/{crowd}</span>}
+                    {canPlan && confirm !== id && <button type="button" className="btn sm" onClick={() => setConfirm(id)}>Plan</button>}
+                    {canPlan && confirm === id && (
+                      <div className="sync-confirm">
+                        <p className="muted">Plans the first one, {dayLabel(start)}.</p>
+                        <button type="button" className="btn sm primary" disabled={making} onClick={() => void plan(start, id)}>{making ? "Making it…" : "Confirm"}</button>
+                        <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
+                      </div>
+                    )}
                   </li>
                 );
               })}
