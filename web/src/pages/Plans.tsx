@@ -41,7 +41,7 @@ export default function Plans() {
       <div className="plans2">
         <div className="plans-col">
           <Suspense fallback={<div className="skeleton sk-card" />}><Calendar posts={posts} day={day} onDay={(k) => setDay(k ?? new Date().toDateString())} details={false} /></Suspense>
-          <UpcomingList limit={5} />
+          <UpcomingList limit={3} />
           <ClassesPanel />
           <FreeTimePanel />
         </div>

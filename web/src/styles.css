@@ -3711,3 +3711,26 @@ a.sl-row{text-decoration:none}
 
 .sl[data-open] .sl-bar{cursor:pointer}
 .sl[data-open] .sl-bar:hover{background:color-mix(in srgb,var(--violet) 6%,transparent)}
+
+/* Plans, tighter */
+.plans2{gap:14px}
+.plans-col,.plans-main{gap:12px}
+.plans-col .cal{padding:12px 14px;border-radius:20px}
+.plans-col .cal-day{aspect-ratio:auto;height:30px;font-size:.8rem}
+.plans-col .cal-grid{gap:1px}
+.plans-main .agenda{padding:12px 16px;gap:8px}
+.wb-scroll{max-height:min(440px,calc(100vh - 330px))}
+.wb-card{border-radius:20px}
+.wb-head{margin-bottom:8px}
+
+/* rows inside a StackedList are flat: the list gives them their lines */
+.sl-list .friend-row{background:none;box-shadow:none;border-radius:0;padding:8px 0}
+.sl-list>li{margin:0}
+
+/* "You are free until..." card: compact, with room below it */
+.nextwin{padding:10px 14px;gap:6px;margin-bottom:12px;border-radius:16px}
+.nw-ic{width:32px;height:32px}
+.nw-head strong{font-size:.95rem}
+.nw-head small{font-size:.78rem}
+.nw-friends{font-size:.82rem}
+.wb-scroll{max-height:min(360px,calc(100vh - 420px))}
