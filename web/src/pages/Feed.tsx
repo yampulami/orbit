@@ -3,6 +3,7 @@ import { useIsPhone } from "../lib/phone";
 import EmojiButton from "../components/EmojiButton";
 import RichText from "../components/RichText";
 import FeedEvents from "../components/FeedEvents";
+import NextWindow from "../components/NextWindow";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
@@ -211,6 +212,7 @@ export default function Feed() {
     <div className="feed-layout">
       <div className="feed-main">
         <h1 className="sr">Campus feed</h1>
+        <NextWindow />
         <section className="hangs" aria-label="Hangouts">
           <header>
             <h2 className="sr">Hangouts</h2>

@@ -3485,3 +3485,32 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .wait-stack .wait-orb{width:84px;height:84px}
 .wait-stack .wait-orb canvas{width:84px!important;height:84px!important}
 .wait-stack .wait-t{font-size:1rem;letter-spacing:.02em}
+
+/* free time: share when you are busy, and find a time with friends */
+.freetime{display:grid;gap:12px;padding:16px;border-radius:18px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.freetime h2{display:flex;align-items:center;gap:8px;margin:0;font-size:1rem}
+.freetime .ft-h{display:flex;align-items:center;gap:8px;margin:4px 0 0;font-size:.9rem;font-weight:700;color:var(--ink-soft)}
+.ft-share{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border-radius:14px;background:var(--panel)}
+.ft-share div{display:grid;gap:2px}
+.ft-share b{font-size:.92rem}
+.ft-share span{font-size:.82rem;color:var(--ink-soft);line-height:1.4}
+.ft-out{display:grid;gap:8px}
+.ft-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.ft-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--panel)}
+.ft-list li span{display:grid;gap:1px}
+.ft-list b{font-size:.9rem}
+.ft-list small{font-size:.78rem;color:var(--ink-soft)}
+
+/* "you have 50 minutes free" on the home screen */
+.nextwin{display:grid;gap:10px;padding:14px 16px;border-radius:18px;background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 18%,var(--surface)),var(--surface));box-shadow:0 0 0 1px var(--line)}
+.nw-head{display:flex;align-items:center;gap:12px}
+.nw-head>div{display:grid;gap:1px;flex:1;min-width:0}
+.nw-head strong{font-size:1.02rem}
+.nw-head small{color:var(--ink-soft);font-size:.82rem}
+.nw-ic{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:color-mix(in srgb,var(--violet) 26%,transparent);color:var(--violet)}
+.nw-find{white-space:nowrap;font-weight:700}
+.nw-friends{display:flex;align-items:center;gap:8px;margin:0;font-size:.88rem;color:var(--ink-soft)}
+.nw-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.nw-list a{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:12px;background:var(--panel);color:var(--ink);text-decoration:none;font-size:.88rem}
+.nw-list a svg{flex:none;margin-top:3px;color:var(--violet)}
+.nw-list a:hover{box-shadow:0 0 0 1px var(--violet)}

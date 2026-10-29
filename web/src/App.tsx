@@ -19,7 +19,8 @@ import { bindRoommates, unbindRoommates } from "./lib/roommates";
 import { bindDms, unbindDms } from "./lib/dms";
 import { bindFriends, unbindFriends } from "./lib/friends";
 import { bindNotifs, unbindNotifs } from "./lib/notifs";
-import { bindClasses, unbindClasses } from "./lib/classes";
+import { bindClasses, unbindClasses, useClasses } from "./lib/classes";
+import { bindSharing, pushBusy, unbindSharing, useSharing } from "./lib/availability";
 import { bindCampusEvents, unbindCampusEvents } from "./lib/campusEvents";
 import { bindCampusOrgs, unbindCampusOrgs } from "./lib/campusOrgs";
 import { clearVerified } from "./lib/verified";
@@ -85,6 +86,11 @@ function InApp({ children }: { children: ReactNode }) {
   const classesFor = session?.user.id;
   // The class schedule is kept on this device for this person, in demo mode and with a database alike.
   useEffect(() => { if (!classesFor) return; bindClasses(classesFor); return () => unbindClasses(); }, [classesFor]);
+  // Free time (busy blocks, no class names) is shared with friends only if the student turned that on, and stays in step with their classes.
+  const myClasses = useClasses();
+  const sharing = useSharing();
+  useEffect(() => { if (!classesFor) return; bindSharing(classesFor); return () => unbindSharing(); }, [classesFor]);
+  useEffect(() => { if (!sharing.on) return; const t = window.setTimeout(() => void pushBusy(myClasses), 800); return () => window.clearTimeout(t); }, [sharing.on, myClasses]);
   const { state: done, campusKey } = useOnboarded(session?.user.id, nameFor(session));
   const uid = session?.user.id;
   // With a database, groups and hangouts load for this student once their campus is known, and are forgotten when they leave.

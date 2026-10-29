@@ -8,6 +8,7 @@ import UpcomingList from "../components/UpcomingList";
 const Calendar = lazy(() => import("../components/Calendar"));
 const WeekBoard = lazy(() => import("../components/WeekBoard"));
 import ClassesPanel from "../components/ClassesPanel";
+import FreeTimePanel from "../components/FreeTimePanel";
 import { feedApi as api, type Row } from "../lib/feedData";
 
 export default function Plans() {
@@ -29,6 +30,7 @@ export default function Plans() {
         <UpcomingList limit={4} />
         <button type="button" className="btn wide-btn" aria-expanded={showClasses} onClick={() => setShowClasses((v) => !v)}>{showClasses ? "Hide class schedule" : "Class schedule"}</button>
         {showClasses && <ClassesPanel />}
+        <FreeTimePanel />
       </div>
     );
   }
@@ -41,6 +43,7 @@ export default function Plans() {
           <Suspense fallback={<div className="skeleton sk-card" />}><Calendar posts={posts} day={day} onDay={(k) => setDay(k ?? new Date().toDateString())} details={false} /></Suspense>
           <UpcomingList limit={5} />
           <ClassesPanel />
+          <FreeTimePanel />
         </div>
         <div className="plans-main">
           <DayAgenda day={day} />

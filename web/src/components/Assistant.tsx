@@ -14,6 +14,8 @@ import { AiProblem, askModel } from "../lib/assistantModel";
 import { useClasses } from "../lib/classes";
 import { reminderActions, useReminders } from "../lib/reminders";
 import { classActions } from "../lib/classes";
+import { loadFriendFree } from "../lib/availability";
+import { commonFree, myBusy } from "../lib/freeTime";
 import { feedApi } from "../lib/feedData";
 import { unreadDms, useDms } from "../lib/dms";
 import { useNotifs } from "../lib/notifs";
@@ -239,6 +241,15 @@ export default function Assistant() {
       notifications: notifs.map((n) => ({ title: n.title, sub: n.sub, at: n.at, unread: n.unread })),
       profile: { name: session?.user.user_metadata?.name ?? session?.user.email?.split("@")[0] ?? "Student" },
       recentPosts: async () => (await feedApi.list()).filter((r) => !r.payload.repostOf).map((r) => ({ author: r.author_name, text: r.payload.body ?? r.payload.text ?? r.payload.title ?? "", at: r.created_at, likes: r.post_likes.length, comments: r.post_comments.length })),
+      findFreeTime: async (names, days) => {
+        const wanted = names.map((n) => friends.find((f) => f.name.toLowerCase() === n.toLowerCase() || (f.username ?? "").toLowerCase() === n.toLowerCase().replace(/^@/, "")) ?? friends.find((f) => f.name.toLowerCase().includes(n.toLowerCase())));
+        const unknown = names.filter((_, i) => !wanted[i]);
+        const chosen = wanted.filter((f): f is NonNullable<typeof f> => !!f);
+        const { sharing: shared, notSharing } = await loadFriendFree(chosen);
+        const mine = myBusy(classes, hangouts, events.filter((e) => e.mine === "going" && isOpen(e, nowD)));
+        const windows = commonFree([mine, ...shared], nowD, { days, min: 60 }).map((w) => ({ start: w.start.toISOString(), minutes: w.minutes }));
+        return { windows, notSharing, unknown };
+      },
       rsvpEvent: (id, answer) => eventActions.respond(id, answer),
       requestJoin: (orgId, message) => orgActions.requestJoin(orgId, message),
       addClass: (c) => classActions.add(c),

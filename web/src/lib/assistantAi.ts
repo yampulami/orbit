@@ -22,6 +22,7 @@ export type AiEnv = {
   friends: Person[];
   unread: { messages: number; notifs: number };
   findPeople(q: string): Promise<Person[]>;
+  findFreeTime?(names: string[], days: number): Promise<{ windows: { start: string; minutes: number }[]; notSharing: string[]; unknown: string[] }>;
   recentPosts?(): Promise<{ author: string; text: string; at: string; likes: number; comments: number }[]>;
   rsvpEvent?(id: string, answer: "going" | "interested" | null): void;
   requestJoin?(orgId: string, message: string): Promise<string | null>;
@@ -76,6 +77,7 @@ export const TOOLS = [
   fn("send_message", "Send a direct message to someone. The student confirms it first. Find the person with find_people first.", { person_id: s("The id from find_people."), person_name: s("Their name."), text: s("The message.") }, ["person_id", "person_name", "text"]),
 ];
 TOOLS.push(
+  fn("find_free_time", "Find times when the student and some of their friends are all free (friends who share their free time only). Use this for \"when are we free\", \"find a time\", \"when can we meet\". With no friends named it gives the student's own free time.", { friends: { type: "array", items: { type: "string" }, description: "Friends' names. Optional." }, days: { type: "number", description: "How many days ahead, 1 to 14. Default 7." } }),
   fn("my_reminders", "All of the student's open reminders, with their ids."),
   fn("my_clubs", "The clubs and circles the student belongs to."),
   fn("notifications", "The student's recent notifications (replies, requests, invites)."),
@@ -158,6 +160,14 @@ async function read(env: AiEnv, tool: string, a: Record<string, unknown>): Promi
   if (tool === "recent_posts") {
     const list = env.recentPosts ? (await env.recentPosts()).slice(0, 8) : [];
     return { result: list.length ? list.map((p) => ({ by: p.author, text: p.text.slice(0, 220), when: describeWhen(p.at, now), likes: p.likes, comments: p.comments })) : "Nothing on the feed yet.", go: "/app/feed", goLabel: "Open the feed" };
+  }
+  if (tool === "find_free_time") {
+    if (!env.findFreeTime) return { result: "Finding free time is not available here." };
+    const names = Array.isArray(a.friends) ? a.friends.map(str).filter(Boolean).slice(0, 6) : [];
+    const days = Math.max(1, Math.min(14, Math.round(Number(a.days) || 7)));
+    const out = await env.findFreeTime(names, days);
+    const windows = out.windows.slice(0, 8).map((w) => ({ start: w.start, when: describeWhen(w.start, now), minutesFree: w.minutes }));
+    return { result: { windows: windows.length ? windows : "No stretch of an hour or more is free for everyone.", notSharingTheirFreeTime: out.notSharing, notFriends: out.unknown }, go: "/app/plans", goLabel: "Open plans" };
   }
   if (tool === "event_details") {
     const e = env.events.find((x) => x.id === str(a.event_id));
@@ -281,7 +291,7 @@ export async function performAction(env: AiEnv, p: Pending): Promise<{ ok: boole
 
 /* ---------- the conversation ---------- */
 
-const LABELS: Record<string, string> = { my_reminders: "Checking your reminders", my_clubs: "Looking at your clubs", notifications: "Reading your notifications", recent_posts: "Reading the feed", event_details: "Looking at that event", search_events: "Checking events", search_clubs: "Looking at clubs", find_people: "Finding people", my_schedule: "Checking your schedule", my_groups: "Looking at your groups", inbox_summary: "Checking your inbox", open_page: "Getting that ready" };
+const LABELS: Record<string, string> = { find_free_time: "Comparing free time", my_reminders: "Checking your reminders", my_clubs: "Looking at your clubs", notifications: "Reading your notifications", recent_posts: "Reading the feed", event_details: "Looking at that event", search_events: "Checking events", search_clubs: "Looking at clubs", find_people: "Finding people", my_schedule: "Checking your schedule", my_groups: "Looking at your groups", inbox_summary: "Checking your inbox", open_page: "Getting that ready" };
 
 export async function converse(opts: { history: ModelMsg[]; env: AiEnv; model: (messages: ModelMsg[]) => Promise<ModelMsg>; onStep?: (label: string) => void }): Promise<AiTurn> {
   const { env, model, onStep } = opts;
