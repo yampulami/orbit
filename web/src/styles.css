@@ -3592,3 +3592,28 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .ct-bar i{display:block;height:100%;border-radius:3px;background:var(--violet)}
 .ct-list small{grid-column:1/-1;color:var(--ink-soft)}
 .rm-sync{display:grid;gap:10px}
+
+/* Plans: the left column keeps its width, and the long sections fold into one row each */
+.plans-col{grid-template-columns:minmax(0,1fr)}
+.plans-col>*{min-width:0}
+.fold-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fold-title{display:inline-flex;align-items:center;gap:8px;flex:1;min-width:0;padding:6px 2px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer;text-align:left}
+.fold-title b{font-size:1rem}
+.fold-title small{color:var(--ink-soft);font-size:.82rem;margin-left:2px}
+.fold-chev{margin-left:auto;color:var(--ink-soft);transition:transform .25s}
+.fold-title[aria-expanded=true] .fold-chev{transform:rotate(180deg)}
+.fold-title:focus-visible{outline:2px solid var(--violet);outline-offset:3px;border-radius:8px}
+.classes>header.fold-head h3,.freetime>header.fold-head h2{margin:0}
+
+.sync-more{justify-self:start;font-weight:600;font-size:.88rem}
+.sync-list li{padding:10px 12px;gap:4px}
+.freetime,.sync,.sync-opts,.sync-grid,.ft-aud,.class-import{grid-template-columns:minmax(0,1fr)}
+.freetime>*,.sync>*,.sync-opts>*,.ft-aud>*{min-width:0}
+.freetime .chip-row,.sync .chip-row{max-width:100%}
+.fold-head:has(.class-head-btns) .fold-title{flex:1 1 100%}
+.sync-where{width:100%}
+
+.sync-adv{display:grid;gap:10px}
+.sync-adv summary{cursor:pointer;font-size:.86rem;font-weight:600;color:var(--ink-soft)}
+.sync-adv[open] summary{margin-bottom:6px}
+.sync-adv>*:not(summary){margin-top:8px}

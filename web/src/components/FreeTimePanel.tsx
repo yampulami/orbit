@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Clock } from "lucide-react";
+import { ChevronDown, Clock } from "lucide-react";
 import { useClasses } from "../lib/classes";
 import { useMyBusy } from "../lib/useMyBusy";
 import { describeBusy } from "../lib/myBusy";
@@ -16,6 +16,7 @@ export default function FreeTimePanel() {
   const { today } = useMyBusy(new Date());
   const { friends } = useFriends();
   const [error, setError] = useState("");
+  const [shown, setShown] = useState(false);
 
   async function flip(on: boolean) {
     setError("");
@@ -35,9 +36,12 @@ export default function FreeTimePanel() {
   const live = !!supabase;
   return (
     <section className="freetime" aria-label="Schedule sync">
-      <header>
-        <h2><Clock size={16} aria-hidden="true" /> Schedule sync</h2>
+      <header className="fold-head">
+        <button type="button" className="fold-title" aria-expanded={shown} onClick={() => setShown((v) => !v)}>
+          <Clock size={15} aria-hidden="true" /><b>Schedule sync</b><small>{!live || sharing.missing ? "find a time" : sharing.on ? "sharing on" : "sharing off"}</small><ChevronDown size={16} className="fold-chev" aria-hidden="true" />
+        </button>
       </header>
+      {shown && <>
       {live && !sharing.missing && (
         <div className="ft-share">
           <div>
@@ -73,6 +77,7 @@ export default function FreeTimePanel() {
       </details>
 
       <ScheduleSync />
+      </>}
     </section>
   );
 }

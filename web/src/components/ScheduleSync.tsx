@@ -54,6 +54,8 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
   const [weekly, setWeekly] = useState(false);
   const [dayIdx, setDayIdx] = useState(0);
   const [confirm, setConfirm] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const [gridOpen, setGridOpen] = useState(false);
   const [making, setMaking] = useState(false);
   const [error, setError] = useState("");
 
@@ -134,6 +136,11 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
         <div className="sync-opt"><span id="sy-len">How long</span>
           <div className="chip-row" role="group" aria-labelledby="sy-len">{LENGTHS.map((l) => <button key={l.m} type="button" className="chip-btn" aria-pressed={duration === l.m} onClick={() => setDuration(l.m)}>{l.l}</button>)}</div>
         </div>
+        {!weekly && <div className="sync-opt"><span id="sy-win">How soon</span>
+          <div className="chip-row" role="group" aria-labelledby="sy-win">{WINDOWS.map((w) => <button key={w.d} type="button" className="chip-btn" aria-pressed={days === w.d} onClick={() => setDays(w.d)}>{w.l}</button>)}</div>
+        </div>}
+        <details className="sync-adv">
+          <summary>More options</summary>
         <div className="sync-opt"><span id="sy-where">Where (optional)</span>
           <select className="sync-where" aria-labelledby="sy-where" value={whereId} onChange={(e) => setWhereId(e.target.value)}>
             <option value="">Anywhere</option>
@@ -141,14 +148,12 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
           </select>
           {spot && <small className="muted">{travel && travel.longest > 0 ? `Leaves up to ${travel.longest} min around your classes to walk to ${spot.name}.` : `Your classes are close to ${spot.name}.`}</small>}
         </div>
-        {!weekly && <div className="sync-opt"><span id="sy-win">How soon</span>
-          <div className="chip-row" role="group" aria-labelledby="sy-win">{WINDOWS.map((w) => <button key={w.d} type="button" className="chip-btn" aria-pressed={days === w.d} onClick={() => setDays(w.d)}>{w.l}</button>)}</div>
-        </div>}
         <div className="sync-toggles">
           <label><input type="checkbox" checked={weekly} onChange={(e) => setWeekly(e.target.checked)} /> Repeats every week</label>
           {crowd > 2 && <label><input type="checkbox" checked={everyone} onChange={(e) => setEveryone(e.target.checked)} /> Everyone must be free</label>}
           <label><input type="checkbox" checked={buffer} onChange={(e) => setBuffer(e.target.checked)} /> Leave 15 min around classes</label>
         </div>
+        </details>
       </div>
 
       {error && <p className="error" role="alert">{error}</p>}
@@ -157,7 +162,7 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
         suggestions.length === 0
           ? <p className="muted">No {duration >= 60 ? span(duration) : `${duration} min`} stretch works{crowd > 1 ? " for everyone" : ""} in this time. Try a shorter length, a longer window{crowd > 2 ? ", or untick \"Everyone must be free\"" : ""}.</p>
           : <ul className="sync-list">
-              {suggestions.map((s) => {
+              {(showAll ? suggestions : suggestions.slice(0, 3)).map((s) => {
                 const ev = eventAt(s.start, s.end);
                 const id = s.start.toISOString();
                 return (
@@ -185,6 +190,7 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
               })}
             </ul>
       )}
+      {!weekly && suggestions.length > 3 && <button type="button" className="link-btn sync-more" onClick={() => setShowAll((v) => !v)}>{showAll ? "Show fewer" : `Show ${suggestions.length - 3} more`}</button>}
 
       {weekly && (
         weeklySlots.length === 0
@@ -215,7 +221,8 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
             </ul>
       )}
 
-      {!weekly && crowd > 0 && (
+      {!weekly && crowd > 0 && <button type="button" className="link-btn sync-more" aria-expanded={gridOpen} onClick={() => setGridOpen((v) => !v)}>{gridOpen ? "Hide everyone's day" : "Show everyone's day"}</button>}
+      {!weekly && crowd > 0 && gridOpen && (
         <div className="sync-grid" aria-label="Everyone's day">
           <div className="chip-row" role="group" aria-label="Which day to show">
             {dayList.map((d, i) => <button key={i} type="button" className="chip-btn" aria-pressed={dayIdx === i} onClick={() => setDayIdx(i)}>{i === 0 ? "Today" : d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })}</button>)}

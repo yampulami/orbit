@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { GraduationCap, MapPin, Plus, Trash2, Upload } from "lucide-react";
+import { ChevronDown, GraduationCap, MapPin, Plus, Trash2, Upload } from "lucide-react";
 import { parseIcs, type ImportedClass } from "../lib/icsImport";
 import { DAY_LETTERS, DAY_NAMES, WEEK_ORDER, classActions, clockLabel, useClasses } from "../lib/classes";
 import { undo } from "../lib/undo";
@@ -11,6 +11,7 @@ import EmptyState from "./EmptyState";
 export default function ClassesPanel() {
   const classes = useClasses();
   const [open, setOpen] = useState(false);
+  const [shown, setShown] = useState(false);
   const [name, setName] = useState("");
   const [place, setPlace] = useState("");
   const [days, setDays] = useState<number[]>([1, 3]);
@@ -54,14 +55,19 @@ export default function ClassesPanel() {
 
   return (
     <section className="classes" aria-label="Class schedule">
-      <header>
-        <h3><GraduationCap size={15} aria-hidden="true" />Class schedule</h3>
-        <span className="class-head-btns">
-          <button type="button" className="btn" onClick={() => fileRef.current?.click()}><Upload size={16} aria-hidden="true" />Import</button>
-          <button type="button" className="btn" aria-expanded={open} onClick={() => { setOpen((v) => !v); setError(""); }}><Plus size={16} aria-hidden="true" />Add a class</button>
-        </span>
+      <header className="fold-head">
+        <button type="button" className="fold-title" aria-expanded={shown} onClick={() => setShown((v) => !v)}>
+          <GraduationCap size={15} aria-hidden="true" /><b>Class schedule</b><small>{classes.length === 0 ? "none yet" : `${classes.length} ${classes.length === 1 ? "class" : "classes"}`}</small><ChevronDown size={16} className="fold-chev" aria-hidden="true" />
+        </button>
+        {shown && (
+          <span className="class-head-btns">
+            <button type="button" className="btn sm" onClick={() => fileRef.current?.click()}><Upload size={15} aria-hidden="true" />Import</button>
+            <button type="button" className="btn sm" aria-expanded={open} onClick={() => { setOpen((v) => !v); setError(""); }}><Plus size={15} aria-hidden="true" />Add</button>
+          </span>
+        )}
         <input ref={fileRef} type="file" accept=".ics,text/calendar" className="sr" tabIndex={-1} aria-label="Choose a calendar file to import" onChange={(e) => void pick(e)} />
       </header>
+      {shown && <>
       {importNote && <p className="error" role="alert">{importNote}</p>}
       {found && (
         <div className="class-import" role="group" aria-label="Classes found in the calendar">
@@ -105,6 +111,7 @@ export default function ClassesPanel() {
           ))}
         </ul>
       )}
+      </>}
     </section>
   );
 }
