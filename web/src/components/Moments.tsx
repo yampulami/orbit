@@ -124,6 +124,8 @@ export function MomentsBar({ always = false, limit = 3 }: { /** Show it even whe
   // On the feed the open/closed choice is remembered; on the Sync page it always starts folded, so finding a time comes first.
   const [openHere, setOpenHere] = useState(false);
   if (!prefs.enabled || (!always && !prefs.showOnFeed)) return null;
+  // While the answer is on its way the bar's place is held, so the feed does not jump down under the pointer when it arrives.
+  if (moments.length === 0 && loading && !always) return <section className="momentsbar holding" aria-hidden="true"><div className="mb-head"><Sparkles size={15} /><span className="mb-t"><b>Looking for plans…</b></span></div></section>;
   if (moments.length === 0) return always ? <p className="muted moments-empty" role="status">{loading ? "Looking at your groups…" : "Nothing lines up yet. Suggestions appear when people in your groups share their free time and a good time opens up."}</p> : null;
   const open = always ? openHere : !prefs.collapsed;
   const faces = [...new Map(moments.flatMap((m) => m.people).map((p) => [p.id, p])).values()];

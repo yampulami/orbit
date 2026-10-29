@@ -10,7 +10,10 @@ import type { Person } from "./freeTime";
 
 /** Who in each of your groups shares their free time with you. One lookup shared by everything on screen, remembered for a few minutes: it is a small amount of data that changes slowly. */
 const cache = new Map<string, { at: number; circle: Promise<Circle> }>();
+/** The circles that have already arrived, so a screen that opens later has them on its very first frame and nothing jumps into place afterwards. */
+const arrived = new Map<string, { at: number; circle: Circle }>();
 const FRESH = 5 * 60_000;
+const known = (groups: { id: string }[]) => groups.slice(0, 8).map((g) => arrived.get(g.id)).filter((x): x is { at: number; circle: Circle } => !!x && Date.now() - x.at < FRESH).map((x) => x.circle);
 
 function loadCircle(g: { id: string; name: string }, me: string): Promise<Circle> {
   const hit = cache.get(g.id);
@@ -21,11 +24,11 @@ function loadCircle(g: { id: string; name: string }, me: string): Promise<Circle
     return { id: g.id, name: g.name, members: sharing as Person[], unknown: notSharing, total: people.length + 1 };
   })();
   cache.set(g.id, { at: Date.now(), circle });
-  circle.catch(() => cache.delete(g.id));
+  circle.then((c) => { arrived.set(g.id, { at: Date.now(), circle: c }); }, () => cache.delete(g.id));
   return circle;
 }
 /** Forget the circles (sharing or the groups changed). */
-export const forgetCircles = () => cache.clear();
+export const forgetCircles = () => { cache.clear(); arrived.clear(); };
 whenForgotten(forgetCircles);
 
 /** The suggestions for right now: nothing is looked up unless the student turned Moments on. */
@@ -36,8 +39,9 @@ export function useMoments(limit = 5): { moments: Moment[]; loading: boolean; en
   const { groups } = useHang();
   const { events } = useCampusEvents();
   const [now, setNow] = useState(() => new Date());
-  const [circles, setCircles] = useState<Circle[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [circles, setCircles] = useState<Circle[]>(() => (prefs.enabled ? known(groups) : []));
+  // "Loading" from the first frame, so a placeholder can hold the place the suggestions will take.
+  const [loading, setLoading] = useState(() => prefs.enabled && groups.length > 0 && known(groups).length < Math.min(8, groups.length));
   useEffect(() => { const t = window.setInterval(() => setNow(new Date()), 60_000); return () => window.clearInterval(t); }, []);
   const { me } = useMyBusy(now);
 

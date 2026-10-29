@@ -3915,3 +3915,7 @@ body.chat-open .chats-switch{display:none}
 .ft-share .switch[aria-checked=true]{background:linear-gradient(135deg,#8f6bff,#5a3fd8);box-shadow:0 6px 14px -6px rgba(90,63,216,.8)}
 .ft-share .switch[aria-checked=true] span{transform:translateX(22px);background:#fff}
 .ft-share .switch[aria-checked=true] span::after{content:"";width:6px;height:11px;border:solid #5a3fd8;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+
+/* the suggestions bar holds its place while it loads, so nothing shifts under the pointer */
+.momentsbar.holding .mb-head{cursor:default;opacity:.55}
+.momentsbar.holding .mb-t b{font-weight:500}
