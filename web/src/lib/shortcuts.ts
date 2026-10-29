@@ -1,10 +1,11 @@
 /** Keyboard shortcuts, like a desktop app: "g" then a letter goes to a page, "n" starts a post, "/" searches, "?" lists them all. */
 export const GO: Record<string, { to: string; label: string }> = {
   f: { to: "/app/feed", label: "Feed" },
-  m: { to: "/app/messages", label: "Messages" },
-  g: { to: "/app/groups", label: "Groups" },
+  m: { to: "/app/chats", label: "Chats" },
+  g: { to: "/app/chats?tab=groups", label: "Groups" },
   r: { to: "/app/roommates", label: "Roommates" },
   p: { to: "/app/plans", label: "Plans" },
+  s: { to: "/app/sync", label: "Schedule sync" },
   c: { to: "/app/map", label: "Map" },
   u: { to: "/app/profile", label: "Profile" },
 };

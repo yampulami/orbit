@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, UserRound, Users, X, type LucideIcon } from "lucide-react";
+import { Bell, CalendarClock, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, UserRound, Users, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi, type Row } from "../lib/feedData";
 import { friendsLive, useFriends } from "../lib/friends";
@@ -17,9 +17,10 @@ type Option = { section: "top" | "people" | "pages"; id: string; go: () => void 
 /** Where you can jump to from the search box before you have typed anything. */
 const PAGES: { id: string; title: string; sub: string; to: string; Icon: LucideIcon }[] = [
   { id: "feed", title: "Feed", sub: "What is happening on campus", to: "/app/feed", Icon: Newspaper },
-  { id: "messages", title: "Messages", sub: "Your conversations", to: "/app/messages", Icon: MessageSquare },
-  { id: "groups", title: "Groups", sub: "Your groups and hangouts", to: "/app/groups", Icon: Users },
+  { id: "messages", title: "Messages", sub: "Your conversations", to: "/app/chats", Icon: MessageSquare },
+  { id: "groups", title: "Groups", sub: "Your groups and hangouts", to: "/app/chats?tab=groups", Icon: Users },
   { id: "plans", title: "Plans", sub: "Classes, reminders and plans", to: "/app/plans", Icon: CalendarDays },
+  { id: "sync", title: "Schedule sync", sub: "Find a time that works for everyone", to: "/app/sync", Icon: CalendarClock },
   { id: "campus", title: "Campus", sub: "Clubs and events", to: "/app/campus", Icon: Megaphone },
   { id: "roommates", title: "Roommates", sub: "Chores, groceries and expenses", to: "/app/roommates", Icon: Sofa },
   { id: "map", title: "Map", sub: "Places around campus", to: "/app/map", Icon: MapPin },

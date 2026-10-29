@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
-import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "./lib/auth";
 import OrbLoader from "./components/OrbLoader";
 import Shell from "./components/Shell";
@@ -35,9 +35,9 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Legal = lazy(() => import("./pages/Legal"));
 const Plans = lazy(() => import("./pages/Plans"));
-const Groups = lazy(() => import("./pages/Groups"));
+const Chats = lazy(() => import("./pages/Chats"));
+const Sync = lazy(() => import("./pages/Sync"));
 const Profile = lazy(() => import("./pages/Profile"));
-const Messages = lazy(() => import("./pages/Messages"));
 const Person = lazy(() => import("./pages/Person"));
 const Roommates = lazy(() => import("./pages/Roommates"));
 const CampusMap = lazy(() => import("./pages/CampusMap"));
@@ -116,7 +116,7 @@ function InApp({ children }: { children: ReactNode }) {
     if (waiting) {
       hangActions.joinWithCode(waiting).then((problem) => {
         if (problem) notice.show({ icon: "alert", title: "That invite did not work", message: problem });
-        else { notice.show({ icon: "pin", title: "You joined the group", message: "It is on your Groups list.", ms: 4000 }); nav("/app/groups"); }
+        else { notice.show({ icon: "pin", title: "You joined the group", message: "It is on your Groups list.", ms: 4000 }); nav("/app/chats?tab=groups"); }
       });
     }
     return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); unbindCampusOrgs(); unbindCheckins(); clearVerified(); };
@@ -137,7 +137,12 @@ function OnboardingGate() {
 function JoinLink() {
   const { code } = useParams();
   try { if (code) sessionStorage.setItem("orbit-join-code", code.toUpperCase()); } catch { /* ignore */ }
-  return <Navigate to="/app/groups" replace />;
+  return <Navigate to="/app/chats?tab=groups" replace />;
+}
+
+/** The old addresses still work: they go to the new place and keep whatever the link carried (a chat to open, a place to plan at). */
+function Moved({ to }: { to: string }) {
+  return <Navigate to={to} replace state={useLocation().state} />;
 }
 
 export default function App() {
@@ -156,8 +161,10 @@ export default function App() {
         <Route path="/app" element={<Protected><InApp><Shell /></InApp></Protected>}>
           <Route index element={<Navigate to="feed" replace />} />
           <Route path="feed" element={<Feed />} />
-          <Route path="messages" element={<Messages />} />
-          <Route path="groups" element={<Groups />} />
+          <Route path="chats" element={<Chats />} />
+          <Route path="messages" element={<Moved to="/app/chats" />} />
+          <Route path="groups" element={<Moved to="/app/chats?tab=groups" />} />
+          <Route path="sync" element={<Sync />} />
           <Route path="roommates" element={<Roommates />} />
           <Route path="plans" element={<Plans />} />
           <Route path="campus" element={<Campus />} />

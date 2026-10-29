@@ -3742,3 +3742,22 @@ a.sl-row{text-decoration:none}
 .sync-note b{color:var(--ink)}
 .sync-adv .sync-bar{margin-top:8px}
 .chip-btn svg{margin-right:4px;vertical-align:-1px}
+
+/* ===== Chats (messages + groups) and the Sync page ===== */
+.chats{display:grid;gap:10px;min-width:0}
+.chats-switch{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);width:fit-content;max-width:100%}
+.chats-switch button{display:inline-flex;align-items:center;gap:7px;border:0;background:none;color:var(--ink-soft);font:inherit;font-size:.9rem;font-weight:600;padding:8px 16px;border-radius:999px;cursor:pointer;transition:background .2s,color .2s}
+.chats-switch button[aria-selected=true]{background:var(--ink);color:var(--on-ink)}
+.chats-switch b{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e0525c;color:#fff;font-size:.68rem;font-weight:700}
+.chats-switch b[data-warm]{background:#e0a13a}
+.chats-switch button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+body.chat-open .chats-switch{display:none}
+
+.sync-page .freetime{padding:16px;gap:12px}
+.ft-cols{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);align-items:start}
+.ft-side,.ft-main{display:grid;gap:8px;min-width:0;align-content:start}
+@media (min-width:900px){.ft-cols{grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:20px}.sync-page{width:min(1040px,100%)}}
+.sync-foot{display:flex;align-items:center;gap:6px;margin:8px 4px 0;font-size:.84rem}
+.sync-link{display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 12px;border-radius:20px;background:var(--surface);box-shadow:0 0 0 1px var(--line);color:var(--ink);text-decoration:none;transition:background .2s}
+.sync-link:hover{background:color-mix(in srgb,var(--violet) 8%,var(--surface))}
+.sync-link:focus-visible{outline:2px solid var(--violet);outline-offset:2px}

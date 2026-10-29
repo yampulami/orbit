@@ -25,7 +25,7 @@ Orbit is one campus-life app for a single university. It combines a campus socia
 ## Operating Context
 
 - Students use Orbit in short check-ins, mostly on phones and laptops between classes.
-- The main navigation areas are Feed, Roommates, Messages, Hangouts, and Campus.
+- The main navigation areas are Feed, Chats (Messages and Groups together), Roommates, Plans, Sync (Schedule Sync), Campus and Map.
 - Feed post types are Post (text, one media attachment, link, location, optional poll), Event (registration, date, audience), and Marketplace (price, pickup/drop-off).
 - Community tags are Everyone, Commuters, Residents, Roommates, and Marketplace.
 - Campus covers events, clubs, dining, and services.
@@ -121,4 +121,8 @@ Orbit now answers "what can I do right now, and with whom?". Pure logic is in `w
 - **Before a plan is made,** it checks again that the organizer is not already booked then. Plans become hangouts in a group chat with Yes/No answers; people who have not answered stay pending, nobody is assumed to accept.
 - **Proactive prompt:** when friends who share are free at the same time as you, the "you are free until" card offers "Plan with Cam", which opens Schedule sync with them picked.
 - **Not built:** polls with several candidate times, "suggest another time" replies, a flexible/movable flag on commitments, live external calendar sync and its staleness handling, change notices when someone's class moves, and per-person preferred hours stored on the account.
+
+### Navigation (2026-10-31)
+
+Messages and Groups are one **Chats** tab (`/app/chats`, a switch between Messages and Groups; `?tab=groups` opens Groups). Schedule Sync has its own **Sync** tab (`/app/sync`); Plans keeps the calendar, the day, the week and the class schedule, and links to Sync. The old addresses `/app/messages` and `/app/groups` still work and carry along whatever the link passed (a chat to open, a place to plan at). Keyboard: `g m` Chats, `g g` Groups, `g s` Sync. On a phone the bottom bar is Feed, Chats, Plans, Sync, Campus, More; the switch and the bar step aside while a chat is open.
 

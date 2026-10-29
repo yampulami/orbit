@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { useClasses } from "../lib/classes";
 import { useMyBusy } from "../lib/useMyBusy";
 import { describeBusy } from "../lib/myBusy";
@@ -16,7 +16,6 @@ export default function FreeTimePanel({ preselect }: { /** Friends to start with
   const { today } = useMyBusy(new Date());
   const { friends } = useFriends();
   const [error, setError] = useState("");
-  const [shown, setShown] = useState(!!preselect?.length);
 
   async function flip(on: boolean) {
     setError("");
@@ -36,12 +35,9 @@ export default function FreeTimePanel({ preselect }: { /** Friends to start with
   const live = !!supabase;
   return (
     <section className="freetime" aria-label="Schedule sync">
-      <header className="fold-head">
-        <button type="button" className="fold-title" aria-expanded={shown} onClick={() => setShown((v) => !v)}>
-          <Clock size={15} aria-hidden="true" /><b>Schedule sync</b><small>{!live || sharing.missing ? "find a time" : sharing.on ? "sharing on" : "sharing off"}</small><ChevronDown size={16} className="fold-chev" aria-hidden="true" />
-        </button>
-      </header>
-      {shown && <>
+      <header><h2><Clock size={16} aria-hidden="true" /> Schedule sync</h2></header>
+      <div className="ft-cols">
+      <div className="ft-side">
       {live && !sharing.missing && (
         <div className="ft-share">
           <div>
@@ -76,8 +72,11 @@ export default function FreeTimePanel({ preselect }: { /** Friends to start with
         {today.length === 0 ? <p className="muted">Nothing today, so the whole day is free.</p> : <ul>{today.map((t, i) => <li key={i}>{describeBusy(t)} <small>({t.kind})</small></li>)}</ul>}
       </details>
 
-      <ScheduleSync initialPicked={preselect} />
-      </>}
+      </div>
+      <div className="ft-main">
+        <ScheduleSync initialPicked={preselect} />
+      </div>
+      </div>
     </section>
   );
 }

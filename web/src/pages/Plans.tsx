@@ -8,7 +8,7 @@ import UpcomingList from "../components/UpcomingList";
 const Calendar = lazy(() => import("../components/Calendar"));
 const WeekBoard = lazy(() => import("../components/WeekBoard"));
 import ClassesPanel from "../components/ClassesPanel";
-import FreeTimePanel from "../components/FreeTimePanel";
+import SyncLink from "../components/SyncLink";
 import { feedApi as api, type Row } from "../lib/feedData";
 
 export default function Plans() {
@@ -17,7 +17,6 @@ export default function Plans() {
   const [posts, setPosts] = useState<Row[]>([]);
   const loc = useLocation();
   const asked = (loc.state as { day?: string } | null)?.day ?? null;
-  const syncWith = (loc.state as { syncWith?: string[] } | null)?.syncWith;
   const [day, setDay] = useState<string>(asked ?? new Date().toDateString());
   useEffect(() => { if (asked) setDay(asked); }, [asked, loc.key]);
   useEffect(() => { if (!phone) api.list().then(setPosts).catch(() => setPosts([])); }, [phone]);
@@ -31,7 +30,7 @@ export default function Plans() {
         <UpcomingList limit={4} />
         <button type="button" className="btn wide-btn" aria-expanded={showClasses} onClick={() => setShowClasses((v) => !v)}>{showClasses ? "Hide class schedule" : "Class schedule"}</button>
         {showClasses && <ClassesPanel />}
-        <FreeTimePanel preselect={syncWith} />
+        <SyncLink />
       </div>
     );
   }
@@ -44,7 +43,7 @@ export default function Plans() {
           <Suspense fallback={<div className="skeleton sk-card" />}><Calendar posts={posts} day={day} onDay={(k) => setDay(k ?? new Date().toDateString())} details={false} /></Suspense>
           <UpcomingList limit={3} />
           <ClassesPanel />
-          <FreeTimePanel preselect={syncWith} />
+          <SyncLink />
         </div>
         <div className="plans-main">
           <DayAgenda day={day} />

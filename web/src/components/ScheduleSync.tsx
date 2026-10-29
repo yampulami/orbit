@@ -113,7 +113,8 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
   };
   const toggleRequired = (id: string) => setRequired((r) => (r.includes(id) ? r.filter((x) => x !== id) : [...r, id]));
   const toggleDay = (d: number) => setSkipDays((x) => (x.includes(d) ? x.filter((y) => y !== d) : [...x, d]));
-  const restricted = notBefore > 8 * 60 || notAfter < 22 * 60 || skipDays.length > 0;
+  const restricted = notBefore > Math.max(kindOf.from, 8 * 60) || notAfter < kindOf.to || skipDays.length > 0;
+  const limited = notBefore > 8 * 60 || notAfter < 22 * 60 || skipDays.length > 0; // any limit at all, so "drop the limits" has something to drop
 
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id].slice(0, 8)));
 
@@ -141,7 +142,7 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
     haptic("success");
     notice.show({ icon: "calendar", title: "Plan made", message: out.invited.length ? `${out.invited.join(", ")} got an invite link. Pick a place in the group chat.` : "Pick a place in the group chat.", ms: 4500 });
     void id;
-    nav("/app/groups");
+    nav("/app/chats?tab=groups");
   }
 
   // The grid shows one day: the day of the best suggestion to start with.
@@ -231,7 +232,7 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
                 {duration > 30 && <button type="button" className="btn sm" onClick={() => setDuration(duration > 60 ? 60 : 30)}>Shorten to {duration > 60 ? "1 hr" : "30 min"}</button>}
                 {days < 14 && <button type="button" className="btn sm" onClick={() => setDays(days < 7 ? 7 : 14)}>Look {days < 7 ? "a week" : "two weeks"} ahead</button>}
                 {crowd > 2 && attend === "all" && <button type="button" className="btn sm" onClick={() => setAttend("half")}>Allow some to miss it</button>}
-                {restricted && <button type="button" className="btn sm" onClick={() => { setNotBefore(8 * 60); setNotAfter(22 * 60); setSkipDays([]); }}>Drop the time limits</button>}
+                {limited && <button type="button" className="btn sm" onClick={() => { setNotBefore(8 * 60); setNotAfter(22 * 60); setSkipDays([]); }}>Drop the time limits</button>}
                 {required.length > 0 && <button type="button" className="btn sm" onClick={() => setRequired([])}>Nobody is a must</button>}
               </div>
             </div>

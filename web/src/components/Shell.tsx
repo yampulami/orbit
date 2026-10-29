@@ -2,8 +2,8 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { LayoutGrid, LogOut, Megaphone, Moon, SquarePen, Sun } from "lucide-react";
-import { GroupsIcon, HomeIcon, MapIcon, MessagesIcon, PlansIcon, RoommatesIcon } from "./icons";
+import { CalendarClock, LayoutGrid, LogOut, Megaphone, Moon, SquarePen, Sun } from "lucide-react";
+import { HomeIcon, MapIcon, MessagesIcon, PlansIcon, RoommatesIcon } from "./icons";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { enter, slide } from "../lib/motion";
@@ -31,10 +31,10 @@ import { useIsPhone } from "../lib/phone";
 
 const items = [
   { to: "/app/feed", label: "Feed", icon: HomeIcon },
-  { to: "/app/messages", label: "Messages", icon: MessagesIcon },
-  { to: "/app/groups", label: "Groups", icon: GroupsIcon },
+  { to: "/app/chats", label: "Chats", icon: MessagesIcon },
   { to: "/app/roommates", label: "Roommates", icon: RoommatesIcon },
   { to: "/app/plans", label: "Plans", icon: PlansIcon },
+  { to: "/app/sync", label: "Sync", icon: CalendarClock },
   { to: "/app/campus", label: "Campus", icon: Megaphone },
   { to: "/app/map", label: "Map", icon: MapIcon },
 ];
@@ -107,7 +107,7 @@ export default function Shell() {
   }, [phone]);
   useEffect(() => { setHideTop(false); }, [loc.pathname]);
   const pageTitle = [...items, { to: "/app/profile", label: "Profile" }].find((i) => loc.pathname.startsWith(i.to))?.label ?? "Orbit";
-  const tabs = items.filter((i) => ["/app/feed", "/app/messages", "/app/groups", "/app/plans", "/app/campus"].includes(i.to));
+  const tabs = items.filter((i) => ["/app/feed", "/app/chats", "/app/plans", "/app/sync", "/app/campus"].includes(i.to));
 
   return (
     <div className={"shell" + (wide && !/\/campus\/clubs\//.test(loc.pathname) ? " wide" : "") + (hideTop ? " hide-top" : "")}>
@@ -124,7 +124,7 @@ export default function Shell() {
                   {isActive && <motion.span layoutId="side-indicator" className="navpill" transition={slide} />}
                   <i.icon size={22} strokeWidth={1.75} />
                   <span className="navtext">{i.label}</span>
-                  {i.to === "/app/messages" && unread > 0 && <span className="nav-count" role="img" aria-label={`${unread} unread ${unread === 1 ? "message" : "messages"}`}>{unread > 9 ? "9+" : unread}</span>}
+                  {i.to === "/app/chats" && unread > 0 && <span className="nav-count" role="img" aria-label={`${unread} unread ${unread === 1 ? "message" : "messages"}`}>{unread > 9 ? "9+" : unread}</span>}
                   {i.to === "/app/plans" && waiting > 0 && <span className="nav-dot" role="img" aria-label={waiting === 1 ? "1 hangout needs your answer" : `${waiting} hangouts need your answer`} />}
                 </>
               )}
@@ -160,7 +160,7 @@ export default function Shell() {
         {tabs.map((t) => (
           <NavLink key={t.to} to={t.to} className={({ isActive }) => "tab" + (isActive ? " active" : "")}>
             <span className="tab-ico"><t.icon size={22} strokeWidth={1.75} />
-              {t.to === "/app/messages" && unread > 0 && <b className="tab-count" role="img" aria-label={`${unread} unread`}>{unread > 9 ? "9+" : unread}</b>}
+              {t.to === "/app/chats" && unread > 0 && <b className="tab-count" role="img" aria-label={`${unread} unread`}>{unread > 9 ? "9+" : unread}</b>}
               {t.to === "/app/plans" && waiting > 0 && <i className="tab-dot" role="img" aria-label={`${waiting} need your answer`} />}
             </span>
             <span className="tab-label">{t.label}</span>
@@ -177,7 +177,7 @@ export default function Shell() {
         {items.map((i) => (
           <NavLink key={i.to} to={i.to} className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}>
             <i.icon size={22} strokeWidth={1.75} /><span>{i.label}</span>
-            {i.to === "/app/messages" && unread > 0 && <b className="drawer-count">{unread > 9 ? "9+" : unread}</b>}
+            {i.to === "/app/chats" && unread > 0 && <b className="drawer-count">{unread > 9 ? "9+" : unread}</b>}
           </NavLink>
         ))}
         <NavLink to="/app/profile" className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}><span className="me">{name.slice(0, 1).toUpperCase()}</span><span>Profile</span></NavLink>

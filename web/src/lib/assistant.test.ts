@@ -58,7 +58,7 @@ describe("assistant answers", () => {
     expect(answerFor("any unread messages?", ctx).text).toMatch(/2 unread messages and 5 unread notifications/);
   });
   it("opens pages", () => {
-    expect(answerFor("open messages", ctx).go).toBe("/app/messages");
+    expect(answerFor("open messages", ctx).go).toBe("/app/chats");
     expect(answerFor("take me to the map", ctx).go).toBe("/app/map");
     expect(answerFor("go to campus", ctx).go).toBe("/app/campus");
   });

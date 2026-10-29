@@ -54,7 +54,7 @@ const named = <T extends { id: string; name: string }>(list: T[], q: string): T 
 };
 
 const PAGES: Record<string, { to: string; label: string }> = {
-  feed: { to: "/app/feed", label: "Open the feed" }, messages: { to: "/app/messages", label: "Open messages" }, groups: { to: "/app/groups", label: "Open groups" },
+  feed: { to: "/app/feed", label: "Open the feed" }, messages: { to: "/app/chats", label: "Open messages" }, groups: { to: "/app/chats?tab=groups", label: "Open groups" }, sync: { to: "/app/sync", label: "Open Schedule sync" },
   plans: { to: "/app/plans", label: "Open plans" }, campus: { to: "/app/campus", label: "Open Campus" }, map: { to: "/app/map", label: "Open the map" },
   profile: { to: "/app/profile", label: "Open your profile" }, roommates: { to: "/app/roommates", label: "Open roommates" },
 };

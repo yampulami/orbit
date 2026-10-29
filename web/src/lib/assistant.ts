@@ -15,8 +15,9 @@ export type Reply = { text: string; go?: string; /** What to call the button tha
 
 const PAGES: [RegExp, string, string][] = [
   [/\b(feed|home)\b/, "/app/feed", "the feed"],
-  [/\b(messages?|dms?|inbox|chats?)\b/, "/app/messages", "messages"],
-  [/\bgroups?\b/, "/app/groups", "groups"],
+  [/\b(messages?|dms?|inbox|chats?)\b/, "/app/chats", "chats"],
+  [/\bgroups?\b/, "/app/chats?tab=groups", "groups"],
+  [/\b(sync|free time|find a time|schedule sync)\b/, "/app/sync", "Schedule sync"],
   [/\b(plans?|calendar|agenda|schedule)\b/, "/app/plans", "your plans"],
   [/\b(campus|events?|clubs?|circles?)\b/, "/app/campus", "Campus"],
   [/\bmap\b/, "/app/map", "the map"],
