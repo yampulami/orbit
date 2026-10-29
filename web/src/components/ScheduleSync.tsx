@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, Sparkles, Users } from "lucide-react";
+import { Check, ChevronDown, Sparkles, Users } from "lucide-react";
 import { useFriends } from "../lib/friends";
 import { hangActions } from "../lib/hangouts";
 import { useCampusEvents } from "../lib/campusEvents";
@@ -55,6 +55,7 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
   const [dayIdx, setDayIdx] = useState(0);
   const [confirm, setConfirm] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [pickOpen, setPickOpen] = useState(false);
   const [gridOpen, setGridOpen] = useState(false);
   const [making, setMaking] = useState(false);
   const [error, setError] = useState("");
@@ -121,9 +122,17 @@ export default function ScheduleSync({ groupId, people: given, title = "Find a t
 
   return (
     <div className="sync">
-      <h3 className="ft-h"><Users size={14} aria-hidden="true" /> {title}</h3>
-
-      {!given && (
+      {given ? (
+        <h3 className="ft-h"><Users size={14} aria-hidden="true" /> {title}</h3>
+      ) : (
+        <button type="button" className="sync-pick" aria-expanded={pickOpen} onClick={() => setPickOpen((v) => !v)}>
+          <Users size={14} aria-hidden="true" />
+          <span>{title}</span>
+          <small>{picked.length ? `with ${picked.length} ${picked.length === 1 ? "friend" : "friends"}` : "just you"}</small>
+          <ChevronDown size={14} className="fold-chev" aria-hidden="true" />
+        </button>
+      )}
+      {!given && pickOpen && (
         friends.length === 0
           ? <p className="muted">Add a friend first, then find a time that works for both of you.</p>
           : <div className="chip-row" role="group" aria-label="Who to find a time with">

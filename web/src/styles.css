@@ -3649,3 +3649,8 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .sync-list .btn.sm{min-height:30px;padding:0 12px;font-size:.8rem}
 .sync-list .sync-confirm{grid-column:1/-1;gap:6px}
 .sync-more{font-size:.82rem}
+
+.sync-pick{display:flex;align-items:center;gap:8px;width:100%;padding:6px 2px;border:0;background:none;color:var(--ink);font:inherit;font-size:.9rem;font-weight:700;cursor:pointer;text-align:left}
+.sync-pick small{color:var(--ink-soft);font-size:.8rem;font-weight:500}
+.sync-pick[aria-expanded=true] .fold-chev{transform:rotate(180deg)}
+.sync-pick:focus-visible{outline:2px solid var(--violet);outline-offset:3px;border-radius:8px}
