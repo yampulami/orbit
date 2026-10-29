@@ -121,7 +121,7 @@ function InApp({ children }: { children: ReactNode }) {
     }
     return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); unbindCampusOrgs(); unbindCheckins(); clearVerified(); };
   }, [done, uid, campusKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (done === "checking") return <div className="ol-page"><OrbLoader label="Finding your campus" state="searching" /></div>;
+  if (done === "checking") return <div className="ol-page"><OrbLoader label="Finding your campus" state="searching" look="stack" /></div>;
   return done === "yes" ? <>{children}</> : <Navigate to="/onboarding" replace />;
 }
 
