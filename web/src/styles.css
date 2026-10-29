@@ -3963,3 +3963,5 @@ body.chat-open .chats-switch{display:none}
 .cf-post footer .cf-act.icon{width:34px;padding:0;justify-content:center}
 .cf-post footer .cf-act:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
 .cf-tools{gap:8px}
+
+.sl-quick{display:flex;gap:14px;font-size:.84rem;font-weight:600}

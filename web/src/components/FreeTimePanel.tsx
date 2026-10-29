@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Clock, UserCheck, Users } from "lucide-react";
+import { Check, Clock, UserCheck, Users } from "lucide-react";
+import StackedList from "./StackedList";
+import { gradientFor } from "../lib/look";
 import Segmented from "./Segmented";
 import { useClasses } from "../lib/classes";
 import { useMyBusy } from "../lib/useMyBusy";
@@ -61,7 +63,32 @@ export default function FreeTimePanel({ preselect }: { /** Friends to start with
                   {who.audience === "selected" && (
                     friends.length === 0
                       ? <p className="muted">Add a friend first, then choose who can see it.</p>
-                      : <div className="chip-row" role="group" aria-label="Friends who can see my free time">{friends.map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={who.allowed.includes(f.id)} onClick={() => togglePerson(f.id)}>{f.name}</button>)}</div>
+                      : (
+                        <StackedList
+                          key={friends.length}
+                          title="Who can see it"
+                          subtitle={who.allowed.length === 0 ? "nobody yet · tick friends" : `${who.allowed.length} of ${friends.length} friends`}
+                          icon={<UserCheck size={18} />}
+                          people={friends.filter((f) => who.allowed.includes(f.id)).map((f) => ({ name: f.name }))}
+                          items={friends}
+                          getKey={(f) => f.id}
+                          itemText={(f) => `${f.name} ${f.username ?? ""}`}
+                          defaultOpen={who.allowed.length === 0}
+                          renderItem={(f) => (
+                            <button type="button" className="sl-row" aria-pressed={who.allowed.includes(f.id)} onClick={() => togglePerson(f.id)}>
+                              <span className="sl-face" style={{ background: gradientFor(f.name) }} aria-hidden="true">{f.name.trim().slice(0, 1).toUpperCase()}</span>
+                              <span className="sl-name">{f.name}{f.username && <small>@{f.username}</small>}</span>
+                              <span className="sl-tick" aria-hidden="true"><Check size={13} /></span>
+                            </button>
+                          )}
+                          footer={
+                            <div className="sl-quick">
+                              <button type="button" className="link-btn" onClick={() => void audience({ ...who, allowed: friends.map((f) => f.id) })}>Everyone</button>
+                              <button type="button" className="link-btn" onClick={() => void audience({ ...who, allowed: [] })}>Nobody</button>
+                            </div>
+                          }
+                        />
+                      )
                   )}
                   <label className="ft-check"><input type="checkbox" checked={who.housemates} onChange={(e) => void audience({ ...who, housemates: e.target.checked })} /> Housemates can see it too</label>
                   <label className="ft-check"><input type="checkbox" checked={who.clubCounts} onChange={(e) => void audience({ ...who, clubCounts: e.target.checked })} /> Count me in my clubs' meeting times <small>(officers see numbers only, never names)</small></label>
