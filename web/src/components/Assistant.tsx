@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
 import { eventActions, isOpen, useCampusEvents } from "../lib/campusEvents";
 import { canHostEvents, eventsNeedApproval, orgActions, useCampusOrgs } from "../lib/campusOrgs";
-import { hangActions, useHang } from "../lib/hangouts";
+import { hangActions, isVisible, useHang } from "../lib/hangouts";
 import { useFriends } from "../lib/friends";
 import { searchPeople } from "../lib/peopleSearch";
 import { dmActions } from "../lib/dms";
@@ -15,7 +15,8 @@ import { useClasses } from "../lib/classes";
 import { reminderActions, useReminders } from "../lib/reminders";
 import { classActions } from "../lib/classes";
 import { loadFriendFree } from "../lib/availability";
-import { commonFree, myBusy } from "../lib/freeTime";
+import { commonFree } from "../lib/freeTime";
+import { buildMyBusy } from "../lib/myBusy";
 import { feedApi } from "../lib/feedData";
 import { unreadDms, useDms } from "../lib/dms";
 import { useNotifs } from "../lib/notifs";
@@ -246,7 +247,12 @@ export default function Assistant() {
         const unknown = names.filter((_, i) => !wanted[i]);
         const chosen = wanted.filter((f): f is NonNullable<typeof f> => !!f);
         const { sharing: shared, notSharing } = await loadFriendFree(chosen);
-        const mine = myBusy(classes, hangouts, events.filter((e) => e.mine === "going" && isOpen(e, nowD)));
+        const mine = buildMyBusy({
+          classes,
+          hangouts: hangouts.map((h) => ({ title: h.title, when: h.when, canceled: h.canceled, rsvp: h.rsvps["You"] ?? null, visible: isVisible(h, groups) })),
+          events,
+          reminders: reminders as { title: string; date: string; time?: string; done: boolean }[],
+        }, nowD);
         const windows = commonFree([mine, ...shared], nowD, { days, min: 60 }).map((w) => ({ start: w.start.toISOString(), minutes: w.minutes }));
         return { windows, notSharing, unknown };
       },

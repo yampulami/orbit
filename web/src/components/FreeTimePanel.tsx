@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Clock, Share2 } from "lucide-react";
 import { useClasses } from "../lib/classes";
+import { useMyBusy } from "../lib/useMyBusy";
+import { describeBusy } from "../lib/myBusy";
 import { useFriends } from "../lib/friends";
-import { hangActions, useHang } from "../lib/hangouts";
-import { isOpen, useCampusEvents } from "../lib/campusEvents";
+import { hangActions } from "../lib/hangouts";
 import { availabilityActions, loadFriendFree, useSharing } from "../lib/availability";
-import { commonFree, myBusy, span, type Person, type Window } from "../lib/freeTime";
+import { commonFree, span, type Window } from "../lib/freeTime";
 import { haptic } from "../lib/haptics";
 import { notice } from "../lib/notice";
 import { supabase } from "../lib/supabase";
@@ -22,8 +23,6 @@ export default function FreeTimePanel() {
   const classes = useClasses();
   const sharing = useSharing();
   const { friends } = useFriends();
-  const { hangouts } = useHang();
-  const { events } = useCampusEvents();
   const nav = useNavigate();
   const [picked, setPicked] = useState<string[]>([]);
   const [windows, setWindows] = useState<Window[] | null>(null);
@@ -31,8 +30,7 @@ export default function FreeTimePanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  /** What the student has on besides classes, so a suggested time never lands on a plan they already made. */
-  const me: Person = useMemo(() => myBusy(classes, hangouts, events.filter((e) => e.mine === "going" && isOpen(e, new Date()))), [classes, hangouts, events]);
+  const { me, today } = useMyBusy(new Date());
 
   async function flip(on: boolean) {
     setError("");
@@ -80,6 +78,14 @@ export default function FreeTimePanel() {
         </div>
       )}
       {error && <p className="error" role="alert">{error}</p>}
+
+      <details className="ft-how">
+        <summary>How this works</summary>
+        <p>Orbit looks at your day and finds the hours with nothing on. It counts your <b>classes</b>, <b>hangouts</b> you have not turned down, <b>events</b> you are going to, interested in or hosting, and <b>reminders</b> that have a time. Anything else is free, between 8 AM and 10 PM.</p>
+        <p>Pick friends below to see when <i>all of you</i> are free. A friend only counts if they turned on sharing, and they share just the hours they are busy, never the reason.</p>
+        <p><b>Counted today</b></p>
+        {today.length === 0 ? <p className="muted">Nothing today, so the whole day is free.</p> : <ul>{today.map((t, i) => <li key={i}>{describeBusy(t)} <small>({t.kind})</small></li>)}</ul>}
+      </details>
 
       <h3 className="ft-h"><Share2 size={14} aria-hidden="true" /> Find a time with friends</h3>
       {friends.length === 0 ? (

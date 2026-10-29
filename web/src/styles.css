@@ -3514,3 +3514,9 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .nw-list a{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:12px;background:var(--panel);color:var(--ink);text-decoration:none;font-size:.88rem}
 .nw-list a svg{flex:none;margin-top:3px;color:var(--violet)}
 .nw-list a:hover{box-shadow:0 0 0 1px var(--violet)}
+
+.ft-how{border-radius:12px;background:var(--panel);padding:10px 14px;font-size:.88rem;line-height:1.5}
+.ft-how summary{cursor:pointer;font-weight:700;color:var(--ink-soft)}
+.ft-how p{margin:8px 0 0}
+.ft-how ul{margin:6px 0 0;padding-left:18px;display:grid;gap:3px}
+.ft-how small{color:var(--ink-soft)}

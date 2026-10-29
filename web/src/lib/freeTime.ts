@@ -102,13 +102,3 @@ export function span(minutes: number): string {
   const h = Math.floor(minutes / 60), m = minutes % 60;
   return h === 0 ? `${m} min` : m === 0 ? `${h} hr` : `${h} hr ${m} min`;
 }
-
-/** The student's own busy time: weekly classes, plus the hangouts and events they have already said yes to (about two hours each unless an end is known). */
-export function myBusy(classes: ClassSlot[], hangouts: { when: string; canceled?: boolean }[], events: { startsAt: string; endsAt?: string }[]): Person {
-  const two = 2 * 3600_000;
-  const dated = [
-    ...hangouts.filter((h) => !h.canceled).map((h) => ({ start: new Date(h.when), end: new Date(new Date(h.when).getTime() + two) })),
-    ...events.map((e) => ({ start: new Date(e.startsAt), end: new Date(e.endsAt ?? new Date(new Date(e.startsAt).getTime() + two)) })),
-  ].filter((x) => !Number.isNaN(x.start.getTime()) && !Number.isNaN(x.end.getTime()));
-  return { id: "me", name: "You", blocks: blocksFromClasses(classes), dated };
-}

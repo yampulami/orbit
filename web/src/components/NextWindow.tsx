@@ -1,16 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, Clock, Users } from "lucide-react";
-import { useClasses } from "../lib/classes";
+import { useMyBusy } from "../lib/useMyBusy";
 import { useFriends } from "../lib/friends";
 import { useHang } from "../lib/hangouts";
-import { isOpen, useCampusEvents } from "../lib/campusEvents";
+import { useCampusEvents } from "../lib/campusEvents";
 import { loadFriendFree } from "../lib/availability";
-import { freeNow, myBusy, span, type Person } from "../lib/freeTime";
+import { freeNow, span, type Person } from "../lib/freeTime";
 
 /** "You have 50 minutes free": what is on in that gap, and which friends are free too (only those who chose to share). Shows nothing when there is no real gap. */
 export default function NextWindow() {
-  const classes = useClasses();
   const { friends } = useFriends();
   const { hangouts } = useHang();
   const { events } = useCampusEvents();
@@ -26,7 +25,7 @@ export default function NextWindow() {
     return () => { live = false; };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const me = useMemo(() => myBusy(classes, hangouts, events.filter((e) => e.mine === "going" && isOpen(e, now))), [classes, hangouts, events, now]);
+  const { me } = useMyBusy(now);
   const free = freeNow(me, now);
   if (!free || free.minutes < 25) return null;
 
