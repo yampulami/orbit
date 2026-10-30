@@ -26,7 +26,7 @@ export default function Landing() {
             ) : (
               <>
                 <Link className="btn" to="/login">Sign in</Link>
-                <Link className="btn primary" to="/signup">Get started</Link>
+                <Link className="btn primary" to="/signup">Create account</Link>
               </>
             )}
           </div>

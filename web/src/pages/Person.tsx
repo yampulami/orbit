@@ -90,7 +90,7 @@ export default function Person() {
         </div>
       </section>
 
-      <div className="pf-tabs"><GradientMenu className="gm-bar" label="Profile sections" items={profileTabs(false, { posts: data.posts.length, reposts: data.reposts.length }, (t) => setTab(t as "posts" | "reposts" | "clubs"), tab)} /></div>
+      <div className="pf-tabs"><GradientMenu className="gm-bar" label="Profile sections" captions items={profileTabs(false, { posts: data.posts.length, reposts: data.reposts.length }, (t) => setTab(t as "posts" | "reposts" | "clubs"), tab)} /></div>
       <ProfileActivity tab={tab} userId={id} isMe={false} name={profile.name} data={data} />
     </div>
   );

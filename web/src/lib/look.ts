@@ -1,11 +1,17 @@
 /** Small, pure helpers that give clubs and events their own look: a colour from the name, a "workshop / talk / game night" hint from the words, and plain-language timing. */
 
-/** A hue between violet and magenta, the same for the same name everywhere (so a club keeps its colour). */
+/** The hues a club may wear: warm and earth tones, a green, two blues and a rose. Violet is left out, so the accent stays the only strong colour. */
+const CLUB_HUES = [12, 28, 45, 95, 150, 185, 210, 340];
+
+/** A hue from the set above, the same for the same name everywhere (so a club keeps its colour). */
 export function hueFor(name: string): number {
   let h = 0;
   for (const ch of name.trim().toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return 245 + (h % 85);
+  return CLUB_HUES[h % CLUB_HUES.length];
 }
+
+/** A colour a club chose earlier in the violet range (245 to 335) is shown in the accent instead. */
+export const calmHue = (h: number): number => (h >= 245 && h <= 335 ? 18 : h);
 
 export type FlavorKey = "workshop" | "talk" | "social" | "game" | "meeting" | "fair" | "sport" | "food";
 const FLAVORS: [FlavorKey, string, RegExp][] = [
@@ -56,10 +62,10 @@ export function dayLabel(iso: string, now: Date): string {
   return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
 }
 
-/** A round avatar's colours, taken from the name: two hues that go well together, the same every time for the same person. */
+/** A round avatar's colours, taken from the name: one flat colour from a small set, the same every time for the same person. */
 export function gradientFor(name: string): string {
   let h = 0;
   for (const ch of name.trim().toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  const a = h % 360;
-  return `linear-gradient(135deg, hsl(${a} 78% 68%), hsl(${(a + 70) % 360} 70% 52%))`;
+  const a = [12, 32, 150, 185, 212, 345][h % 6];
+  return `hsl(${a} 42% 46%)`;
 }

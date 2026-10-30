@@ -62,7 +62,7 @@ export default function DayAgenda({ day }: { day: string }) {
         <div className="agenda-hangs">
           <h3><Users size={15} aria-hidden="true" />Group hangouts <span className="agenda-sub">private plans with your groups</span></h3>
           {list.length === 0 ? (
-            <p className="rem-empty">No hangouts. <Link to="/app/groups">Plan one</Link></p>
+            <p className="rem-empty">No hangouts yet. <Link to="/app/groups">Plan a hangout</Link></p>
           ) : (
             <SweepUl>
               {list.map((h) => {

@@ -168,7 +168,7 @@ export default function Roommates() {
 
       <GradientMenu
         className="gm-bar"
-        label="Household sections"
+        label="Household sections" captions
         items={SECTIONS.map(({ id, label, Icon, tone }): GMItem => ({ key: id, label, icon: Icon, tone, on: section === id, onClick: () => setSection(id) }))}
       />
 

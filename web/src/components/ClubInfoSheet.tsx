@@ -8,7 +8,7 @@ import RolesPanel from "./RolesPanel";
 import RichText from "./RichText";
 
 /** Everything about the club that used to sit on its front: what it is, when it meets, the president's editing, roles, the application and the coordinator's controls. */
-const HUES = [262, 285, 315, 340, 10, 35, 150, 190, 215];
+const HUES = [12, 28, 45, 95, 150, 185, 210, 340];
 const ICONS = ["🤖", "♟️", "🎬", "🎨", "🎵", "⚽", "📚", "🧪", "🌱", "🎮", "🍜", "🚀"];
 
 /** The president picks the club's colour and icon. They tint its rail icon, header and highlights for everyone. */

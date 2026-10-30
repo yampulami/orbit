@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { countdown, dayLabel, eventFlavor, hueFor } from "./look";
+import { calmHue, countdown, dayLabel, eventFlavor, hueFor } from "./look";
 
 describe("hueFor", () => {
-  it("is stable for a name and stays between violet and pink", () => {
+  it("is stable for a name and stays out of the violet range", () => {
     expect(hueFor("Chess Club")).toBe(hueFor("  chess club "));
-    for (const n of ["Robotics", "Film Society", "Student Life", "A"]) { const h = hueFor(n); expect(h).toBeGreaterThanOrEqual(240); expect(h).toBeLessThan(350); }
+    for (const n of ["Robotics", "Film Society", "Student Life", "A"]) { const h = hueFor(n); expect(h < 245 || h > 335).toBe(true); }
+  });
+  it("shows a colour chosen earlier in the violet range as the accent", () => {
+    expect(calmHue(262)).toBe(18);
+    expect(calmHue(150)).toBe(150);
   });
 });
 

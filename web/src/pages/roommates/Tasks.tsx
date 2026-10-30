@@ -28,6 +28,7 @@ export default function Tasks({ space }: { space: Space }) {
   const [points, setPoints] = useState<Points>(2);
   const [due, setDue] = useState("");
   const [error, setError] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
   const people = memberOptions(space.members);
   const today = ymd(new Date());
@@ -45,18 +46,18 @@ export default function Tasks({ space }: { space: Space }) {
     e.preventDefault();
     if (!title.trim()) { setError("Name the chore first."); return; }
     roomActions.addTask(title.trim(), who, points, due || undefined);
-    setTitle(""); setDue(""); setError("");
+    setTitle(""); setDue(""); setError(""); setExpanded(false);
   }
 
   return (
     <div className="rm-card">
-      <form className="rm-add" data-tone="lav" onSubmit={add}>
-        <label className="field grow"><span className="sr">Chore</span><input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Add a chore, like “Clean the bathroom”" maxLength={80} /></label>
-        <Picker value={who} options={assignOptions} onChange={setWho} label="Assign to" />
+      <form className="rm-add" data-tone="lav" data-collapsed={expanded || title ? undefined : ""} onSubmit={add}>
+        <label className="field grow"><span className="sr">Chore</span><input value={title} onFocus={() => setExpanded(true)} onChange={(e) => setTitle(e.target.value)} placeholder="Add a chore, like “Clean the bathroom”" maxLength={80} /></label>
+        <div className="rm-extra"><Picker value={who} options={assignOptions} onChange={setWho} label="Assign to" />
         <div className="segment" role="radiogroup" aria-label="Effort points">
           {POINTS.map((p) => <button key={p} type="button" role="radio" aria-checked={points === p} onClick={() => setPoints(p)} title={`${p} effort point${p === 1 ? "" : "s"}`}>{p}</button>)}
         </div>
-        <label className="field due"><span className="sr">Due date (optional)</span><input type="date" value={due} min={today} onChange={(e) => setDue(e.target.value)} title="Due date (optional)" /></label>
+        <label className="field due"><span className="sr">Due date (optional)</span><input type="date" value={due} min={today} onChange={(e) => setDue(e.target.value)} title="Due date (optional)" /></label></div>
         <button className="btn primary"><Plus size={18} aria-hidden="true" />Add</button>
         {error && <p className="error" role="alert">{error}</p>}
         {who === "auto" && <p className="rm-hint">Goes to whoever has the least open work right now.</p>}

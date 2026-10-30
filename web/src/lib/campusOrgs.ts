@@ -1,4 +1,4 @@
-import { hueFor } from "./look";
+import { calmHue, hueFor } from "./look";
 import { useSyncExternalStore } from "react";
 import { supabase } from "./supabase";
 import { loadNames, watchTables } from "./people";
@@ -346,4 +346,4 @@ export function useMyOrgIds(): Set<string> {
 }
 
 /** The club's colour: the one its president chose, or one from its name. */
-export const orgHue = (o: { name: string; accent?: number }): number => (typeof o.accent === "number" ? o.accent : hueFor(o.name));
+export const orgHue = (o: { name: string; accent?: number }): number => (typeof o.accent === "number" ? calmHue(o.accent) : hueFor(o.name));

@@ -22,8 +22,8 @@ const ago = (iso: string) => {
 const paint = (name: string) => {
   let h = 0;
   for (const ch of name.toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  const a = h % 360;
-  return `linear-gradient(135deg, hsl(${a} 78% 68%), hsl(${(a + 70) % 360} 70% 52%))`;
+  const a = [12, 32, 150, 185, 212, 345][h % 6];
+  return `hsl(${a} 42% 46%)`;
 };
 const Face = ({ name, size = 40 }: { name: string; size?: number }) => <i className="ct-av" aria-hidden="true" style={{ width: size, height: size, background: paint(name) }} />;
 

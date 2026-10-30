@@ -1,13 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 
-/** The colours an item can melt into when you point at it: soft gradients, each with a glow. */
+/** The colour an item turns into when you point at it: one flat tint per tone. */
 export const GM = {
-  purple: ["#e3c4ff", "#a96bff"],
-  blue: ["#c6dcff", "#6f9cff"],
-  orange: ["#ffd0b0", "#ff8a5c"],
-  green: ["#d2fcbd", "#6fe0a0"],
-  pink: ["#ffc2e8", "#ef5fcf"],
+  purple: ["#ffd2bd", "#ff9a6b"],
+  blue: ["#cfdcf3", "#9bbcf0"],
+  orange: ["#f8e0b0", "#f2bd62"],
+  green: ["#d3ead9", "#8fd4a8"],
+  pink: ["#f4d3d7", "#eca0ac"],
 } as const;
 
 /** How wide an item's pill is once it is open. */
@@ -27,7 +27,7 @@ export type GMItem = {
 };
 
 /** A row of round icon buttons. Point at one (or tap it) and it opens into a gradient pill with its name, and the others make room. */
-export default function GradientMenu({ items, label, className = "", quietOnScroll = false }: { items: GMItem[]; label: string; className?: string; /** Scrolling down shrinks it to small icons (the chosen one ringed); scrolling back up, or reaching the top, opens it again. */ quietOnScroll?: boolean }) {
+export default function GradientMenu({ items, label, className = "", quietOnScroll = false, captions = false }: { items: GMItem[]; label: string; className?: string; /** Write every item's name under its icon, not only the open one's. */ captions?: boolean; /** Scrolling down shrinks it to small icons (the chosen one ringed); scrolling back up, or reaching the top, opens it again. */ quietOnScroll?: boolean }) {
   const [quiet, setQuiet] = useState(false);
   useEffect(() => {
     if (!quietOnScroll) return;
@@ -43,7 +43,7 @@ export default function GradientMenu({ items, label, className = "", quietOnScro
     return () => window.removeEventListener("scroll", on);
   }, [quietOnScroll]);
   return (
-    <div className={"gm " + className} role="group" aria-label={label} data-quiet={quiet ? "" : undefined}>
+    <div className={"gm " + className} role="group" aria-label={label} data-quiet={quiet ? "" : undefined} data-caps={captions ? "" : undefined}>
       {items.map((it) => {
         const [a, b] = GM[it.tone];
         return (
@@ -62,6 +62,7 @@ export default function GradientMenu({ items, label, className = "", quietOnScro
             <span className="gm-bg" aria-hidden="true" />
             <it.icon className="gm-ic" size={19} aria-hidden="true" />
             <span className="gm-label" aria-hidden="true">{it.label}</span>
+            {captions && <span className="gm-cap" aria-hidden="true">{it.label}</span>}
             {it.badge && <span className="gm-badge">{it.badge}</span>}
             {it.extra}
           </button>

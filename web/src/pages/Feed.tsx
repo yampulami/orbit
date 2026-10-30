@@ -237,7 +237,7 @@ export default function Feed() {
                 </div>
               )}
               {weeks > 0 && <span className="streak-chip" aria-label={`${weeks} week streak`}><Flame size={16} strokeWidth={1.75} aria-hidden="true" />{weeks} week{weeks === 1 ? "" : "s"}</span>}
-              <Link to="/app/groups" className="pill-link">Plan one</Link>
+              <Link to="/app/groups" className="pill-link">Plan a hangout</Link>
               {upcoming.length > 0 && <button type="button" className="hang-fold" aria-expanded={hangsOpen} aria-label={hangsOpen ? "Collapse hangouts" : "Expand hangouts"} onClick={toggleHangs}><ChevronUp size={18} aria-hidden="true" style={{ transform: hangsOpen ? "none" : "rotate(180deg)", transition: "transform .25s" }} /></button>}
             </div>
           </header>
@@ -286,7 +286,7 @@ export default function Feed() {
         <GradientMenu
           className="gm-bar"
           quietOnScroll
-          label="Filter by community"
+          label="Filter by community" captions
           items={(["All", ...communities] as const).map((c): GMItem => ({
             key: c, label: c, icon: communityIcon[c].Icon, on: filter === c, onClick: () => setFilter(c),
             tone: ({ All: "purple", Everyone: "pink", Commuters: "orange", Residents: "green", Roommates: "blue", Marketplace: "orange" } as Record<string, GMItem["tone"]>)[c] ?? "purple",

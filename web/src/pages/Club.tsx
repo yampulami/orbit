@@ -126,7 +126,7 @@ export default function Club() {
         </div>
         <JoinButton org={org} />
         <GradientMenu
-          label="Club actions"
+          label="Club actions" captions
           items={[
             ...(canPost ? [{ key: "post", label: "Post event", icon: Plus, tone: "orange" as const, onClick: () => { setView("events"); setPosting(true); } }] : []),
             { key: "about", label: "About", icon: Info, tone: "blue" as const, on: info, onClick: () => setInfo(true) },

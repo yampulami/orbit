@@ -5,8 +5,8 @@ import { MotionConfig } from "framer-motion";
 import { AuthProvider } from "./lib/auth";
 import { DEMO_BUILD } from "./lib/supabase";
 import App from "./App";
-import "@fontsource-variable/dm-sans";
-import "@fontsource-variable/fraunces/opsz.css";
+import "@fontsource-variable/hanken-grotesk";
+import "@fontsource-variable/bricolage-grotesque";
 import "./styles.css";
 import { startHaptics } from "./lib/haptics";
 

@@ -117,7 +117,7 @@ export default function Profile() {
         </div>
       </header>
 
-      <div className="pf-tabs"><GradientMenu className="gm-bar" label="Profile sections" items={profileTabs(true, { posts: data.posts.length, reposts: data.reposts.length }, setTab, tab)} /></div>
+      <div className="pf-tabs"><GradientMenu className="gm-bar" label="Profile sections" captions items={profileTabs(true, { posts: data.posts.length, reposts: data.reposts.length }, setTab, tab)} /></div>
 
       {(tab === "posts" || tab === "reposts" || tab === "clubs") && uid && <ProfileActivity tab={tab} userId={uid} isMe name={name} data={data} />}
 

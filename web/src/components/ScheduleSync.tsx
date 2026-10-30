@@ -21,6 +21,8 @@ import { DAY_NAMES } from "../lib/classes";
 import { haptic } from "../lib/haptics";
 import { notice } from "../lib/notice";
 
+/** How many suggested times show before "more times": the best match alone, so the choice starts with one answer. */
+const FIRST = 1;
 const LENGTHS = [{ m: 30, l: "30m" }, { m: 60, l: "1h" }, { m: 90, l: "1.5h" }, { m: 120, l: "2h" }, { m: 180, l: "3h" }];
 const WINDOWS = [{ d: 1, l: "Today" }, { d: 3, l: "3 days" }, { d: 7, l: "Week" }, { d: 14, l: "2 wks" }];
 const KIND_LOOK: Record<string, { icon: typeof Users; tone: GMItem["tone"]; short: string }> = {
@@ -261,7 +263,7 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
             </div>
           )
           : <SweepUl className="sync-list">
-              {(showAll ? suggestions : suggestions.slice(0, 3)).map((s) => {
+              {(showAll ? suggestions : suggestions.slice(0, FIRST)).map((s) => {
                 const ev = eventAt(s.start, s.end);
                 const id = s.start.toISOString();
                 return (
@@ -313,11 +315,11 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
             </SweepUl>
       )}
 
-      {!weekly && (suggestions.length > 3 || crowd > 0) && (
+      {!weekly && (suggestions.length > FIRST || crowd > 0) && (
         <div className="sync-pills">
-          {suggestions.length > 3 && (
+          {suggestions.length > FIRST && (
             <button type="button" className="pill-btn" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
-              {showAll ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}{showAll ? "Fewer times" : `${suggestions.length - 3} more times`}
+              {showAll ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}{showAll ? "Fewer times" : `${suggestions.length - FIRST} more time${suggestions.length - FIRST === 1 ? "" : "s"}`}
             </button>
           )}
           {crowd > 0 && (

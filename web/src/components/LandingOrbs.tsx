@@ -4,9 +4,9 @@ import OrbGL from "./OrbGL";
 
 /** Purple stays the main colour of each; the other two stops are neighbours on the colour wheel (blue, magenta, red, orange). */
 const ORBS = [
-  { colors: ["#6A4DE8", "#3E63F0", "#FF7A59"], size: 1, lift: 0 },
-  { colors: ["#7C5CFF", "#E0529C", "#FFB067"], size: 1.22, lift: -22 },
-  { colors: ["#5B3FD9", "#2F8CFF", "#FF5E6C"], size: 1, lift: 0 },
+  { colors: ["#9c2f12", "#d9582a", "#F2A23C"], size: 1, lift: 0 },
+  { colors: ["#e8572a", "#F2A23C", "#FFD08A"], size: 1.22, lift: -22 },
+  { colors: ["#F2A23C", "#E8572A", "#8f2d08"], size: 1, lift: 0 },
 ];
 const REACH = 280;
 

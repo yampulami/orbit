@@ -264,7 +264,7 @@ function ClubsView({ mine, all }: { mine: Org[]; all: Org[] }) {
         </div>
       )}
       {others.length === 0 && everyone.length > 0 && <p className="rows-empty">Nothing matches. Try a different word or category.</p>}
-      {everyone.length === 0 && <p className="rows-empty">{mine.length ? "You are in everything there is. Tap + on the left to start something." : "Nothing here yet. Tap + on the left to start the first club or circle."}</p>}
+      {everyone.length === 0 && <p className="rows-empty">{mine.length ? "You have joined every club and circle here. Tap + on the left to start a new one." : "Nothing here yet. Tap + on the left to start the first club or circle."}</p>}
     </section>
   );
 }

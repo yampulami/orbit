@@ -9,8 +9,8 @@ import { buildPeopleSets, everyone, type PeopleSet, type Pick, type SetKey } fro
 const paint = (name: string) => {
   let h = 0;
   for (const ch of name.toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  const a = h % 360;
-  return `linear-gradient(135deg, hsl(${a} 78% 68%), hsl(${(a + 70) % 360} 70% 52%))`;
+  const a = [12, 32, 150, 185, 212, 345][h % 6];
+  return `hsl(${a} 42% 46%)`;
 };
 const initial = (n: string) => n.trim().slice(0, 1).toUpperCase() || "?";
 

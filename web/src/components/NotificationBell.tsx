@@ -79,6 +79,9 @@ export default function NotificationBell() {
     if (votes.length) rows.push({ id: "places", icon: MapPinCheck, title: `${votes.length} ${votes.length === 1 ? "place needs" : "places need"} your vote`, sub: "Students added them to the map", go: go("/app/map") });
   }
   const count = rows.length - social.filter((r) => !r.unread).length;
+  const needs = rows.filter((r) => !r.id.startsWith("n-"));
+  const fresh = rows.filter((r) => r.id.startsWith("n-") && r.unread);
+  const earlier = rows.filter((r) => r.id.startsWith("n-") && !r.unread);
 
   return (
     <div className="bell-wrap" ref={root}>
@@ -89,27 +92,35 @@ export default function NotificationBell() {
       <AnimatePresence>
         {open && (
           <motion.div className="bell-pop" role="region" aria-label="Notifications" initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, y: -6, transition: exit }}>
+            <div className="bell-head">
+              <strong>Notifications</strong>
+              {unreadSocial > 0 && <button type="button" className="bell-markall" onClick={() => notifActions.markAllRead()}>Mark all as read</button>}
+            </div>
             {count === 0 ? (
               <p className="bell-empty">You are all caught up.</p>
             ) : (
-              <ul>
-                {rows.map((r) => (
-                  <li key={r.id} className={r.unread === false ? "seen" : undefined}>
-                    <button type="button" onClick={r.go}>
-                      <span className="bell-ico" aria-hidden="true"><r.icon size={16} strokeWidth={1.9} /></span>
-                      <span className="bell-text"><strong>{r.title}</strong><em>{r.sub}</em></span>
-                    </button>
-                    {r.request && (
-                      <div className="bell-actions">
-                        <button type="button" className="btn primary" onClick={async () => friendActions.tell(await friendActions.accept(r.request!.id), "Could not accept")}>Accept</button>
-                        <button type="button" className="btn" onClick={async () => friendActions.tell(await friendActions.ignore(r.request!.id), "Could not ignore")}>Ignore</button>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              [["Needs you", needs], ["New", fresh], ["Earlier", earlier]].map(([title, list]) => (list as Row[]).length > 0 && (
+                <section key={title as string} className={"bell-group" + (title === "Needs you" ? " needs" : "")}>
+                  <h3 className="bell-h">{title as string}</h3>
+                  <ul>
+                    {(list as Row[]).map((r) => (
+                      <li key={r.id} className={r.unread === false ? "seen" : undefined}>
+                        <button type="button" onClick={r.go}>
+                          <span className="bell-ico" aria-hidden="true"><r.icon size={16} strokeWidth={1.9} /></span>
+                          <span className="bell-text"><strong>{r.title}</strong><em>{r.sub}</em></span>
+                        </button>
+                        {r.request && (
+                          <div className="bell-actions">
+                            <button type="button" className="btn primary" onClick={async () => friendActions.tell(await friendActions.accept(r.request!.id), "Could not accept")}>Accept</button>
+                            <button type="button" className="btn" onClick={async () => friendActions.tell(await friendActions.ignore(r.request!.id), "Could not ignore")}>Ignore</button>
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))
             )}
-            {unreadSocial > 0 && <button type="button" className="bell-settings" onClick={() => notifActions.markAllRead()}>Mark all as read</button>}
             <Link to="/app/profile" className="bell-settings" onClick={() => setOpen(false)}>Notification settings</Link>
           </motion.div>
         )}

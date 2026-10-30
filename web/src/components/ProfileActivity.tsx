@@ -4,7 +4,7 @@ import { Heart, MessageCircle, Megaphone, Newspaper, Pencil, Repeat2, Settings, 
 import { feedApi, type Row } from "../lib/feedData";
 import { useCampusOrgs } from "../lib/campusOrgs";
 import { useCampusEvents } from "../lib/campusEvents";
-import { dayLabel, hueFor } from "../lib/look";
+import { calmHue, dayLabel, hueFor } from "../lib/look";
 import EventCard from "./EventCard";
 import EmptyState from "./EmptyState";
 import RichText from "./RichText";
@@ -18,7 +18,7 @@ export function profileTabs(isMe: boolean, counts: { posts: number; reposts: num
   const base: { id: ProfileTab; label: string; icon: LucideIcon; tone: GMItem["tone"]; badge?: string }[] = [
     { id: "posts", label: "Posts", icon: Newspaper, tone: "purple", badge: counts.posts > 0 ? String(counts.posts) : undefined },
     { id: "reposts", label: "Reposts", icon: Repeat2, tone: "green", badge: counts.reposts > 0 ? String(counts.reposts) : undefined },
-    { id: "clubs", label: "Clubs and events", icon: Megaphone, tone: "orange" },
+    { id: "clubs", label: "Clubs", icon: Megaphone, tone: "orange" },
   ];
   if (isMe) base.push({ id: "edit", label: "Edit profile", icon: Pencil, tone: "pink" }, { id: "settings", label: "Settings", icon: Settings, tone: "blue" });
   return base.map((b) => ({ key: b.id, label: b.label, icon: b.icon, tone: b.tone, on: tab === b.id, onClick: () => set(b.id) }));
@@ -78,7 +78,7 @@ export default function ProfileActivity({ tab, userId, isMe, name, data }: { tab
           <ul className="club-rows">
             {clubs.map((o) => (
               <li key={o.id}>
-                <Link className="club-row" style={{ ["--h" as string]: o.accent ?? hueFor(o.name) }} to={`/app/campus/clubs/${o.id}`}>
+                <Link className="club-row" style={{ ["--h" as string]: typeof o.accent === "number" ? calmHue(o.accent) : hueFor(o.name) }} to={`/app/campus/clubs/${o.id}`}>
                   <span className="club-mark" aria-hidden="true">{o.icon || o.name.slice(0, 1).toUpperCase()}</span>
                   <span className="club-text"><strong>{o.name}{o.kind !== "circle" && <VerifiedBadge label="Verified" />}</strong><span className="club-sub">{o.description || (o.kind === "circle" ? "Student circle" : "Student club")}</span></span>
                 </Link>
