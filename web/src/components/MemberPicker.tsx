@@ -10,7 +10,7 @@ const paint = (name: string) => {
   let h = 0;
   for (const ch of name.toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const a = [12, 32, 150, 185, 212, 345][h % 6];
-  return `hsl(${a} 42% 46%)`;
+  return `hsl(${a} 42% 36%)`;
 };
 const initial = (n: string) => n.trim().slice(0, 1).toUpperCase() || "?";
 

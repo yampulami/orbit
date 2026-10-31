@@ -4092,3 +4092,46 @@ body.chat-open .chats-switch{display:none}
 
 /* ---- Polish: a long group name wraps on hangout cards instead of being cut off ---- */
 .hangs .hang .hang-top .chip{white-space:normal;line-height:1.25;overflow:visible;text-overflow:clip}
+
+/* ---- Feed critique fixes ---- */
+/* the filter bar that sticks under the title has a solid ground, so nothing shows through it */
+.pills,[data-theme=dark] .pills,.pills:has(.gm[data-quiet]){background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 1px 0 var(--line);border-radius:0 0 14px 14px}
+
+/* hangouts: the card is neutral and community is a small dot; the accent says "this one needs your answer" */
+.hang{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.hang[data-tone="0"]{--dot:var(--lav-ink)}.hang[data-tone="1"]{--dot:var(--mint-ink)}.hang[data-tone="2"]{--dot:var(--peach-ink)}.hang[data-tone="3"]{--dot:var(--pink-ink)}.hang[data-tone="4"]{--dot:var(--butter-ink)}
+.hang-top .chip::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:var(--dot,var(--ink-soft))}
+.hang-top .chip{color:var(--ink-soft)}
+.hang-when{order:-1;font-weight:700;color:var(--ink);font-size:.86rem}
+.hang[data-ask]{box-shadow:0 0 0 2px var(--violet)}
+.hang[data-ask] .rsvp{background:transparent;padding:0;gap:8px}
+.hang[data-ask] .rsvp button{background:var(--violet);color:#fff;border-radius:8px}
+.hang[data-ask] .rsvp button[data-a=no]{background:transparent;color:var(--ink);box-shadow:0 0 0 1px var(--ink-soft)}
+/* once answered the choice is quiet */
+.rsvp button[aria-pressed=true][data-a=yes],.hangs .rsvp button[aria-pressed=true][data-a=yes]{color:var(--mint-ink)}
+.rsvp button[aria-pressed=true][data-a=no],.hangs .rsvp button[aria-pressed=true][data-a=no]{color:var(--ink)}
+.rsvp .thumb,.rsvp button[data-a=yes] .thumb,.rsvp button[data-a=no] .thumb,[data-theme=dark] .rsvp button[data-a=yes] .thumb,[data-theme=dark] .rsvp button[data-a=no] .thumb{background:var(--panel);box-shadow:inset 0 0 0 1px var(--line)}
+[data-theme=dark] .hang[data-ask] .rsvp button:not([data-a=no]){color:#1a1210}
+
+/* hit areas: 44px without growing what you see */
+.rsvp button{min-height:44px}
+.hangs .rsvp button{min-height:44px}
+.pin-btn,.safety-btn{position:relative}
+.pin-btn::after,.safety-btn::after{content:"";position:absolute;inset:-7px}
+a.person-link.who-link{min-height:24px;align-items:center}
+.avs-face,.mp-face b,.sl-face{color:#fff;text-shadow:none}
+.avs-face{color:#fff}
+.ev-desc2,.post .body{text-wrap:pretty}
+[data-theme=dark] .hang{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+[data-theme=dark] .hang[data-ask]{box-shadow:0 0 0 2px var(--violet)}
+.rsvp button[aria-pressed=true][data-a],.hangs .rsvp button[aria-pressed=true][data-a],[data-theme=dark] .rsvp button[aria-pressed=true][data-a]{background:transparent}
+.hang[data-ask] .rsvp button[data-a=yes]{background:var(--violet);color:#fff}
+[data-theme=dark] .hang[data-ask] .rsvp button[data-a=yes]{color:#1a1210}
+[data-theme=dark] .rsvp button[aria-pressed=true][data-a=yes]{color:var(--mint-ink)}
+[data-theme=dark] .rsvp button[aria-pressed=true][data-a=no]{color:var(--ink)}
+@media (min-width:901px){
+  .topline{background:var(--bg);padding-bottom:10px}
+  .topline>*{pointer-events:auto}
+  .pills,.pills:has(.gm[data-quiet]){top:78px!important}
+}
+@media (min-width:901px) and (max-width:1100px){.pills,.pills:has(.gm[data-quiet]){top:8px!important}}

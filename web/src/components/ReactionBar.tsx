@@ -7,6 +7,8 @@ type Props = {
   commentsOpen: boolean; comments: number; onComment: () => void;
   reposted: boolean; reposts: number; onRepost?: () => void;
   onShare: () => void;
+  /** What the post is about, so each button has a name of its own ("Comments on …") for screen readers. */
+  subject?: string;
 };
 
 /** One pill with the four things you can do to a post: like, comment, repost, share. Each icon pops when you switch it on and each count rolls to its new number. */
@@ -21,13 +23,14 @@ function Item({ Icon, active, count, label, tone, onClick, disabled }: { Icon: L
   );
 }
 
-export default function ReactionBar({ liked, likes, onLike, commentsOpen, comments, onComment, reposted, reposts, onRepost, onShare }: Props) {
+export default function ReactionBar({ liked, likes, onLike, commentsOpen, comments, onComment, reposted, reposts, onRepost, onShare, subject }: Props) {
+  const of = subject ? ` on “${subject}”` : "";
   return (
     <div className="rb" role="group" aria-label="Reactions">
-      <Item Icon={Heart} active={liked} count={likes} label={liked ? "Unlike" : "Like"} tone="#f0476b" onClick={onLike} />
-      <Item Icon={MessageCircle} active={commentsOpen} count={comments} label="Comments" tone="var(--violet)" onClick={onComment} />
-      <Item Icon={Repeat2} active={reposted} count={reposts} label={reposted ? "Undo repost" : "Repost"} tone="#1fa97a" onClick={onRepost} disabled={!onRepost} />
-      <Item Icon={Send} active={false} label="Share" tone="var(--violet)" onClick={onShare} />
+      <Item Icon={Heart} active={liked} count={likes} label={(liked ? "Unlike" : "Like") + of} tone="#f0476b" onClick={onLike} />
+      <Item Icon={MessageCircle} active={commentsOpen} count={comments} label={"Comments" + of} tone="var(--violet)" onClick={onComment} />
+      <Item Icon={Repeat2} active={reposted} count={reposts} label={(reposted ? "Undo repost" : "Repost") + of} tone="#1fa97a" onClick={onRepost} disabled={!onRepost} />
+      <Item Icon={Send} active={false} label={"Share" + of} tone="var(--violet)" onClick={onShare} />
     </div>
   );
 }

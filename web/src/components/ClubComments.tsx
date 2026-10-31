@@ -13,7 +13,7 @@ const paint = (name: string) => {
   let h = 0;
   for (const ch of name.toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
   const a = [12, 32, 150, 185, 212, 345][h % 6];
-  return `hsl(${a} 42% 46%)`;
+  return `hsl(${a} 42% 36%)`;
 };
 export const Avatar = ({ name, size = 40 }: { name: string; size?: number }) => <i className="ct-av" aria-hidden="true" style={{ width: size, height: size, background: paint(name) }} />;
 

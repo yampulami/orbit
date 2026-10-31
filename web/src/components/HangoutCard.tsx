@@ -27,7 +27,7 @@ export default function HangoutCard({ h, group, tone = 0, plain = false }: { h: 
   const answer = (a: "yes" | "no") => hangActions.setRsvp(h.id, mine === a ? null : a);
 
   return (
-    <article className={"hang" + (plain ? " plain" : "") + (pinned ? " is-pinned" : "")} data-tone={tone % 5}>
+    <article className={"hang" + (plain ? " plain" : "") + (pinned ? " is-pinned" : "")} data-tone={tone % 5} data-ask={!mine && !past && !plain ? "" : undefined}>
       {!plain && !past && <div className="hang-pin"><PinButton kind="hangout" id={h.id} title={h.title} /></div>}
       <div className="hang-top"><span className="chip">{h.visibility === "campus" ? (group ? `Hangout · ${group} · open to campus` : "Hangout · open to campus") : `Group hangout · ${group}`}</span><span className="hang-when">{fmtWhen(h.when)}</span></div>
       <h3>{h.title}</h3>

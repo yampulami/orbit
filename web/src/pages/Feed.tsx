@@ -195,7 +195,7 @@ export default function Feed() {
 
   const asking = upcoming.filter((h) => !h.rsvps[YOU]);
   const going = upcoming.filter((h) => h.rsvps[YOU] === "yes");
-  const tab = hangTab ?? (asking.length ? "ask" : "all");
+  const tab = hangTab && !(hangTab === "ask" && asking.length === 0) ? hangTab : (asking.length ? "ask" : "all");
   const isPinned = (id: string) => pins.some((p) => p.kind === "hangout" && p.id === id);
   // Pinned hangouts lead the row, and stay in it whichever tab is open.
   const filtered = tab === "ask" ? asking : tab === "going" ? going : upcoming;
@@ -226,7 +226,7 @@ export default function Feed() {
             )}
             {upcoming.length > 0 && hangsOpen && (
               <div className="hang-tabs" role="tablist" aria-label="Filter hangouts">
-                {tabs.map((t) => <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} data-ask={t.id === "ask" && t.n > 0 ? "1" : undefined} onClick={() => { setHangTab(t.id); hangRow.current?.scrollTo({ left: 0 }); }}>{t.label}<b>{t.n}</b></button>)}
+                {tabs.filter((t) => t.id !== "ask" || t.n > 0).map((t) => <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} data-ask={t.id === "ask" && t.n > 0 ? "1" : undefined} onClick={() => { setHangTab(t.id); hangRow.current?.scrollTo({ left: 0 }); }}>{t.label}<b>{t.n}</b></button>)}
               </div>
             )}
             <div className="hangs-actions">
@@ -311,6 +311,7 @@ export default function Feed() {
                   <div className="foot">
                     {people.length > 0 && <AvatarStack names={people} max={3} size={26} label={`${people.join(", ")} commented`} />}
                     <ReactionBar
+                      subject={(p.payload.title ?? p.payload.body ?? p.payload.text ?? "").slice(0, 40)}
                       liked={liked} likes={p.post_likes.length} onLike={() => like(p)}
                       commentsOpen={expanded} comments={p.post_comments.length} onComment={() => setOpen(expanded ? null : p.id)}
                       reposted={!!myRepost(p)} reposts={repostCount(p)} onRepost={p.author_id === me && !p.payload.repostOf ? undefined : () => repost(p)}
