@@ -3217,27 +3217,12 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .posts .post .foot .rb-del{margin-left:auto}
 .repost-note{display:flex;align-items:center;gap:6px;margin:0 0 6px;font-size:.82rem;font-weight:600;color:var(--ink-soft)}
 
-/* ===== Search with four category circles: click the bar and it makes room for them ===== */
-.gs-row{position:relative;display:flex;align-items:flex-start;gap:10px;flex:0 1 330px;width:330px;max-width:100%;transition:flex-basis .45s cubic-bezier(.22,1,.36,1),width .45s cubic-bezier(.22,1,.36,1)}
-.gs-row.open{z-index:45;flex-basis:740px;width:740px}
+/* ===== Search wrapper: the bar widens when you use it ===== */
+.gs-row{position:relative;display:flex;align-items:flex-start;flex:0 1 330px;width:330px;max-width:100%;transition:flex-basis .35s cubic-bezier(.22,1,.36,1),width .35s cubic-bezier(.22,1,.36,1)}
+.gs-row.open{z-index:45;flex-basis:600px;width:600px}
 .gs-row .gsearch,.gs-row .gsearch:focus-within,.gs-row .gsearch.has-panel{flex:1 1 auto;width:auto;min-width:0}
-.gs-scopes.beside{display:flex;gap:10px;max-width:0;opacity:0;overflow:hidden;padding:2px 0;transform:translateX(-12px);transition:max-width .45s cubic-bezier(.22,1,.36,1),opacity .3s,transform .45s cubic-bezier(.22,1,.36,1)}
-.gs-row.open .gs-scopes.beside{max-width:260px;opacity:1;transform:none;overflow:visible}
-.gs-scope{position:relative;flex:none;display:grid;place-items:center;width:52px;height:52px;border:0;border-radius:50%;background:var(--surface);color:var(--ink-soft);box-shadow:0 0 0 1px var(--line),0 10px 24px -16px rgba(16,20,18,.5);cursor:pointer;transition:background .25s,color .25s,transform .2s var(--ease),box-shadow .25s}
-.gs-scope:hover{color:var(--ink);transform:translateY(-2px)}
-.gs-scope[aria-pressed=true]{background:var(--accent);color:#fff;box-shadow:0 8px 20px -10px var(--accent)}
-.gs-scope:active{transform:scale(.94)}
-.gs-scope-l{display:none}
-.gs-panel li.gs-chips{display:none;padding:2px 2px 8px;cursor:default;background:none}
-@media (max-width:900px){
-  .gs-row,.gs-row.open{display:contents}
-  .gs-scopes.beside{display:none}
-  .gs-panel li.gs-chips{display:block}
-  .gs-scopes.in-panel{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
-  .gs-scopes.in-panel .gs-scope{width:auto;height:38px;padding:0 14px 0 12px;gap:8px;border-radius:999px;grid-auto-flow:column;box-shadow:0 0 0 1px var(--line)}
-  .gs-scopes.in-panel .gs-scope-l{display:inline;font-size:.82rem;font-weight:600;white-space:nowrap}
-}
-@media (prefers-reduced-motion:reduce){.gs-row,.gs-scopes.beside,.gs-scope{transition:none}}
+@media (max-width:900px){.gs-row,.gs-row.open{display:contents}}
+@media (prefers-reduced-motion:reduce){.gs-row{transition:none}}
 
 .gsearch{cursor:text}
 .gsearch button,.gs-panel li{cursor:pointer}
@@ -4247,3 +4232,40 @@ body.feed-page .asst-fab{display:none}
 .rail .cal-day.today.sel,[data-theme=dark] .rail .cal-day.today.sel{background:var(--ink);color:var(--on-ink);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
 .now-acts button.btn{text-decoration:none}
 .now-acts button.btn{border:1px solid var(--ink-soft)}
+
+
+/* ---- Search: a plain bar, a text row of places to look, one-line page rows, no round buttons or pills ---- */
+.gs-dim{background:rgba(16,20,18,.35);-webkit-backdrop-filter:none;backdrop-filter:none}
+@media (min-width:901px){
+  .gsearch{min-height:44px;padding:0 14px;box-shadow:0 0 0 1px var(--line)}
+  .gsearch .gs-glass{width:18px;height:18px}
+  .gsearch input{font-size:var(--t-ui)}
+}
+.gsearch:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+.gsearch.has-panel:focus-within{outline:none;box-shadow:0 0 0 1px var(--ink-soft)}
+.gs-panel{padding:0 0 4px;border-radius:0 0 12px 12px;box-shadow:0 0 0 1px var(--ink-soft),0 18px 36px -20px rgba(0,0,0,.6);max-height:min(70vh,520px);animation:none}
+.gs-panel li{padding:0 14px;min-height:44px;border-radius:0;gap:12px}
+.gs-panel li.on{background:var(--panel)}
+.gs-panel li.gs-chips{display:block;padding:0 6px;min-height:0;border-bottom:1px solid var(--line);background:none;cursor:default}
+.gs-scopes{display:flex;gap:0 4px;overflow-x:auto;scrollbar-width:none}
+.gs-scopes::-webkit-scrollbar{display:none}
+.gs-scope{flex:none;width:auto;height:auto;min-height:44px;padding:0 10px;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;box-shadow:none;transform:none;font:inherit;font-size:var(--t-meta);font-weight:500;color:var(--ink-soft);white-space:nowrap}
+.gs-scope:hover{color:var(--ink);transform:none}
+.gs-scope[aria-pressed=true]{background:none;box-shadow:none;color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
+.gs-panel li.gs-head,.gs-panel li.gs-head:not(:first-child){display:block;min-height:0;margin:0;padding:12px 14px 4px;border:0;font-size:var(--t-micro);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-soft)}
+.gs-ico,.gs-ico.gs-av{width:24px;height:24px;border-radius:0;background:none;color:var(--ink-soft)}
+.gs-ico.gs-av{width:28px;height:28px;border-radius:50%;background:var(--panel);color:var(--ink);font-size:var(--t-meta)}
+.gs-text{display:flex;align-items:baseline;gap:10px;min-width:0}
+.gs-text strong{flex:none;max-width:60%;font-size:var(--t-ui);font-weight:600}
+.gs-text span{font-size:var(--t-meta);min-width:0}
+.gs-kind{border:0;border-radius:0;padding:0;font-size:var(--t-micro);color:var(--ink-soft)}
+.gs-panel li.gs-foot{justify-content:flex-start;gap:16px;min-height:0;padding:8px 14px 4px;margin-top:4px;border-top:1px solid var(--line);font-size:var(--t-micro)}
+.gs-none{padding:14px!important;font-size:var(--t-meta)}
+@media (max-width:900px){.gs-text{display:grid;gap:0}.gs-text strong{max-width:none}.gs-panel li{min-height:52px}}
+
+/* ---- Composer: just the box until you write; the audience choice shows while you do ---- */
+.composer .composer-row{display:none}
+.composer:focus-within .composer-row,.composer.has-text .composer-row{display:flex}
+.composer-row .audience{flex:1 1 0}
+.composer-row .audience button{padding:10px 6px}
+.composer-row .count{margin-left:auto}

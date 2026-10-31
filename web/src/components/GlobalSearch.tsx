@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, CalendarClock, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, UserRound, Users, X, type LucideIcon } from "lucide-react";
+import { Bell, CalendarClock, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, Users, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi, type Row } from "../lib/feedData";
 import { friendsLive, useFriends } from "../lib/friends";
@@ -25,18 +25,19 @@ const PAGES: { id: string; title: string; sub: string; to: string; Icon: LucideI
   { id: "roommates", title: "Roommates", sub: "Chores, groceries and expenses", to: "/app/roommates", Icon: Sofa },
   { id: "map", title: "Map", sub: "Places around campus", to: "/app/map", Icon: MapPin },
 ];
-/** The four things people look for most. Pick one and the search looks only there. */
+/** The four things people look for most, and everything. Pick one and the search looks only there. */
 type Scope = "all" | "posts" | "people" | "campus" | "plans";
-const SCOPES: { id: Exclude<Scope, "all">; label: string; Icon: LucideIcon }[] = [
-  { id: "posts", label: "Posts", Icon: Newspaper },
-  { id: "people", label: "People", Icon: UserRound },
-  { id: "campus", label: "Clubs and events", Icon: Megaphone },
-  { id: "plans", label: "Groups and plans", Icon: Users },
+const SCOPES: { id: Scope; label: string }[] = [
+  { id: "all", label: "Everything" },
+  { id: "posts", label: "Posts" },
+  { id: "people", label: "People" },
+  { id: "campus", label: "Clubs and events" },
+  { id: "plans", label: "Groups and plans" },
 ];
 const clip = (s: string, n = 70) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 
-/** Search as you type. Click the bar and it makes room for four category buttons (posts, people, clubs and events, groups and plans); pick one to search just there.
+/** Search as you type. Click the bar and a row of text choices (everything, posts, people, clubs and events, groups and plans) sits above the results; pick one to search just there.
  *  With none picked it looks everywhere in Orbit, and people are found by name or by username (starting with @ looks only for usernames). Ctrl or Cmd + K focuses it. */
 export default function GlobalSearch() {
   const [q, setQ] = useState("");
@@ -134,19 +135,16 @@ export default function GlobalSearch() {
     else if (e.key === "Enter" && open) { e.preventDefault(); options[Math.min(active, options.length - 1)].go(); }
   }
 
-  const pick = (s: Exclude<Scope, "all">) => { setScope((cur) => (cur === s ? "all" : s)); setActive(0); setOpen(true); loadPosts(); setTimeout(() => input.current?.focus(), 0); };
+  const pick = (s: Scope) => { setScope(s); setActive(0); setOpen(true); loadPosts(); setTimeout(() => input.current?.focus(), 0); };
   const showPanel = open && (longEnough(q) || scoped || pages.length > 0);
   const idx = (section: Option["section"], id: string) => options.findIndex((o) => o.section === section && o.id === id);
   const label = scoped ? SCOPES.find((s) => s.id === scope)!.label : "";
   const placeholder = scoped ? label : friendsLive ? "Search, or @username" : "Search";
 
-  const scopeButtons = (cls: string) => (
-    <div className={cls} role="group" aria-label="Search in">
-      {SCOPES.map(({ id, label: l, Icon }) => (
-        <button key={id} type="button" className="gs-scope" aria-pressed={scope === id} aria-label={l} title={l} onClick={() => pick(id)}>
-          <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
-          <span className="gs-scope-l">{l}</span>
-        </button>
+  const scopeRow = (
+    <div className="gs-scopes" role="group" aria-label="Search in">
+      {SCOPES.map(({ id, label: l }) => (
+        <button key={id} type="button" className="gs-scope" aria-pressed={scope === id} onClick={() => pick(id)}>{l}</button>
       ))}
     </div>
   );
@@ -166,19 +164,18 @@ export default function GlobalSearch() {
           <button type="button" className="gs-close" aria-label="Close search" onClick={() => { setPhoneOpen(false); setOpen(false); setQ(""); setScope("all"); }}><X size={20} aria-hidden="true" /></button>
           {showPanel && (
             <ul id={listId} role="listbox" className="gs-panel" aria-label="Search results">
-              <li className="gs-chips" role="presentation">{scopeButtons("gs-scopes in-panel")}</li>
+              <li className="gs-chips" role="presentation">{scopeRow}</li>
               {options.length === 0 ? (
                 <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />{noneText}</li>
               ) : (
                 <>
-                  {pages.length > 0 && <li className="gs-head" role="presentation">Jump to</li>}
+                  {pages.length > 0 && <li className="gs-head" role="presentation">Go to</li>}
                   {pages.map((p) => {
                     const i = idx("pages", p.id);
                     return (
                       <li key={p.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onClick={() => options[i].go()}>
-                        <span className="gs-ico"><p.Icon size={16} strokeWidth={1.9} aria-hidden="true" /></span>
+                        <span className="gs-ico"><p.Icon size={18} strokeWidth={1.8} aria-hidden="true" /></span>
                         <span className="gs-text"><strong>{p.title}</strong><span>{p.sub}</span></span>
-                        <span className="gs-kind">Open</span>
                       </li>
                     );
                   })}
@@ -187,7 +184,7 @@ export default function GlobalSearch() {
                     const i = idx("top", h.id);
                     return (
                       <li key={h.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onClick={() => options[i].go()}>
-                        <span className="gs-ico"><h.Icon size={16} strokeWidth={1.9} aria-hidden="true" /></span>
+                        <span className="gs-ico"><h.Icon size={18} strokeWidth={1.8} aria-hidden="true" /></span>
                         <span className="gs-text"><strong>{h.title}</strong><span>{h.sub}</span></span>
                         <span className="gs-kind">{h.kind}</span>
                       </li>
@@ -206,11 +203,10 @@ export default function GlobalSearch() {
                   })}
                 </>
               )}
-              <li className="gs-foot" role="presentation"><span>↑ ↓ to move</span><span>Enter to open</span><span>Esc to close</span></li>
+              <li className="gs-foot" role="presentation"><span>↑ ↓ move</span><span>Enter open</span><span>Esc close</span></li>
             </ul>
           )}
         </div>
-        {scopeButtons("gs-scopes beside")}
       </div>
     </>
   );

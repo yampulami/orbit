@@ -205,8 +205,8 @@ export default function Feed() {
               {communities.map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => setCommunity(c)}>{SHOW[c]}</button>)}
             </div>
             <EmojiButton value={body} onChange={setBody} inputRef={composerRef} max={MAX} />
-            {body.length > MAX * 0.8 ? <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span> : <span className="composer-hint">Ctrl+Enter posts</span>}
-            <button className="btn primary" disabled={posting || !body.trim()}>{posting ? "Posting…" : "Post"}</button>
+            {body.length > MAX * 0.8 && <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span>}
+            <button className="btn primary" title="Ctrl+Enter posts" disabled={posting || !body.trim()}>{posting ? "Posting…" : "Post"}</button>
           </div>
         </form>}
         {posted && <p className="composer-note" role="status">{posted}</p>}
