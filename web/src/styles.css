@@ -4269,3 +4269,6 @@ body.feed-page .asst-fab{display:none}
 .composer-row .audience{flex:1 1 0}
 .composer-row .audience button{padding:10px 6px}
 .composer-row .count{margin-left:auto}
+
+/* the pinned filter row sits flush under the top bar (the bar is 12 + 44 + 10 tall), so nothing scrolls through a gap */
+@media (min-width:1101px){.pills,.pills:has(.gm[data-quiet]){top:66px!important}}
