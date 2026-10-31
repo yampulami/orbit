@@ -4294,3 +4294,19 @@ body.feed-page .asst-fab{display:none}
 .cs-narrow{display:block}
 @media (min-width:1101px){.cs-narrow{display:none}}
 @media (max-width:1100px){.cs-wide{display:none}}
+
+/* ---- Feed: one filled button per area, dark text on the orange in dark mode, 44px hit areas, phone pins at the top ---- */
+[data-theme=dark] .btn.primary,[data-theme=dark] .btn.now-main,[data-theme=dark] .composer .btn.primary,[data-theme=dark] .compose-btn.solo,[data-theme=dark] .shell:not(.wide) .compose-btn.solo .navtext{color:#1a1210}
+.pw-ans .btn.primary,[data-theme=dark] .pw-ans .btn.primary{background:transparent;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.pw-ans .btn.primary:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+.pw-ans .btn:not(.primary){border-color:var(--line);color:var(--ink-soft)}
+.cs-row .btn,.rail .cs-row .btn{min-height:44px}
+.up li .check{position:relative}
+.up li .check::after,.up li .pin::after,.up li [aria-label^="Pin"]::after,.up li [aria-label^="Unpin"]::after{content:"";position:absolute;inset:-9px}
+.up-more,.cs header a,.rail .cs header a{min-height:44px;display:inline-flex;align-items:center}
+@media (max-width:900px){
+  .pills,.feed-main .pills{top:0!important}
+}
+.up .pin-btn{position:relative}
+.up .pin-btn::after{content:"";position:absolute;inset:-7px}
+[data-theme=dark] .now-acts .now-main,[data-theme=dark] .now-acts a.now-main:first-child,[data-theme=dark] .shell .compose-btn.solo,[data-theme=dark] .shell .compose-btn.solo .navtext,[data-theme=dark] .shell .compose-btn.solo svg{color:#1a1210}

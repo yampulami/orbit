@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMyBusy } from "../lib/useMyBusy";
 import { useFriends } from "../lib/friends";
-import { useHang } from "../lib/hangouts";
+import { useHang, YOU } from "../lib/hangouts";
 import { useCampusEvents } from "../lib/campusEvents";
 import { loadFriendFree } from "../lib/availability";
 import { busyOn, describeBusy, type BusyItem } from "../lib/myBusy";
@@ -40,19 +40,23 @@ export default function NowHeader() {
   const shownDay = late ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + (now.getHours() >= 22 ? 1 : 0)) : now;
   const items = (late ? busyOn(input, shownDay) : today).filter((i) => KEPT.includes(i.kind)).sort(byStart);
   const nowMin = minutes(now);
-  const inside = late ? undefined : items.find((i) => i.start <= now && i.end > now);
+  // A plan nobody has answered yet is drawn on the bar but is not "your" plan in the headline until you say yes.
+  const unanswered = (i: BusyItem) => i.kind === "hangout" && !hangouts.some((h) => h.title === i.label && new Date(h.when).getTime() === i.start.getTime() && h.rsvps[YOU] === "yes");
+  const confirmed = items.filter((i) => !unanswered(i));
+  const waiting = !late && items.some((i) => unanswered(i) && i.end > now);
+  const inside = late ? undefined : confirmed.find((i) => i.start <= now && i.end > now);
   const nextClass = late ? undefined : items.find((i) => i.kind === "class" && i.start > now);
   const free = late ? null : freeNow(me, now);
   const open = free && free.minutes >= 25 ? free : null;
 
   let head: string, sub: string | null = null, prompt = false;
   if (late) {
-    const first = items[0];
+    const first = confirmed[0];
     head = first ? `Tomorrow: ${first.label} at ${clock(first.start)}` : "Nothing on your schedule tomorrow";
-  } else if (items.length === 0) {
-    head = "Nothing on your schedule today";
-    sub = "Add your classes to see your gaps.";
-    prompt = true;
+  } else if (confirmed.length === 0) {
+    head = waiting ? "Nothing confirmed yet today" : "Nothing on your schedule today";
+    sub = waiting ? "A plan is waiting on your answer." : "Add your classes to see your gaps.";
+    prompt = !waiting;
   } else if (inside) {
     head = `${inside.label} until ${clock(inside.end)}`;
     const after = freeNow(me, inside.end);
@@ -61,8 +65,8 @@ export default function NowHeader() {
     head = `Free ${clock(now)} to ${clock(open.until)}`;
     sub = nextClass ? `${nextClass.label} starts in ${span(Math.max(1, Math.round((nextClass.start.getTime() - now.getTime()) / 60000)))}.` : "Nothing else on your schedule today.";
   } else {
-    const next = items.find((i) => i.start > now);
-    head = next ? `${next.label} at ${clock(next.start)}` : "Done for today";
+    const next = confirmed.find((i) => i.start > now);
+    head = next ? `${next.label} at ${clock(next.start)}` : waiting ? "Nothing else confirmed today" : "Done for today";
     sub = next ? `In ${span(Math.max(1, Math.round((next.start.getTime() - now.getTime()) / 60000)))}.` : null;
   }
 

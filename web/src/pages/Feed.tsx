@@ -196,10 +196,6 @@ export default function Feed() {
       <div className="feed-main">
         <h1 className="sr">Campus feed</h1>
         <NowHeader />
-        <MomentsBar />
-        <PlansWaiting />
-        {phone ? <CampusSoon /> : <div className="cs-narrow"><CampusSoon /></div>}
-        {phone && <UpcomingList limit={3} moreTo="/app/plans" hide={["hangout"]} title="On your list" />}
         {!phone && <form className={"composer" + (body ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
             <span className="sr">Write a post</span>
@@ -216,6 +212,10 @@ export default function Feed() {
           </div>
         </form>}
         {posted && <p className="composer-note" role="status">{posted}</p>}
+        <MomentsBar />
+        <PlansWaiting />
+        {phone ? <CampusSoon /> : <div className="cs-narrow"><CampusSoon /></div>}
+        {phone && <UpcomingList limit={3} moreTo="/app/plans" hide={["hangout"]} title="On your list" />}
         <h2 className="feed-h">{campus.name}<span>{feed.length >= PAGE ? `Newest ${PAGE} posts` : "What students are saying"}</span></h2>
         <div className="pills">
           <nav className="frow" aria-label="Show posts">
