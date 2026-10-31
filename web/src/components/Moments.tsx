@@ -117,7 +117,10 @@ export default function Moments({ limit = 4 }: { limit?: number }) {
   );
 }
 
-/** On the feed: one line (how many plans may line up, with faces). Open it to see them, fold it away again. Shows nothing when there is nothing to show. */
+/** "Cam", "Cam and Dib", "Cam, Dib and 2 others". */
+const who = (names: string[]) => (names.length <= 1 ? names[0] ?? "Someone" : names.length === 2 ? `${names[0]} and ${names[1]}` : `${names[0]}, ${names[1]} and ${names.length - 2} other${names.length === 3 ? "" : "s"}`);
+
+/** On the feed: one line (who is free with you, and when). Open it to see them, fold it away again. Shows nothing when there is nothing to show. */
 export function MomentsBar({ always = false, limit = 3 }: { /** Show it even when "show on the feed" is off (the Sync page). */ always?: boolean; limit?: number }) {
   const prefs = useMomentPrefs();
   const { moments, loading } = useMoments(limit);
@@ -128,13 +131,11 @@ export function MomentsBar({ always = false, limit = 3 }: { /** Show it even whe
   if (moments.length === 0 && loading && !always) return <section className="momentsbar holding" aria-hidden="true"><div className="mb-head"><span className="mb-t"><b>Looking for plans…</b></span></div></section>;
   if (moments.length === 0) return always ? <p className="muted moments-empty" role="status">{loading ? "Looking at your groups…" : "Nothing lines up yet. Suggestions appear when people in your groups share their free time and a good time opens up."}</p> : null;
   const open = always ? openHere : !prefs.collapsed;
-  const faces = [...new Map(moments.flatMap((m) => m.people).map((p) => [p.id, p])).values()];
   return (
     <section className="momentsbar" data-open={open ? "" : undefined} aria-label="Orbit Moments">
       <button type="button" className="mb-head" aria-expanded={open} onClick={() => (always ? setOpenHere(!open) : momentActions.setCollapsed(open))}>
         
-        <span className="mb-t"><b>{moments.length === 1 ? "Free together soon" : `${moments.length} times you are free together`}</b>{!open && <small>{moments[0].event ? moments[0].event.title : "Free together"} · {whenLabel(moments[0])}</small>}</span>
-        {!open && <AvatarStack people={faces.map((p) => ({ name: p.name }))} max={3} size={22} />}
+        <span className="mb-t"><b>{who(moments[0].people.map((p) => p.name.split(" ")[0]))} {moments[0].people.length === 1 ? "is" : "are"} free with you</b>{!open && <small>{whenLabel(moments[0])}{moments[0].event ? ` · ${moments[0].event.title} is on` : ""}{moments.length > 1 ? ` · ${moments.length - 1} more time${moments.length === 2 ? "" : "s"}` : ""}</small>}</span>
         <ChevronDown size={16} className="mb-chev" aria-hidden="true" />
       </button>
       {open && (

@@ -4208,3 +4208,42 @@ body.feed-page .asst-fab{display:none}
   .shell:not(.wide) .navlink.extra,.shell:not(.wide) .navlink.extra[aria-pressed=true]{background:transparent;color:inherit}
   .shell:not(.wide) .navlink.extra:hover{background:rgba(255,255,255,.1)}
 }
+
+/* ---- Cleaner top block, text audience choice, icons on post actions, a tidier calendar ---- */
+.now-key{gap:2px 14px}
+.now-acts .btn:not(.now-main){background:transparent;border-color:var(--ink-soft);color:var(--ink);border-radius:8px;min-height:44px;padding:0 18px;font-weight:600;font-size:var(--t-ui)}
+
+.audience{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 4px;flex:1 1 360px;min-width:0}
+.audience #post-to{margin-right:10px;font-size:var(--t-meta);color:var(--ink-soft)}
+.audience button{border:0;border-bottom:2px solid transparent;background:none;min-height:44px;padding:10px 8px;font:inherit;font-size:var(--t-meta);font-weight:500;color:var(--ink-soft);cursor:pointer;white-space:nowrap}
+.audience button:hover{color:var(--ink)}
+.audience button[aria-checked=true]{color:var(--ink);font-weight:600;border-bottom-color:var(--ink)}
+.composer .composer-row{justify-content:space-between}
+.composer-hint{display:none}
+.composer:focus-within .composer-hint{display:inline}
+
+.rp-acts button{display:inline-flex;align-items:center;gap:6px}
+.rp-acts button[aria-pressed=true] svg{color:var(--accent)}
+.rp-acts button[aria-pressed=true]{text-decoration:none}
+
+/* the feed's calendar: plain numbers, one dot for a day with something on, today filled, the picked day ringed */
+.rail .cal{padding:0 14px 14px}
+.rail .cal header{margin:2px 0 6px}
+.rail .cal h2{font-family:var(--display);font-size:var(--t-ui);font-weight:600}
+.rail .cal header button{width:32px;height:32px;border-radius:8px;background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
+.rail .cal header button:hover{background:var(--panel)}
+.rail .cal-wd{font-size:var(--t-micro);font-weight:600;color:var(--ink-soft);padding:6px 0 4px}
+.rail .cal-grid{gap:2px 0}
+.rail .cal-day,[data-theme=dark] .rail .cal-day{width:34px;height:34px;max-width:none;border-radius:50%;background:none;box-shadow:none;outline:none;text-decoration:none;font-size:var(--t-meta);font-weight:400;color:var(--ink)}
+.rail .cal-day:hover{background:var(--panel)}
+.rail .cal-day.out,[data-theme=dark] .rail .cal-day.out{color:var(--ink-soft);opacity:.5}
+.rail .cal-day.rem::before{display:none}
+.rail .cal-day.has::after{display:none}
+.rail .cal-day.rem::after,.rail .cal-day.hm-pending::after,.rail .cal-day.hm-no::after,.rail .cal-day.hm-yes::after{content:"";display:block;position:absolute;left:50%;bottom:3px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
+.rail .cal-day.hm-pending,.rail .cal-day.hm-no,.rail .cal-day.hm-yes,[data-theme=dark] .rail .cal-day.hm-pending,[data-theme=dark] .rail .cal-day.hm-no,[data-theme=dark] .rail .cal-day.hm-yes{background:none;outline:none;box-shadow:none;text-decoration:none;font-weight:600;color:var(--ink)}
+.rail .cal-day.today,[data-theme=dark] .rail .cal-day.today{background:var(--ink);color:var(--on-ink);font-weight:600}
+.rail .cal-day.today::after,[data-theme=dark] .rail .cal-day.today::after{background:var(--on-ink)}
+.rail .cal-day.sel,[data-theme=dark] .rail .cal-day.sel{background:none;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.rail .cal-day.today.sel,[data-theme=dark] .rail .cal-day.today.sel{background:var(--ink);color:var(--on-ink);box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.now-acts button.btn{text-decoration:none}
+.now-acts button.btn{border:1px solid var(--ink-soft)}

@@ -91,19 +91,19 @@ export default function NowHeader() {
         {needle && <span className="now-needle" style={{ left: pct(nowMin) }} />}
       </div>
       <div className="now-ticks" aria-hidden="true"><span>7 AM</span><span>Noon</span><span>5 PM</span><span>11 PM</span></div>
-      <p className="now-key" aria-hidden="true">
-        <span><i className="class" />Classes</span>
-        <span><i className="plan" />Plans and events</span>
-        {needle && <span><i className="needle" />Now</span>}
-        {late && <span>Tomorrow, 7 AM to 11 PM</span>}
-      </p>
+      {items.length > 0 && (
+        <p className="now-key" aria-hidden="true">
+          {items.some((i) => i.kind === "class") && <span><i className="class" />Class</span>}
+          {items.some((i) => i.kind !== "class") && <span><i className="plan" />Plan or event</span>}
+          {needle && <span><i className="needle" />Now</span>}
+        </p>
+      )}
 
       <div className="now-acts">
         {alsoFree.length > 0
           ? <Link className="btn now-main" to="/app/sync" state={{ syncWith: alsoFree.map((p) => p.id) }}>Plan with {first(alsoFree[0])}{alsoFree.length > 1 ? ` +${alsoFree.length - 1}` : ""}</Link>
           : <Link className="btn now-main" to="/app/sync">Find a time</Link>}
-        <Link to="/app/chats?tab=groups">Plan with a group</Link>
-        <button type="button" aria-label="Ask the Orbit assistant" onClick={() => window.dispatchEvent(new CustomEvent("orbit-assistant-open"))}>Ask Orbit</button>
+        <button type="button" className="btn" aria-label="Ask the Orbit assistant" onClick={() => window.dispatchEvent(new CustomEvent("orbit-assistant-open"))}>Ask Orbit</button>
       </div>
     </section>
   );

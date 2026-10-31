@@ -9,7 +9,7 @@ import { MomentsBar } from "../components/Moments";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi as api, type Row } from "../lib/feedData";
 import { communities, type Community } from "../shared/feed";
@@ -17,7 +17,6 @@ import { enter, exit } from "../lib/motion";
 // The calendar is only used on a larger screen, so it is loaded only there.
 const Calendar = lazy(() => import("../components/Calendar"));
 import UpcomingList from "../components/UpcomingList";
-import CommunityPicker from "../components/CommunityPicker";
 import ShareMenu from "../components/ShareMenu";
 import { siteUrl } from "../lib/siteUrl";
 import { notice } from "../lib/notice";
@@ -201,9 +200,9 @@ export default function Feed() {
             <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder={`Lost a lanyard? Found a seat? Tell ${campus.name}.`} />
           </label>
           <div className="composer-row">
-            <div className="field" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="audience" role="radiogroup" aria-labelledby="post-to">
               <span id="post-to">Post to</span>
-              <CommunityPicker value={community} onChange={setCommunity} labelledBy="post-to" />
+              {communities.map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => setCommunity(c)}>{SHOW[c]}</button>)}
             </div>
             <EmojiButton value={body} onChange={setBody} inputRef={composerRef} max={MAX} />
             {body.length > MAX * 0.8 ? <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span> : <span className="composer-hint">Ctrl+Enter posts</span>}
@@ -259,10 +258,10 @@ export default function Feed() {
                   {p.payload.title && <h3 className="rp-title">{p.payload.title}</h3>}
                   <p className="rp-body"><RichText text={p.payload.body ?? p.payload.text ?? ""} /></p>
                   <div className="rp-acts">
-                    <button type="button" aria-expanded={expanded} aria-label={`Replies to “${subject}”`} onClick={() => setOpen(expanded ? null : p.id)}>Reply{replies > 0 ? ` · ${replies}` : ""}</button>
-                    <button type="button" aria-pressed={liked} aria-label={`Like “${subject}”`} onClick={() => like(p)}>{liked ? "Liked" : "Like"}{p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}</button>
-                    <button type="button" aria-label={`Share “${subject}”`} onClick={() => setSharing(p)}>Share</button>
-                    {p.author_id === me && <button type="button" aria-label={`Delete “${subject}”`} onClick={() => remove(p)}>Delete</button>}
+                    <button type="button" aria-expanded={expanded} aria-label={`Replies to “${subject}”`} onClick={() => setOpen(expanded ? null : p.id)}><MessageCircle size={16} aria-hidden="true" />Reply{replies > 0 ? ` · ${replies}` : ""}</button>
+                    <button type="button" aria-pressed={liked} aria-label={`Like “${subject}”`} onClick={() => like(p)}><Heart size={16} aria-hidden="true" fill={liked ? "currentColor" : "none"} />{liked ? "Liked" : "Like"}{p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}</button>
+                    <button type="button" aria-label={`Share “${subject}”`} onClick={() => setSharing(p)}><Send size={16} aria-hidden="true" />Share</button>
+                    {p.author_id === me && <button type="button" aria-label={`Delete “${subject}”`} onClick={() => remove(p)}><Trash2 size={16} aria-hidden="true" />Delete</button>}
                     {repliedBy(p) && <span className="rp-who">{repliedBy(p)}</span>}
                   </div>
                   <AnimatePresence initial={false}>
