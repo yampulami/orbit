@@ -198,7 +198,7 @@ export default function Feed() {
         <NowHeader />
         <MomentsBar />
         <PlansWaiting />
-        {phone && <CampusSoon />}
+        {phone ? <CampusSoon /> : <div className="cs-narrow"><CampusSoon /></div>}
         {phone && <UpcomingList limit={3} moreTo="/app/plans" hide={["hangout"]} title="On your list" />}
         {!phone && <form className={"composer" + (body ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
@@ -288,7 +288,7 @@ export default function Feed() {
       </div>
       {!phone && <aside className="rail" ref={rail} aria-label="Your campus summary">
         <UpcomingList limit={5} moreTo="/app/plans" hide={["hangout"]} title="On your list" />
-        <CampusSoon compact />
+        <div className="cs-wide"><CampusSoon compact /></div>
         <section className="cal-fold">
           <button type="button" className="cal-toggle" aria-expanded={calOpen} onClick={toggleCal}>
             <span>Calendar{day ? " · 1 day selected" : ""}</span>
