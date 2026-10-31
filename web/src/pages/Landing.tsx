@@ -45,7 +45,7 @@ export default function Landing() {
         </header>
 
         <section id="inside" className="land-inside" aria-label="What is inside Orbit">
-          {inside.map((f) => <div key={f.title}><h3>{f.title}</h3><p className="muted">{f.body}</p></div>)}
+          {inside.map((f) => <div key={f.title}><h2>{f.title}</h2><p className="muted">{f.body}</p></div>)}
         </section>
       </div>
       <footer className="footer">

@@ -20,7 +20,7 @@ export type LiveOrbInstance = { setOptions: (o: Partial<LiveOrbOptions>) => void
 export const WHITE = { color: "#F4F4F5", eyeColor: "#09090B" } as const;
 export const BLACK = { color: "#18181B", eyeColor: "#F4F4F5" } as const;
 export const CUSTOM_DEFAULT = { color: "#e8572a", eyeColor: "#FAFAFA" } as const;
-export const WEBGL_COLORS = ["#c2410c", "#8f2d08", "#ffd2bd"];
+export const WEBGL_COLORS = ["#b5472a", "#8c3219", "#ffd2bd"];
 
 /** Orbit marks dark mode with data-theme="dark" on the page. */
 export function isDarkTheme(): boolean {

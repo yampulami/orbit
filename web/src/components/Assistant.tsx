@@ -140,13 +140,20 @@ export default function Assistant() {
     window.setTimeout(() => { justDragged.current = false; }, 80);
   };
 
-  const openFrom = () => {
-    if (justDragged.current) return;
+  const openFrom = (at?: { x: number; y: number }) => {
+    if (!at && justDragged.current) return;
     const r = fab.current?.getBoundingClientRect();
-    setOrigin(r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: window.innerWidth - 56, y: window.innerHeight - 56 });
+    setOrigin(at ?? (r && r.width > 0 ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: window.innerWidth / 2, y: 120 }));
     // Someone who has chatted before goes straight to their chats; the pill is for the very first question.
     setMode(history.chats.some((c) => c.messages.length > 0) ? "chat" : "morph");
   };
+
+  // "Ask Orbit" on the Feed opens it from the middle of the page.
+  useEffect(() => {
+    const on = () => openFrom({ x: window.innerWidth / 2, y: 140 });
+    window.addEventListener("orbit-assistant-open", on);
+    return () => window.removeEventListener("orbit-assistant-open", on);
+  }); // eslint-disable-line react-hooks/exhaustive-deps
 
   const close = useCallback(() => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -315,7 +322,7 @@ export default function Assistant() {
         onPointerUp={onUp}
         onPointerCancel={onUp}
         onTransitionEnd={() => setSettling(false)}
-        onClick={openFrom}
+        onClick={() => openFrom()}
       >
         <Orb size={50} variant="violet" poke={false} />
         <span className="asst-tip" aria-hidden="true">Ask Orbit</span>

@@ -22,21 +22,21 @@ export default function OrbitArt({ step, rings, planets, initial, campus, living
     <svg viewBox="0 0 400 400" className="orbit-art" role="presentation">
       {/* rings: one more for every year on campus, each one springing out when it appears */}
       {Array.from({ length: 6 }, (_, n) => n + 1).map((n) => (
-        <motion.circle key={n} cx={C} cy={C} r={70 + n * 20} fill="none" stroke="var(--violet)" strokeWidth={2}
+        <motion.circle key={n} cx={C} cy={C} r={70 + n * 20} fill="none" stroke="var(--accent)" strokeWidth={2}
           initial={false} animate={{ opacity: n <= showRings ? (n === showRings ? 0.6 : 0.28) : 0, scale: n <= showRings ? 1 : 0.8 }} style={{ transformOrigin: "200px 200px" }} transition={spring} />
       ))}
 
       {/* a ripple leaves the campus every time you answer something */}
       <AnimatePresence>
         {!reduce && kick > 0 && (
-          <motion.circle key={kick} cx={C} cy={C} fill="none" stroke="var(--violet)" strokeWidth={3}
+          <motion.circle key={kick} cx={C} cy={C} fill="none" stroke="var(--accent)" strokeWidth={3}
             initial={{ r: 62, opacity: 0.6 }} animate={{ r: outer + 34, opacity: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }} />
         )}
       </AnimatePresence>
 
       {/* the dot that travels around the outermost ring, faster for a moment after each answer */}
       <motion.g key={`orbit-${kick}`} style={{ transformOrigin: "200px 200px" }} initial={reduce ? false : { rotate: -40 }} animate={reduce ? {} : { rotate: 320 }} transition={reduce ? undefined : { repeat: Infinity, ease: "linear", duration: done ? 5 : 13 }}>
-        <motion.circle cx={C} cy={C - outer} r={9} fill="var(--violet)" initial={false} animate={{ cy: C - outer }} transition={spring} />
+        <motion.circle cx={C} cy={C - outer} r={9} fill="var(--accent)" initial={false} animate={{ cy: C - outer }} transition={spring} />
       </motion.g>
 
       {/* planets: what you are here for. They shoot out of the campus and then drift gently */}
@@ -56,7 +56,7 @@ export default function OrbitArt({ step, rings, planets, initial, campus, living
       <motion.g key={`campus-${kick}`} style={{ transformOrigin: "200px 200px" }} initial={false}
         animate={reduce ? {} : { scale: kick > 0 ? [1, 1.14, 0.95, 1.03, 1] : [1, 1.02, 1] }}
         transition={reduce ? undefined : kick > 0 ? { duration: 0.55, ease: "easeOut" } : { repeat: Infinity, duration: 5, ease: "easeInOut" }}>
-        <circle cx={C} cy={C} r={62} fill="var(--violet)" />
+        <circle cx={C} cy={C} r={62} fill="var(--accent)" />
         {step === "campus" && campus ? (
           <g aria-hidden="true">
             {[{ x: -26, w: 16, h: 30 }, { x: -8, w: 18, h: 44 }, { x: 12, w: 16, h: 26 }].map((b, n) => (
@@ -65,7 +65,7 @@ export default function OrbitArt({ step, rings, planets, initial, campus, living
             <motion.circle key={`sun-${campus}`} cx={C + 4} cy={C - 30} r={5} fill="var(--gold)" initial={{ scale: 0, y: -14 }} animate={{ scale: 1, y: 0 }} transition={{ ...spring, delay: 0.3 }} style={{ transformOrigin: `${C + 4}px ${C - 30}px` }} />
           </g>
         ) : (
-          <motion.text key={initial} x={C} y={C + 14} textAnchor="middle" fontSize={44} fontWeight={500} fill="#fff" fontFamily="var(--serif)" initial={reduce ? false : { scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ transformOrigin: "200px 200px" }} transition={spring}>
+          <motion.text key={initial} x={C} y={C + 14} textAnchor="middle" fontSize={44} fontWeight={500} fill="#fff" fontFamily="var(--display)" initial={reduce ? false : { scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ transformOrigin: "200px 200px" }} transition={spring}>
             {initial.toUpperCase()}
           </motion.text>
         )}

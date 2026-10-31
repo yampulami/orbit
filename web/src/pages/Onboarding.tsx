@@ -347,7 +347,7 @@ function Switch({ on, label, onClick, index }: { on: boolean; label: string; onC
       whileHover={reduce ? undefined : { y: -2, transition: spring }} whileTap={reduce ? undefined : { scale: 0.97, transition: spring }}>
       <motion.span className="sw-bell" animate={on && !reduce ? { rotate: [0, -18, 14, -8, 0] } : { rotate: 0 }} transition={{ duration: 0.5 }}><Bell size={16} aria-hidden="true" /></motion.span>
       <span>{label}</span>
-      <motion.i className="sw-track" animate={{ backgroundColor: on ? "var(--violet)" : "var(--line)" }} transition={{ duration: 0.2 }} style={{ justifyContent: on ? "flex-end" : "flex-start" }}>
+      <motion.i className="sw-track" animate={{ backgroundColor: on ? "var(--accent)" : "var(--line)" }} transition={{ duration: 0.2 }} style={{ justifyContent: on ? "flex-end" : "flex-start" }}>
         <motion.b layout className="sw-knob" transition={{ type: "spring", stiffness: 700, damping: 24 }} />
       </motion.i>
     </motion.button>

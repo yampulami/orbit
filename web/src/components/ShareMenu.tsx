@@ -65,7 +65,7 @@ export default function ShareMenu({ text, author, url, onClose }: Props) {
         <blockquote className="share-quote"><strong>{author}</strong><span>{clip(text, 140)}</span></blockquote>
 
         <div className="share-grid">
-          {friendsLive && <button type="button" className="share-opt" aria-expanded={picking} onClick={() => setPicking((v) => !v)}><span className="share-ic" style={{ background: "var(--violet)" }}><MessageSquare size={20} aria-hidden="true" /></span>Message</button>}
+          {friendsLive && <button type="button" className="share-opt" aria-expanded={picking} onClick={() => setPicking((v) => !v)}><span className="share-ic" style={{ background: "var(--accent)" }}><MessageSquare size={20} aria-hidden="true" /></span>Message</button>}
           <button type="button" className="share-opt" onClick={() => open(t.email)}><span className="share-ic" style={{ background: "#e0793a" }}><Mail size={20} aria-hidden="true" /></span>Email</button>
           <button type="button" className="share-opt" onClick={() => void copy()}><span className="share-ic" style={{ background: "#1fa97a" }}>{copied ? <Check size={20} aria-hidden="true" /> : <Link2 size={20} aria-hidden="true" />}</span>{copied ? "Copied" : "Copy link"}</button>
           <button type="button" className="share-opt" onClick={() => open(t.whatsapp)}><span className="share-ic" style={{ background: "#25b05a" }}>W</span>WhatsApp</button>

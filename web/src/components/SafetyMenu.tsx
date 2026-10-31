@@ -40,7 +40,7 @@ export default function SafetyMenu({ userId, name, postId, commentId, context = 
 
   return (
     <span className="safety-wrap" ref={root}>
-      <button type="button" className="safety-btn" aria-haspopup="menu" aria-expanded={open} aria-label={`More options for ${name}`} onClick={() => setOpen((v) => !v)}>
+      <button type="button" className="safety-btn" aria-haspopup="menu" aria-expanded={open} aria-label={`Report or block ${name}`} onClick={() => setOpen((v) => !v)}>
         <MoreHorizontal size={16} aria-hidden="true" />
       </button>
       {open && (

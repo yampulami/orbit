@@ -55,9 +55,9 @@ export function buildUpcoming(o: { now: Date; groups: Group[]; hangouts: Hangout
       const when = new Date(fromYmd(t.due).getTime() + DAY - 1);
       const overdue = when.getTime() < now.getTime();
       const dueToday = !overdue && startOfDay(when).getTime() === startOfDay(now).getTime();
-      items.push({ id: `t-${t.id}`, kind: "chore", title: t.title, sub: `${overdue ? "Was due" : "Due"} ${soft(dayLabel(fromYmd(t.due), now))} · ${t.points} pt${t.points === 1 ? "" : "s"}`, when, tag: overdue ? "overdue" : dueToday ? "today" : undefined, to: "/app/roommates", state: { section: "tasks" } });
+      items.push({ id: `t-${t.id}`, kind: "chore", title: t.title, sub: `${overdue ? "Was due" : "Due"} ${soft(dayLabel(fromYmd(t.due), now))}`, when, tag: overdue ? "overdue" : dueToday ? "today" : undefined, to: "/app/roommates", state: { section: "tasks" } });
     } else {
-      items.push({ id: `t-${t.id}`, kind: "chore", title: t.title, sub: `No due date · ${t.points} pt${t.points === 1 ? "" : "s"}`, to: "/app/roommates", state: { section: "tasks" } });
+      items.push({ id: `t-${t.id}`, kind: "chore", title: t.title, sub: "No due date", to: "/app/roommates", state: { section: "tasks" } });
     }
   }
 

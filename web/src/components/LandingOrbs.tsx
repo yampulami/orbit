@@ -6,7 +6,7 @@ import OrbGL from "./OrbGL";
 const ORBS = [
   { colors: ["#9c2f12", "#d9582a", "#F2A23C"], size: 1, lift: 0 },
   { colors: ["#e8572a", "#F2A23C", "#FFD08A"], size: 1.22, lift: -22 },
-  { colors: ["#F2A23C", "#E8572A", "#8f2d08"], size: 1, lift: 0 },
+  { colors: ["#F2A23C", "#E8572A", "#8c3219"], size: 1, lift: 0 },
 ];
 const REACH = 280;
 

@@ -10,14 +10,8 @@ import PersonLink from "./PersonLink";
 import VerifiedBadge from "./VerifiedBadge";
 import { useVerified } from "../lib/verified";
 import SafetyMenu from "./SafetyMenu";
+import { ago } from "../lib/dayWords";
 
-const ago = (iso: string) => {
-  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m`;
-  if (m < 1440) return `${Math.round(m / 60)}h`;
-  return `${Math.round(m / 1440)}d`;
-};
 /** A round avatar painted with a gradient taken from the name, so everyone keeps their own colours. */
 const paint = (name: string) => {
   let h = 0;
@@ -80,7 +74,7 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
         {kind !== "focus" && (
           <div className="cmt-actions">
             <button type="button" className="cmt-reply" aria-label={n === 0 ? `Reply to ${c.author_name}` : `${n} ${n === 1 ? "reply" : "replies"} to ${c.author_name}. Open the thread`} onClick={() => open(c.id)}>
-              <ChevronDown size={15} aria-hidden="true" />{n === 0 ? "reply" : n === 1 ? "reply (1)" : `replies (${n})`}
+              <ChevronDown size={15} aria-hidden="true" />{n === 0 ? "Reply" : n === 1 ? "1 reply" : `${n} replies`}
             </button>
           </div>
         )}
@@ -95,10 +89,10 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
     <form className="ct-compose" onSubmit={submit}>
       <Face name="You" />
       <div className="ct-box">
-        <textarea ref={commentInput} rows={2} aria-label={focus ? `Reply to ${focus.author_name}` : "Write a comment"} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(e as unknown as FormEvent); } }} placeholder={focus ? `Reply to ${focus.author_name}…` : "Enter your comment"} />
+        <textarea ref={commentInput} rows={2} aria-label={focus ? `Reply to ${focus.author_name}` : "Write a reply"} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(e as unknown as FormEvent); } }} placeholder={focus ? `Reply to ${focus.author_name}…` : "Write a reply"} />
         <EmojiButton value={text} onChange={setText} inputRef={commentInput} max={500} />
       </div>
-      <button className="ct-post" data-ready={text.trim() && !sending ? "" : undefined} disabled={!text.trim() || sending}>{sending ? "Posting…" : focus ? "Post reply" : "Post comment"}</button>
+      <button className="ct-post" data-ready={text.trim() && !sending ? "" : undefined} disabled={!text.trim() || sending}>{sending ? "Posting…" : "Reply"}</button>
     </form>
   );
 
@@ -107,7 +101,7 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
         {focus ? (
           <>
             <button type="button" className="cmt-back" onClick={() => setFocusId(parent?.id ?? null)}>
-              <ArrowLeft size={16} aria-hidden="true" />{parent ? `Back to ${parent.author_name}'s comment` : "All comments"}
+              <ArrowLeft size={16} aria-hidden="true" />{parent ? `Back to ${parent.author_name}'s reply` : "All replies"}
             </button>
             {above.map((a) => card(a, "context"))}
             {card(focus, "focus")}
@@ -118,9 +112,9 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
           </>
         ) : (
           <>
-            <h4 className="ct-title">Comments{comments.length > 0 && <span>{comments.length}</span>}</h4>
+            <h4 className="ct-title">Replies{comments.length > 0 && <span>{comments.length}</span>}</h4>
             {composer}
-            {shown.length > 0 && <section className="cmt-list" aria-label="Comments">{shown.map((c) => card(c))}</section>}
+            {shown.length > 0 && <section className="cmt-list" aria-label="Replies">{shown.map((c) => card(c))}</section>}
           </>
         )}
     </motion.div>

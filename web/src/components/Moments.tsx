@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronDown, MapPin, Sparkles } from "lucide-react";
+import { ChevronDown, MapPin } from "lucide-react";
 import AvatarStack from "./AvatarStack";
 import { SweepDiv, SweepItem } from "./Sweep";
 import { findConflict, hangActions } from "../lib/hangouts";
@@ -86,7 +86,7 @@ export function MomentCard({ m, row = false }: { m: Moment; /** A compact line i
   return (
     <article className="moment" aria-label="A suggestion from Orbit">
       <header>
-        <span className="moment-tag"><Sparkles size={12} aria-hidden="true" /> Your schedules line up</span>
+        <span className="moment-tag">Free together</span>
         {notNow}
       </header>
       <h3>{headline(m)}</h3>
@@ -125,15 +125,15 @@ export function MomentsBar({ always = false, limit = 3 }: { /** Show it even whe
   const [openHere, setOpenHere] = useState(false);
   if (!prefs.enabled || (!always && !prefs.showOnFeed)) return null;
   // While the answer is on its way the bar's place is held, so the feed does not jump down under the pointer when it arrives.
-  if (moments.length === 0 && loading && !always) return <section className="momentsbar holding" aria-hidden="true"><div className="mb-head"><Sparkles size={15} /><span className="mb-t"><b>Looking for plans…</b></span></div></section>;
+  if (moments.length === 0 && loading && !always) return <section className="momentsbar holding" aria-hidden="true"><div className="mb-head"><span className="mb-t"><b>Looking for plans…</b></span></div></section>;
   if (moments.length === 0) return always ? <p className="muted moments-empty" role="status">{loading ? "Looking at your groups…" : "Nothing lines up yet. Suggestions appear when people in your groups share their free time and a good time opens up."}</p> : null;
   const open = always ? openHere : !prefs.collapsed;
   const faces = [...new Map(moments.flatMap((m) => m.people).map((p) => [p.id, p])).values()];
   return (
     <section className="momentsbar" data-open={open ? "" : undefined} aria-label="Orbit Moments">
       <button type="button" className="mb-head" aria-expanded={open} onClick={() => (always ? setOpenHere(!open) : momentActions.setCollapsed(open))}>
-        <Sparkles size={15} aria-hidden="true" />
-        <span className="mb-t"><b>{moments.length === 1 ? "A plan may line up" : `${moments.length} plans may line up`}</b>{!open && <small>{moments[0].event ? moments[0].event.title : "Free together"} · {whenLabel(moments[0])}</small>}</span>
+        
+        <span className="mb-t"><b>{moments.length === 1 ? "Free together soon" : `${moments.length} times you are free together`}</b>{!open && <small>{moments[0].event ? moments[0].event.title : "Free together"} · {whenLabel(moments[0])}</small>}</span>
         {!open && <AvatarStack people={faces.map((p) => ({ name: p.name }))} max={3} size={22} />}
         <ChevronDown size={16} className="mb-chev" aria-hidden="true" />
       </button>
@@ -156,7 +156,7 @@ export function GroupMoment({ groupId }: { groupId: string }) {
   return (
     <div className="momentsbar group" data-open={open ? "" : undefined}>
       <button type="button" className="mb-head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        <Sparkles size={15} aria-hidden="true" />
+        
         <span className="mb-t"><b>Free together {whenLabel(m)}</b></span>
         <ChevronDown size={16} className="mb-chev" aria-hidden="true" />
       </button>
