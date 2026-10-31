@@ -4132,3 +4132,79 @@ body.feed-page .asst-fab{display:none}
 }
 .composer textarea{height:auto;max-height:220px;field-sizing:content}
 .rp-acts button{min-width:44px;padding-inline:4px}
+
+
+/* ---- Type and hierarchy: six sizes, one style per kind of heading, one shape per kind of container ----
+   12 micro (keys, counts)  ·  14 meta and small controls  ·  16 body and main controls  ·  18 row titles and days
+   20 section headings (main column)  ·  30 the "Now" headline.  Post text reads at 17, the one reading size.
+   Containers are 12px, controls 8px, avatars round. */
+:root{--t-micro:.75rem;--t-meta:.875rem;--t-ui:1rem;--t-row:1.125rem;--t-h2:1.25rem;--t-hero:1.875rem;--t-read:1.0625rem}
+
+/* top bar: search, bell and profile share one height and one corner */
+.topline .gsearch,.gsearch{min-height:44px;height:44px;border-radius:12px;padding:0 14px;background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.gsearch.has-panel{border-radius:12px 12px 0 0}
+.gs-panel{border-radius:0 0 12px 12px}
+.gsearch input{font-size:var(--t-ui)}
+.gsearch kbd{font-size:var(--t-micro);border-radius:6px}
+.topline .bell{width:44px;height:44px;border-radius:12px}
+.topline .me.topme{width:44px;height:44px}
+.top-title{font-size:1.5rem}
+
+/* sidebar: every tile says its name at 12px; New post is the one filled tile; Light mode and Sign out step back */
+@media (min-width:901px){
+  .shell:not(.wide) .navlink .navtext{font-size:var(--t-micro)}
+  .shell:not(.wide) .compose-btn.solo{width:76px;height:auto;min-height:58px;margin:4px 0 0 10px;padding:7px 0 6px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--accent);color:#fff;box-shadow:none}
+  .shell:not(.wide) .compose-btn.solo:hover{transform:none;background:var(--accent-deep)}
+  .shell:not(.wide) .compose-btn.solo .navtext{display:block;position:static;margin:0;opacity:1;transform:none;color:#fff;font-size:var(--t-micro);font-weight:600;line-height:1.1}
+  .shell:not(.wide) .compose-btn.solo svg{width:22px;height:22px}
+  .shell:not(.wide) .navlink.extra{opacity:.78}
+  .shell:not(.wide) .navlink.extra:hover{opacity:1}
+}
+
+/* right column: both cards are 12px panels with the same heading */
+.up,.cal-fold{border-radius:12px;box-shadow:0 0 0 1px var(--line);background:var(--surface)}
+.up{padding:14px}
+.up h3,.cal-toggle>span:first-child{font-family:var(--display);font-size:var(--t-ui);font-weight:600;letter-spacing:0;line-height:1.2}
+.up header .muted{font-size:var(--t-meta)}
+.up li{border-radius:8px}
+.up li .up-text strong{font-size:var(--t-meta);font-weight:600}
+.up li .up-sub{font-size:var(--t-micro)}
+.cal-toggle{min-height:48px}
+
+/* main column headings */
+.now-head{font-size:clamp(1.5rem,2.5vw,var(--t-hero))}
+.now-sub{font-size:var(--t-ui)}
+.now-key,.now-ticks{font-size:var(--t-micro)}
+.now-acts a,.now-acts button,.now-acts .now-main{font-size:var(--t-ui)}
+.pw-h,.cs h2,.feed-h{font-family:var(--display);font-size:var(--t-h2);font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.feed-h span{font-family:var(--font);font-size:var(--t-meta);font-weight:400;letter-spacing:0;color:var(--ink-soft)}
+.pw-when b,.cs-rail b{font-size:var(--t-row);font-weight:600}
+.pw-when span,.cs-rail span{font-size:var(--t-meta)}
+.cs-rail small{font-size:var(--t-micro)}
+.pw-what h3,.cs-main h3{font-size:var(--t-ui);font-weight:600;letter-spacing:0}
+.pw-what p,.cs-main p,.cs-by,.pw-note,.composer-hint,.composer-note,.cs header a,.pw-in{font-size:var(--t-meta)}
+.pw-ans .btn,.cs-row .btn{font-size:var(--t-meta);font-weight:600;padding:0 18px}
+
+/* composer */
+.composer textarea{font-size:var(--t-ui)}
+.composer #post-to{font-size:var(--t-meta)}
+.composer .picker-btn{font-size:var(--t-meta)}
+.composer .btn.primary{font-size:var(--t-meta);font-weight:600}
+
+/* filter row */
+.frow-l,.frow small{font-size:var(--t-micro)}
+.frow button{font-size:var(--t-meta);font-weight:500}
+.frow button[aria-pressed=true]{font-weight:600}
+
+/* post: the name leads, the words are the biggest text, everything else is quiet */
+.rp-head strong{font-size:var(--t-ui);font-weight:600}
+.rp-time,.rp-aud,.rp-who{font-size:var(--t-meta)}
+.rp-tag{font-size:var(--t-micro)}
+.rp-title{font-size:var(--t-row)}
+.rp-body{font-size:var(--t-read);line-height:1.55}
+.rp-acts button{font-size:var(--t-meta)}
+.bell-count{font-size:var(--t-micro)}
+@media (min-width:901px){
+  .shell:not(.wide) .navlink.extra,.shell:not(.wide) .navlink.extra[aria-pressed=true]{background:transparent;color:inherit}
+  .shell:not(.wide) .navlink.extra:hover{background:rgba(255,255,255,.1)}
+}
