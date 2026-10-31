@@ -50,7 +50,7 @@ export default function PlansWaiting() {
   };
   return (
     <section className="pw" aria-label="Hangouts">
-      <h2 className="pw-h">Plans waiting on you</h2>
+      <h2 className="pw-h">Plans waiting on you{asking.length > 1 && <span className="pw-n"> · {asking.length}</span>}</h2>
       <ul className="pw-list">{shown.map((h) => <Row key={h.id} h={h} group={groupName(h)} clash={clashWith(h)} />)}</ul>
       {asking.length > 1 && <button type="button" className="text-btn" aria-expanded={all} onClick={() => setAll((v) => !v)}>{all ? "Show fewer" : `${asking.length - 1} more waiting`}</button>}
       <p className="pw-note">The people in each plan see your answer.</p>

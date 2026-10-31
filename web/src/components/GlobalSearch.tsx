@@ -64,7 +64,11 @@ export default function GlobalSearch() {
   const loadPosts = () => { if (posts === null) { setPosts([]); feedApi.list().then(setPosts).catch(() => setPosts([])); } };
 
   useEffect(() => {
-    const onKey = (e: globalThis.KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); } };
+    // Escape closes the list wherever focus is (the box itself, a place-to-look tab, or nowhere in particular after a click on the dimmed page).
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); }
+      else if (e.key === "Escape" && root.current?.querySelector(".gs-panel")) { setOpen(false); if (root.current.contains(document.activeElement)) (document.activeElement as HTMLElement).blur(); }
+    };
     const away = (e: MouseEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
     window.addEventListener("keydown", onKey);
     document.addEventListener("mousedown", away);
@@ -112,7 +116,12 @@ export default function GlobalSearch() {
       for (const n of space.notes) if (has(n.title, n.body)) out.push({ id: `n${n.id}`, kind: "House note", Icon: NotebookText, title: n.title, sub: clip(n.body), to: "/app/roommates", state: { section: "notes" } });
     }
     if (fromPosts) for (const p of posts ?? []) if (has(p.payload.body, p.payload.text, p.payload.title, p.author_name)) out.push({ id: `p${p.id}`, kind: "Post", Icon: Newspaper, title: clip(p.payload.body ?? p.payload.text ?? p.payload.title ?? ""), sub: `${p.author_name} · ${p.community}`, to: "/app/feed" });
-    return out.slice(0, limit);
+    if (scoped) return out.slice(0, limit);
+    // Everywhere: each kind of thing gets room, so posts are not crowded out by plans and reminders.
+    const family = (id: string) => (id.startsWith("p") ? "posts" : /^(h|grp|r)/.test(id) ? "plans" : /^(o|e)/.test(id) ? "campus" : "home");
+    const order = ["posts", "plans", "campus", "home"];
+    const taken: Record<string, number> = {};
+    return out.filter((h) => { const f = family(h.id); taken[f] = (taken[f] ?? 0) + 1; return taken[f] <= 2; }).sort((a, b) => order.indexOf(family(a.id)) - order.indexOf(family(b.id)));
   }, [term, usernameOnly, scope, scoped, limit, hangouts, reminders, space, groups, posts, orgs, events]);
 
   const close = () => { setOpen(false); setQ(""); };

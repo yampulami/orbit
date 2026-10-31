@@ -4310,3 +4310,20 @@ body.feed-page .asst-fab{display:none}
 .up .pin-btn{position:relative}
 .up .pin-btn::after{content:"";position:absolute;inset:-7px}
 [data-theme=dark] .now-acts .now-main,[data-theme=dark] .now-acts a.now-main:first-child,[data-theme=dark] .shell .compose-btn.solo,[data-theme=dark] .shell .compose-btn.solo .navtext,[data-theme=dark] .shell .compose-btn.solo svg{color:#1a1210}
+
+/* ---- Feed critique (desktop): one column width, readable placeholder, quieter rail actions, audience marks, bigger hit areas ---- */
+.feed-layout{grid-template-columns:minmax(0,720px) 320px;justify-content:start}
+.composer,.rp,.feed-empty,.feed-end,.composer-note{max-width:none}
+::placeholder{color:var(--ink-soft);opacity:1}
+[data-theme=dark] ::placeholder{color:#a5aeaa}
+.pw-n{font-weight:400;color:var(--ink-soft)}
+.skip-row .skip{position:fixed;left:-9999px;top:12px;white-space:nowrap}
+.skip-row .skip:focus{left:12px;z-index:60}
+.skip-row .skip + .skip:focus{left:12px}
+#posts:focus,#your-list:focus{outline:none}
+.rp-aud{border:1px solid var(--line);border-radius:6px;padding:1px 8px;font-size:var(--t-micro);line-height:1.5;color:var(--ink)}
+.rp-aud[data-aud=Marketplace]{border-color:var(--accent);color:var(--accent)}
+[data-theme=dark] .rp-aud{color:var(--ink)}
+[data-theme=dark] .rp-aud[data-aud=Marketplace]{color:var(--accent)}
+.rail .cs-row .btn{border:0;background:none;box-shadow:none;color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:0 6px}
+.rail .cs-row .btn[aria-pressed=true]{background:none;color:var(--ink);border:0;text-decoration:none}

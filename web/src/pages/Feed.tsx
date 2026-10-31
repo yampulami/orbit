@@ -163,7 +163,7 @@ export default function Feed() {
           <div className="skeleton sk-now" />
           <div className="skeleton sk-line" />
           <div className="skeleton sk-composer" />
-          <div className="posts ruled">{[0, 1, 2].map((i) => <div key={i} className="skeleton sk-post" />)}</div>
+          <div className="posts ruled" id="posts" tabIndex={-1}>{[0, 1, 2].map((i) => <div key={i} className="skeleton sk-post" />)}</div>
         </div>
       </div>
     );
@@ -195,6 +195,7 @@ export default function Feed() {
     <div className="feed-layout">
       <div className="feed-main">
         <h1 className="sr">Campus feed</h1>
+        {!phone && <nav className="skip-row" aria-label="Skip within the feed"><a className="skip" href="#posts" onClick={(e) => { e.preventDefault(); document.getElementById("posts")?.focus(); }}>Skip to posts</a><a className="skip" href="#your-list" onClick={(e) => { e.preventDefault(); document.getElementById("your-list")?.focus(); }}>Skip to your list</a></nav>}
         <NowHeader />
         {!phone && <form className={"composer" + (body ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
@@ -226,7 +227,7 @@ export default function Feed() {
           </nav>
         </div>
         {sharing && <ShareMenu text={sharing.payload.body ?? sharing.payload.text ?? ""} author={sharing.author_name} url={`${siteUrl()}/app/feed?post=${sharing.id}`} onClose={() => setSharing(null)} />}
-        <div className="posts ruled">
+        <div className="posts ruled" id="posts" tabIndex={-1}>
           {shown.length === 0 && (
             <div className="feed-empty">
               {feed.length === 0 ? (
@@ -258,7 +259,7 @@ export default function Feed() {
                     <PersonLink id={p.author_id} className="rp-name"><strong>{p.author_name}</strong></PersonLink>
                     {isVerified(p.author_id) && <span className="rp-tag">Campus staff</span>}
                     <span className="rp-time">{ago(p.created_at)}</span>
-                    {p.community !== "Everyone" && <span className="rp-aud">For {audience(p.community)}</span>}
+                    {p.community !== "Everyone" && <span className="rp-aud" data-aud={p.community}>{p.community === "Marketplace" ? "For sale" : `For ${audience(p.community)}`}</span>}
                     <SafetyMenu userId={p.author_id} name={p.author_name} postId={p.id} context="post" />
                   </div>
                   {p.payload.title && <h3 className="rp-title">{p.payload.title}</h3>}
@@ -286,7 +287,7 @@ export default function Feed() {
           {feed.length >= PAGE && filter === "All" && <p className="feed-end">That’s the newest {PAGE} posts. Older ones aren’t shown.</p>}
         </div>
       </div>
-      {!phone && <aside className="rail" ref={rail} aria-label="Your campus summary">
+      {!phone && <aside className="rail" id="your-list" tabIndex={-1} ref={rail} aria-label="Your campus summary">
         <UpcomingList limit={5} moreTo="/app/plans" hide={["hangout"]} title="On your list" />
         <div className="cs-wide"><CampusSoon compact /></div>
         <section className="cal-fold">
