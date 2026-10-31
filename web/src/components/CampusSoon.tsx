@@ -31,8 +31,8 @@ function Row({ e, host }: { e: CampusEvent; host: boolean }) {
   );
 }
 
-/** The next few campus events, in time order and apart from the posts. On a phone only the first shows, with a link to the rest. */
-export default function CampusSoon() {
+/** The next few campus events, in time order and apart from the posts. On a phone only the first shows, with a link to the rest. `compact` is the narrow version that sits in the right column. */
+export default function CampusSoon({ compact = false }: { compact?: boolean }) {
   const { events } = useCampusEvents();
   const phone = useIsPhone();
   const now = new Date();
@@ -45,7 +45,7 @@ export default function CampusSoon() {
   // When everyone on the list has the same host, say it once under the heading instead of on every row.
   const sameHost = next.every((e) => hostLine(e) === hostLine(next[0]));
   return (
-    <section className="cs" aria-label="Campus events">
+    <section className={"cs" + (compact ? " compact" : "")} aria-label="Campus events">
       <header><h2>On campus soon</h2><Link to="/app/campus">{phone && next.length > 1 ? `${next.length - 1} more · All events` : "All events"}</Link></header>
       {sameHost && <p className="cs-by">Hosted by {hostLine(next[0])}. “I’m going” adds you to the public going count.</p>}
       {!sameHost && <p className="cs-by">“I’m going” adds you to the public going count.</p>}

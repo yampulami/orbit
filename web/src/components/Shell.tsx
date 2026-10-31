@@ -20,6 +20,7 @@ import { isNight } from "../lib/cheer";
 import ReminderAlerts from "./ReminderAlerts";
 import ClassAlerts from "./ClassAlerts";
 import ComposeModal from "./ComposeModal";
+import type { Community } from "../shared/feed";
 import GlobalSearch from "./GlobalSearch";
 import { setTheme, useTheme } from "../lib/theme";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
@@ -89,7 +90,14 @@ export default function Shell() {
   }, [drawer]);
 
   const [composing, setComposing] = useState(false);
-  const newPost = () => setComposing(true);
+  const [startAt, setStartAt] = useState<Community | undefined>(undefined);
+  const newPost = () => { setStartAt(undefined); setComposing(true); };
+  // A page can ask for the new-post window (the feed does on a phone, where the post box is this window), naming who it is for.
+  useEffect(() => {
+    const open = (e: Event) => { setStartAt((e as CustomEvent<{ community?: Community }>).detail?.community); setComposing(true); };
+    window.addEventListener("orbit-compose", open);
+    return () => window.removeEventListener("orbit-compose", open);
+  }, []);
 
   // Phone: the top bar tucks away when you scroll down and comes back when you scroll up, like a phone app.
   const phone = useIsPhone();
@@ -194,7 +202,7 @@ export default function Shell() {
       <NoticeHost />
       <ReminderAlerts />
       <ClassAlerts />
-      <ComposeModal open={composing} onClose={() => setComposing(false)} />
+      <ComposeModal open={composing} initialCommunity={startAt} onClose={() => setComposing(false)} />
     </div>
   );
 }

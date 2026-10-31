@@ -98,6 +98,12 @@ export default function Feed() {
   const [day, setDay] = useState<string | null>(null);
 
   const phone = useIsPhone();
+  /** Start a post. On a phone the post box is the new-post window the shell owns, so ask it to open (naming who it is for). */
+  const startPost = (c?: Community) => {
+    if (phone) { window.dispatchEvent(new CustomEvent("orbit-compose", { detail: { community: c } })); return; }
+    if (c) setCommunity(c);
+    composerRef.current?.focus();
+  };
   const rail = useRef<HTMLElement>(null);
   useStickyRail(rail, !loading && !!campus);
   const run = async (fn: () => Promise<void>) => { try { await fn(); } catch (e) { notice.show({ icon: "wifi", title: "That did not go through", message: `${(e as Error).message || "Something went wrong."} Check your connection and try again.` }); } };
@@ -192,7 +198,7 @@ export default function Feed() {
         <NowHeader />
         <MomentsBar />
         <PlansWaiting />
-        <CampusSoon />
+        {phone && <CampusSoon />}
         {phone && <UpcomingList limit={3} moreTo="/app/plans" hide={["hangout"]} title="On your list" />}
         {!phone && <form className={"composer" + (body ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
@@ -205,12 +211,12 @@ export default function Feed() {
               {communities.map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => setCommunity(c)}>{SHOW[c]}</button>)}
             </div>
             <EmojiButton value={body} onChange={setBody} inputRef={composerRef} max={MAX} />
-            {body.length > MAX * 0.8 && <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span>}
-            <button className="btn primary" title="Ctrl+Enter posts" disabled={posting || !body.trim()}>{posting ? "Posting…" : "Post"}</button>
+            {body.length > MAX * 0.8 ? <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span> : <span className="composer-hint">Ctrl+Enter to post</span>}
+            <button className="btn primary" disabled={posting || !body.trim()}>{posting ? "Posting…" : community === "Everyone" ? "Post" : community === "Marketplace" ? "Post for sale" : `Post to ${SHOW[community]}`}</button>
           </div>
         </form>}
         {posted && <p className="composer-note" role="status">{posted}</p>}
-        <h2 className="feed-h">{campus.name}<span>What students are saying</span></h2>
+        <h2 className="feed-h">{campus.name}<span>{feed.length >= PAGE ? `Newest ${PAGE} posts` : "What students are saying"}</span></h2>
         <div className="pills">
           <nav className="frow" aria-label="Show posts">
             <span className="frow-l" title={`Counts are for the newest ${PAGE} posts`}>Show</span>
@@ -226,13 +232,13 @@ export default function Feed() {
               {feed.length === 0 ? (
                 <>
                   <p>Nobody has posted at {campus.name} yet. Say what you saw on the way to class.</p>
-                  <button type="button" className="btn primary" onClick={() => composerRef.current?.focus()}>Write the first post</button>
+                  <button type="button" className="btn primary" onClick={() => startPost()}>Write the first post</button>
                 </>
               ) : (
                 <>
                   <p>Nothing {filter === "Marketplace" ? "for sale" : `for ${audience(filter)}`} yet. Ask where to park, or when the shuttle runs.</p>
                   <div className="feed-empty-acts">
-                    <button type="button" className="btn primary" onClick={() => { setCommunity(filter as Community); composerRef.current?.focus(); }}>Post {filter === "Marketplace" ? "something for sale" : `for ${audience(filter)}`}</button>
+                    <button type="button" className="btn primary" onClick={() => startPost(filter as Community)}>Post {filter === "Marketplace" ? "something for sale" : `for ${audience(filter)}`}</button>
                     <button type="button" className="btn" onClick={() => setFilter("All")}>Show everything</button>
                   </div>
                 </>
@@ -282,6 +288,7 @@ export default function Feed() {
       </div>
       {!phone && <aside className="rail" ref={rail} aria-label="Your campus summary">
         <UpcomingList limit={5} moreTo="/app/plans" hide={["hangout"]} title="On your list" />
+        <CampusSoon compact />
         <section className="cal-fold">
           <button type="button" className="cal-toggle" aria-expanded={calOpen} onClick={toggleCal}>
             <span>Calendar{day ? " · 1 day selected" : ""}</span>

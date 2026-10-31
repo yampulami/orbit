@@ -20,7 +20,7 @@ const ago = (iso: string) => {
 };
 
 /** The new-post window opened by the round button in the sidebar. Works from any page. */
-export default function ComposeModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function ComposeModal({ open, onClose, initialCommunity }: { open: boolean; onClose: () => void; initialCommunity?: Community }) {
   const { session } = useAuth();
   const nav = useNavigate();
   const me = session?.user.id ?? "";
@@ -40,6 +40,7 @@ export default function ComposeModal({ open, onClose }: { open: boolean; onClose
     if (!open) return;
     opener.current = document.activeElement;
     setCampus(undefined); setError("");
+    if (initialCommunity) setCommunity(initialCommunity);
     feedApi.campus().then(setCampus).catch(() => setCampus(null));
     const lock = document.body.style.overflow;
     document.body.style.overflow = "hidden";
