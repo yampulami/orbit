@@ -4336,3 +4336,8 @@ body.feed-page .asst-fab{display:none}
 .composer:focus-within .composer-row,.composer.has-text .composer-row{max-height:120px;opacity:1;overflow:visible;visibility:visible;transition:max-height .22s var(--ease,ease),opacity .18s,visibility 0s}
 @media (prefers-reduced-motion:reduce){.composer .composer-row,.composer:focus-within .composer-row{transition:none}}
 .gsearch.has-panel:focus-within{box-shadow:0 0 0 2px var(--ink)}
+
+/* the right column's "I'm in" is an orange text link, as the team liked it */
+.rail .cs-row .btn{border:0;background:none;box-shadow:none;color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:0 6px;min-height:44px}
+.rail .cs-row .btn:hover{background:none;color:var(--accent-deep,var(--accent))}
+.rail .cs-row .btn[aria-pressed=true]{background:none;border:0;color:var(--ink);text-decoration:none}
