@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMyBusy } from "../lib/useMyBusy";
 import { useFriends } from "../lib/friends";
-import { useHang, YOU } from "../lib/hangouts";
+import { isVisible, useHang, YOU } from "../lib/hangouts";
+import { useReminders, ymd } from "../lib/reminders";
 import { useCampusEvents } from "../lib/campusEvents";
 import { loadFriendFree } from "../lib/availability";
 import { busyOn, describeBusy, type BusyItem } from "../lib/myBusy";
@@ -20,7 +21,8 @@ const byStart = (a: BusyItem, b: BusyItem) => a.start.getTime() - b.start.getTim
  *  From 10 PM to 6 AM it talks about the coming day instead, and always says "Tomorrow", so the word does not flip at midnight. */
 export default function NowHeader() {
   const { friends } = useFriends();
-  const { hangouts } = useHang();
+  const { groups, hangouts } = useHang();
+  const reminders = useReminders();
   const { events } = useCampusEvents();
   const [now, setNow] = useState(() => new Date());
   const [shared, setShared] = useState<Person[]>([]);
@@ -43,6 +45,10 @@ export default function NowHeader() {
   // A plan nobody has answered yet is drawn on the bar but is not "your" plan in the headline until you say yes.
   const unanswered = (i: BusyItem) => i.kind === "hangout" && !hangouts.some((h) => h.title === i.label && new Date(h.when).getTime() === i.start.getTime() && h.rsvps[YOU] === "yes");
   const confirmed = items.filter((i) => !unanswered(i));
+  // What needs you when nothing is confirmed: plans nobody has answered yet (the same ones "Plans waiting on you" lists) and tasks past their day.
+  const toAnswer = hangouts.filter((h) => isVisible(h, groups) && !h.canceled && new Date(h.when).getTime() > now.getTime() - 3 * 3600_000 && !h.rsvps[YOU]).length;
+  const overdue = reminders.filter((r) => !r.done && r.date < ymd(now)).length;
+  const needs = [toAnswer > 0 ? `${toAnswer} plan${toAnswer === 1 ? "" : "s"} to answer` : "", overdue > 0 ? `${overdue} overdue` : ""].filter(Boolean);
   const waiting = !late && items.some((i) => unanswered(i) && i.end > now);
   const inside = late ? undefined : confirmed.find((i) => i.start <= now && i.end > now);
   const nextClass = late ? undefined : items.find((i) => i.kind === "class" && i.start > now);
@@ -54,9 +60,9 @@ export default function NowHeader() {
     const first = confirmed[0];
     head = first ? `Tomorrow: ${first.label} at ${clock(first.start)}` : "Nothing on your schedule tomorrow";
   } else if (confirmed.length === 0) {
-    head = waiting ? "Nothing confirmed yet today" : "Nothing on your schedule today";
-    sub = waiting ? "A plan is waiting on your answer." : "Add your classes to see your gaps.";
-    prompt = !waiting;
+    head = needs.length ? needs.join(" · ") : "Nothing on your schedule today";
+    sub = needs.length ? "Nothing else is confirmed for today." : "Add your classes to see your gaps.";
+    prompt = needs.length === 0;
   } else if (inside) {
     head = `${inside.label} until ${clock(inside.end)}`;
     const after = freeNow(me, inside.end);
@@ -88,13 +94,13 @@ export default function NowHeader() {
       {inGap && <p className="now-sub">{inGap.title} at {clock(inGap.at)} falls in this gap.</p>}
       {alsoFree.length > 0 && <p className="now-sub">{alsoFree.slice(0, 3).map(first).join(", ")}{alsoFree.length > 3 ? ` and ${alsoFree.length - 3} more` : ""} {alsoFree.length === 1 ? "is" : "are"} free too.</p>}
 
-      <div className="now-bar" role="img" aria-label={`${late ? "Tomorrow" : "Your day"} from 7 AM to 11 PM: ${daySays}.${needle ? " The marker shows where it is now." : ""}`}>
+      {items.length > 0 && <><div className="now-bar" role="img" aria-label={`${late ? "Tomorrow" : "Your day"} from 7 AM to 11 PM: ${daySays}.${needle ? " The marker shows where it is now." : ""}`}>
         {items.map((i, n) => (
           <span key={n} className={"now-seg " + i.kind} style={{ left: pct(minutes(i.start)), width: `max(3px, calc(${pct(minutes(i.end))} - ${pct(minutes(i.start))}))` }} />
         ))}
         {needle && <span className="now-needle" style={{ left: pct(nowMin) }} />}
       </div>
-      <div className="now-ticks" aria-hidden="true"><span>7 AM</span><span>Noon</span><span>5 PM</span><span>11 PM</span></div>
+      <div className="now-ticks" aria-hidden="true"><span>7 AM</span><span>Noon</span><span>5 PM</span><span>11 PM</span></div></>}
       {items.length > 0 && (
         <p className="now-key" aria-hidden="true">
           {items.some((i) => i.kind === "class") && <span><i className="class" />Class</span>}

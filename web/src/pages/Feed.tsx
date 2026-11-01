@@ -265,10 +265,10 @@ export default function Feed() {
                   {p.payload.title && <h3 className="rp-title">{p.payload.title}</h3>}
                   <p className="rp-body"><RichText text={p.payload.body ?? p.payload.text ?? ""} /></p>
                   <div className="rp-acts">
-                    <button type="button" aria-expanded={expanded} aria-label={`Replies to “${subject}”`} onClick={() => setOpen(expanded ? null : p.id)}><MessageCircle size={16} aria-hidden="true" />Reply{replies > 0 ? ` · ${replies}` : ""}</button>
-                    <button type="button" aria-pressed={liked} aria-label={`Like “${subject}”`} onClick={() => like(p)}><Heart size={16} aria-hidden="true" fill={liked ? "currentColor" : "none"} />{liked ? "Liked" : "Like"}{p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}</button>
-                    <button type="button" aria-label={`Share “${subject}”`} onClick={() => setSharing(p)}><Send size={16} aria-hidden="true" />Share</button>
-                    {p.author_id === me && <button type="button" aria-label={`Delete “${subject}”`} onClick={() => remove(p)}><Trash2 size={16} aria-hidden="true" />Delete</button>}
+                    <button type="button" aria-expanded={expanded} aria-label={`Reply${replies > 0 ? ` · ${replies}` : ""}, ${p.author_name}’s post`} onClick={() => setOpen(expanded ? null : p.id)}><MessageCircle size={16} aria-hidden="true" />Reply{replies > 0 ? ` · ${replies}` : ""}</button>
+                    <button type="button" aria-pressed={liked} aria-label={`${liked ? "Liked" : "Like"}${p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}, ${p.author_name}’s post`} onClick={() => like(p)}><Heart size={16} aria-hidden="true" fill={liked ? "currentColor" : "none"} />{liked ? "Liked" : "Like"}{p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}</button>
+                    <button type="button" aria-label={`Share, ${p.author_name}’s post`} onClick={() => setSharing(p)}><Send size={16} aria-hidden="true" />Share</button>
+                    {p.author_id === me && <button type="button" aria-label={`Delete, your post “${subject}”`} onClick={() => remove(p)}><Trash2 size={16} aria-hidden="true" />Delete</button>}
                     {repliedBy(p) && <span className="rp-who">{repliedBy(p)}</span>}
                   </div>
                   <AnimatePresence initial={false}>
