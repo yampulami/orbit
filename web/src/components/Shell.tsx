@@ -81,7 +81,7 @@ export default function Shell() {
 
   // The left bar works like the one in the Supabase dashboard: icons only that open over the page while you point at them, or pinned open
   // (the page makes room), or pinned shut. The choice is remembered on this device.
-  const [sideMode, setSideMode] = useState<SideMode>(() => { try { const m = localStorage.getItem("orbit-side-mode"); return m === "expanded" || m === "collapsed" || m === "hover" ? m : localStorage.getItem("orbit-side-wide") === "1" ? "expanded" : "hover"; } catch { return "hover"; } });
+  const [sideMode, setSideMode] = useState<SideMode>(() => { try { const m = localStorage.getItem("orbit-side-mode"); return m === "expanded" || m === "collapsed" || m === "hover" ? m : "hover"; } catch { return "hover"; } });
   const chooseSide = (m: SideMode) => { setSideMode(m); setSideMenu(false); try { localStorage.setItem("orbit-side-mode", m); } catch { /* ignore */ } };
   const [sideMenu, setSideMenu] = useState(false);
   useEffect(() => {
