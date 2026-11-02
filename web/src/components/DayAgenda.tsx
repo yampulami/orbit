@@ -75,8 +75,8 @@ export default function DayAgenda({ day }: { day: string }) {
                     </div>
                     <PinButton kind="hangout" id={h.id} title={h.title} />
                     <div className="cal-hbtns" role="group" aria-label={`Are you going to ${h.title}?`}>
-                      <button type="button" data-a="yes" aria-pressed={mine === "yes"} onClick={() => hangActions.setRsvp(h.id, mine === "yes" ? null : "yes")}>Yes</button>
-                      <button type="button" data-a="no" aria-pressed={mine === "no"} onClick={() => hangActions.setRsvp(h.id, mine === "no" ? null : "no")}>No</button>
+                      <button type="button" data-a="yes" aria-pressed={mine === "yes"} onClick={() => hangActions.setRsvp(h.id, mine === "yes" ? null : "yes")}>{mine === "yes" ? "You’re in" : "I’m in"}</button>
+                      <button type="button" data-a="no" aria-pressed={mine === "no"} onClick={() => hangActions.setRsvp(h.id, mine === "no" ? null : "no")}>{mine === "no" ? "You can’t" : "Can’t"}</button>
                     </div>
                   </SweepLi>
                 );

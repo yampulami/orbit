@@ -4725,3 +4725,26 @@ textarea,input{caret-color:var(--accent)}
 .rm-h{font-size:var(--t-ui);font-weight:600}
 .rm-count{font-size:var(--t-meta);color:var(--ink-soft)}
 .rm-add .field.price input,.rm-add .field.due input{height:44px;border-radius:8px}
+
+/* ---- Plans, in the Orbit look: a sentence about the day, flat cards, plain calendar numbers, softer week blocks ---- */
+.plans-head{font-family:var(--display);font-size:clamp(1.5rem,2.5vw,var(--t-hero));font-weight:600;letter-spacing:-.02em;line-height:1.15;margin:8px 0 16px}
+.plans2 .agenda,.plans2 .classes,.plans2 .sync-link,.plans2 .up,.plans2 .cal,.plans2 .wb-card,.plans2 .wb{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:none}
+.plans2 .wb{background:none;border:0}
+.plans2 .cal-day,[data-theme=dark] .plans2 .cal-day{width:34px;height:34px;border-radius:50%;background:none;box-shadow:none;outline:none;font-size:var(--t-meta);font-weight:400;color:var(--ink)}
+.plans2 .cal-day:hover{background:var(--panel)}
+.plans2 .cal-day.out{color:var(--ink-soft);opacity:.5}
+.plans2 .cal-day.hm-pending,.plans2 .cal-day.hm-no,.plans2 .cal-day.hm-yes,[data-theme=dark] .plans2 .cal-day.hm-pending,[data-theme=dark] .plans2 .cal-day.hm-no,[data-theme=dark] .plans2 .cal-day.hm-yes{background:none;outline:none;box-shadow:none;font-weight:600;color:var(--ink)}
+.plans2 .cal-day.rem::after,.plans2 .cal-day.hm-pending::after,.plans2 .cal-day.hm-no::after,.plans2 .cal-day.hm-yes::after{content:"";display:block;position:absolute;left:50%;bottom:3px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
+.plans2 .cal-day.rem::before,.plans2 .cal-day.has::after{display:none}
+.plans2 .cal-day.today,[data-theme=dark] .plans2 .cal-day.today,.plans2 .cal-day.sel{background:var(--ink);color:var(--on-ink)}
+.plans2 .wb-ev{border-radius:6px;border-style:solid;border-width:0;box-shadow:none}
+.plans2 .wb-chip,.plans2 .lg{border-radius:6px}
+.plans2 .wb-today,.plans2 .wb-arrow{border-radius:8px}
+.plans2 .rem-row .btn,.plans2 .cal-rem .btn{border-radius:8px}
+.agenda-hangs li,.agenda-hangs li.a-pending,.agenda-hangs li.a-yes,.agenda-hangs li.a-no{background:none;color:var(--ink);border-radius:0;border-top:1px solid var(--line);padding:10px 0}
+.agenda-hangs li:first-child{border-top:0}
+.cal-hbtns button,.wb-detail .cal-hbtns button{min-height:44px;min-width:0;padding:0 8px;border-radius:8px;background:none;color:var(--ink-soft);font-size:var(--t-meta);text-decoration:underline;text-underline-offset:3px}
+.cal-hbtns button[data-a=yes]{color:var(--accent)}
+.cal-hbtns button[aria-pressed=true],.cal-hbtns button[aria-pressed=true][data-a=yes],.cal-hbtns button[aria-pressed=true][data-a=no],.wb-detail .cal-hbtns button[aria-pressed=true]{background:none;color:var(--ink);text-decoration:none;font-weight:700}
+.cal-hbtns button[aria-pressed=true][data-a=yes]{color:var(--accent)}
+.plans2 .wb-ev,.plans2 .wb-ev.pending,.plans2 .wb-ev[data-pending]{border:0!important;box-shadow:none!important;border-radius:6px}

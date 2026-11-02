@@ -297,4 +297,6 @@ Recurring items still worth improving: too many time-related blocks at once, the
 | Left bar, search, assistant | done |
 | Chats: Messages | done (sentence headline, text tabs, ruled threads, flat conversation) |
 | Chats: Groups | done (same frame; flat plan card with "I'm in / Can't"; no pills) |
-| Roommates, Plans, Free time, Campus, Map, Profile, Clubs, People, Landing, Sign in, Onboarding | to do |
+| Roommates | done (sentence "N chores open", text tabs, flat lists, notes as hairline cards) |
+| Plans | done (sentence about the day, flat cards, plain calendar numbers, answers as links); the week grid still has dashed blocks for unanswered plans |
+| Free time, Campus, Map, Profile, Clubs, People, Landing, Sign in, Onboarding | to do |

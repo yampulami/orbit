@@ -10,6 +10,7 @@ const WeekBoard = lazy(() => import("../components/WeekBoard"));
 import ClassesPanel from "../components/ClassesPanel";
 import SyncLink from "../components/SyncLink";
 import { feedApi as api, type Row } from "../lib/feedData";
+import { isVisible, useHang, YOU } from "../lib/hangouts";
 
 export default function Plans() {
   const phone = useIsPhone();
@@ -19,6 +20,12 @@ export default function Plans() {
   const asked = (loc.state as { day?: string } | null)?.day ?? null;
   const [day, setDay] = useState<string>(asked ?? new Date().toDateString());
   useEffect(() => { if (asked) setDay(asked); }, [asked, loc.key]);
+  // One sentence about the day you are looking at.
+  const { groups, hangouts } = useHang();
+  const planned = hangouts.filter((h) => isVisible(h, groups) && !h.canceled && new Date(h.when).toDateString() === day);
+  const waiting = planned.filter((h) => !h.rsvps[YOU]).length;
+  const when = day === new Date().toDateString() ? "today" : new Date(day).toLocaleDateString(undefined, { weekday: "long" });
+  const head = planned.length === 0 ? `Nothing planned ${when}` : `${planned.length} plan${planned.length === 1 ? "" : "s"} ${when}${waiting > 0 ? `, ${waiting} need${waiting === 1 ? "s" : ""} your answer` : ""}`;
   useEffect(() => { if (!phone) api.list().then(setPosts).catch(() => setPosts([])); }, [phone]);
 
   if (phone) {
@@ -38,6 +45,7 @@ export default function Plans() {
   return (
     <div className="page">
       <h1 className="sr">Plans</h1>
+      <h2 className="plans-head">{head}</h2>
       <div className="plans2">
         <div className="plans-col">
           <Suspense fallback={<div className="skeleton sk-card" />}><Calendar posts={posts} day={day} onDay={(k) => setDay(k ?? new Date().toDateString())} details={false} /></Suspense>
