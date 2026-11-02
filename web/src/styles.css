@@ -4748,3 +4748,25 @@ textarea,input{caret-color:var(--accent)}
 .cal-hbtns button[aria-pressed=true],.cal-hbtns button[aria-pressed=true][data-a=yes],.cal-hbtns button[aria-pressed=true][data-a=no],.wb-detail .cal-hbtns button[aria-pressed=true]{background:none;color:var(--ink);text-decoration:none;font-weight:700}
 .cal-hbtns button[aria-pressed=true][data-a=yes]{color:var(--accent)}
 .plans2 .wb-ev,.plans2 .wb-ev.pending,.plans2 .wb-ev[data-pending]{border:0!important;box-shadow:none!important;border-radius:6px}
+
+/* ---- Free time, in the Orbit look: the product's own sentence on top, flat options, text choices instead of pills ---- */
+.sync-head{font-family:var(--display);font-size:clamp(1.5rem,2.5vw,var(--t-hero));font-weight:600;letter-spacing:-.02em;line-height:1.15;margin:8px 0 16px}
+.sync-page .freetime>header{display:none}
+.sync-page .sl,.sync-page .ft-blk,.sync-page .ft-how{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:none}
+.sync-opts{background:none;border:0;border-radius:0;box-shadow:none;padding:12px 0 0}
+.sync-k{font-size:var(--t-micro);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-soft)}
+.sync-kinds .gm-bg{display:none}
+.sync-kinds .gm-item{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ink-soft);width:auto}
+.sync-kinds .gm-item svg{display:none}
+.sync-kinds .gm-label{display:inline;position:static;opacity:1;max-width:none;font-size:var(--t-meta);font-weight:500;text-transform:none;letter-spacing:0;color:inherit}
+.sync-kinds .gm-item[aria-pressed=true],.sync-kinds .gm-item[aria-current=true],.sync-kinds .gm-item.on{border-color:var(--accent);color:var(--ink);background:none}
+.seg{display:flex;gap:18px;background:none;border:0;border-radius:0;box-shadow:none;padding:0}
+.seg-pill{display:none}
+.seg-opt{min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-ui);font-weight:500;cursor:pointer}
+.seg-opt[aria-checked=true],.seg-opt[aria-pressed=true],.seg-opt.on{background:none;color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.sr-main{border-radius:12px;box-shadow:none}
+.pill-btn,.chip-btn,.dd-btn{border-radius:8px;box-shadow:none}
+.sync-pills .pill-btn{min-height:44px;border:1px solid var(--line);background:none;font-size:var(--t-meta)}
+.sr-main,.sr-main.best,.sync-list .sr-main{background:var(--surface);border:1px solid var(--accent);color:var(--ink)}
+.ft-how summary,.ft-how>*{border:0;background:none;box-shadow:none}
+.sync-head+.freetime .sl{max-width:none}
