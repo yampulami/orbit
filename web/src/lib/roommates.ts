@@ -260,6 +260,11 @@ export const roomActions = {
     patch((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === id ? { ...t, assignee } : t)) }));
     sync("Reassigning that chore", () => table("household_tasks").update({ assignee: userOf(assignee) }).eq("id", id), { table: "household_tasks", id, op: "upsert" });
   },
+  rename(id: string, title: string) {
+    const t = title.trim(); if (!t) return;
+    patch((s) => ({ ...s, tasks: s.tasks.map((x) => (x.id === id ? { ...x, title: t } : x)) }));
+    sync("Renaming that chore", () => table("household_tasks").update({ title: t }).eq("id", id), { table: "household_tasks", id, op: "upsert" });
+  },
   addGrocery(name: string, category: string) {
     const item: Grocery = { id: uid(), name, category, bought: false };
     patch((s) => ({ ...s, groceries: [...s.groceries, item] }));

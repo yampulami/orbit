@@ -29,6 +29,8 @@ export default function Tasks({ space }: { space: Space }) {
   const [due, setDue] = useState("");
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [editing, setEditing] = useState("");
+  const [draft, setDraft] = useState("");
 
   const people = memberOptions(space.members);
   const today = ymd(new Date());
@@ -89,7 +91,13 @@ export default function Tasks({ space }: { space: Space }) {
             <ArrangeItem key={t.id} id={t.id} handle label={t.title} className={"rm-row" + (t.done ? " done" : "")}>
               <button type="button" className="check" role="checkbox" aria-checked={t.done} aria-label={`${t.done ? "Reopen" : "Complete"} ${t.title}`} onClick={() => roomActions.setTaskDone(t.id, !t.done)}><Check size={16} strokeWidth={2.4} aria-hidden="true" /></button>
               <div className="rm-main">
-                <strong>{t.title}</strong>
+                {editing === t.id ? (
+                  <input className="rm-edit-input" autoFocus aria-label={`Rename ${t.title}`} value={draft} maxLength={80} onChange={(e) => setDraft(e.target.value)}
+                    onBlur={() => { roomActions.rename(t.id, draft); setEditing(""); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") { roomActions.rename(t.id, draft); setEditing(""); } else if (e.key === "Escape") setEditing(""); e.stopPropagation(); }} />
+                ) : (
+                  <strong><button type="button" className="rm-edit" title="Click to rename" onClick={() => { setDraft(t.title); setEditing(t.id); }}>{t.title}</button></strong>
+                )}
                 <span className="rm-sub">{t.points} point{t.points === 1 ? "" : "s"}{t.done ? ` · done ${ago(t.doneAt)}` : ""}{!t.done && t.due ? <> · <span className={t.due < today ? "late" : ""}>{t.due < today ? "was due " : "due "}{fromYmd(t.due).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</span></> : null}</span>
               </div>
               <Picker compact value={t.assignee} options={people} onChange={(v) => roomActions.reassign(t.id, v)} label={`Assigned to, ${t.title}`} />
