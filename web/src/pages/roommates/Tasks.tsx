@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { Check, Plus, Search, Trash2, Wand2 } from "lucide-react";
 import Picker from "../../components/Picker";
 import { YOU } from "../../lib/hangouts";
@@ -8,9 +8,9 @@ import { memberOptions } from "./Avatar";
 import { ArrangeItem, ArrangeList } from "../../components/Arrange";
 import { applyOrder, mergeOrder, useSavedOrder } from "../../lib/order";
 
-type Filter = "open" | "mine" | "done" | "all";
+type Filter = "open" | "mine" | "done";
 const FILTERS: { value: Filter; label: string }[] = [
-  { value: "open", label: "Open" }, { value: "mine", label: "Mine" }, { value: "done", label: "Done" }, { value: "all", label: "All" },
+  { value: "open", label: "Open" }, { value: "mine", label: "Mine" }, { value: "done", label: "Done" }
 ];
 
 const ago = (iso?: string) => {
@@ -42,6 +42,17 @@ export default function Tasks({ space }: { space: Space }) {
   });
   const ordered = applyOrder(shown, order);
 
+  /** j and k (or the arrow keys) move between the chores' tick boxes. */
+  function rowKeys(e: KeyboardEvent<HTMLElement>) {
+    if ((e.target as HTMLElement).matches("input,textarea,select")) return;
+    const down = e.key === "j" || e.key === "ArrowDown", up = e.key === "k" || e.key === "ArrowUp";
+    if (!down && !up) return;
+    const boxes = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>(".rm-row .check"));
+    const at = boxes.indexOf(document.activeElement as HTMLButtonElement);
+    const next = boxes[Math.max(0, Math.min(boxes.length - 1, at < 0 ? 0 : at + (down ? 1 : -1)))];
+    if (next) { e.preventDefault(); next.focus(); }
+  }
+
   function add(e: FormEvent) {
     e.preventDefault();
     if (!title.trim()) { setError("Name the chore first."); return; }
@@ -50,7 +61,7 @@ export default function Tasks({ space }: { space: Space }) {
   }
 
   return (
-    <div className="rm-card">
+    <div className="rm-card" onKeyDown={rowKeys}>
       <form className="rm-add" data-tone="lav" data-collapsed={expanded || title ? undefined : ""} onSubmit={add}>
         <label className="field grow"><span className="sr">Chore</span><input value={title} onFocus={() => setExpanded(true)} onChange={(e) => setTitle(e.target.value)} placeholder="Add a chore, like “Clean the bathroom”" maxLength={80} /></label>
         <div className="rm-extra"><Picker value={who} options={assignOptions} onChange={setWho} label="Assign to" />
@@ -87,7 +98,7 @@ export default function Tasks({ space }: { space: Space }) {
           ))}
         </ArrangeList>
       )}
-      <p className="rm-foot">Effort points count bigger chores more, so “fair” means similar points, not similar numbers of chores.</p>
+      <p className="rm-foot">Effort points count bigger chores more, so “fair” means similar points, not similar numbers of chores. Press j and k to move between chores, then Space to tick one off.</p>
     </div>
   );
 }

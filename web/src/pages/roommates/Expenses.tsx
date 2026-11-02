@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Plus, Trash2 } from "lucide-react";
 import Picker from "../../components/Picker";
 import { YOU } from "../../lib/hangouts";
 import { undo } from "../../lib/undo";
@@ -50,14 +50,21 @@ export default function Expenses({ space }: { space: Space }) {
       <section className={"rm-balance" + (mine > 0 ? " owed" : mine < 0 ? " owe" : "")} aria-label="Your balance">
         <strong>{mine > 0 ? `You’re owed ${money(mine)}` : mine < 0 ? `You owe ${money(-mine)}` : "You’re all settled"}</strong>
         {plan.length > 0 ? (
-          <ul className="rm-plan">{plan.map((p) => (
-            <li key={p.from + p.to}>
-              <span>{name(p.from)} {p.from === YOU ? "pay" : "pays"} {name(p.to)} <b>{money(p.cents)}</b></span>
-              <button type="button" className="btn" onClick={() => markPaid(p.from, p.to, p.cents)} aria-label={`${name(p.from)} paid ${name(p.to)} ${money(p.cents)}: mark as paid`}>
-                <Check size={16} aria-hidden="true" />{p.from === YOU ? "I paid" : p.to === YOU ? "They paid me" : "Mark as paid"}
-              </button>
-            </li>
-          ))}</ul>
+          <>
+            {([["", plan.filter((p) => p.from === YOU || p.to === YOU)], ["Between others", plan.filter((p) => p.from !== YOU && p.to !== YOU)]] as const).map(([label, list]) => list.length > 0 && (
+              <div key={label || "yours"}>
+                {label && <h4 className="rm-sub-h">{label}</h4>}
+                <ul className="rm-plan">{list.map((p) => (
+                  <li key={p.from + p.to}>
+                    <span>{name(p.from)} {p.from === YOU ? "pay" : "pays"} {name(p.to)} <b>{money(p.cents)}</b></span>
+                    <button type="button" className="btn" onClick={() => markPaid(p.from, p.to, p.cents)} aria-label={`${name(p.from)} paid ${name(p.to)} ${money(p.cents)}: mark as paid`}>
+                      <Check size={16} aria-hidden="true" />{p.from === YOU ? "I paid" : p.to === YOU ? "They paid me" : "Mark as paid"}
+                    </button>
+                  </li>
+                ))}</ul>
+              </div>
+            ))}
+          </>
         ) : <p>{space.expenses.length === 0 ? "Add a shared purchase to start keeping track." : "Nobody owes anybody."}</p>}
         {plan.length > 0 && <p className="rm-hint">Paid someone back with cash or an app? Mark it as paid and it is taken off what you owe. Orbit does not move any money.</p>}
       </section>
@@ -89,6 +96,7 @@ export default function Expenses({ space }: { space: Space }) {
                   <summary>
                     <span className="rm-main"><strong>{e.item}</strong><span className="rm-sub">Paid by {name(e.paidBy)} · {new Date(e.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span></span>
                     <span className="rm-price">{money(e.cents)}</span>
+                    <ChevronDown size={16} className="rm-chev" aria-hidden="true" />
                   </summary>
                   <div className="rm-break">
                     <p>Split {split.length} ways</p>

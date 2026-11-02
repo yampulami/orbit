@@ -18,6 +18,7 @@ export default function Groceries({ space }: { space: Space }) {
     .map((c) => ({ category: c, items: shown.filter((g) => g.category === c) }))
     .filter((g) => g.items.length > 0);
   const needed = space.groceries.filter((g) => !g.bought).length;
+  const flat = shown.length <= 6; // a short list reads better as one list than as headings with one item each
 
   function add(e: FormEvent) {
     e.preventDefault();
@@ -43,7 +44,19 @@ export default function Groceries({ space }: { space: Space }) {
       </div>
 
       {groups.length === 0 ? (
-        <p className="rm-empty">{space.groceries.length === 0 ? "The list is empty. Add what the house needs." : filter === "needed" ? "Everything is bought." : "Nothing here yet."}</p>
+        <p className="rm-empty">{space.groceries.length === 0 ? "The list is empty. Add what the house needs." : filter === "needed" ? "Everything is bought." : "Nothing here yet."}{" "}
+          {filter !== "needed" && space.groceries.length > 0 && <button type="button" className="rm-link" onClick={() => setFilter("needed")}>Show what is needed</button>}
+        </p>
+      ) : flat ? (
+        <ul className="rm-list">
+          {shown.map((it) => (
+            <li key={it.id} className={"rm-row" + (it.bought ? " done" : "")}>
+              <button type="button" className="check" role="checkbox" aria-checked={it.bought} aria-label={`${it.bought ? "Mark as needed again" : "Mark as purchased"}: ${it.name}`} onClick={() => roomActions.setBought(it.id, !it.bought)}><Check size={16} strokeWidth={2.4} aria-hidden="true" /></button>
+              <div className="rm-main"><strong>{it.name}</strong><span className="rm-sub">{it.category}</span></div>
+              <button type="button" className="ghost-btn" aria-label={`Delete ${it.name}`} onClick={() => removeWithUndo("groceries", it.id, `“${it.name}”`)}><Trash2 size={16} aria-hidden="true" /></button>
+            </li>
+          ))}
+        </ul>
       ) : (
         groups.map((g) => (
           <section key={g.category} className="rm-group" aria-label={g.category}>

@@ -4932,3 +4932,14 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .rm-exp summary{cursor:pointer}
 .rm-exp .rm-plan .btn,.rm-balance .btn{min-width:132px;justify-content:center}
 .btn{border-radius:8px}
+
+/* ---- Roommates pass 3: filter reads as plain text, settle-up groups, expense chevrons ---- */
+.rm-bar .segment{gap:18px}
+.rm-bar .segment button,.rm-bar .segment button[aria-checked=true]{border-bottom-color:transparent}
+.rm-bar .segment button[aria-checked=true]{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:2px;text-underline-offset:8px}
+.rm-sub-h{font-size:var(--t-meta);font-weight:500;color:var(--ink-soft);margin:14px 0 2px}
+.rm-exp summary{list-style:none}
+.rm-exp summary::-webkit-details-marker{display:none}
+.rm-chev{flex:none;color:var(--ink-soft);transition:transform .2s var(--ease)}
+.rm-exp details[open] .rm-chev{transform:rotate(180deg)}
+.rm-exp summary{display:flex;align-items:center;gap:12px}
