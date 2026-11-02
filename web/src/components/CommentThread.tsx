@@ -89,7 +89,7 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
     <form className="ct-compose" onSubmit={submit}>
       <Face name="You" />
       <div className="ct-box">
-        <textarea ref={commentInput} rows={2} aria-label={focus ? `Reply to ${focus.author_name}` : "Write a reply"} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(e as unknown as FormEvent); } }} placeholder={focus ? `Reply to ${focus.author_name}…` : "Write a reply"} />
+        <textarea ref={commentInput} rows={2} aria-label={focus ? `Reply to ${focus.author_name}` : "Write a reply"} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(e as unknown as FormEvent); } else if (e.key === "Escape") { e.currentTarget.blur(); } }} placeholder={focus ? `Reply to ${focus.author_name}…` : "Write a reply"} />
         <EmojiButton value={text} onChange={setText} inputRef={commentInput} max={500} />
       </div>
       <button className="ct-post" data-ready={text.trim() && !sending ? "" : undefined} disabled={!text.trim() || sending}>{sending ? "Posting…" : "Reply"}</button>

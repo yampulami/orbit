@@ -249,12 +249,12 @@ export default function Feed() {
             <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } else if (e.key === "Escape") { if (choosing) setChoosing(false); else e.currentTarget.blur(); } }} placeholder={`Lost a lanyard? Found a seat? Tell ${campus.name}.`} />
           </label>
           <div className="composer-row">
-            <div className="aud-wrap">
+            <div className="aud-wrap" onKeyDown={(e) => { if (e.key === "Escape" && choosing) { e.stopPropagation(); setChoosing(false); (e.currentTarget.querySelector(".aud-trigger") as HTMLElement | null)?.focus(); } }}>
               <button type="button" className="aud-trigger" aria-haspopup="true" aria-expanded={choosing} title={WHO[community]} onClick={() => setChoosing((v) => !v)}>
                 <span>Audience</span> <b>{SHOW[community]}</b> <ChevronDown size={16} aria-hidden="true" style={{ transform: choosing ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
               </button>
               {choosing && (
-                <div className="audience choosing" role="radiogroup" aria-label="Post to" onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setChoosing(false); composerRef.current?.focus(); } }}>
+                <div className="audience choosing" role="radiogroup" aria-label="Post to">
                   {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); composerRef.current?.focus(); }}>{SHOW[c]}</button>)}
                   {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); composerRef.current?.focus(); }}>{SHOW.Marketplace}</button></>}
                   <small className="aud-who">{WHO[community]}</small>

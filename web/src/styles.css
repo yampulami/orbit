@@ -4456,3 +4456,22 @@ textarea,input{caret-color:var(--accent)}
 .now-needle{background:var(--accent)}
 .now-key i.needle{background:var(--accent)}
 .feed-h::before{content:"";display:inline-block;width:10px;height:10px;margin-right:2px;border-radius:50%;background:var(--accent);align-self:center}
+
+/* ---- Left bar and dialogs on short screens; New post reads the same open or closed ---- */
+@media (min-width:901px){
+  .shell.wide .compose-btn.solo{background:var(--accent);color:#fff}
+  [data-theme=dark] .shell.wide .compose-btn.solo{color:#1a1210}
+  .shell.wide .compose-btn.solo .navtext,[data-theme=dark] .shell.wide .compose-btn.solo .navtext{color:#fff}
+}
+@media (min-width:901px) and (max-height:880px){
+  .side{padding:14px 0;gap:8px}
+  .navgroup{gap:6px;margin-top:6px}
+  .side-utils{gap:0}
+  .navlink{min-height:52px}
+}
+.shortcuts{max-height:calc(100vh - 40px);overflow-y:auto}
+@media (min-width:901px) and (max-height:880px){
+  .shell:not(.wide) .side-utils .navtext{display:none}
+  .shell:not(.wide) .side-utils .navlink{min-height:44px;height:44px}
+  .navlink{min-height:48px}
+}

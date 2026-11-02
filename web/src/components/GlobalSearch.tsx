@@ -69,7 +69,7 @@ export default function GlobalSearch() {
     // Escape closes the list wherever focus is (the box itself, a place-to-look tab, or nowhere in particular after a click on the dimmed page).
     const onKey = (e: globalThis.KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); }
-      else if (e.key === "Escape" && root.current?.querySelector(".gs-panel")) { setOpen(false); setQ(""); if (root.current.contains(document.activeElement)) { (document.activeElement as HTMLElement).blur(); if (came.current?.isConnected) came.current.focus(); } }
+      else if (e.key === "Escape" && root.current?.querySelector(".gs-panel")) { setOpen(false); setHoverIdx(null); setQ(""); if (root.current.contains(document.activeElement)) { (document.activeElement as HTMLElement).blur(); if (came.current?.isConnected) came.current.focus(); } }
     };
     const away = (e: MouseEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
     window.addEventListener("keydown", onKey);
@@ -126,7 +126,7 @@ export default function GlobalSearch() {
     return out.filter((h) => { const f = family(h.id); taken[f] = (taken[f] ?? 0) + 1; return taken[f] <= 2; }).sort((a, b) => order.indexOf(family(a.id)) - order.indexOf(family(b.id)));
   }, [term, usernameOnly, scope, scoped, limit, hangouts, reminders, space, groups, posts, orgs, events]);
 
-  const close = () => { setOpen(false); setQ(""); };
+  const close = () => { setOpen(false); setHoverIdx(null); setQ(""); };
   const pages = scope === "all" && !longEnough(q) ? PAGES.filter((p) => !q.trim() || p.title.toLowerCase().includes(q.trim().toLowerCase())) : [];
   const options: Option[] = [
     ...pages.map((p): Option => ({ section: "pages", id: p.id, label: p.title, go: () => { close(); nav(p.to); } })),
@@ -139,7 +139,7 @@ export default function GlobalSearch() {
     friends.some((f) => f.id === id) ? "Friend" : outgoing.some((r) => r.to.id === id) ? "Requested" : incoming.some((r) => r.from.id === id) ? "Wants to add you" : "Person";
 
   function key(e: KeyboardEvent) {
-    if (e.key === "Escape") { e.preventDefault(); setOpen(false); setQ(""); input.current?.blur(); if (came.current?.isConnected) came.current.focus(); return; }
+    if (e.key === "Escape") { e.preventDefault(); setOpen(false); setHoverIdx(null); setQ(""); input.current?.blur(); if (came.current?.isConnected) came.current.focus(); return; }
     if (!options.length) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((a) => (a + 1) % options.length); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => (a + options.length - 1) % options.length); }
@@ -150,7 +150,7 @@ export default function GlobalSearch() {
   const showPanel = open && (longEnough(q) || scoped || pages.length > 0);
   const idx = (section: Option["section"], id: string) => options.findIndex((o) => o.section === section && o.id === id);
   const label = scoped ? SCOPES.find((s) => s.id === scope)!.label : "";
-  const hovered = hoverIdx !== null && !q ? options[hoverIdx]?.label : undefined;
+  const hovered = showPanel && hoverIdx !== null && !q ? options[hoverIdx]?.label : undefined;
   const placeholder = hovered ?? (scoped ? label : friendsLive ? "Search, or @username" : "Search");
 
   const scopeRow = (
@@ -166,7 +166,7 @@ export default function GlobalSearch() {
   return (
     <>
       {showPanel && <div className="gs-dim" aria-hidden="true" />}
-      <div className={"gs-row" + (open ? " open" : "")} ref={root}>
+      <div className={"gs-row" + (open ? " open" : "")} ref={root} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) { setOpen(false); setHoverIdx(null); } }}>
         <div className={"gsearch" + (phoneOpen ? " phone-open" : "") + (showPanel ? " has-panel" : "")} role="search" onKeyDown={key} onClick={(e) => { if (!(e.target as HTMLElement).closest("button,li")) input.current?.focus(); }}>
           <button type="button" className="gs-toggle" aria-label="Search" aria-expanded={phoneOpen} onClick={() => { setPhoneOpen(true); setTimeout(() => input.current?.focus(), 50); }}><Search size={20} aria-hidden="true" /></button>
           <Search size={18} aria-hidden="true" className="gs-glass" />

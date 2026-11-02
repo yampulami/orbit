@@ -6,7 +6,8 @@ export const GO: Record<string, { to: string; label: string }> = {
   r: { to: "/app/roommates", label: "Roommates" },
   p: { to: "/app/plans", label: "Plans" },
   s: { to: "/app/sync", label: "Schedule sync" },
-  c: { to: "/app/map", label: "Map" },
+  c: { to: "/app/campus", label: "Campus" },
+  o: { to: "/app/map", label: "Map" },
   u: { to: "/app/profile", label: "Profile" },
 };
 
