@@ -4611,3 +4611,7 @@ textarea,input{caret-color:var(--accent)}
 .asst-sphere{display:grid;place-items:center;animation:asst-float 4.5s ease-in-out infinite}
 @keyframes asst-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 @media (prefers-reduced-motion:reduce){.asst-sphere{animation:none}}
+
+/* the reminders list needs no round icons: the title and its day say what it is */
+.up-ico{display:none}
+.up-main{padding-left:12px}

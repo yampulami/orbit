@@ -1,7 +1,7 @@
 import { SweepLi, SweepUl } from "./Sweep";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, Check, GraduationCap, ListChecks, Users } from "lucide-react";
+import { Check } from "lucide-react";
 import { useClasses } from "../lib/classes";
 import { useHang } from "../lib/hangouts";
 import { reminderActions, useReminders } from "../lib/reminders";
@@ -10,7 +10,6 @@ import PinButton from "./PinButton";
 import { usePins } from "../lib/pins";
 import { buildUpcoming, type UpKind, type UpTag } from "../lib/upcoming";
 
-const ICON: Record<UpKind, typeof Bell> = { hangout: Users, chore: ListChecks, reminder: Bell, class: GraduationCap };
 const TAG: Record<UpTag, string> = { answer: "Needs your answer", overdue: "Overdue", today: "Today", soon: "Soon", tomorrow: "Tomorrow" };
 
 /** What is coming up: hangouts (with what needs an answer), your chores in the house, and reminders you set on the calendar. */
@@ -41,11 +40,9 @@ export default function UpcomingList({ limit = 5, moreTo, hide = [], title = "Co
       ) : (
         <SweepUl>
           {shown.map((it, i) => {
-            const Icon = ICON[it.kind];
             return (
               <SweepLi key={it.id} data-kind={it.kind} className={[i >= visible ? "fold" : "", isPinned(it) ? "is-pinned" : "", leaving === it.id ? "leaving" : ""].join(" ").trim() || undefined} inert={i >= visible}>
                 <button type="button" className="up-main" title={`${it.title}, ${it.sub}`} onClick={() => nav(it.to, { state: it.state })}>
-                  <span className="up-ico" aria-hidden="true"><Icon size={16} strokeWidth={1.9} /></span>
                   <span className="up-text"><strong>{it.title}</strong><span className="up-sub">{it.sub}</span></span>
                   {it.tag && <span className="up-tag" data-tag={it.tag}>{TAG[it.tag]}</span>}
                 </button>
