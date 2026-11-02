@@ -4615,3 +4615,41 @@ textarea,input{caret-color:var(--accent)}
 /* the reminders list needs no round icons: the title and its day say what it is */
 .up-ico{display:none}
 .up-main{padding-left:12px}
+
+/* ---- Chats, in the Orbit look (see REDESIGN-GUIDE.md): a sentence on top, text tabs, ruled thread list, a flat conversation that uses the width ---- */
+.chats{gap:0;width:100%}
+.chats>.page,.chats .page{width:100%}
+.chats-head{font-family:var(--display);font-size:clamp(1.5rem,2.5vw,var(--t-hero));font-weight:600;letter-spacing:-.02em;line-height:1.15;margin:8px 0 14px}
+.chats-switch{display:flex;gap:22px;padding:0;border-radius:0;background:none;box-shadow:none;width:100%;border-bottom:1px solid var(--line)}
+.chats-switch button{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 2px;border-radius:0;background:none;color:var(--ink-soft);font-size:var(--t-ui);font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px}
+.chats-switch button:hover{color:var(--ink)}
+.chats-switch button[aria-selected=true]{background:none;color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.chats-switch b,.chats-switch b[data-warm]{min-width:0;height:auto;padding:0;background:none;color:var(--accent);font-size:var(--t-meta);font-weight:600}
+.chats .chat{grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:0;margin-top:16px;align-items:stretch;min-height:min(62vh,640px)}
+.chats .threads{gap:0;align-content:start;border-right:1px solid var(--line);padding-right:12px}
+.chats .thread{display:grid;gap:2px;padding:12px 12px;border-radius:8px;background:none;border-top:1px solid var(--line);color:var(--ink)}
+.chats .thread:first-child{border-top:0}
+.chats .thread:hover{background:var(--panel)}
+.chats .thread.on{background:var(--panel);color:var(--ink)}
+.chats .thread.on .muted,.chats .thread .muted{color:var(--ink-soft);font-size:var(--t-meta)}
+.chats .thread strong{font-size:var(--t-ui);font-weight:600}
+.chats .threadpill{background:var(--panel);border-radius:8px}
+.chats .thread.new{border:0;background:none;color:var(--accent);display:flex;align-items:center;gap:8px;font-weight:600;border-bottom:1px solid var(--line);border-radius:0;min-height:44px}
+.chats .thread.new strong{color:inherit;font-size:var(--t-ui)}
+.chats .thread.new:hover{background:none;text-decoration:underline;text-underline-offset:3px}
+.chats .dm-unread{min-width:0;height:auto;padding:0 0 0 8px;background:none;color:var(--accent);font-size:var(--t-meta);font-weight:600}
+.chats .convo{border-radius:0;background:none;box-shadow:none;border:0;padding:0 0 0 24px;min-height:0;gap:14px}
+.chats .convo-head h2{font-size:var(--t-h2);font-weight:600}
+.chats .convo-head p{font-size:var(--t-meta);color:var(--ink-soft)}
+.chats .bubbles{max-height:min(48vh,480px);gap:6px}
+.chats .bubble{font-size:var(--t-ui);line-height:1.45;max-width:min(68ch,82%);background:var(--panel);color:var(--ink);box-shadow:none;padding:10px 14px;border-radius:14px 14px 14px 4px}
+.chats .bubble.mine{background:var(--ink);color:var(--on-ink);border-radius:14px 14px 4px 14px}
+.chats .bubble-meta{font-size:var(--t-micro)}
+.chats .comment-form{gap:8px;align-items:center;padding-top:10px;border-top:1px solid var(--line)}
+.chats .comment-form input{height:44px;border-radius:8px;padding:0 14px;font-size:var(--t-ui)}
+.chats .comment-form .btn.primary{min-width:44px;height:44px;padding:0;border-radius:8px;background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .chats .comment-form .btn.primary{color:#1a1210}
+.chats .comment-form .btn.primary:disabled{background:transparent;border-color:var(--line);color:var(--ink-soft);opacity:1}
+.chats .dm-people{list-style:none;margin:0;padding:0;display:grid}
+.chats .rm-empty{font-size:var(--t-meta);color:var(--ink-soft)}
+@media (max-width:900px){.chats .chat{grid-template-columns:1fr}.chats .threads{border-right:0;padding-right:0}.chats .convo{padding-left:0}}
