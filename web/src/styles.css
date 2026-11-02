@@ -4868,3 +4868,35 @@ textarea,input{caret-color:var(--accent)}
 .merc-btn,.merc-base,.merc-drop{border-radius:8px}
 .merc-submit .merc-btn,.merc-goo i,.merc-goo,.merc-submit{border-radius:8px!important}
 .merc-submit{filter:none}
+
+/* ---- Chats pass 2 (critique): a pointer to the answer, calmer group header, bolder unread rows, phone list, contrast ---- */
+.chats-head .chats-link,.convo-link{border:0;background:none;color:var(--accent);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0;border-radius:0;min-height:44px}
+.chats-head .chats-link{font-size:var(--t-ui);min-height:0;margin-left:6px}
+.chats-head .chats-link:hover,.convo-link:hover{background:none;color:var(--ink)}
+.chats .thread-ask{color:var(--accent);font-weight:600}
+.chats .thread[data-unread] .muted{color:var(--ink);font-weight:600}
+.chats .convo-actions{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px}
+.chats .convo-actions .convo-link{font-size:var(--t-meta);color:var(--ink-soft)}
+.chats .convo-more{position:relative}
+.chats .convo-more summary{list-style:none;cursor:pointer;min-height:44px;display:inline-flex;align-items:center;color:var(--ink-soft);font-size:var(--t-meta);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.chats .convo-more summary::-webkit-details-marker{display:none}
+.chats .convo-more[open] summary{color:var(--ink)}
+.chats .convo-more>div{display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;margin-top:2px}
+.chats .convo-more .cf-act{color:var(--ink-soft)}
+.chats .dm-empty-note{display:grid;gap:4px;justify-items:start;font-size:var(--t-ui);color:var(--ink-soft)}
+.chats .dm-empty-note p{margin:0}
+.chats .dm-empty-note strong{color:var(--ink)}
+.chats .comment-form{padding-right:0}
+.chats .comment-form .emoji-btn{width:44px;height:44px}
+.who-name{color:color-mix(in srgb,var(--accent) 82%,#000)}
+[data-theme=dark] .who-name{color:#ff9a6e}
+[data-theme=dark] .rsvp.rsvp button[data-a=yes]{color:#ff9a6e}
+[data-theme=dark] .drawer-link.on,[data-theme=dark] .drawer-link[aria-current=page],[data-theme=dark] .bell-count{color:#1a1210}
+@media (max-width:900px){
+  .chats .chat.phone-list .threads,.chats .chat .threads{grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:1fr;overflow:visible;gap:0}
+  .chats .chat.phone-list .thread{min-height:64px;padding:12px 4px;border-radius:0}
+  .chats .chat.phone-list .thread.on,.chats .chat.phone-list .threadpill{background:none;box-shadow:none}
+  .chats .bubbles{padding-top:12px}
+}
+body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
+@media (min-width:901px){.chats .convo{padding-bottom:56px}}

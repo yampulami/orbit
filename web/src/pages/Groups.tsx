@@ -2,7 +2,7 @@ import { siteUrl } from "../lib/siteUrl";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarClock, CalendarPlus, Copy, KeyRound, LogOut, Plus, Send, Trash2, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, Copy, KeyRound, Plus, Send, Users } from "lucide-react";
 import ConfirmButton from "../components/ConfirmButton";
 import GroupSync from "../components/GroupSync";
 import { GroupMoment } from "../components/Moments";
@@ -16,7 +16,8 @@ import GroupAddFriend from "../components/GroupAddFriend";
 import AvatarStack from "../components/AvatarStack";
 import MemberPicker, { everyone, usePeopleSets } from "../components/MemberPicker";
 import { useFriends } from "../lib/friends";
-import { findConflict, hangActions, hangLive, useHang, useHangStatus, YOU } from "../lib/hangouts";
+import { findConflict, hangActions, hangLive, isVisible, useHang, useHangStatus, YOU } from "../lib/hangouts";
+import { threadKeys } from "../lib/threadKeys";
 import { notice } from "../lib/notice";
 import { useMapPlaces } from "../lib/mapPlaces";
 import { enter, slide } from "../lib/motion";
@@ -55,6 +56,9 @@ export default function Groups() {
   const { incoming: friendRequests } = useFriends();
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState("");
+
+  /** Hangouts in this group still waiting on your answer. */
+  const toAnswer = (gid: string) => hangouts.filter((h) => h.groupId === gid && isVisible(h, groups) && !h.rsvps[YOU] && new Date(h.when).getTime() > Date.now()).length;
 
   const scroller = useRef<HTMLDivElement>(null);
   const sets = usePeopleSets();
@@ -127,15 +131,15 @@ export default function Groups() {
 
   return (
     <div className="page">
-      <h1 className="sr">Groups</h1>
+      <h2 className="sr">Groups</h2>
       {phone && paneOpen && <button type="button" className="chat-back-bar" onClick={() => setPaneOpen(false)}><ArrowLeft size={18} aria-hidden="true" /> Groups</button>}
       <div className={"chat" + (phone ? (paneOpen ? " phone-chat" : " phone-list") : "")}>
-        <div className="threads" aria-label="Your groups">
+        <div className="threads" aria-label="Your groups" onKeyDown={threadKeys}>
           {groups.map((g) => (
             <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate && !friendsOpen ? " on" : "")} aria-current={g.id === group?.id && !showCreate && !friendsOpen} onClick={() => { setActiveId(g.id); setFriendsOpen(false); setCreating(false); setPlanning(false); setSyncing(false); setAdding(false); setError(""); setPaneOpen(true); }}>
               {g.id === group?.id && !showCreate && !friendsOpen && <motion.span layoutId="group-indicator" className="threadpill" transition={slide} />}
               <strong>{g.name}</strong>
-              <span className="muted">{g.members.length} people</span>
+              <span className="muted">{g.members.length} people{toAnswer(g.id) > 0 && <> · <span className="thread-ask">{toAnswer(g.id)} to answer</span></>}</span>
             </button>
           ))}
           <button className="thread new" onClick={() => { setCreating(true); setFriendsOpen(false); setError(""); setPaneOpen(true); }}><Plus size={16} /> New group</button>
@@ -180,12 +184,17 @@ export default function Groups() {
             <div className="convo-head">
               <div><h2>{group.name}</h2><div className="convo-people"><AvatarStack people={group.members.filter((m) => m !== YOU).map((m) => ({ name: m, id: friendIds.get(m) }))} max={5} size={30} expandable /><span className="muted">{group.members.length} {group.members.length === 1 ? "person" : "people"}</span></div></div>
               <div className="convo-actions">
-                <button className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setError(""); }} aria-expanded={adding}><UserPlus size={18} /> {hangLive ? "Add people" : "Add friends"}</button>
-                <button className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setError(""); }} aria-expanded={planning}><CalendarPlus size={18} /> Plan a hangout</button>
-                <button className="btn" onClick={() => { setSyncing((v) => !v); setAdding(false); setPlanning(false); setError(""); }} aria-expanded={syncing}><CalendarClock size={18} /> Find a time</button>
-                {group.mine
-                  ? <ConfirmButton icon={<Trash2 size={15} aria-hidden="true" />} label="Delete group" question={`Delete ${group.name} for everyone? Its chat, hangouts and invite link go too.`} confirm="Delete" onConfirm={() => { void hangActions.deleteGroup(group.id); setPaneOpen(false); }} />
-                  : <ConfirmButton icon={<LogOut size={15} aria-hidden="true" />} label="Leave group" question={`Leave ${group.name}? It leaves your list. The others keep it.`} confirm="Leave" onConfirm={() => { void hangActions.leaveGroup(group.id); setPaneOpen(false); }} />}
+                <button className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setSyncing(false); setError(""); }} aria-expanded={planning}>Plan a hangout</button>
+                <button type="button" className="link-btn convo-link" onClick={() => { setSyncing((v) => !v); setAdding(false); setPlanning(false); setError(""); }} aria-expanded={syncing}>Find a time when everyone is free</button>
+                <details className="convo-more">
+                  <summary>More</summary>
+                  <div>
+                    <button type="button" className="link-btn convo-link" onClick={() => { setAdding((v) => !v); setPlanning(false); setSyncing(false); setError(""); }} aria-expanded={adding}>{hangLive ? "Add people" : "Add friends"}</button>
+                    {group.mine
+                      ? <ConfirmButton label="Delete group" question={`Delete ${group.name} for everyone? Its chat, hangouts and invite link go too.`} confirm="Delete" onConfirm={() => { void hangActions.deleteGroup(group.id); setPaneOpen(false); }} />
+                      : <ConfirmButton label="Leave group" question={`Leave ${group.name}? It leaves your list. The others keep it.`} confirm="Leave" onConfirm={() => { void hangActions.leaveGroup(group.id); setPaneOpen(false); }} />}
+                  </div>
+                </details>
               </div>
             </div>
             {!syncing && !planning && !adding && <GroupMoment groupId={group.id} />}

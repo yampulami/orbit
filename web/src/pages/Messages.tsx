@@ -2,10 +2,10 @@ import Orb from "../components/Orb";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, MessageCircle, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Send, Trash2 } from "lucide-react";
 import ConfirmButton from "../components/ConfirmButton";
 import { useChatOpenClass, useIsPhone } from "../lib/phone";
-import EmptyState from "../components/EmptyState";
+import { threadKeys } from "../lib/threadKeys";
 import EmojiButton from "../components/EmojiButton";
 import RichText from "../components/RichText";
 import { enter, slide } from "../lib/motion";
@@ -104,13 +104,13 @@ function LiveMessages() {
 
   return (
     <div className="page">
-      <h1 className="sr">Messages</h1>
+      <h2 className="sr">Messages</h2>
       {phone && inChat && <button type="button" className="chat-back-bar" onClick={() => { setChatOpen(false); setPicking(false); }}><ArrowLeft size={18} aria-hidden="true" /> Messages</button>}
       <div className={"chat" + (phone ? (inChat ? " phone-chat" : " phone-list") : "")}>
-        <div className="threads" role="tablist" aria-label="Conversations">
+        <div className="threads" role="tablist" aria-label="Conversations" onKeyDown={threadKeys}>
           <button type="button" className="thread new" onClick={() => { setPicking((v) => !v); setActive(""); setChatOpen(true); }} aria-expanded={picking}><Plus size={16} aria-hidden="true" /><strong>New message</strong></button>
           {threads.map((t) => (
-            <button key={t.id} role="tab" aria-selected={!picking && t.id === shownId} className={"thread" + (!picking && t.id === shownId ? " on" : "")} onClick={() => { setPicking(false); setActive(t.id); setChatOpen(true); }}>
+            <button key={t.id} role="tab" aria-selected={!picking && t.id === shownId} className={"thread" + (!picking && t.id === shownId ? " on" : "")} data-unread={t.unread > 0 ? "" : undefined} onClick={() => { setPicking(false); setActive(t.id); setChatOpen(true); }}>
               {!picking && t.id === shownId && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
               <strong>{t.name}{onlineNow.has(t.otherId) && <Orb size={14} variant="green" poke={false} className="active-orb" />}{t.unread > 0 && <span className="dm-unread" aria-label={`${t.unread} unread`}>{t.unread}</span>}</strong>
               <span className="muted">{t.messages.length ? t.messages[t.messages.length - 1].text : "No messages yet"}</span>
@@ -157,10 +157,12 @@ function LiveMessages() {
             status === "loading" ? (
               <div className="dm-empty" aria-busy="true" aria-label="Loading your messages"><div className="skeleton sk-line" /><div className="skeleton sk-line short" /><div className="skeleton sk-tile" /></div>
             ) : (
-              <EmptyState icon={MessageCircle} title={status === "error" ? "Messages did not load" : "No messages yet"}
-                action={status === "ready" ? <button type="button" className="btn primary" onClick={() => setPicking(true)}><Plus size={16} aria-hidden="true" />New message</button> : undefined}>
-                {status === "error" ? "Check your connection and reopen this page." : "Start a conversation with someone on your campus."}
-              </EmptyState>
+              <div className="dm-empty-note">
+                <p><strong>{status === "error" ? "Messages did not load." : "No messages yet."}</strong> {status === "error" ? "Check your connection, then try again." : "Start a conversation with someone on your campus."}</p>
+                {status === "error"
+                  ? <button type="button" className="link-btn convo-link" onClick={() => window.location.reload()}>Try again</button>
+                  : <button type="button" className="link-btn convo-link" onClick={() => setPicking(true)}>New message</button>}
+              </div>
             )
           )}
         </div>
@@ -175,6 +177,10 @@ function SampleMessages() {
   const [active, setActive] = useState("Maya");
   const [text, setText] = useState("");
   const [fresh, setFresh] = useState("");
+  const phone = useIsPhone();
+  const [chatOpen, setChatOpen] = useState(false);
+  const inChat = phone && chatOpen;
+  useChatOpenClass(inChat);
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [active, threads[active].length]);
 
@@ -188,11 +194,12 @@ function SampleMessages() {
 
   return (
     <div className="page">
-      <h1 className="sr">Messages</h1>
-      <div className="chat">
-        <div className="threads" role="tablist" aria-label="Conversations">
+      <h2 className="sr">Messages</h2>
+      {inChat && <button type="button" className="chat-back-bar" onClick={() => setChatOpen(false)}><ArrowLeft size={18} aria-hidden="true" /> Messages</button>}
+      <div className={"chat" + (phone ? (inChat ? " phone-chat" : " phone-list") : "")}>
+        <div className="threads" role="tablist" aria-label="Conversations" onKeyDown={threadKeys}>
           {Object.keys(threads).map((n) => (
-            <button key={n} role="tab" aria-selected={n === active} className={"thread" + (n === active ? " on" : "")} onClick={() => setActive(n)}>
+            <button key={n} role="tab" aria-selected={n === active} className={"thread" + (n === active ? " on" : "")} onClick={() => { setActive(n); setChatOpen(true); }}>
               {n === active && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
               <strong>{n}</strong>
               <span className="muted">{threads[n][threads[n].length - 1].text}</span>

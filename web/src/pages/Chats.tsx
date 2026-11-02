@@ -19,11 +19,17 @@ export default function Chats() {
   // One sentence that says where things stand, like the top of the Feed.
   const head = tab === "groups"
     ? waiting > 0 ? `${waiting} plan${waiting === 1 ? "" : "s"} from your groups need${waiting === 1 ? "s" : ""} an answer` : "Your groups"
-    : unread > 0 ? `${unread} new message${unread === 1 ? "" : "s"}` : "You are all caught up";
+    : unread > 0 ? `${unread} new message${unread === 1 ? "" : "s"}`
+    : waiting > 0 ? `${waiting} plan${waiting === 1 ? "" : "s"} from your groups need${waiting === 1 ? "s" : ""} an answer`
+    : "You are all caught up";
+  const pointToGroups = tab === "messages" && unread === 0 && waiting > 0;
 
   return (
     <div className="chats">
-      <h2 className="chats-head">{head}</h2>
+      <h1 className="chats-head">
+        {head}
+        {pointToGroups && <> <button type="button" className="chats-link" onClick={() => go("groups")}>Open groups</button></>}
+      </h1>
       <div className="chats-switch" role="tablist" aria-label="Chats">
         <button type="button" role="tab" aria-selected={tab === "messages"} onClick={() => go("messages")}>
           Messages{unread > 0 && <b role="img" aria-label={`${unread} unread`}>{unread > 9 ? "9+" : unread}</b>}
