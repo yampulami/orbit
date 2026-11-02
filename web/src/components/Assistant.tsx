@@ -28,7 +28,7 @@ import { answerFor, type AssistantCtx, type Reply } from "../lib/assistant";
 import { makeMsg, useChatHistory, type Msg } from "../lib/assistantChats";
 import AssistantChat from "./AssistantChat";
 import MorphOrb from "./MorphOrb";
-import Orb from "./Orb";
+import OrbAvatar from "./OrbAvatar";
 
 /** Where the launcher sits, as a share of the room it can move in, so it stays put when the window changes size. */
 type Frac = { fx: number; fy: number };
@@ -324,7 +324,7 @@ export default function Assistant() {
         onTransitionEnd={() => setSettling(false)}
         onClick={() => openFrom()}
       >
-        <Orb size={50} variant="violet" poke={false} />
+        <span className="asst-sphere"><OrbAvatar size={58} decorative /></span>
         <span className="asst-tip" aria-hidden="true">Ask Orbit</span>
       </button>
       {createPortal(

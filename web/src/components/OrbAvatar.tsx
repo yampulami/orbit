@@ -18,7 +18,7 @@ const ORANGE = {
   shine: "radial-gradient(ellipse at 30% 24%, rgba(255,255,255,.75) 0%, rgba(255,255,255,.1) 50%, transparent 70%)",
 };
 
-export default function OrbAvatar({ size = 32, mood = "idle", onPoke, label = "Orbit" }: { size?: number; mood?: OrbMood; onPoke?: () => void; label?: string }) {
+export default function OrbAvatar({ size = 32, mood = "idle", onPoke, label = "Orbit", decorative = false }: { size?: number; mood?: OrbMood; onPoke?: () => void; label?: string; decorative?: boolean }) {
   const uid = useId().replace(/\W/g, "");
   const eyeW = Math.max(3, Math.round(size * 0.12));
   const eyeH = Math.max(5, Math.round(size * 0.2));
@@ -29,8 +29,9 @@ export default function OrbAvatar({ size = 32, mood = "idle", onPoke, label = "O
     <>
       <style>{BLINK}</style>
       <motion.span
-        role="img"
-        aria-label={label}
+        role={decorative ? undefined : "img"}
+        aria-label={decorative ? undefined : label}
+        aria-hidden={decorative ? true : undefined}
         onClick={onPoke}
         whileTap={{ scaleX: 1.15, scaleY: 1.3 }}
         transition={{ type: "tween", duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}

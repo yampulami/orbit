@@ -4050,7 +4050,7 @@ a.person-link.who-link{min-height:24px;align-items:center}
 .feed-failed p{margin:0;color:var(--ink-soft)}
 .sk-now{height:150px;border-radius:8px}.sk-line{height:56px;margin-top:14px;border-radius:8px}.sk-post{height:110px;margin-top:20px;border-radius:8px}
 .cal-toggle{justify-content:space-between}
-body.feed-page .asst-fab{display:none}
+@media (max-width:900px){body.feed-page .asst-fab{display:none}}
 @media (max-width:700px){
   .pw-row,.cs-row{grid-template-columns:86px minmax(0,1fr);gap:12px}
   .pw-when b,.cs-rail b{font-size:1rem}
@@ -4603,3 +4603,11 @@ textarea,input{caret-color:var(--accent)}
 /* the page uses the room it has: the rail on the right stays on the right edge and the main column grows to meet it; reading lines keep a comfortable length */
 .feed-layout{grid-template-columns:minmax(0,1fr) clamp(320px,24vw,440px);justify-content:stretch}
 .feed-main .rp-body,.feed-main .rp-title,.feed-main .comments{max-width:72ch}
+
+
+/* the assistant: a floating orange sphere in the corner. Click it and the chat opens. */
+.asst-fab{width:68px;height:68px;background:transparent;box-shadow:none;border-radius:50%;filter:drop-shadow(0 14px 16px rgba(232,87,42,.4))}
+.asst-fab:hover{transform:translateY(-3px) scale(1.06)}
+.asst-sphere{display:grid;place-items:center;animation:asst-float 4.5s ease-in-out infinite}
+@keyframes asst-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@media (prefers-reduced-motion:reduce){.asst-sphere{animation:none}}

@@ -12,7 +12,7 @@ import UndoToast from "./UndoToast";
 import NoticeHost from "./NoticeHost";
 import { arrival } from "../lib/arrival";
 import NotificationBell from "./NotificationBell";
-import OrbAvatar from "./OrbAvatar";
+import Orb from "./Orb";
 import Assistant from "./Assistant";
 import { useNotifs } from "../lib/notifs";
 import type { OrbMood } from "../lib/orbGaze";
@@ -138,7 +138,7 @@ export default function Shell() {
       <a className="skip" href="#main">Skip to content</a>
       <aside className="side" aria-label="Main">
         <div className="side-top">
-          <NavLink to="/app/feed" className="logo logo-toggle" aria-label="Orbit, home"><OrbAvatar size={32} mood={logoMood} onPoke={wake} /><span className="navtext">Orbit</span></NavLink>
+          <NavLink to="/app/feed" className="logo logo-toggle" aria-label="Orbit, home"><Orb variant="light" size={32} mood={logoMood} onPoke={wake} /><span className="navtext">Orbit</span></NavLink>
         </div>
         <nav className="navgroup" aria-label="Primary">
           {items.map((i) => {
@@ -194,7 +194,7 @@ export default function Shell() {
       </aside>
       <div className="content">
         <div className="topline">
-          <button type="button" className="logo logo-mobile" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><OrbAvatar size={34} mood={logoMood} onPoke={wake} /></button>
+          <button type="button" className="logo logo-mobile" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><Orb variant="violet" size={34} mood={logoMood} onPoke={wake} /></button>
           <span className="top-title" aria-hidden="true">{pageTitle}</span>
           <GlobalSearch />
           <NotificationBell />
@@ -222,7 +222,7 @@ export default function Shell() {
       {loc.pathname.startsWith("/app/feed") && <button type="button" className="fab" aria-label="New post" onClick={newPost}><SquarePen size={24} strokeWidth={1.9} aria-hidden="true" /></button>}
       <div className={"drawer-scrim" + (drawer ? " open" : "")} aria-hidden="true" onClick={() => setDrawer(false)} />
       <nav className={"drawer" + (drawer ? " open" : "")} aria-label="Menu" aria-hidden={!drawer} inert={!drawer}>
-        <div className="drawer-head"><span className="logo"><OrbAvatar size={34} /><span>Orbit</span></span></div>
+        <div className="drawer-head"><span className="logo"><Orb variant="violet" size={34} /><span>Orbit</span></span></div>
         {items.map((i) => (
           <NavLink key={i.to} to={i.to} className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}>
             <i.icon size={22} strokeWidth={1.75} /><span>{i.label}</span>
