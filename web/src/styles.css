@@ -4973,3 +4973,17 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .agenda-hangs li .cal-hbtns button[aria-pressed=true]{background:none;color:var(--ink);font-weight:700;text-decoration:none}
 .agenda-hangs li .cal-hbtns button[aria-pressed=true][data-a=yes]{color:var(--accent)}
 .agenda-hangs li{border-radius:0}
+
+/* ---- Plans pass 3: neutral week blocks (only unanswered plans get a dashed accent), a quiet rail footer ---- */
+.plans2 .wb-ev,.plans2 .wb-ev.reminder,.plans2 .wb-ev.class,.plans2 .wb-ev.event,.plans2 .wb-ev.m-yes,.plans2 .wb-ev.m-no,.plans2 .wb-ev.event.m-yes,[data-theme=dark] .plans2 .wb-ev.class{background:var(--panel);color:var(--ink);border:0!important;box-shadow:inset 0 0 0 1px var(--line)!important}
+.plans2 .wb-ev.m-pending,.plans2 .wb-ev.event.m-pending{background:none;color:var(--ink);outline:1px dashed var(--accent);outline-offset:-1px;box-shadow:none!important}
+.plans2 .wb-ev.picked{box-shadow:inset 0 0 0 2px var(--ink)!important}
+.plans2 .wb-ev.reminder,.plans2 .wb-ev.class{background:none}
+.plans2 .wb-ev span,.plans2 .wb-ev em{color:var(--ink-soft);opacity:1}
+.plans2 .wb-chip,.plans2 .wb-chip.chore,.plans2 .wb-chip.reminder{background:none;color:var(--ink-soft);box-shadow:inset 0 0 0 1px var(--line)}
+.wb-legend .lg.hangout{background:var(--panel);box-shadow:inset 0 0 0 1px var(--line)}
+.wb-legend .lg.pending{background:none;outline:1px dashed var(--accent);outline-offset:-1px}
+.wb-legend .lg.other{background:none;box-shadow:inset 0 0 0 1px var(--line)}
+.rail-links{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:var(--t-meta);color:var(--ink-soft);margin:4px 2px 0}
+.rail-links .rm-link{font-weight:500;color:var(--ink-soft);min-height:44px;display:inline-flex;align-items:center}
+.plans-keys{font-size:var(--t-micro);color:var(--ink-soft);margin:12px 2px 0}

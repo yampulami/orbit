@@ -121,11 +121,10 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
       </header>
 
       <div className="wb-card">
-        <ul className="wb-legend" aria-label="What the colours mean">
-          <li><i className="lg hangout" aria-hidden="true" /> Group hangout (private)</li>
-          <li><i className="lg event" aria-hidden="true" /> Campus event (public)</li>
-          <li><i className="lg class" aria-hidden="true" /> Class</li>
-          <li><i className="lg reminder" aria-hidden="true" /> Reminder</li>
+        <ul className="wb-legend" aria-label="What the blocks mean">
+          <li><i className="lg hangout" aria-hidden="true" /> Plan</li>
+          <li><i className="lg pending" aria-hidden="true" /> Waiting for your answer</li>
+          <li><i className="lg other" aria-hidden="true" /> Class, event or reminder</li>
         </ul>
         <div className="wb-cols" style={cols}>
           <span />

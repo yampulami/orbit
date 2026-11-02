@@ -9,10 +9,10 @@ import TimePicker from "./TimePicker";
 import EmptyState from "./EmptyState";
 
 /** The weekly class schedule: what is there, and a quick way to add a class. It appears on the week board and in "Coming up". */
-export default function ClassesPanel() {
+export default function ClassesPanel({ startOpen = false }: { startOpen?: boolean } = {}) {
   const classes = useClasses();
   const [open, setOpen] = useState(false);
-  const [shown, setShown] = useState(false);
+  const [shown, setShown] = useState(startOpen);
   const [name, setName] = useState("");
   const [place, setPlace] = useState("");
   const [days, setDays] = useState<number[]>([1, 3]);
