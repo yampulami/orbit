@@ -5,7 +5,7 @@ export const GO: Record<string, { to: string; label: string }> = {
   g: { to: "/app/chats?tab=groups", label: "Groups" },
   r: { to: "/app/roommates", label: "Roommates" },
   p: { to: "/app/plans", label: "Plans" },
-  s: { to: "/app/sync", label: "Schedule sync" },
+  s: { to: "/app/sync", label: "Free time" },
   c: { to: "/app/campus", label: "Campus" },
   o: { to: "/app/map", label: "Map" },
   u: { to: "/app/profile", label: "Profile" },

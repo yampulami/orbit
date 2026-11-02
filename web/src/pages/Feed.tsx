@@ -109,7 +109,7 @@ export default function Feed() {
       if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || isTyping(document.activeElement)) return;
       const k = e.key.toLowerCase();
       if (k === "g") { lastG = Date.now(); return; }
-      if (k.length !== 1 || !"jklr".includes(k) || Date.now() - lastG < 1200 || document.querySelector(".gs-panel")) return;
+      if (k.length !== 1 || !"jklr".includes(k) || Date.now() - lastG < 1200 || document.querySelector(".gs-overlay")) return;
       const posts = [...document.querySelectorAll<HTMLElement>("article.rp")];
       if (posts.length === 0) return;
       const here = (document.activeElement as HTMLElement | null)?.closest("article.rp") as HTMLElement | null;

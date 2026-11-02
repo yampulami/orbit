@@ -21,7 +21,7 @@ export default function Shortcuts({ onNew }: { onNew: () => void }) {
       if (!r) return;
       if (r.kind === "go") { e.preventDefault(); nav(r.to); }
       else if (r.kind === "new") { e.preventDefault(); onNew(); }
-      else if (r.kind === "search") { e.preventDefault(); document.querySelector<HTMLInputElement>(".gsearch input")?.focus(); }
+      else if (r.kind === "search") { e.preventDefault(); window.dispatchEvent(new CustomEvent("orbit-search-open")); }
       else if (r.kind === "help") { e.preventDefault(); setHelp((v) => !v); }
     };
     const show = () => setHelp(true);

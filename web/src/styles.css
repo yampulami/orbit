@@ -3880,12 +3880,6 @@ body.chat-open .chats-switch{display:none}
 .gm.gm-bar[data-caps]{padding-bottom:4px}
 @media (min-width:901px){
   .top-title{display:block;margin-right:auto;font-family:var(--display);font-size:1.5rem;font-weight:600;letter-spacing:-.01em;line-height:1;color:var(--ink)}
-  .shell:not(.wide) .navgroup .navlink,.shell:not(.wide) .navlink.extra{flex-direction:column;justify-content:center;gap:3px;width:76px;height:auto;min-height:58px;padding:7px 0 6px;border-radius:14px}
-  .shell:not(.wide) .navlink>svg{margin-left:0}
-  .shell:not(.wide) .navlink .navtext{display:block;position:relative;z-index:1;margin:0;opacity:1;transform:none;font-size:.6875rem;font-weight:600;line-height:1.1;color:inherit}
-  .shell:not(.wide) .navgroup{gap:6px}
-  .shell:not(.wide) .navpill{border-radius:14px}
-  .shell:not(.wide) .nav-dot{right:14px;top:8px}
 }
 
 /* ---- Quieter: the phone menu is a dark panel like the desktop rail, with the accent only on the page you are on ---- */
@@ -4137,13 +4131,6 @@ body.feed-page .asst-fab{display:none}
 
 /* sidebar: every tile says its name at 12px; New post is the one filled tile; Light mode and Sign out step back */
 @media (min-width:901px){
-  .shell:not(.wide) .navlink .navtext{font-size:var(--t-micro)}
-  .shell:not(.wide) .compose-btn.solo{width:76px;height:auto;min-height:58px;margin:4px 0 0 10px;padding:7px 0 6px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--accent);color:#fff;box-shadow:none}
-  .shell:not(.wide) .compose-btn.solo:hover{transform:none;background:var(--accent-deep)}
-  .shell:not(.wide) .compose-btn.solo .navtext{display:block;position:static;margin:0;opacity:1;transform:none;color:#fff;font-size:var(--t-micro);font-weight:600;line-height:1.1}
-  .shell:not(.wide) .compose-btn.solo svg{width:22px;height:22px}
-  .shell:not(.wide) .navlink.extra{opacity:.78}
-  .shell:not(.wide) .navlink.extra:hover{opacity:1}
 }
 
 /* right column: both cards are 12px panels with the same heading */
@@ -4190,8 +4177,6 @@ body.feed-page .asst-fab{display:none}
 .rp-acts button{font-size:var(--t-meta)}
 .bell-count{font-size:var(--t-micro)}
 @media (min-width:901px){
-  .shell:not(.wide) .navlink.extra,.shell:not(.wide) .navlink.extra[aria-pressed=true]{background:transparent;color:inherit}
-  .shell:not(.wide) .navlink.extra:hover{background:rgba(255,255,255,.1)}
 }
 
 /* ---- Cleaner top block, text audience choice, icons on post actions, a tidier calendar ---- */
@@ -4296,7 +4281,7 @@ body.feed-page .asst-fab{display:none}
 @media (max-width:1100px){.cs-wide{display:none}}
 
 /* ---- Feed: one filled button per area, dark text on the orange in dark mode, 44px hit areas, phone pins at the top ---- */
-[data-theme=dark] .btn.primary,[data-theme=dark] .btn.now-main,[data-theme=dark] .composer .btn.primary,[data-theme=dark] .compose-btn.solo,[data-theme=dark] .shell:not(.wide) .compose-btn.solo .navtext{color:#1a1210}
+[data-theme=dark] .btn.primary,[data-theme=dark] .btn.now-main,[data-theme=dark] .composer .btn.primary,[data-theme=dark] .compose-btn.solo{color:#1a1210}
 .pw-ans .btn.primary,[data-theme=dark] .pw-ans .btn.primary{background:transparent;border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .pw-ans .btn.primary:hover{background:color-mix(in srgb,var(--accent) 14%,transparent)}
 .pw-ans .btn:not(.primary){border-color:var(--line);color:var(--ink-soft)}
@@ -4451,7 +4436,6 @@ body.feed-page .asst-fab{display:none}
 /* ---- Orange, for the brand: text selection, the caret, the orbit mark, the active filter, the day bar's marker ---- */
 ::selection{background:color-mix(in srgb,var(--accent) 38%,transparent)}
 textarea,input{caret-color:var(--accent)}
-.logo-toggle{border-radius:50%;box-shadow:0 0 0 2px var(--accent)}
 .frow button[aria-pressed=true],.audience button[aria-checked=true]{border-bottom-color:var(--accent)}
 .now-needle{background:var(--accent)}
 .now-key i.needle{background:var(--accent)}
@@ -4471,7 +4455,99 @@ textarea,input{caret-color:var(--accent)}
 }
 .shortcuts{max-height:calc(100vh - 40px);overflow-y:auto}
 @media (min-width:901px) and (max-height:880px){
-  .shell:not(.wide) .side-utils .navtext{display:none}
-  .shell:not(.wide) .side-utils .navlink{min-height:44px;height:44px}
   .navlink{min-height:48px}
 }
+
+
+/* ---- The left bar, the way the Supabase dashboard does it: a slim icon rail that opens over the page while you point at it (nothing behind it moves),
+        or stays open, or stays shut, chosen from the control at the bottom ---- */
+@media (min-width:901px){
+  .shell.shell{--rail:76px;grid-template-columns:var(--rail) minmax(0,1fr);transition:grid-template-columns .15s ease}
+  .shell.shell.side-expanded{--rail:236px}
+  .shell.shell .side{--sw:76px;--lab:0;width:var(--sw);padding:14px 10px;align-items:stretch;gap:6px;border-radius:24px;overflow:visible;z-index:40;transition:width .15s ease,box-shadow .15s ease}
+  .shell.shell.side-expanded .side{--sw:236px;--lab:1}
+  .shell.shell.side-hover .side:hover,.shell.shell.side-hover .side:has(:focus-visible),.shell.shell.side-hover .side:has(.side-menu){--sw:236px;--lab:1;box-shadow:0 24px 60px -18px rgba(0,0,0,.65)}
+  .shell.shell .side-top{width:100%;padding:0;flex-direction:row;justify-content:flex-start}
+  .shell.shell .side .logo{margin:0;padding-left:7px;gap:12px;overflow:hidden}
+  .shell.shell .side .logo .navtext{opacity:var(--lab);max-width:none;font-size:1.25rem}
+  .shell.shell .navgroup{margin-top:10px;gap:4px;width:100%;align-items:stretch}
+  .shell.shell .side .navlink,.shell.shell .side .navlink.extra{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;height:44px;padding:0 0 0 17px;border-radius:12px;background:transparent;overflow:hidden;transition:background .12s,color .12s}
+  .shell.shell .side .navlink:hover{background:rgba(255,255,255,.1)}
+  .shell.shell .side .navlink.active{background:#fff;color:var(--accent-deep)}
+  .shell.shell .side .navlink>svg{flex:none;margin:0}
+  .shell.shell .navpill{border-radius:12px;box-shadow:none}
+  .shell.shell .side .navtext{position:static;display:block;margin:0;opacity:var(--lab);transform:none;font-size:.9375rem;font-weight:600;white-space:nowrap;transition:opacity .12s .03s;transition-delay:.03s}
+  .shell.shell .side .compose-btn.solo{display:flex;align-items:center;justify-content:flex-start;gap:12px;width:100%;height:44px;min-height:0;margin:8px 0 0;padding:0 0 0 17px;border-radius:12px;background:var(--accent);color:#fff;box-shadow:none;overflow:hidden;flex-direction:row;align-self:stretch}
+  .shell.shell .side .compose-btn.solo:hover{transform:none;background:var(--accent-deep)}
+  .shell.shell .side .compose-btn.solo .navtext{color:inherit}
+  [data-theme=dark] .shell.shell .side .compose-btn.solo{color:#1a1210}
+  .shell.shell .side-utils{display:grid;gap:2px;width:100%;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)}
+  .shell.shell .side-me{display:flex;align-items:center;gap:12px;height:48px;padding:0 0 0 8px;border-radius:12px;color:#fff;overflow:hidden;text-decoration:none}
+  .shell.shell .side-me:hover{background:rgba(255,255,255,.1)}
+  .shell.shell .side-me.active{background:rgba(255,255,255,.18)}
+  .me-av{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--lav);color:var(--lav-ink);font-weight:700;border:2px solid rgba(255,255,255,.7)}
+  .shell.shell .nav-dot{right:auto;left:32px;top:8px}
+  .shell.shell .nav-count{right:auto;left:30px;top:5px}
+  .side-mode{position:relative}
+  .side-menu{position:absolute;left:calc(100% + 10px);bottom:0;z-index:70;min-width:210px;padding:6px;border-radius:12px;background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 18px 40px -16px rgba(0,0,0,.6)}
+  .side-menu p{margin:0;padding:6px 10px 4px;font-size:var(--t-micro);font-weight:600;color:var(--ink-soft)}
+  .side-menu button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:40px;padding:0 10px;border:0;border-radius:8px;background:none;color:inherit;font:inherit;font-size:var(--t-meta);cursor:pointer;text-align:left}
+  .side-menu button:hover{background:var(--panel)}
+  .side-menu button[aria-checked=true]{font-weight:600}
+}
+@media (max-width:900px){.side-utils,.side-me{display:none}}
+@media (min-width:901px) and (prefers-reduced-motion:reduce){.shell.shell,.shell.shell .side{transition:none}}
+@media (min-width:901px){
+  .shell.shell .side .compose-btn.solo .navtext{opacity:var(--lab);font-size:.9375rem}
+}
+@media (min-width:901px){.shell.shell .side .compose-btn.solo svg{flex:none;width:22px;height:22px}}
+
+/* ---- Search: a quiet bar in the top line that opens a Spotlight over the page (the shape and motion follow the Apple Spotlight component) ---- */
+.gs-row{flex:0 1 330px;width:330px;max-width:100%;display:block}
+.gs-trigger{display:flex;align-items:center;gap:10px;width:100%;height:44px;padding:0 16px;border:0;border-radius:22px;background:var(--surface);box-shadow:0 0 0 1px var(--line);color:var(--ink-soft);font:inherit;font-size:var(--t-ui);cursor:pointer;text-align:left;transition:box-shadow .15s,color .15s}
+.gs-trigger:hover{color:var(--ink);box-shadow:0 0 0 1px var(--ink-soft)}
+.gs-trigger-t{flex:1}
+.gs-trigger kbd{font:inherit;font-size:var(--t-micro);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+.gs-overlay{position:fixed;inset:0;z-index:80;display:flex;justify-content:center;align-items:flex-start;padding:14vh 16px 16px;background:rgba(16,20,18,.5)}
+.gs-stage{width:min(780px,100%)}
+.gs-line{display:flex;align-items:flex-start;gap:16px;width:100%}
+.gs-pill{flex:1 1 0;min-width:0;border-radius:30px;background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 28px 70px -24px rgba(0,0,0,.7);overflow:hidden}
+.gs-bar{display:flex;align-items:center;gap:12px;height:64px;padding:0 22px;color:var(--ink-soft)}
+.gs-field{position:relative;flex:1;min-width:0;height:100%;display:flex;align-items:center;font-size:1.25rem}
+.gs-field input{position:relative;z-index:1;width:100%;height:100%;border:0;outline:none;background:transparent;color:var(--ink);font:inherit;caret-color:var(--accent)}
+.gs-ph{position:absolute;left:0;top:50%;margin-top:-.75em;z-index:0;line-height:1.5;white-space:nowrap;color:var(--ink-soft);pointer-events:none}
+.gs-ph.lit{color:var(--ink)}
+.gs-bar kbd{flex:none;font:inherit;font-size:var(--t-micro);border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:var(--ink-soft)}
+.gs-chip{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 10px 0 12px;border:0;border-radius:16px;background:var(--accent);color:#fff;font:inherit;font-size:var(--t-meta);font-weight:600;cursor:pointer}
+[data-theme=dark] .gs-chip{color:#1a1210}
+.gs-list{list-style:none;margin:0;padding:8px;border-top:1px solid var(--line);background:var(--panel);max-height:min(56vh,420px);overflow-y:auto}
+.gs-list li{display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 10px;border-radius:14px;cursor:pointer;color:var(--ink)}
+.gs-list li.on,.gs-list li[role=option]:hover{background:var(--surface);box-shadow:0 1px 0 var(--line),0 8px 16px -10px rgba(0,0,0,.5)}
+.gs-list .gs-ico{display:grid;place-items:center;flex:none;width:32px;height:32px;color:var(--ink-soft);background:none;border-radius:0}
+.gs-list .gs-ico.gs-av{border-radius:50%;background:var(--surface);color:var(--ink);font-weight:700;font-size:var(--t-meta)}
+.gs-list .gs-text{display:grid;gap:1px;min-width:0;flex:1}
+.gs-list .gs-text strong{font-size:var(--t-ui);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-list .gs-text span{font-size:var(--t-meta);color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-list .gs-kind{flex:none;border:0;padding:0;font-size:var(--t-micro);color:var(--ink-soft)}
+.gs-list .gs-go{flex:none;opacity:0;transition:opacity .2s;color:var(--ink-soft)}
+.gs-list li.on .gs-go,.gs-list li[role=option]:hover .gs-go{opacity:1}
+.gs-list li.gs-head{display:block;min-height:0;padding:10px 10px 2px;font-size:var(--t-micro);font-weight:600;color:var(--ink-soft);cursor:default;background:none;box-shadow:none}
+.gs-list li.gs-none{cursor:default;color:var(--ink-soft);font-size:var(--t-meta)}
+.gs-list li.gs-foot{min-height:0;gap:16px;padding:8px 10px 2px;margin-top:4px;border-top:1px solid var(--line);border-radius:0;font-size:var(--t-micro);color:var(--ink-soft);cursor:default;background:none;box-shadow:none}
+.gs-circle{flex:none;width:64px;height:64px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line),0 18px 40px -22px rgba(0,0,0,.6);cursor:pointer;opacity:.6;transition:opacity .2s,background .2s,box-shadow .2s}
+.gs-circle:hover,.gs-circle:focus-visible{opacity:1}
+.gs-circle[aria-pressed=true]{opacity:1;background:var(--accent);color:#fff}
+[data-theme=dark] .gs-circle[aria-pressed=true]{color:#1a1210}
+.gs-circle:focus-visible,.gs-trigger:focus-visible,.gs-chip:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+@media (max-width:900px){
+  .gs-row{flex:none;width:44px}
+  .gs-trigger{width:44px;padding:0;justify-content:center;border-radius:50%}
+  .gs-trigger-t,.gs-trigger kbd{display:none}
+  .gs-overlay{padding-top:72px}
+  .gs-circle{width:48px;height:48px}
+  .gs-bar{height:56px;padding:0 16px}
+  .gs-field{font-size:1.0625rem}
+}
+
+/* orange is for things you can act on and the brand's own touches (the mark, the dot by the campus name, the filter you are on), not for labels */
+.rp-aud[data-aud=Marketplace],[data-theme=dark] .rp-aud[data-aud=Marketplace]{border-color:var(--line);color:var(--ink)}
