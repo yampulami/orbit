@@ -304,4 +304,6 @@ Recurring items still worth improving: too many time-related blocks at once, the
 | Map | done (flat side panel, text categories) |
 | Profile and People | done (text tabs through the shared menu, flat header); the settings and edit-profile forms inside still need a pass |
 | Shared round-icon menu (`GradientMenu`) | now a row of plain text choices everywhere it is used (profile tabs, club actions, event answers) |
-| Clubs (club page), Landing, Sign in, Onboarding | to do |
+| Club page | done (plain channel rows, flat posts, quiet tags) |
+| Sign in | done by CSS only (12px card, 8px fields, orange primary); not looked at in the browser |
+| Landing, Onboarding | not restyled beyond the shared button and corner rules; Onboarding has many custom screens and should be done one screen at a time |

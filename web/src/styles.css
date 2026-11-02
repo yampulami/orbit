@@ -4854,3 +4854,11 @@ textarea,input{caret-color:var(--accent)}
 .club-av,.club-planet.sm{box-shadow:none}
 .chan.page,.chan[aria-current=page]{background:var(--panel);color:var(--ink);font-weight:600}
 .chan.page svg,.chan[aria-current=page] svg{color:var(--accent)}
+
+/* ---- Sign in and the landing page: the same corners and buttons as the app (no pills, 12px card, 8px fields) ---- */
+.auth form{border-radius:12px;box-shadow:none;border:1px solid var(--line);background:var(--surface);padding:28px}
+.auth .field input{height:44px;border-radius:8px;padding:0 14px}
+.auth .btn,.auth button.btn{border-radius:8px}
+.auth .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .auth .btn.primary{color:#1a1210}
+.auth a{text-decoration:underline;text-underline-offset:3px}
