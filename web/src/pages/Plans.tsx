@@ -23,8 +23,9 @@ export default function Plans() {
   // One sentence about the day you are looking at.
   const { groups, hangouts } = useHang();
   const planned = hangouts.filter((h) => isVisible(h, groups) && !h.canceled && new Date(h.when).toDateString() === day);
-  const waiting = planned.filter((h) => !h.rsvps[YOU]).length;
-  const when = day === new Date().toDateString() ? "today" : new Date(day).toLocaleDateString(undefined, { weekday: "long" });
+  const daysAway = Math.round((new Date(day).getTime() - new Date(new Date().toDateString()).getTime()) / 864e5);
+  const waiting = daysAway < 0 ? 0 : planned.filter((h) => !h.rsvps[YOU]).length;
+  const when = daysAway === 0 ? "today" : daysAway === 1 ? "tomorrow" : daysAway === -1 ? "yesterday" : new Date(day).toLocaleDateString(undefined, { weekday: "long" });
   const head = planned.length === 0 ? `Nothing planned ${when}` : `${planned.length} plan${planned.length === 1 ? "" : "s"} ${when}${waiting > 0 ? `, ${waiting} need${waiting === 1 ? "s" : ""} your answer` : ""}`;
   useEffect(() => { if (!phone) api.list().then(setPosts).catch(() => setPosts([])); }, [phone]);
 

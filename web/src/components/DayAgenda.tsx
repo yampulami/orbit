@@ -29,6 +29,7 @@ export default function DayAgenda({ day }: { day: string }) {
     ...classes.map((c): Row => { const [h, m] = c.start.split(":").map(Number); return { key: c.id, at: new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m).getTime(), time: clockLabel(c.start), end: clockLabel(c.end), title: c.name, place: c.place, kind: "class" }; }),
     ...dayEvents.map((e): Row => ({ key: e.id, at: new Date(e.startsAt).getTime(), time: clock(e.startsAt), title: e.title, place: e.place, kind: "event", event: e })),
   ].sort((a, b) => a.at - b.at);
+  const daysAway = Math.round((d.getTime() - new Date(new Date().toDateString()).getTime()) / 864e5);
   const next = isToday ? rows.find((r) => r.at > Date.now()) : undefined;
   const summary = [classes.length ? `${classes.length} ${classes.length === 1 ? "class" : "classes"}` : "", dayEvents.length ? `${dayEvents.length} ${dayEvents.length === 1 ? "event" : "events"}` : ""].filter(Boolean).join(" · ") + (next ? ` · next ${next.time}` : "");
 
@@ -36,9 +37,9 @@ export default function DayAgenda({ day }: { day: string }) {
     <section className="agenda" aria-label="Selected day">
       <header>
         <h2>{d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}</h2>
-        <p>{isToday ? "Today" : d.toLocaleDateString(undefined, { year: "numeric" })}
+        <p>{isToday ? "Today" : daysAway === 1 ? "Tomorrow" : daysAway === -1 ? "Yesterday" : daysAway < 0 ? "Past" : d.toLocaleDateString(undefined, { weekday: "long" })}
           {list.length > 0 && ` · ${list.length} hangout${list.length === 1 ? "" : "s"}`}
-          {asking > 0 && ` · ${asking} need${asking === 1 ? "s" : ""} your answer`}</p>
+          {asking > 0 && daysAway >= 0 && ` · ${asking} need${asking === 1 ? "s" : ""} your answer`}</p>
       </header>
       {rows.length > 0 && (
         <StackedList

@@ -92,7 +92,8 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
   // Open near the current hour so today is in view without scrolling.
   useEffect(() => {
     const el = scroller.current;
-    if (el) el.scrollTop = Math.max(0, (now.getHours() - FIRST - 1) * ROW);
+    const earliest = shown.length ? Math.min(...shown.map((b) => Math.floor(b.start / 60))) : now.getHours();
+    if (el) el.scrollTop = Math.max(0, (Math.min(earliest, now.getHours()) - FIRST - 1) * ROW);
   }, [view, FIRST]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const first = days[0], last = days[days.length - 1];
@@ -113,9 +114,6 @@ export default function WeekBoard({ day, onDay }: { day: string | null; onDay: (
           <p className="wb-sub">{shown.length === 0 ? "Nothing planned" : `${shown.length} thing${shown.length === 1 ? "" : "s"} on the schedule`}{shown.some((b) => b.mark === "pending") ? ` · ${shown.filter((b) => b.mark === "pending").length} need your answer` : ""}</p>
         </div>
         <div className="wb-ctl">
-          <div className="segment" role="radiogroup" aria-label="Schedule view">
-            {(["day", "week"] as const).map((v) => <button key={v} type="button" role="radio" aria-checked={view === v} onClick={() => setView(v)}>{v === "day" ? "Day" : "Week"}</button>)}
-          </div>
           <button type="button" className="wb-today" onClick={() => { setAnchor(new Date()); onDay(new Date().toDateString()); }}>Today</button>
           <button type="button" className="wb-arrow" aria-label={view === "week" ? "Previous week" : "Previous day"} onClick={() => go(-step)}><ChevronLeft size={18} /></button>
           <button type="button" className="wb-arrow" aria-label={view === "week" ? "Next week" : "Next day"} onClick={() => go(step)}><ChevronRight size={18} /></button>

@@ -4947,3 +4947,29 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .rm-edit{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:text;border-radius:4px}
 .rm-edit:hover{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px}
 .rm-edit-input{width:100%;height:36px;border:1px solid var(--ink-soft);border-radius:8px;background:var(--surface);color:var(--ink);padding:0 10px;font:inherit;font-size:var(--t-ui);font-weight:600}
+
+/* ---- Plans pass 2 (critique, desktop): today is a ring, the picked day is solid, answers are text, no pills, 44px controls ---- */
+.plans2 .plans-col .cal-day{width:40px;height:40px;border-radius:8px}
+.plans2 .plans-col .cal-day.today,[data-theme=dark] .plans2 .plans-col .cal-day.today{background:none;color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.plans2 .plans-col .cal-day.sel,[data-theme=dark] .plans2 .plans-col .cal-day.sel{background:var(--ink);color:var(--on-ink);box-shadow:none;font-weight:700}
+.plans2 .plans-col .cal-day.sel::after{background:var(--on-ink)}
+.plans2 .cal header button{width:44px;height:44px;border-radius:8px}
+.plans2 .wb-arrow{width:44px;height:44px}
+.plans2 .wb-today{min-height:44px;padding:0 14px}
+.plans2 .pin-btn{width:44px;height:44px;border-radius:8px}
+.plans2 .check{position:relative}
+.plans2 .check::after{content:"";position:absolute;inset:-8px}
+.plans2 .ghost-btn{width:44px;height:44px;border-radius:8px}
+.plans2 .rem-row input,.plans2 .cal-rem input{min-height:44px;border-radius:8px}
+.plans2 .rem-row .btn,.plans2 .cal-rem .btn{min-height:44px}
+.plans2 .fold-title{min-height:44px}
+.up-tag,.up-tag[data-tag],[data-theme=dark] .up-tag[data-tag]{border-radius:6px;background:none;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink-soft)}
+.up-tag[data-tag=answer],[data-theme=dark] .up-tag[data-tag=answer],.up-tag[data-tag=overdue],[data-theme=dark] .up-tag[data-tag=overdue]{color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+[data-theme=dark] .up-tag[data-tag=answer],[data-theme=dark] .up-tag[data-tag=overdue]{color:#ff9a6e;box-shadow:inset 0 0 0 1px #ff9a6e}
+.up-main{border-radius:8px}
+.plans2 .cal-rem li,.plans2 .cal-hrow,.plans2 .rem-chip,.plans2 .cal-rem form .chip,.plans2 .cal-rem form button.chip{border-radius:8px}
+.agenda-hangs li .cal-hbtns button,[data-theme=dark] .agenda-hangs li .cal-hbtns button{background:none;color:var(--ink-soft)}
+.agenda-hangs li .cal-hbtns button[data-a=yes]{color:var(--accent)}
+.agenda-hangs li .cal-hbtns button[aria-pressed=true]{background:none;color:var(--ink);font-weight:700;text-decoration:none}
+.agenda-hangs li .cal-hbtns button[aria-pressed=true][data-a=yes]{color:var(--accent)}
+.agenda-hangs li{border-radius:0}
