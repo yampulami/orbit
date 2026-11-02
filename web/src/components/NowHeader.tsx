@@ -85,7 +85,7 @@ export default function NowHeader() {
   const alsoFree = open ? shared.filter((p) => (freeNow(p, now)?.minutes ?? 0) >= 25) : [];
   const first = (p: Person) => p.name.split(" ")[0];
   const needle = !late && nowMin >= FROM && nowMin <= TO;
-  const daySays = items.length ? items.map(describeBusy).join("; ") : "nothing scheduled";
+  const daySays = items.length ? items.map((i) => describeBusy(i) + (unanswered(i) ? " (waiting for your answer)" : "")).join("; ") : "nothing scheduled";
 
   return (
     <section className="now" aria-labelledby="now-h">
@@ -96,7 +96,7 @@ export default function NowHeader() {
 
       {items.length > 0 && <><div className="now-bar" role="img" aria-label={`${late ? "Tomorrow" : "Your day"} from 7 AM to 11 PM: ${daySays}.${needle ? " The marker shows where it is now." : ""}`}>
         {items.map((i, n) => (
-          <span key={n} className={"now-seg " + i.kind} style={{ left: pct(minutes(i.start)), width: `max(3px, calc(${pct(minutes(i.end))} - ${pct(minutes(i.start))}))` }} />
+          <span key={n} className={"now-seg " + i.kind + (unanswered(i) ? " pending" : "")} style={{ left: pct(minutes(i.start)), width: `max(3px, calc(${pct(minutes(i.end))} - ${pct(minutes(i.start))}))` }} />
         ))}
         {needle && <span className="now-needle" style={{ left: pct(nowMin) }} />}
       </div>
@@ -104,7 +104,8 @@ export default function NowHeader() {
       {items.length > 0 && (
         <p className="now-key" aria-hidden="true">
           {items.some((i) => i.kind === "class") && <span><i className="class" />Class</span>}
-          {items.some((i) => i.kind !== "class") && <span><i className="plan" />Plan or event</span>}
+          {items.some((i) => i.kind !== "class" && !unanswered(i)) && <span><i className="plan" />Plan or event</span>}
+          {items.some(unanswered) && <span><i className="plan pending" />Waiting for your answer</span>}
           {needle && <span><i className="needle" />Now</span>}
         </p>
       )}

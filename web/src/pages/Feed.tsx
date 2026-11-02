@@ -72,6 +72,7 @@ export default function Feed() {
   const [body, setBody] = useState("");
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const [community, setCommunity] = useState<Community>("Everyone");
+  const [choosing, setChoosing] = useState(false); // the audience list opens only when asked; the box says who it is for
   const [posting, setPosting] = useState(false);
   const [posted, setPosted] = useState("");
   const [sharing, setSharing] = useState<Row | null>(null);
@@ -130,7 +131,7 @@ export default function Feed() {
     e.preventDefault();
     const text = body.trim(); if (!campus || !text) return;
     setPosting(true);
-    await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community, body: text }); progress.log("post"); setBody(""); await load();
+    await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community, body: text }); progress.log("post"); setBody(""); setChoosing(false); await load();
       setPosted(filter !== "All" && filter !== community ? `Posted for ${audience(community)}. Switch to Everything to see it.` : `Posted for ${audience(community)}. It is at the top of the list below.`);
       window.setTimeout(() => setPosted(""), 8000);
     });
@@ -203,10 +204,18 @@ export default function Feed() {
             <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder={`Lost a lanyard? Found a seat? Tell ${campus.name}.`} />
           </label>
           <div className="composer-row">
-            <div className="audience" role="radiogroup" aria-labelledby="post-to">
-              <span id="post-to">Post to</span>
-              {communities.map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => setCommunity(c)}>{SHOW[c]}</button>)}
-            </div>
+            {choosing ? (
+              <div className="audience" role="radiogroup" aria-label="Post to">
+                <span aria-hidden="true">Post to</span>
+                {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); }}>{SHOW[c]}</button>)}
+                {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title="Something to sell or give away" onClick={() => { setCommunity("Marketplace"); setChoosing(false); }}>{SHOW.Marketplace}</button></>}
+              </div>
+            ) : (
+              <div className="audience">
+                <span>Posting to <b>{SHOW[community]}</b></span>
+                <button type="button" className="aud-change" onClick={() => setChoosing(true)}>Change</button>
+              </div>
+            )}
             <EmojiButton value={body} onChange={setBody} inputRef={composerRef} max={MAX} />
             {body.length > MAX * 0.8 ? <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span> : <span className="composer-hint">Ctrl+Enter to post</span>}
             <button className="btn primary" disabled={posting || !body.trim()}>{posting ? "Posting…" : community === "Everyone" ? "Post" : community === "Marketplace" ? "Post for sale" : `Post to ${SHOW[community]}`}</button>

@@ -49,6 +49,7 @@ export default function GlobalSearch() {
   const [people, setPeople] = useState<PersonHit[]>([]);
   const root = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
+  const came = useRef<HTMLElement | null>(null); // where focus was before the box took it, so Escape can give it back
   const listId = useId();
   const nav = useNavigate();
   const { session } = useAuth();
@@ -67,7 +68,7 @@ export default function GlobalSearch() {
     // Escape closes the list wherever focus is (the box itself, a place-to-look tab, or nowhere in particular after a click on the dimmed page).
     const onKey = (e: globalThis.KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); }
-      else if (e.key === "Escape" && root.current?.querySelector(".gs-panel")) { setOpen(false); if (root.current.contains(document.activeElement)) (document.activeElement as HTMLElement).blur(); }
+      else if (e.key === "Escape" && root.current?.querySelector(".gs-panel")) { setOpen(false); if (root.current.contains(document.activeElement)) { (document.activeElement as HTMLElement).blur(); if (came.current?.isConnected) came.current.focus(); } }
     };
     const away = (e: MouseEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
     window.addEventListener("keydown", onKey);
@@ -137,7 +138,7 @@ export default function GlobalSearch() {
     friends.some((f) => f.id === id) ? "Friend" : outgoing.some((r) => r.to.id === id) ? "Requested" : incoming.some((r) => r.from.id === id) ? "Wants to add you" : "Person";
 
   function key(e: KeyboardEvent) {
-    if (e.key === "Escape") { setOpen(false); input.current?.blur(); return; }
+    if (e.key === "Escape") { setOpen(false); input.current?.blur(); if (came.current?.isConnected) came.current.focus(); return; }
     if (!options.length) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((a) => (a + 1) % options.length); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => (a + options.length - 1) % options.length); }
@@ -168,14 +169,14 @@ export default function GlobalSearch() {
           <button type="button" className="gs-toggle" aria-label="Search" aria-expanded={phoneOpen} onClick={() => { setPhoneOpen(true); setTimeout(() => input.current?.focus(), 50); }}><Search size={20} aria-hidden="true" /></button>
           <Search size={18} aria-hidden="true" className="gs-glass" />
           <input ref={input} type="search" value={q} placeholder={placeholder} aria-label={scoped ? `Search ${label}` : "Search Orbit"} role="combobox" aria-expanded={showPanel} aria-controls={listId} aria-autocomplete="list" aria-activedescendant={showPanel && options.length ? `${listId}-${active}` : undefined}
-            onChange={(e) => { setQ(e.target.value); setActive(0); setOpen(true); }} onFocus={() => { loadPosts(); setOpen(true); }} />
+            onChange={(e) => { setQ(e.target.value); setActive(0); setOpen(true); }} onFocus={(e) => { came.current = e.relatedTarget as HTMLElement | null; loadPosts(); setOpen(true); }} />
           <kbd aria-hidden="true">Ctrl K</kbd>
           <button type="button" className="gs-close" aria-label="Close search" onClick={() => { setPhoneOpen(false); setOpen(false); setQ(""); setScope("all"); }}><X size={20} aria-hidden="true" /></button>
           {showPanel && (
             <ul id={listId} role="listbox" className="gs-panel" aria-label="Search results">
               <li className="gs-chips" role="presentation">{scopeRow}</li>
               {options.length === 0 ? (
-                <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />{noneText}</li>
+                <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />{noneText}{scope === "all" && longEnough(q) && <button type="button" className="gs-more" onClick={() => pick("posts")}>Search posts only</button>}</li>
               ) : (
                 <>
                   {pages.length > 0 && <li className="gs-head" role="presentation">Go to</li>}
