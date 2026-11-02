@@ -4653,3 +4653,32 @@ textarea,input{caret-color:var(--accent)}
 .chats .dm-people{list-style:none;margin:0;padding:0;display:grid}
 .chats .rm-empty{font-size:var(--t-meta);color:var(--ink-soft)}
 @media (max-width:900px){.chats .chat{grid-template-columns:1fr}.chats .threads{border-right:0;padding-right:0}.chats .convo{padding-left:0}}
+
+/* ---- No pills. Buttons and tags are 8px and 6px rectangles everywhere; the plan card is flat; answers read "I'm in" / "Can't" like the rest of the app ---- */
+.btn,.btn.primary,.btn.ghost{border-radius:8px}
+.chip,.hang .chip,.hang-top .chip{border-radius:6px}
+.hang.hang{background:var(--surface);background-image:none;border:1px solid var(--line);border-radius:12px;padding:16px;gap:6px;box-shadow:none}
+.hang.hang::before,.hang.hang::after{display:none}
+.hang .chip,.hang-top .chip{background:none;padding:0;font-size:var(--t-micro);color:var(--ink-soft);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+.hang-when{font-size:var(--t-meta);color:var(--ink-soft)}
+.hang h3{font-family:var(--display);font-size:var(--t-h2);font-weight:600;letter-spacing:-.01em;margin-top:2px}
+.hang-place.hang-place{background:none;padding:0;border-radius:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;font-size:var(--t-meta);color:var(--ink-soft)}
+.hang-by{font-size:var(--t-meta);opacity:1;color:var(--ink-soft)}
+.hang .avatars{background:none;padding:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.hang-count{font-size:var(--t-meta);font-weight:400;color:var(--ink-soft)}
+.rsvp.rsvp{background:none;box-shadow:none;padding:0;gap:4px;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+.rsvp.rsvp button{min-height:44px;padding:0 10px;border-radius:8px;background:none;font-size:var(--t-ui);font-weight:600;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;box-shadow:none}
+.rsvp.rsvp button[data-a=yes]{color:var(--accent)}
+.rsvp.rsvp button:hover{background:none;color:var(--ink)}
+.rsvp.rsvp button[aria-pressed=true],.rsvp.rsvp button[aria-pressed=true][data-a=yes],.rsvp.rsvp button[aria-pressed=true][data-a=no]{background:none;text-decoration:none;color:var(--ink)}
+.rsvp.rsvp button[aria-pressed=true][data-a=yes]{color:var(--accent)}
+.rsvp .thumb{display:none}
+.hang[data-ask]{border-color:var(--accent)}
+.chats .convo-actions .btn,.chats .convo-tools .btn{min-height:44px;font-size:var(--t-meta);font-weight:600;padding:0 14px;background:none;border:1px solid var(--ink-soft);color:var(--ink)}
+.chats .convo-actions .btn:hover,.chats .convo-tools .btn:hover{background:var(--panel)}
+.chats .convo-actions .btn.danger,.chats .convo-tools .btn.danger{border-color:transparent;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px}
+.cf-act{border-radius:8px}
+.chats .cf-act.leave,.chats .convo-actions .cf-act:last-child{background:none;border:0;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;min-height:44px;font-size:var(--t-meta)}
+.chats .thread.on,.chats .threadpill{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.chats .thread.on{border-top-color:transparent}
+.chats .convo-actions>.cf-act:last-child{background:none!important;border:0!important;box-shadow:none!important}

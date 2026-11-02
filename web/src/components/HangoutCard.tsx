@@ -50,7 +50,7 @@ export default function HangoutCard({ h, group, tone = 0, plain = false }: { h: 
           {(["yes", "no"] as const).map((a) => (
             <motion.button key={a} type="button" data-a={a} aria-pressed={mine === a} whileTap={{ scale: 0.94 }} onClick={() => answer(a)}>
               {mine === a && <motion.span layoutId={`thumb-${h.id}`} className="thumb" initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={slide} />}
-              <span>{a === "yes" ? "Yes" : "No"}</span>
+              <span>{a === "yes" ? (mine === "yes" ? "You’re in" : "I’m in") : (mine === "no" ? "You can’t" : "Can’t")}</span>
             </motion.button>
           ))}
         </div>

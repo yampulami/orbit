@@ -111,7 +111,7 @@ Numerals are tabular (`font-feature-settings:"tnum" 1`). Headings use `letter-sp
 
 ## 4. Shape, space, depth, motion
 
-- **Corners:** containers **12px**, controls **8px**, search pill **22px**, avatars and the sphere fully round. No 24 to 32px blobs.
+- **Corners:** containers **12px**, controls **8px**, tags **6px**, the search dock 22px, avatars and the sphere fully round. **No pills:** `border-radius:999px` is not used for buttons, tabs, chips or selected rows (the owner said pills look wrong, especially in light mode). No 24 to 32px blobs. The global `.btn` is already 8px; about 89 older rules in `styles.css` still say 999px and get replaced as each tab is redone.
 - **Borders over shadows.** Cards are `box-shadow:0 0 0 1px var(--line)` or `border:1px solid var(--line)`. Real shadows only on things that float (the open sidebar, the search card, popovers): offset and soft blur, never a coloured halo.
 - **Spacing:** rows are 44px minimum for anything clickable. Section gaps 24 to 32px; inside a card 12 to 14px.
 - **Motion:** one authored moment per surface. Springs on the search dock (stiffness 300, damping 30) and the sphere; 120 to 150ms on the sidebar width; all motion respects `prefers-reduced-motion`. No scattered fades.
@@ -285,3 +285,16 @@ Do each tab in this order. Keep the structure; change only the look and the clut
 Runs scored 24 to 29 out of 40 across the work (26, 26, 24, 27, 26, 27, 26, 27, 28, 29, 27, 27, 29). The score moves a point or two between runs because an agent judges each time. The measurable parts are clean: the design detector reports 0 findings, no text fails contrast except the faded calendar days, every control has a visible focus ring, and no horizontal overflow at 375 / 1180 / 1400.
 
 Recurring items still worth improving: too many time-related blocks at once, the same "I'm in" appearing in three places, orange being fairly loud above the fold, and phone layouts not re-reviewed after the latest changes.
+
+
+---
+
+## 13. Tab progress
+
+| Tab | State |
+|---|---|
+| Feed | done |
+| Left bar, search, assistant | done |
+| Chats: Messages | done (sentence headline, text tabs, ruled threads, flat conversation) |
+| Chats: Groups | done (same frame; flat plan card with "I'm in / Can't"; no pills) |
+| Roommates, Plans, Free time, Campus, Map, Profile, Clubs, People, Landing, Sign in, Onboarding | to do |
