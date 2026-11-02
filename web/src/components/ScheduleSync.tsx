@@ -158,6 +158,8 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
   // The grid shows one day: the day of the best suggestion to start with.
   const dayList = useMemo(() => Array.from({ length: Math.min(days, 7) }, (_, i) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + i)), [now, days]);
   useEffect(() => { setDayIdx(0); }, [days]);
+  const bestDay = suggestions[0] ? dayList.findIndex((d) => d.toDateString() === suggestions[0].start.toDateString()) : -1;
+  useEffect(() => { if (bestDay > 0) setDayIdx(bestDay); }, [bestDay]);
   const gridDay = dayList[Math.min(dayIdx, dayList.length - 1)];
   const mark = suggestions.filter((s) => s.start.toDateString() === gridDay.toDateString());
 
@@ -207,7 +209,116 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
             <Segmented label="How soon" options={WINDOWS.map((w) => ({ value: w.d, label: w.l }))} value={days} onChange={setDays} />
           </div>
         )}
-        <details className="sync-adv">
+      </div>
+
+      {error && <p className="error" role="alert">{error}</p>}
+
+      {!weekly && (
+        suggestions.length === 0
+          ? (
+            <div className="sync-none">
+              <p><b>No {duration >= 60 ? span(duration) : `${duration} min`} time works{crowd > 1 ? " for everyone" : ""} in this window.</b> Try one of these:</p>
+              <div className="sync-alts">
+                {duration > 30 && <button type="button" className="btn sm" onClick={() => setDuration(duration > 60 ? 60 : 30)}>Shorten to {duration > 60 ? "1 hr" : "30 min"}</button>}
+                {days < 14 && <button type="button" className="btn sm" onClick={() => setDays(days < 7 ? 7 : 14)}>Look {days < 7 ? "a week" : "two weeks"} ahead</button>}
+                {crowd > 2 && attend === "all" && <button type="button" className="btn sm" onClick={() => setAttend("half")}>Allow some to miss it</button>}
+                {limited && <button type="button" className="btn sm" onClick={() => { setNotBefore(8 * 60); setNotAfter(22 * 60); setSkipDays([]); }}>Drop the time limits</button>}
+                {required.length > 0 && <button type="button" className="btn sm" onClick={() => setRequired([])}>Nobody is a must</button>}
+              </div>
+            </div>
+          )
+          : <SweepUl className="sync-list">
+              {(showAll ? suggestions : suggestions.slice(0, FIRST)).map((s) => {
+                const ev = eventAt(s.start, s.end);
+                const id = s.start.toISOString();
+                return (
+                  <SweepLi key={id} data-best={s.best ? "" : undefined}>
+                    <div className="sr-main">
+                      <b>{dayLabel(s.start)} · {clock(s.start)}–{clock(s.end)}{s.best && <span className="sr-best">Best time</span>}</b>
+                      <small>{[...(crowd > 1 && s.missing.length ? [`${s.missing.map(first).join(", ")} can't`] : []), ...s.reasons.filter((r) => !/^Everyone is free$|free$/.test(r)).slice(0, 2), ...(ev ? [`Also on: ${ev.title}`] : [])].join(" · ")}</small>
+                    </div>
+                    {crowd > 1 && <span className="sync-count" data-all={s.missing.length === 0 ? "" : undefined}>{s.available.length === crowd ? "everyone free" : `${s.available.length} of ${crowd} free`}</span>}
+                    {canPlan && confirm !== id && <button type="button" className="link-btn sync-plan" onClick={() => setConfirm(id)}>Plan this</button>}
+                    {canPlan && confirm === id && (
+                      <div className="sync-confirm">
+                        <p className="muted">{groupId ? "Plans a hangout in this group." : `Makes a private group, plans it, and messages ${chosen.map((f) => f.name.split(" ")[0]).join(", ")} a link.`}</p>
+                        <button type="button" className="btn sm primary" disabled={making} onClick={() => void plan(s.start, id)}>{making ? "Making it…" : "Confirm"}</button>
+                        <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
+                      </div>
+                    )}
+                  </SweepLi>
+                );
+              })}
+            </SweepUl>
+      )}
+
+      {weekly && (
+        weeklySlots.length === 0
+          ? <p className="muted">No time repeats every week for everyone. Try a shorter length.</p>
+          : <SweepUl className="sync-list">
+              {weeklySlots.map((w, i) => {
+                const start = nextOccurrence(w.weekday, w.start, now);
+                const id = `w${w.weekday}-${w.start}`;
+                return (
+                  <SweepLi key={id} data-best={i === 0 ? "" : undefined}>
+                    <div className="sr-main">
+                      <b>Every {DAY_NAMES[w.weekday]} · {timeLabel(w.start)}–{timeLabel(w.end)}{i === 0 && <span className="sr-best">Best time</span>}</b>
+                      <small>{[...(w.missing.length ? [`${w.missing.map(first).join(", ")} can't`] : []), "Classes only, holds every week"].join(" · ")}</small>
+                    </div>
+                    {crowd > 1 && <span className="sync-count" data-all={w.missing.length === 0 ? "" : undefined}>{w.available.length === crowd ? "everyone free" : `${w.available.length} of ${crowd} free`}</span>}
+                    {canPlan && confirm !== id && <button type="button" className="link-btn sync-plan" onClick={() => setConfirm(id)}>Plan this</button>}
+                    {canPlan && confirm === id && (
+                      <div className="sync-confirm">
+                        <p className="muted">Plans the first one, {dayLabel(start)}.</p>
+                        <button type="button" className="btn sm primary" disabled={making} onClick={() => void plan(start, id)}>{making ? "Making it…" : "Confirm"}</button>
+                        <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
+                      </div>
+                    )}
+                  </SweepLi>
+                );
+              })}
+            </SweepUl>
+      )}
+
+      {!weekly && (suggestions.length > FIRST || crowd > 0) && (
+        <div className="sync-pills">
+          {suggestions.length > FIRST && (
+            <button type="button" className="pill-btn" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
+              {showAll ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}{showAll ? "Fewer times" : `${suggestions.length - FIRST} more time${suggestions.length - FIRST === 1 ? "" : "s"}`}
+            </button>
+          )}
+          {crowd > 0 && (
+            <button type="button" className="pill-btn" aria-expanded={gridOpen} onClick={() => setGridOpen((v) => !v)}>
+              <CalendarDays size={14} aria-hidden="true" />{gridOpen ? "Hide the day" : "Everyone's day"}
+            </button>
+          )}
+        </div>
+      )}
+      {!weekly && crowd > 0 && gridOpen && (
+        <div className="sync-grid" aria-label="Everyone's day">
+          <div className="chip-row" role="group" aria-label="Which day to show">
+            {dayList.map((d, i) => <button key={i} type="button" className="chip-btn" aria-pressed={dayIdx === i} onClick={() => setDayIdx(i)}>{i === 0 ? "Today" : d.toLocaleDateString(undefined, { weekday: "short" }) + " " + d.getDate()}</button>)}
+          </div>
+          <div className="sg-axis" aria-hidden="true">{[8, 10, 12, 14, 16, 18, 20, 22].map((h) => <span key={h} style={{ left: `${((h * 60 - GRID_FROM) / (GRID_TO - GRID_FROM)) * 100}%` }}>{h === 12 ? "12" : h > 12 ? h - 12 : h}{h >= 12 ? "p" : "a"}</span>)}</div>
+          {people.map((p) => (
+            <div key={p.id} className="sg-row">
+              <span className="sg-name">{p.id === "me" ? "You" : p.name.split(" ")[0]}</span>
+              <div className="sg-track" role="img" aria-label={`${p.id === "me" ? "Your" : p.name.split(" ")[0] + "'s"} busy and free hours`}>
+                {busySpans(p, gridDay).map(([s, e], i) => {
+                  const a = Math.max(s, GRID_FROM), b = Math.min(e, GRID_TO);
+                  return b > a ? <i key={i} className="sg-busy" style={{ left: `${((a - GRID_FROM) / (GRID_TO - GRID_FROM)) * 100}%`, width: `${((b - a) / (GRID_TO - GRID_FROM)) * 100}%` }} /> : null;
+                })}
+                {mark.map((m) => {
+                  const a = m.start.getHours() * 60 + m.start.getMinutes(), b = a + duration;
+                  return <i key={m.start.toISOString()} className="sg-pick" data-best={m.best ? "" : undefined} style={{ left: `${((a - GRID_FROM) / (GRID_TO - GRID_FROM)) * 100}%`, width: `${((b - a) / (GRID_TO - GRID_FROM)) * 100}%` }} />;
+                })}
+              </div>
+            </div>
+          ))}
+          <p className="sg-key"><i className="sg-busy" /> busy <i className="sg-pick" /> suggested <Check size={12} aria-hidden="true" /> the rest is free</p>
+        </div>
+      )}
+      <details className="sync-adv">
           <summary>More{restricted || attend !== "all" || required.length > 0 ? " (set)" : ""}</summary>
           {crowd > 2 && (
             <div className="sync-opt"><span id="sy-att">Who has to be free</span>
@@ -243,116 +354,7 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
             <label><input type="checkbox" checked={weekly} onChange={(e) => setWeekly(e.target.checked)} /> Repeats every week</label>
             <label><input type="checkbox" checked={buffer} onChange={(e) => setBuffer(e.target.checked)} /> Leave 15 min around classes</label>
           </div>
-        </details>
-      </div>
-
-      {error && <p className="error" role="alert">{error}</p>}
-
-      {!weekly && (
-        suggestions.length === 0
-          ? (
-            <div className="sync-none">
-              <p><b>No {duration >= 60 ? span(duration) : `${duration} min`} time works{crowd > 1 ? " for everyone" : ""} in this window.</b> Try one of these:</p>
-              <div className="sync-alts">
-                {duration > 30 && <button type="button" className="btn sm" onClick={() => setDuration(duration > 60 ? 60 : 30)}>Shorten to {duration > 60 ? "1 hr" : "30 min"}</button>}
-                {days < 14 && <button type="button" className="btn sm" onClick={() => setDays(days < 7 ? 7 : 14)}>Look {days < 7 ? "a week" : "two weeks"} ahead</button>}
-                {crowd > 2 && attend === "all" && <button type="button" className="btn sm" onClick={() => setAttend("half")}>Allow some to miss it</button>}
-                {limited && <button type="button" className="btn sm" onClick={() => { setNotBefore(8 * 60); setNotAfter(22 * 60); setSkipDays([]); }}>Drop the time limits</button>}
-                {required.length > 0 && <button type="button" className="btn sm" onClick={() => setRequired([])}>Nobody is a must</button>}
-              </div>
-            </div>
-          )
-          : <SweepUl className="sync-list">
-              {(showAll ? suggestions : suggestions.slice(0, FIRST)).map((s) => {
-                const ev = eventAt(s.start, s.end);
-                const id = s.start.toISOString();
-                return (
-                  <SweepLi key={id} data-best={s.best ? "" : undefined}>
-                    <div className="sr-main">
-                      <b>{s.best && <Sparkles size={12} className="sr-star" aria-label="Best match" />}{dayLabel(s.start)} · {clock(s.start)}–{clock(s.end)}</b>
-                      <small>{[...(crowd > 1 && s.missing.length ? [`${s.missing.map(first).join(", ")} can't`] : []), ...s.reasons.filter((r) => !/^Everyone is free$|free$/.test(r)).slice(0, 2), ...(ev ? [`Also on: ${ev.title}`] : [])].join(" · ")}</small>
-                    </div>
-                    {crowd > 1 && <span className="sync-count" data-all={s.missing.length === 0 ? "" : undefined}>{s.available.length}/{crowd}</span>}
-                    {canPlan && confirm !== id && <button type="button" className="btn sm" onClick={() => setConfirm(id)}>Plan</button>}
-                    {canPlan && confirm === id && (
-                      <div className="sync-confirm">
-                        <p className="muted">{groupId ? "Plans a hangout in this group." : `Makes a private group, plans it, and messages ${chosen.map((f) => f.name.split(" ")[0]).join(", ")} a link.`}</p>
-                        <button type="button" className="btn sm primary" disabled={making} onClick={() => void plan(s.start, id)}>{making ? "Making it…" : "Confirm"}</button>
-                        <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
-                      </div>
-                    )}
-                  </SweepLi>
-                );
-              })}
-            </SweepUl>
-      )}
-
-      {weekly && (
-        weeklySlots.length === 0
-          ? <p className="muted">No time repeats every week for everyone. Try a shorter length.</p>
-          : <SweepUl className="sync-list">
-              {weeklySlots.map((w, i) => {
-                const start = nextOccurrence(w.weekday, w.start, now);
-                const id = `w${w.weekday}-${w.start}`;
-                return (
-                  <SweepLi key={id} data-best={i === 0 ? "" : undefined}>
-                    <div className="sr-main">
-                      <b>{i === 0 && <Sparkles size={12} className="sr-star" aria-label="Best match" />}Every {DAY_NAMES[w.weekday]} · {timeLabel(w.start)}–{timeLabel(w.end)}</b>
-                      <small>{[...(w.missing.length ? [`${w.missing.map(first).join(", ")} can't`] : []), "Classes only, holds every week"].join(" · ")}</small>
-                    </div>
-                    {crowd > 1 && <span className="sync-count" data-all={w.missing.length === 0 ? "" : undefined}>{w.available.length}/{crowd}</span>}
-                    {canPlan && confirm !== id && <button type="button" className="btn sm" onClick={() => setConfirm(id)}>Plan</button>}
-                    {canPlan && confirm === id && (
-                      <div className="sync-confirm">
-                        <p className="muted">Plans the first one, {dayLabel(start)}.</p>
-                        <button type="button" className="btn sm primary" disabled={making} onClick={() => void plan(start, id)}>{making ? "Making it…" : "Confirm"}</button>
-                        <button type="button" className="btn sm" disabled={making} onClick={() => setConfirm(null)}>Cancel</button>
-                      </div>
-                    )}
-                  </SweepLi>
-                );
-              })}
-            </SweepUl>
-      )}
-
-      {!weekly && (suggestions.length > FIRST || crowd > 0) && (
-        <div className="sync-pills">
-          {suggestions.length > FIRST && (
-            <button type="button" className="pill-btn" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
-              {showAll ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />}{showAll ? "Fewer times" : `${suggestions.length - FIRST} more time${suggestions.length - FIRST === 1 ? "" : "s"}`}
-            </button>
-          )}
-          {crowd > 0 && (
-            <button type="button" className="pill-btn" aria-expanded={gridOpen} onClick={() => setGridOpen((v) => !v)}>
-              <CalendarDays size={14} aria-hidden="true" />{gridOpen ? "Hide the day" : "Everyone's day"}
-            </button>
-          )}
-        </div>
-      )}
-      {!weekly && crowd > 0 && gridOpen && (
-        <div className="sync-grid" aria-label="Everyone's day">
-          <div className="chip-row" role="group" aria-label="Which day to show">
-            {dayList.map((d, i) => <button key={i} type="button" className="chip-btn" aria-pressed={dayIdx === i} onClick={() => setDayIdx(i)}>{i === 0 ? "Today" : d.toLocaleDateString(undefined, { weekday: "short", day: "numeric" })}</button>)}
-          </div>
-          <div className="sg-axis" aria-hidden="true">{[8, 10, 12, 14, 16, 18, 20, 22].map((h) => <span key={h} style={{ left: `${((h * 60 - GRID_FROM) / (GRID_TO - GRID_FROM)) * 100}%` }}>{h === 12 ? "12" : h > 12 ? h - 12 : h}{h >= 12 ? "p" : "a"}</span>)}</div>
-          {people.map((p) => (
-            <div key={p.id} className="sg-row">
-              <span className="sg-name">{p.id === "me" ? "You" : p.name.split(" ")[0]}</span>
-              <div className="sg-track" role="img" aria-label={`${p.id === "me" ? "Your" : p.name.split(" ")[0] + "'s"} busy and free hours`}>
-                {busySpans(p, gridDay).map(([s, e], i) => {
-                  const a = Math.max(s, GRID_FROM), b = Math.min(e, GRID_TO);
-                  return b > a ? <i key={i} className="sg-busy" style={{ left: `${((a - GRID_FROM) / (GRID_TO - GRID_FROM)) * 100}%`, width: `${((b - a) / (GRID_TO - GRID_FROM)) * 100}%` }} /> : null;
-                })}
-                {mark.map((m) => {
-                  const a = m.start.getHours() * 60 + m.start.getMinutes(), b = a + duration;
-                  return <i key={m.start.toISOString()} className="sg-pick" data-best={m.best ? "" : undefined} style={{ left: `${((a - GRID_FROM) / (GRID_TO - GRID_FROM)) * 100}%`, width: `${((b - a) / (GRID_TO - GRID_FROM)) * 100}%` }} />;
-                })}
-              </div>
-            </div>
-          ))}
-          <p className="sg-key"><i className="sg-busy" /> busy <i className="sg-pick" /> suggested <Check size={12} aria-hidden="true" /> the rest is free</p>
-        </div>
-      )}
+      </details>
     </div>
   );
 }

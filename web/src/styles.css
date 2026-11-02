@@ -4987,3 +4987,37 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .rail-links{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:var(--t-meta);color:var(--ink-soft);margin:4px 2px 0}
 .rail-links .rm-link{font-weight:500;color:var(--ink-soft);min-height:44px;display:inline-flex;align-items:center}
 .plans-keys{font-size:var(--t-micro);color:var(--ink-soft);margin:12px 2px 0}
+
+/* ---- Free time pass 2 (critique, desktop): a ruled list with one marked best time, links instead of pills, calmer options, clearer grid ---- */
+.sync-list{gap:0;border-top:1px solid var(--line)}
+.sync-list li,.sync-list li[data-best]{background:none;box-shadow:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:12px 0}
+.sync-list .sr-main,.sync-list .sr-main.best,.sr-main{background:none;border:0;border-radius:0;padding:0}
+.sync-list li[data-best] .sr-main b{font-weight:700}
+.sr-best{margin-left:10px;font-size:var(--t-micro);font-weight:600;color:var(--accent)}
+.sync-count,.sync-count[data-all]{padding:0;border-radius:0;background:none;color:var(--ink-soft);font-size:var(--t-meta);font-weight:500}
+.sync-count[data-all]{color:var(--ink)}
+.sync-list .sync-plan{min-height:44px;font-size:var(--t-meta);text-decoration:underline;text-underline-offset:3px;padding:0 4px}
+.sync-list .sync-plan:hover{background:none;color:var(--ink)}
+.sync-pills .pill-btn,.sync-pills .pill-btn[aria-expanded=true]{border:0;background:none;padding:0 4px;min-height:44px;color:var(--ink-soft);font-weight:500;text-decoration:underline;text-underline-offset:3px;border-radius:0}
+.sync-pills .pill-btn:hover{background:none;color:var(--ink)}
+.sync-pills .pill-btn svg{display:none}
+.sync-adv{border-top:1px solid var(--line);padding-top:6px}
+.sync-adv summary{min-height:44px;display:flex;align-items:center;font-size:var(--t-meta);color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.sync-opt>span,.sync-bar label,.sync-k{font-size:var(--t-meta);font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-soft)}
+.sync-adv .chip-btn,.sync-grid .chip-btn{min-height:44px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:none;color:var(--ink-soft)}
+.sync-adv .chip-btn[aria-pressed=true],.sync-grid .chip-btn[aria-pressed=true]{border-color:var(--ink);color:var(--ink);background:none;font-weight:600}
+.dd-btn{min-height:44px;border-radius:8px}
+.seg-opt{min-width:44px}
+.sync-toggles input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px}
+.sync-toggles label{min-height:44px;display:flex;align-items:center;gap:8px}
+.sync .sl,.ft-side,.ft-blk,.sync-grid,.sync .sl-ic{border-radius:12px}
+.sync .sl .sl-ic{display:none}
+.sg-track{border-radius:6px}
+.sg-busy{background:color-mix(in srgb,var(--ink-soft) 55%,transparent)}
+.sg-pick{background:color-mix(in srgb,var(--accent) 38%,transparent);box-shadow:inset 0 0 0 1px var(--accent)}
+.sync-alts .btn.sm{min-height:44px;border-radius:8px}
+.sync-page .ft-side{background:none;border:0;box-shadow:none;padding:0}
+.sync-page .ft-side .ft-blk{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0}
+.sync-page .ft-side .ft-blk .ft-how{background:none;border:0;border-radius:0;padding:0}
+.sync-page .ft-how summary{min-height:44px;display:flex;align-items:center;font-size:var(--t-meta);font-weight:500;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.sync .sync-grid .chip-row .chip-btn,.sync .sync-adv .chip-row .chip-btn{min-height:44px;height:auto}
