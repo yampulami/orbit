@@ -4862,3 +4862,9 @@ textarea,input{caret-color:var(--accent)}
 .auth .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 [data-theme=dark] .auth .btn.primary{color:#1a1210}
 .auth a{text-decoration:underline;text-underline-offset:3px}
+
+/* ---- The sign-in and sign-up page: the app's corners, no pill button ---- */
+.merc-form{border-radius:12px}
+.merc-btn,.merc-base,.merc-drop{border-radius:8px}
+.merc-submit .merc-btn,.merc-goo i,.merc-goo,.merc-submit{border-radius:8px!important}
+.merc-submit{filter:none}
