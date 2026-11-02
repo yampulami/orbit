@@ -5,11 +5,11 @@ import type { OrbMood } from "../lib/orbGaze";
 /** The Orbit face: a soft orange orb with a little grain, a glossy highlight and eyes that blink now and then.
  *  Built from the "AI Avatar" component, with the colour changed from blue to the brand orange. A sleepy mood closes the eyes halfway, an excited one blinks quicker. */
 const BLINK = `
-@keyframes orb-blink {
+@keyframes av-blink {
   0%, 88%, 100% { transform: scaleY(1); }
   93%, 97% { transform: scaleY(0.07); }
 }
-@media (prefers-reduced-motion: reduce) { .orb-eye { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .av-eye { animation: none !important; } }
 `;
 const ORANGE = {
   gradient: "radial-gradient(circle at 50% 45%, #a63e10 0%, #e27a2a 40%, #ffb46a 68%, #ffe8cc 100%)",
@@ -52,7 +52,7 @@ export default function OrbAvatar({ size = 32, mood = "idle", onPoke, label = "O
         <span aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", background: "radial-gradient(circle at 62% 68%, rgba(0,0,0,0.18) 0%, transparent 55%)" }} />
         <span style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap, transform: `translateY(${-Math.round(size * 0.04)}px)` }}>
           {[0, 60].map((delay) => (
-            <span key={delay} className="orb-eye" style={{ display: "block", width: eyeW, height: eyeH, borderRadius: "50%", background: ORANGE.iris, transformOrigin: "center", transform: sleepy ? "scaleY(.45)" : undefined, animation: sleepy ? undefined : `orb-blink ${quick} ease-in-out ${delay}ms infinite` }} />
+            <span key={delay} className="av-eye" style={{ display: "block", width: eyeW, height: eyeH, borderRadius: "50%", background: ORANGE.iris, transformOrigin: "center", transform: sleepy ? "scaleY(.45)" : undefined, animation: sleepy ? undefined : `av-blink ${quick} ease-in-out ${delay}ms infinite` }} />
           ))}
         </span>
       </motion.span>
