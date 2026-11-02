@@ -109,7 +109,7 @@ export default function Feed() {
       if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || isTyping(document.activeElement)) return;
       const k = e.key.toLowerCase();
       if (k === "g") { lastG = Date.now(); return; }
-      if (k.length !== 1 || !"jklr".includes(k) || Date.now() - lastG < 1200) return;
+      if (k.length !== 1 || !"jklr".includes(k) || Date.now() - lastG < 1200 || document.querySelector(".gs-panel")) return;
       const posts = [...document.querySelectorAll<HTMLElement>("article.rp")];
       if (posts.length === 0) return;
       const here = (document.activeElement as HTMLElement | null)?.closest("article.rp") as HTMLElement | null;
@@ -251,7 +251,7 @@ export default function Feed() {
               </div>
             ) : (
               <div className="audience">
-                <span>Posting to <b>{SHOW[community]}</b> <small className="aud-who">{WHO[community]}</small></span>
+                <span title={WHO[community]}>Posting to <b>{SHOW[community]}</b></span>
                 <button type="button" className="aud-change" onClick={() => setChoosing(true)}>Change</button>
               </div>
             )}
@@ -318,6 +318,7 @@ export default function Feed() {
                     <button type="button" aria-label={`Share, ${p.author_name}’s post`} onClick={() => setSharing(p)}><Send size={16} aria-hidden="true" />Share</button>
                     {p.author_id === me && <button type="button" aria-label={`Delete, your post “${subject}”`} onClick={() => remove(p)}><Trash2 size={16} aria-hidden="true" />Delete</button>}
                     {repliedBy(p) && <span className="rp-who">{repliedBy(p)}</span>}
+                    <span className="rp-keys" aria-hidden="true">j next · k back · l like · r replies</span>
                   </div>
                   <AnimatePresence initial={false}>
                     {expanded && (

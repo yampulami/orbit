@@ -4373,3 +4373,14 @@ body.feed-page .asst-fab{display:none}
 .now>.now-head{grid-column:1;grid-row:1}
 .now>.now-acts{grid-column:2;grid-row:1}
 .now>.now-sub{grid-column:1}
+
+/* ---- Feed critique pass 6 ---- */
+.pw-fold{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.pw-fold:hover{color:var(--accent)}
+.audience>span{white-space:nowrap}
+.up-text strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
+.rail .cal-day:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.rp-aud{font-size:var(--t-meta);font-weight:600}
+.rp-keys{display:none;margin-left:auto;font-size:var(--t-micro);color:var(--ink-soft)}
+.rp:focus-visible .rp-keys{display:inline}
+.rp:focus-visible .rp-who{display:none}

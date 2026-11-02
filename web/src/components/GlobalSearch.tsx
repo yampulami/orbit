@@ -138,7 +138,7 @@ export default function GlobalSearch() {
     friends.some((f) => f.id === id) ? "Friend" : outgoing.some((r) => r.to.id === id) ? "Requested" : incoming.some((r) => r.from.id === id) ? "Wants to add you" : "Person";
 
   function key(e: KeyboardEvent) {
-    if (e.key === "Escape") { setOpen(false); input.current?.blur(); if (came.current?.isConnected) came.current.focus(); return; }
+    if (e.key === "Escape") { e.preventDefault(); setOpen(false); input.current?.blur(); if (came.current?.isConnected) came.current.focus(); return; }
     if (!options.length) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((a) => (a + 1) % options.length); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => (a + options.length - 1) % options.length); }

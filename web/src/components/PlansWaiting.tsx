@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { hangActions, isVisible, useHang, YOU, type Hangout } from "../lib/hangouts";
 import { useMyBusy } from "../lib/useMyBusy";
 import { busyOn } from "../lib/myBusy";
@@ -40,7 +41,9 @@ export default function PlansWaiting() {
     .filter((h) => isVisible(h, groups) && !h.canceled && new Date(h.when).getTime() > Date.now() - 3 * HOUR && !h.rsvps[YOU])
     .sort((a, b) => a.when.localeCompare(b.when));
   if (asking.length === 0) return null;
-  const shown = all ? asking : asking.slice(0, 1);
+  // One plan shows itself; several fold into a single line that opens the list.
+  const folded = asking.length > 1 && !all;
+  const shown = folded ? [] : asking;
   const groupName = (h: Hangout) => groups.find((g) => g.id === h.groupId)?.name ?? "";
   // A plan that lands on one of your classes says so before you answer.
   const clashWith = (h: Hangout) => {
@@ -50,10 +53,14 @@ export default function PlansWaiting() {
   };
   return (
     <section className="pw" aria-label="Hangouts">
-      <h2 className="pw-h">Plans waiting on you{asking.length > 1 && <span className="pw-n"> · {asking.length}</span>}</h2>
-      <ul className="pw-list">{shown.map((h) => <Row key={h.id} h={h} group={groupName(h)} clash={clashWith(h)} />)}</ul>
-      {asking.length > 1 && <button type="button" className="text-btn" aria-expanded={all} onClick={() => setAll((v) => !v)}>{all ? "Show fewer" : `${asking.length - 1} more waiting`}</button>}
-      <p className="pw-note">The people in each plan see your answer.</p>
+      {asking.length > 1 ? (
+        <h2 className="pw-h"><button type="button" className="pw-fold" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+          {asking.length} plans from friends need your answer
+          <ChevronDown size={18} aria-hidden="true" style={{ transform: all ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+        </button></h2>
+      ) : <h2 className="pw-h">A plan from a friend needs your answer</h2>}
+      {shown.length > 0 && <ul className="pw-list">{shown.map((h) => <Row key={h.id} h={h} group={groupName(h)} clash={clashWith(h)} />)}</ul>}
+      {!folded && <p className="pw-note">The people in each plan see your answer.</p>}
     </section>
   );
 }
