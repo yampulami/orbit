@@ -1,13 +1,12 @@
 import { siteUrl } from "../lib/siteUrl";
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocation } from "react-router-dom";
-import { CalendarClock, Receipt, Scale, ShoppingBasket, StickyNote, ListChecks, UserPlus, Copy, type LucideIcon } from "lucide-react";
+import { CalendarClock, Copy } from "lucide-react";
 import { hangActions, hangLive, useHang, YOU } from "../lib/hangouts";
 import { notice } from "../lib/notice";
-import { roomActions, useSpace, useSpaceReady } from "../lib/roommates";
+import { money, netBalances, roomActions, useSpace, useSpaceReady, workload } from "../lib/roommates";
 import GroupAddFriend from "../components/GroupAddFriend";
 import GroupSync from "../components/GroupSync";
-import StackedList from "../components/StackedList";
 import { Avatar } from "./roommates/Avatar";
 import Tasks from "./roommates/Tasks";
 import Groceries from "./roommates/Groceries";
@@ -16,12 +15,12 @@ import Fairness from "./roommates/Fairness";
 import Notes from "./roommates/Notes";
 
 type Section = "tasks" | "groceries" | "expenses" | "fairness" | "notes";
-const SECTIONS: { id: Section; label: string; Icon: LucideIcon }[] = [
-  { id: "tasks", label: "Tasks", Icon: ListChecks },
-  { id: "groceries", label: "Groceries", Icon: ShoppingBasket },
-  { id: "expenses", label: "Expenses", Icon: Receipt },
-  { id: "fairness", label: "Fairness", Icon: Scale },
-  { id: "notes", label: "House notes", Icon: StickyNote },
+const SECTIONS: { id: Section; label: string }[] = [
+  { id: "tasks", label: "Tasks" },
+  { id: "groceries", label: "Groceries" },
+  { id: "expenses", label: "Expenses" },
+  { id: "fairness", label: "Fairness" },
+  { id: "notes", label: "House notes" },
 ];
 
 const names = (s: string) => [...new Set(s.split(",").map((m) => m.trim()).filter((m) => m && m !== YOU))];
@@ -42,6 +41,7 @@ export default function Roommates() {
   const [others, setOthers] = useState("");
   const [adding, setAdding] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [showPeople, setShowPeople] = useState(false);
   const [more, setMore] = useState("");
   const [error, setError] = useState("");
 
@@ -115,26 +115,33 @@ export default function Roommates() {
 
   const open = space.tasks.filter((t) => !t.done).length;
   const mine = space.tasks.filter((t) => !t.done && t.assignee === YOU).length;
+  const toBuy = space.groceries.filter((g) => !g.bought).length;
+  const owed = netBalances(space.members, space.expenses, space.payments)[YOU] ?? 0;
+  const load = Object.values(workload(space.members, space.tasks));
+  const sentence: Record<Section, string> = {
+    tasks: open === 0 ? "Nothing left to do" : `${open} chore${open === 1 ? "" : "s"} open${mine > 0 ? `, ${mine} for you` : ""}`,
+    groceries: toBuy === 0 ? "Everything on the list is bought" : `${toBuy} thing${toBuy === 1 ? "" : "s"} to buy`,
+    expenses: owed > 0 ? `You are owed ${money(owed)}` : owed < 0 ? `You owe ${money(-owed)}` : "You are all settled",
+    fairness: load.length > 0 && Math.max(...load.map((w) => w.open)) - Math.min(...load.map((w) => w.open)) >= 4 ? "Work is uneven this week" : "Work is spread evenly",
+    notes: `${space.notes.length} house note${space.notes.length === 1 ? "" : "s"}`,
+  };
+  const who = space.members.map((m) => (m === YOU ? "You" : m.split(" ")[0]));
   return (
     <div className="page">
       <h1 className="sr">Roommates</h1>
       <header className="rm-head">
         <div>
-          <h2>{open === 0 ? "Nothing left to do" : `${open} chore${open === 1 ? "" : "s"} open${mine > 0 ? `, ${mine} yours` : ""}`}</h2>
-          <p className="rm-house">{space.name}</p>
-          <StackedList
-            title="Roommates"
-            subtitle={space.members.map((m) => (m === YOU ? "You" : m.split(" ")[0])).slice(0, 4).join(", ") + (space.members.length > 4 ? ` +${space.members.length - 4}` : "")}
-            people={space.members.filter((m) => m !== YOU).map((m) => ({ name: m }))}
-            items={space.members}
-            getKey={(m) => m}
-            itemText={(m) => m}
-            renderItem={(m) => (
-              <div className="sl-row"><Avatar name={m} members={space.members} size={32} /><span className="sl-name">{m === YOU ? "You" : m}</span></div>
-            )}
-          />
+          <h2>{sentence[section]}</h2>
+          <p className="rm-house">
+            {space.name} · <button type="button" className="rm-link" aria-expanded={showPeople} onClick={() => setShowPeople((v) => !v)}>{who.slice(0, 4).join(", ")}{who.length > 4 ? ` +${who.length - 4}` : ""}</button>
+          </p>
+          {showPeople && (
+            <ul className="rm-people" aria-label="Roommates">
+              {space.members.map((m) => <li key={m}><Avatar name={m} members={space.members} size={28} />{m === YOU ? "You" : m}</li>)}
+            </ul>
+          )}
         </div>
-        <button type="button" className="btn" aria-expanded={adding} onClick={() => { setAdding((v) => !v); setError(""); }}><UserPlus size={18} aria-hidden="true" />Add roommates</button>
+        <button type="button" className="rm-link" aria-expanded={adding} onClick={() => { setAdding((v) => !v); setError(""); }}>{adding ? "Close" : "Add roommates"}</button>
       </header>
       {adding && (
         hangLive ? (
@@ -156,7 +163,7 @@ export default function Roommates() {
         <form className="plan-form" onSubmit={addMore}>
           <label className="field">Names, separated by commas<input autoFocus value={more} onChange={(e) => setMore(e.target.value)} placeholder="Sam, Riley" /></label>
           {error && <p className="error" role="alert">{error}</p>}
-          <button className="btn primary">Add to {space.name}</button>
+          <div className="rm-setup-actions"><button className="btn primary">Add to {space.name}</button><button type="button" className="rm-link" onClick={() => { setAdding(false); setError(""); }}>Cancel</button></div>
         </form>
         )
       )}

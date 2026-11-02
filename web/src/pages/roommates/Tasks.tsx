@@ -54,7 +54,7 @@ export default function Tasks({ space }: { space: Space }) {
       <form className="rm-add" data-tone="lav" data-collapsed={expanded || title ? undefined : ""} onSubmit={add}>
         <label className="field grow"><span className="sr">Chore</span><input value={title} onFocus={() => setExpanded(true)} onChange={(e) => setTitle(e.target.value)} placeholder="Add a chore, like “Clean the bathroom”" maxLength={80} /></label>
         <div className="rm-extra"><Picker value={who} options={assignOptions} onChange={setWho} label="Assign to" />
-        <div className="segment" role="radiogroup" aria-label="Effort points">
+        <div className="segment" role="radiogroup" aria-label="Effort points"><span className="rm-lbl" aria-hidden="true">Effort</span>
           {POINTS.map((p) => <button key={p} type="button" role="radio" aria-checked={points === p} onClick={() => setPoints(p)} title={`${p} effort point${p === 1 ? "" : "s"}`}>{p}</button>)}
         </div>
         <label className="field due"><span className="sr">Due date (optional)</span><input type="date" value={due} min={today} onChange={(e) => setDue(e.target.value)} title="Due date (optional)" /></label></div>

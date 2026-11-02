@@ -4900,3 +4900,35 @@ textarea,input{caret-color:var(--accent)}
 }
 body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 @media (min-width:901px){.chats .convo{padding-bottom:56px}}
+
+/* ---- Roommates pass 2 (critique, desktop): a headline for every section, a one-line household, flat add panel, square bars, 44px controls ---- */
+.rm-link{border:0;background:none;padding:0;font:inherit;font-weight:600;color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:0}
+.rm-house .rm-link{color:var(--ink-soft);font-weight:500}
+.rm-link:hover{color:var(--ink)}
+.rm-head>.rm-link{font-size:var(--t-meta);min-height:44px;align-self:flex-start}
+.rm-people{list-style:none;margin:2px 0 8px;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:var(--t-meta);color:var(--ink)}
+.rm-people li{display:inline-flex;align-items:center;gap:8px}
+.rm-head+.plan-form{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:0 0 14px;margin-bottom:6px}
+.rm-head+.plan-form .btn.primary,.rm-setup .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;width:auto;border-radius:8px;min-height:44px}
+[data-theme=dark] .rm-head+.plan-form .btn.primary,[data-theme=dark] .rm-setup .btn.primary{color:#1a1210}
+.rm-head+.plan-form .rm-setup-actions{display:flex;align-items:center;gap:18px}
+.rm-lbl{font-size:var(--t-micro);color:var(--ink-soft);align-self:center;margin-right:2px}
+.rm-bar-track{border-radius:4px;height:12px}
+.rm-bar-open{background:repeating-linear-gradient(45deg,var(--ink-soft) 0 2px,transparent 2px 7px);opacity:.5}
+.rm-legend i{border-radius:2px}
+.rm-legend i.o{background:repeating-linear-gradient(45deg,var(--ink-soft) 0 2px,transparent 2px 5px)}
+.rm-nudge{background:none;border:0;border-left:1px solid var(--accent);border-radius:0;padding:2px 0 2px 12px}
+.rm-notes{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.rm-notes textarea{font-size:var(--t-ui);border-radius:8px}
+.rm-row .check{position:relative;width:30px;height:30px}
+.rm-row .check::after{content:"";position:absolute;inset:-7px}
+.rm-row .drag,.rm-row [class*=grip],.rm-row [class*=drag]{min-width:32px;min-height:44px}
+.rm-row .picker-btn,.rm-add .picker-btn{min-height:44px}
+.rm-search input{min-height:42px}
+.segment button{min-width:32px}
+.rm-exp .ghost-btn.wide,.ghost-btn.wide{width:auto;min-height:44px;padding:0 12px;border-radius:8px;gap:6px;display:inline-flex;align-items:center}
+.rm-notes .ghost-btn{width:44px;height:44px;border-radius:8px}
+.rm-exp summary,.rm-pay{padding-left:0;padding-right:0}
+.rm-exp summary{cursor:pointer}
+.rm-exp .rm-plan .btn,.rm-balance .btn{min-width:132px;justify-content:center}
+.btn{border-radius:8px}
