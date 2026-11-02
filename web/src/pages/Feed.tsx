@@ -1,3 +1,4 @@
+import { isTyping } from "../lib/shortcuts";
 import { Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "react";
 import { useIsPhone } from "../lib/phone";
 import EmojiButton from "../components/EmojiButton";
@@ -35,6 +36,14 @@ import { gradientFor } from "../lib/look";
 const MAX = 1000;
 /** What each audience is called on the page. "Everyone" is the open one; "Marketplace" is things for sale, not a group of people. */
 const SHOW: Record<string, string> = { All: "Everything", Everyone: "Open to all", Commuters: "Commuters", Residents: "Residents", Roommates: "Roommates", Marketplace: "For sale" };
+/** What each audience means, said when you open the list. */
+const WHO: Record<string, string> = {
+  Everyone: "Everyone at your university can see it.",
+  Commuters: "Only students who live off campus see it.",
+  Residents: "Only students who live in residence see it.",
+  Roommates: "Only your roommates see it.",
+  Marketplace: "Shows up as something for sale or to give away.",
+};
 const audience = (c: string) => (c === "Marketplace" ? "sale" : c === "Everyone" ? "everyone" : c.toLowerCase());
 /** The feed asks for this many posts, so this is also where it says it has stopped. */
 const PAGE = 50;
@@ -69,7 +78,10 @@ export default function Feed() {
   const [posts, setPosts] = useState<Row[]>([]);
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [body, setBody] = useState("");
+  const draftKey = `orbit-feed-draft:${me}`;
+  const [body, setBody] = useState(() => { try { return localStorage.getItem(`orbit-feed-draft:${session?.user.id ?? ""}`) ?? ""; } catch { return ""; } });
+  // A half-written post survives leaving the page or closing the tab.
+  useEffect(() => { try { if (body) localStorage.setItem(draftKey, body); else localStorage.removeItem(draftKey); } catch { /* storage unavailable */ } }, [body, draftKey]);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const [community, setCommunity] = useState<Community>("Everyone");
   const [choosing, setChoosing] = useState(false); // the audience list opens only when asked; the box says who it is for
@@ -90,6 +102,32 @@ export default function Feed() {
     const t = window.setTimeout(() => el.classList.remove("flash"), 2400);
     return () => window.clearTimeout(t);
   }, [target, loading, posts.length]);
+  // Keys for the post list: j and k move between posts, l likes, r opens the replies. (After "g" a letter is a page jump, so those are left alone.)
+  useEffect(() => {
+    let lastG = 0;
+    const down = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || isTyping(document.activeElement)) return;
+      const k = e.key.toLowerCase();
+      if (k === "g") { lastG = Date.now(); return; }
+      if (k.length !== 1 || !"jklr".includes(k) || Date.now() - lastG < 1200) return;
+      const posts = [...document.querySelectorAll<HTMLElement>("article.rp")];
+      if (posts.length === 0) return;
+      const here = (document.activeElement as HTMLElement | null)?.closest("article.rp") as HTMLElement | null;
+      if (k === "j" || k === "k") {
+        e.preventDefault();
+        const at = here ? posts.indexOf(here) : -1;
+        const next = posts[k === "j" ? Math.min(at + 1, posts.length - 1) : Math.max(at < 0 ? 0 : at - 1, 0)];
+        next.focus();
+        next.scrollIntoView({ block: "nearest" });
+        return;
+      }
+      if (!here) return;
+      e.preventDefault();
+      here.querySelector<HTMLElement>(k === "l" ? "button[aria-pressed]" : "button[aria-expanded]")?.click();
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, []);
   const [open, setOpen] = useState<string | null>(null);
   const [filter, setFilter] = useState<"All" | Community>("All");
   // Writing a post while looking at one audience posts to that audience.
@@ -208,11 +246,12 @@ export default function Feed() {
               <div className="audience" role="radiogroup" aria-label="Post to">
                 <span aria-hidden="true">Post to</span>
                 {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); }}>{SHOW[c]}</button>)}
-                {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title="Something to sell or give away" onClick={() => { setCommunity("Marketplace"); setChoosing(false); }}>{SHOW.Marketplace}</button></>}
+                {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); }}>{SHOW.Marketplace}</button></>}
+                <small className="aud-who">{WHO[community]}</small>
               </div>
             ) : (
               <div className="audience">
-                <span>Posting to <b>{SHOW[community]}</b></span>
+                <span>Posting to <b>{SHOW[community]}</b> <small className="aud-who">{WHO[community]}</small></span>
                 <button type="button" className="aud-change" onClick={() => setChoosing(true)}>Change</button>
               </div>
             )}
@@ -261,7 +300,7 @@ export default function Feed() {
             const subject = (p.payload.title ?? p.payload.body ?? p.payload.text ?? "").slice(0, 40);
             const replies = p.post_comments.length;
             return (
-              <article key={p.id} id={`post-${p.id}`} className="rp" aria-label={`Post by ${p.author_name}`}>
+              <article key={p.id} id={`post-${p.id}`} className="rp" tabIndex={-1} aria-label={`Post by ${p.author_name}`}>
                 <PersonLink id={p.author_id} className="rp-avlink" decorative><span className="rp-av" style={{ background: gradientFor(p.author_name) }} aria-hidden="true">{initials(p.author_name)}</span></PersonLink>
                 <div className="rp-main">
                   <div className="rp-head">
@@ -299,6 +338,7 @@ export default function Feed() {
       {!phone && <aside className="rail" id="your-list" tabIndex={-1} ref={rail} aria-label="Your campus summary">
         <UpcomingList limit={5} moreTo="/app/plans" hide={["hangout"]} title="On your list" />
         <div className="cs-wide"><CampusSoon compact /></div>
+        <button type="button" className="kb-link" onClick={() => window.dispatchEvent(new CustomEvent("orbit-shortcuts"))}><kbd>?</kbd> Keyboard shortcuts</button>
         <section className="cal-fold">
           <button type="button" className="cal-toggle" aria-expanded={calOpen} onClick={toggleCal}>
             <span>Calendar{day ? " · 1 day selected" : ""}</span>

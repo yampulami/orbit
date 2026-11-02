@@ -4353,3 +4353,23 @@ body.feed-page .asst-fab{display:none}
 .gs-more{margin-left:auto;border:0;background:none;padding:0 4px;min-height:44px;font:inherit;font-size:var(--t-meta);font-weight:600;color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .up li .check{width:32px;height:32px}
 .up .pin-btn{width:32px;height:32px}
+
+/* ---- Feed critique pass 6: keys, explained audiences, answers as links, one-row header ---- */
+.rp:focus{outline:none}
+.rp:focus-visible{outline:2px solid var(--ink);outline-offset:6px;border-radius:8px}
+.kb-link{justify-self:start;border:0;background:none;padding:6px 4px;min-height:44px;font:inherit;font-size:var(--t-meta);color:var(--ink-soft);cursor:pointer}
+.kb-link:hover{color:var(--ink)}
+.kb-link kbd{font:inherit;font-size:var(--t-micro);border:1px solid var(--line);border-radius:6px;padding:1px 7px;margin-right:6px}
+.aud-who{display:block;flex:1 1 100%;font-size:var(--t-micro);color:var(--ink-soft);margin:0}
+.audience>span>.aud-who{display:inline;margin-left:8px}
+/* Plans waiting: the answers are links, like the ones in the right column */
+.pw-ans .btn,.pw-ans .btn.primary,[data-theme=dark] .pw-ans .btn.primary{border:0;background:none;box-shadow:none;padding:0 10px;min-height:44px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.pw-ans .btn.primary,[data-theme=dark] .pw-ans .btn.primary{color:var(--accent)}
+.pw-ans .btn:not(.primary){color:var(--ink-soft);border:0}
+.pw-ans .btn.primary:hover{background:none;color:var(--accent-deep,var(--accent))}
+/* top block: the two actions sit beside the headline instead of under the bar */
+.now{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;align-items:start}
+.now>*{grid-column:1/-1}
+.now>.now-head{grid-column:1;grid-row:1}
+.now>.now-acts{grid-column:2;grid-row:1}
+.now>.now-sub{grid-column:1}

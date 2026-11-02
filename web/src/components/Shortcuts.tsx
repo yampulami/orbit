@@ -24,8 +24,10 @@ export default function Shortcuts({ onNew }: { onNew: () => void }) {
       else if (r.kind === "search") { e.preventDefault(); document.querySelector<HTMLInputElement>(".gsearch input")?.focus(); }
       else if (r.kind === "help") { e.preventDefault(); setHelp((v) => !v); }
     };
+    const show = () => setHelp(true);
     document.addEventListener("keydown", down);
-    return () => document.removeEventListener("keydown", down);
+    window.addEventListener("orbit-shortcuts", show);
+    return () => { document.removeEventListener("keydown", down); window.removeEventListener("orbit-shortcuts", show); };
   }, [nav, onNew]);
 
   return (
@@ -38,6 +40,10 @@ export default function Shortcuts({ onNew }: { onNew: () => void }) {
               {Object.entries(GO).map(([k, v]) => <div key={k}><dt><kbd>g</kbd> <kbd>{k}</kbd></dt><dd>Go to {v.label}</dd></div>)}
               <div><dt><kbd>n</kbd></dt><dd>New post</dd></div>
               <div><dt><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>K</kbd></dt><dd>Search</dd></div>
+              <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Next or previous post on the feed</dd></div>
+              <div><dt><kbd>l</kbd></dt><dd>Like the post you are on</dd></div>
+              <div><dt><kbd>r</kbd></dt><dd>Open its replies</dd></div>
+              <div><dt><kbd>Ctrl</kbd> <kbd>Enter</kbd></dt><dd>Post what you have written</dd></div>
               <div><dt><kbd>?</kbd></dt><dd>This list</dd></div>
             </dl>
           </motion.div>
