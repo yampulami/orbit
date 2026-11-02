@@ -17,12 +17,12 @@ type Hit = { id: string; kind: string; Icon: LucideIcon; title: string; sub: str
 /** One row in the results, whichever section it is in. */
 type Option = { section: "top" | "people" | "pages"; id: string; label: string; go: () => void };
 /** Pages you can jump to by typing their name. */
-const PAGES: { id: string; title: string; sub: string; to: string; Icon: LucideIcon }[] = [
+const PAGES: { id: string; title: string; sub: string; to: string; Icon: LucideIcon; words?: string }[] = [
   { id: "feed", title: "Feed", sub: "What is happening on campus", to: "/app/feed", Icon: Newspaper },
-  { id: "messages", title: "Messages", sub: "Your conversations", to: "/app/chats", Icon: MessageSquare },
+  { id: "messages", title: "Messages", sub: "Your conversations", to: "/app/chats", Icon: MessageSquare, words: "chats dm direct" },
   { id: "groups", title: "Groups", sub: "Your groups and hangouts", to: "/app/chats?tab=groups", Icon: Users },
   { id: "plans", title: "Plans", sub: "Classes, reminders and plans", to: "/app/plans", Icon: CalendarDays },
-  { id: "sync", title: "Free time", sub: "Find a time that works for everyone", to: "/app/sync", Icon: CalendarClock },
+  { id: "sync", title: "Free time", sub: "Find a time that works for everyone", to: "/app/sync", Icon: CalendarClock, words: "sync schedule calendar find a time" },
   { id: "campus", title: "Campus", sub: "Clubs and events", to: "/app/campus", Icon: Megaphone },
   { id: "roommates", title: "Roommates", sub: "Chores, groceries and expenses", to: "/app/roommates", Icon: Sofa },
   { id: "map", title: "Map", sub: "Places around campus", to: "/app/map", Icon: MapPin },
@@ -90,6 +90,8 @@ export default function GlobalSearch() {
     return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("orbit-search-open", ask); };
   }); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (open) { const t = window.setTimeout(() => input.current?.focus(), 30); return () => window.clearTimeout(t); } }, [open]);
+  // While the search is open the page behind it does not scroll.
+  useEffect(() => { if (!open) return; const was = document.body.style.overflow; document.body.style.overflow = "hidden"; return () => { document.body.style.overflow = was; }; }, [open]);
 
   const { term, usernameOnly } = parseQuery(q);
   const scoped = scope !== "all";
@@ -141,7 +143,7 @@ export default function GlobalSearch() {
   }, [term, usernameOnly, scope, scoped, limit, hangouts, reminders, space, groups, posts, orgs, events]);
 
   // Typing a page name offers that page; with nothing typed the bar stays clean, like Spotlight.
-  const pages = scope === "all" && !longEnough(q) && q.trim() ? PAGES.filter((p) => p.title.toLowerCase().includes(q.trim().toLowerCase())) : [];
+  const pages = scope === "all" && q.trim() && !usernameOnly ? PAGES.filter((p) => `${p.title} ${p.words ?? ""}`.toLowerCase().includes(q.trim().toLowerCase())) : [];
   const options: Option[] = [
     ...pages.map((p): Option => ({ section: "pages", id: p.id, label: p.title, go: () => { closeSearch(); nav(p.to); } })),
     ...things.map((h): Option => ({ section: "top", id: h.id, label: h.title, go: () => { closeSearch(); nav(h.to, { state: h.state }); } })),
@@ -153,6 +155,11 @@ export default function GlobalSearch() {
     friends.some((f) => f.id === id) ? "Friend" : outgoing.some((r) => r.to.id === id) ? "Requested" : incoming.some((r) => r.from.id === id) ? "Wants to add you" : "Person";
 
   function key(e: KeyboardEvent) {
+    if (e.key === "Tab") { // keep Tab inside the search
+      const f = [...(e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>("input,button")].filter((x) => !x.hasAttribute("disabled"));
+      if (f.length) { const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } }
+      return;
+    }
     if (!options.length) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => (a + 1) % options.length); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => (a + options.length - 1) % options.length); }
