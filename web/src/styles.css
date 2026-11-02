@@ -4397,3 +4397,16 @@ body.feed-page .asst-fab{display:none}
 .audience.choosing{flex:1 1 100%;order:-1;flex-wrap:wrap}
 .rp-keys{font-size:var(--t-meta);color:var(--ink)}
 [data-theme=dark] .rail .cal-day:focus-visible{outline:2px solid var(--ink)!important;outline-offset:2px}
+
+/* ---- Feed critique pass 8: the right column always fits and scrolls on its own; the first plan that needs you leads ---- */
+@media (min-width:1101px){
+  .rail{position:sticky;top:78px;max-height:calc(100vh - 90px);overflow-y:auto;overscroll-behavior:contain;padding:4px 6px 12px;margin:-4px -6px}
+}
+.now-ans{border:0;background:none;padding:0 6px;min-height:44px;margin-left:6px;font:inherit;font-weight:600;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.now-ans.yes{color:var(--accent)}
+.now-ans:hover{color:var(--ink)}
+.now-more{color:var(--ink-soft)}
+[data-theme=dark] .composer .btn.primary:disabled{color:var(--ink-soft);opacity:1;border:1px solid var(--line);background:transparent}
+.composer .btn.primary:disabled{opacity:1;color:var(--ink-soft)}
+.frow .sep{align-self:center;width:1px;height:18px;margin:0 4px;background:var(--line);flex:none}
+.gs-scopes{flex-wrap:wrap}

@@ -68,7 +68,7 @@ export default function GlobalSearch() {
     // Escape closes the list wherever focus is (the box itself, a place-to-look tab, or nowhere in particular after a click on the dimmed page).
     const onKey = (e: globalThis.KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); input.current?.focus(); }
-      else if (e.key === "Escape" && root.current?.querySelector(".gs-panel")) { setOpen(false); if (root.current.contains(document.activeElement)) { (document.activeElement as HTMLElement).blur(); if (came.current?.isConnected) came.current.focus(); } }
+      else if (e.key === "Escape" && root.current?.querySelector(".gs-panel")) { setOpen(false); setQ(""); if (root.current.contains(document.activeElement)) { (document.activeElement as HTMLElement).blur(); if (came.current?.isConnected) came.current.focus(); } }
     };
     const away = (e: MouseEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
     window.addEventListener("keydown", onKey);
@@ -138,7 +138,7 @@ export default function GlobalSearch() {
     friends.some((f) => f.id === id) ? "Friend" : outgoing.some((r) => r.to.id === id) ? "Requested" : incoming.some((r) => r.from.id === id) ? "Wants to add you" : "Person";
 
   function key(e: KeyboardEvent) {
-    if (e.key === "Escape") { e.preventDefault(); setOpen(false); input.current?.blur(); if (came.current?.isConnected) came.current.focus(); return; }
+    if (e.key === "Escape") { e.preventDefault(); setOpen(false); setQ(""); input.current?.blur(); if (came.current?.isConnected) came.current.focus(); return; }
     if (!options.length) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((a) => (a + 1) % options.length); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => (a + options.length - 1) % options.length); }
@@ -176,7 +176,7 @@ export default function GlobalSearch() {
             <ul id={listId} role="listbox" className="gs-panel" aria-label="Search results">
               <li className="gs-chips" role="presentation">{scopeRow}</li>
               {options.length === 0 ? (
-                <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />{noneText}{scope === "all" && longEnough(q) && <button type="button" className="gs-more" onClick={() => pick("posts")}>Search posts only</button>}</li>
+                <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />{noneText}{scoped && <button type="button" className="gs-more" onClick={() => pick("all")}>Search everything</button>}</li>
               ) : (
                 <>
                   {pages.length > 0 && <li className="gs-head" role="presentation">Go to</li>}

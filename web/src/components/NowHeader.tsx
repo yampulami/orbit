@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMyBusy } from "../lib/useMyBusy";
 import { useFriends } from "../lib/friends";
-import { isVisible, useHang, YOU } from "../lib/hangouts";
+import { hangActions, isVisible, useHang, YOU, type Hangout } from "../lib/hangouts";
+import { undo } from "../lib/undo";
 import { useReminders, ymd } from "../lib/reminders";
 import { useCampusEvents } from "../lib/campusEvents";
 import { loadFriendFree } from "../lib/availability";
 import { busyOn, describeBusy, type BusyItem } from "../lib/myBusy";
 import { freeNow, span, type Person } from "../lib/freeTime";
-import { clock } from "../lib/dayWords";
+import { clock, dayWord } from "../lib/dayWords";
 
 /** The bar shows 7 AM to 11 PM. */
 const FROM = 7 * 60, TO = 23 * 60;
@@ -46,6 +47,14 @@ export default function NowHeader() {
   const unanswered = (i: BusyItem) => i.kind === "hangout" && !hangouts.some((h) => h.title === i.label && new Date(h.when).getTime() === i.start.getTime() && h.rsvps[YOU] === "yes");
   const confirmed = items.filter((i) => !unanswered(i));
   // What needs you when nothing is confirmed: plans nobody has answered yet (the same ones "Plans waiting on you" lists) and tasks past their day.
+  const pending = hangouts.filter((h) => isVisible(h, groups) && !h.canceled && new Date(h.when).getTime() > now.getTime() - 3 * 3600_000 && !h.rsvps[YOU]).sort((a, b) => a.when.localeCompare(b.when));
+  // The plan that needs you first, when it comes before anything you have confirmed on the day shown.
+  const nextConfirmed = confirmed.find((i) => i.end > now)?.start;
+  const lead: Hangout | undefined = !(late ? undefined : confirmed.find((i) => i.start <= now && i.end > now)) && pending[0] && new Date(pending[0].when).toDateString() === shownDay.toDateString() && (!nextConfirmed || new Date(pending[0].when) < nextConfirmed) ? pending[0] : undefined;
+  const answer = (h: Hangout, a: "yes" | "no") => {
+    hangActions.setRsvp(h.id, a);
+    undo.show(a === "yes" ? `You’re in for “${h.title}”` : `You said you can’t make “${h.title}”`, { onUndo: () => hangActions.setRsvp(h.id, null), commit: () => {} });
+  };
   const toAnswer = hangouts.filter((h) => isVisible(h, groups) && !h.canceled && new Date(h.when).getTime() > now.getTime() - 3 * 3600_000 && !h.rsvps[YOU]).length;
   const overdue = reminders.filter((r) => !r.done && r.date < ymd(now)).length;
   const needs = [toAnswer > 0 ? `${toAnswer} plan${toAnswer === 1 ? "" : "s"} to answer` : "", overdue > 0 ? `${overdue} overdue` : ""].filter(Boolean);
@@ -56,7 +65,10 @@ export default function NowHeader() {
   const open = free && free.minutes >= 25 ? free : null;
 
   let head: string, sub: string | null = null, prompt = false;
-  if (late) {
+  if (lead) {
+    const d = new Date(lead.when);
+    head = `${late || dayWord(d, now) !== "Today" ? `${dayWord(d, now)}: ` : ""}${lead.title} at ${clock(d)}`;
+  } else if (late) {
     const first = confirmed[0];
     head = first ? `Tomorrow: ${first.label} at ${clock(first.start)}` : "Nothing on your schedule tomorrow";
   } else if (confirmed.length === 0) {
@@ -91,7 +103,14 @@ export default function NowHeader() {
     <section className="now" aria-labelledby="now-h">
       <h2 id="now-h" className="now-head">{head}</h2>
       {sub && <p className="now-sub">{sub}{prompt && <> <Link to="/app/plans">Add classes</Link></>}</p>}
-      {!late && toAnswer > 0 && confirmed.length > 0 && <p className="now-sub">{toAnswer} plan{toAnswer === 1 ? "" : "s"} from friends need your answer below.</p>}
+      {lead && (
+        <p className="now-sub">Waiting for your answer
+          <button type="button" className="now-ans yes" onClick={() => answer(lead, "yes")}>I’m in</button>
+          <button type="button" className="now-ans" onClick={() => answer(lead, "no")}>Can’t</button>
+          {toAnswer > 1 && <span className="now-more"> · {toAnswer - 1} more below</span>}
+        </p>
+      )}
+      {!lead && !late && toAnswer > 0 && confirmed.length > 0 && <p className="now-sub">{toAnswer} plan{toAnswer === 1 ? "" : "s"} from friends need your answer below.</p>}
       {inGap && <p className="now-sub">{inGap.title} at {clock(inGap.at)} falls in this gap.</p>}
       {alsoFree.length > 0 && <p className="now-sub">{alsoFree.slice(0, 3).map(first).join(", ")}{alsoFree.length > 3 ? ` and ${alsoFree.length - 3} more` : ""} {alsoFree.length === 1 ? "is" : "are"} free too.</p>}
 

@@ -1,5 +1,5 @@
 import { isTyping } from "../lib/shortcuts";
-import { Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "react";
+import { Fragment, Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "react";
 import { useIsPhone } from "../lib/phone";
 import EmojiButton from "../components/EmojiButton";
 import RichText from "../components/RichText";
@@ -124,6 +124,7 @@ export default function Feed() {
       if (!here) return;
       e.preventDefault();
       here.querySelector<HTMLElement>(k === "l" ? "button[aria-pressed]" : "button[aria-expanded]")?.click();
+      if (k === "r") window.setTimeout(() => here.querySelector<HTMLElement>(".comments textarea, .comments input")?.focus(), 450);
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
@@ -245,8 +246,8 @@ export default function Feed() {
             {choosing ? (
               <div className="audience choosing" role="radiogroup" aria-label="Post to">
                 <span aria-hidden="true">Audience</span>
-                {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); }}>{SHOW[c]}</button>)}
-                {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); }}>{SHOW.Marketplace}</button></>}
+                {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); composerRef.current?.focus(); }}>{SHOW[c]}</button>)}
+                {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); composerRef.current?.focus(); }}>{SHOW.Marketplace}</button></>}
                 <small className="aud-who">{WHO[community]}</small>
               </div>
             ) : (
@@ -268,9 +269,12 @@ export default function Feed() {
         <h2 className="feed-h">{campus.name}<span>{feed.length >= PAGE ? `Newest ${PAGE} posts` : "What students are saying"}</span></h2>
         <div className="pills">
           <nav className="frow" aria-label="Show posts">
-            <span className="frow-l" title={`Counts are for the newest ${PAGE} posts`}>Show</span>
+            <span className="frow-l" title={`Counts are for the newest ${PAGE} posts`}>Showing</span>
             {(["All", ...communities] as const).map((c) => (
-              <button key={c} type="button" aria-pressed={filter === c} disabled={countFor(c) === 0 && filter !== c} onClick={() => pick(c)}>{SHOW[c]}<small>{countFor(c)}</small></button>
+              <Fragment key={c}>
+              {c === "Marketplace" && <span className="sep" aria-hidden="true" />}
+              <button type="button" aria-pressed={filter === c} disabled={countFor(c) === 0 && filter !== c} onClick={() => pick(c)}>{SHOW[c]}<small>{countFor(c)}</small></button>
+              </Fragment>
             ))}
           </nav>
         </div>
