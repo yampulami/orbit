@@ -10,7 +10,7 @@ import { MomentsBar } from "../components/Moments";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { ChevronDown, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi as api, type Row } from "../lib/feedData";
 import { communities, type Community } from "../shared/feed";
@@ -255,8 +255,8 @@ export default function Feed() {
               </button>
               {choosing && (
                 <div className="audience choosing" role="radiogroup" aria-label="Post to">
-                  {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); composerRef.current?.focus(); }}>{SHOW[c]}</button>)}
-                  {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); composerRef.current?.focus(); }}>{SHOW.Marketplace}</button></>}
+                  {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); composerRef.current?.focus(); }}>{SHOW[c]}{community === c && <Check size={14} aria-hidden="true" />}</button>)}
+                  {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); composerRef.current?.focus(); }}>{SHOW.Marketplace}{community === "Marketplace" && <Check size={14} aria-hidden="true" />}</button></>}
                   <small className="aud-who">{WHO[community]}</small>
                 </div>
               )}

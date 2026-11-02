@@ -2,8 +2,8 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { CalendarClock, Check, Keyboard, LayoutGrid, LogOut, Megaphone, Moon, PanelLeft, SquarePen, Sun } from "lucide-react";
-import { HomeIcon, MapIcon, MessagesIcon, PlansIcon, RoommatesIcon } from "./icons";
+import { CalendarClock, Check, Keyboard, LayoutGrid, LogOut, Megaphone, Moon, PanelLeft, Sofa, SquarePen, Sun } from "lucide-react";
+import { HomeIcon, MapIcon, MessagesIcon, PlansIcon } from "./icons";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { enter, slide } from "../lib/motion";
@@ -37,7 +37,7 @@ const SIDE_MODES: { id: SideMode; label: string }[] = [{ id: "expanded", label: 
 const items = [
   { to: "/app/feed", label: "Feed", icon: HomeIcon },
   { to: "/app/chats", label: "Chats", icon: MessagesIcon },
-  { to: "/app/roommates", label: "Roommates", icon: RoommatesIcon },
+  { to: "/app/roommates", label: "Roommates", icon: Sofa },
   { to: "/app/plans", label: "Plans", icon: PlansIcon },
   { to: "/app/sync", label: "Free time", icon: CalendarClock },
   { to: "/app/campus", label: "Campus", icon: Megaphone },
