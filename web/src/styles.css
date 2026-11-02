@@ -4800,3 +4800,18 @@ textarea,input{caret-color:var(--accent)}
 .ev-tags .ebadge.official{border-color:var(--accent)!important;color:var(--accent)!important}
 .campus-seg{border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;box-shadow:none;padding:0}
 .crail .crail-btn,.crail button,.crail a{border-radius:12px}
+
+/* ---- Map, in the Orbit look: flat side panel, text category choices, a quiet review note, 8px controls ---- */
+.mapview{width:100%}
+.map-side{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:none}
+.map-search{border-radius:8px;background:var(--bg);border:1px solid var(--line);box-shadow:none}
+.map-vote-ask{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;color:var(--ink);padding:0 0 10px;font-size:var(--t-meta)}
+.map-vote-ask .btn{border-radius:8px;min-height:44px}
+.map-cats{display:flex;flex-wrap:wrap;gap:0 16px}
+.map-cats button,.map-cats .chip-btn{min-height:44px;padding:0 2px;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:none!important;color:var(--ink-soft)!important;font:inherit;font-size:var(--t-meta);font-weight:500;box-shadow:none!important}
+.map-cats button[aria-pressed=true],.map-cats button.on,.map-cats .needs[aria-pressed=true]{color:var(--ink)!important;font-weight:600;border-bottom-color:var(--accent)!important}
+.map-cats .needs{color:var(--accent)!important}
+.map-list li,.map-list button{border-radius:8px}
+.map-note{font-size:var(--t-micro);color:var(--ink-soft)}
+.map-stage,.map-box{border-radius:12px}
+.map-add{border-radius:8px;box-shadow:0 0 0 1px var(--line)}
