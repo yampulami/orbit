@@ -4834,3 +4834,23 @@ textarea,input{caret-color:var(--accent)}
 .gm .gm-cap,.gm[data-caps] .gm-cap{display:none}
 .pf-head{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:8px 0 18px}
 .pf-head h1,.pf-head h2{font-family:var(--display);font-size:clamp(1.5rem,2.5vw,var(--t-hero));font-weight:600;letter-spacing:-.02em}
+
+/* ---- Club page, in the Orbit look: channel list as plain rows, flat posts, quiet tags and counts ---- */
+.chan{border-radius:8px;background:none;color:var(--ink-soft);font-size:var(--t-meta)}
+.chan:hover{background:var(--panel);color:var(--ink)}
+.chan[aria-current=true],.chan.on,.chan.active{background:var(--panel);color:var(--ink);font-weight:600}
+.chan.on.chan,.chan[aria-current=true]{box-shadow:none}
+.rem-count{background:none;color:var(--accent);min-width:0;height:auto;padding:0;font-size:var(--t-meta);font-weight:600}
+.my-tasks{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:0 0 12px}
+.my-tasks .btn{border-radius:8px}
+.cf-compose{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:0 0 14px}
+.cf-compose .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;border-radius:8px}
+[data-theme=dark] .cf-compose .btn.primary{color:#1a1210}
+.cf-post,.cf-post.announcement,.cf-post.poll,.cf-post.post{background:none;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;padding:16px 0}
+.cf-act,.cf-act.icon{border-radius:8px;background:none;min-height:44px;color:var(--ink-soft)}
+.cf-act:hover{background:var(--panel);color:var(--ink)}
+.cf-title-chip,.ebadge.wait,.ebadge.student{border-radius:6px;background:none;border:1px solid var(--line);color:var(--ink-soft);font-size:var(--t-micro);padding:1px 8px}
+.club-back{border-radius:8px}
+.club-av,.club-planet.sm{box-shadow:none}
+.chan.page,.chan[aria-current=page]{background:var(--panel);color:var(--ink);font-weight:600}
+.chan.page svg,.chan[aria-current=page] svg{color:var(--accent)}
