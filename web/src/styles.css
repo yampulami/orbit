@@ -4384,3 +4384,16 @@ body.feed-page .asst-fab{display:none}
 .rp-keys{display:none;margin-left:auto;font-size:var(--t-micro);color:var(--ink-soft)}
 .rp:focus-visible .rp-keys{display:inline}
 .rp:focus-visible .rp-who{display:none}
+
+/* ---- Feed critique pass 7: one card on the right, one quiet pair beside the headline, audience on its own row ---- */
+.rail-card{display:grid;gap:0;padding:6px 14px 8px;border-radius:12px;box-shadow:0 0 0 1px var(--line);background:var(--surface)}
+.rail-card .up,.rail-card .cs{background:none;box-shadow:none;border-radius:0;padding:10px 0}
+.rail-card .cs{border-top:1px solid var(--line)}
+.rail-card .up ul{gap:4px}
+.now-acts .btn.now-main,.now-acts a.now-main:first-child,[data-theme=dark] .now-acts .now-main,[data-theme=dark] .now-acts a.now-main:first-child{background:transparent;border:1px solid var(--ink-soft);color:var(--ink)}
+.now-acts .btn.now-main:hover{background:var(--panel)}
+.now-acts .btn.quiet{border-color:transparent;background:none;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;padding:0 10px}
+.now-acts .btn.quiet:hover{color:var(--ink)}
+.audience.choosing{flex:1 1 100%;order:-1;flex-wrap:wrap}
+.rp-keys{font-size:var(--t-meta);color:var(--ink)}
+[data-theme=dark] .rail .cal-day:focus-visible{outline:2px solid var(--ink)!important;outline-offset:2px}

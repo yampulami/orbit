@@ -243,15 +243,15 @@ export default function Feed() {
           </label>
           <div className="composer-row">
             {choosing ? (
-              <div className="audience" role="radiogroup" aria-label="Post to">
-                <span aria-hidden="true">Post to</span>
+              <div className="audience choosing" role="radiogroup" aria-label="Post to">
+                <span aria-hidden="true">Audience</span>
                 {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); }}>{SHOW[c]}</button>)}
                 {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); }}>{SHOW.Marketplace}</button></>}
                 <small className="aud-who">{WHO[community]}</small>
               </div>
             ) : (
               <div className="audience">
-                <span title={WHO[community]}>Posting to <b>{SHOW[community]}</b></span>
+                <span title={WHO[community]}>Audience <b>{SHOW[community]}</b></span>
                 <button type="button" className="aud-change" onClick={() => setChoosing(true)}>Change</button>
               </div>
             )}
@@ -300,7 +300,7 @@ export default function Feed() {
             const subject = (p.payload.title ?? p.payload.body ?? p.payload.text ?? "").slice(0, 40);
             const replies = p.post_comments.length;
             return (
-              <article key={p.id} id={`post-${p.id}`} className="rp" tabIndex={-1} aria-label={`Post by ${p.author_name}`}>
+              <article key={p.id} id={`post-${p.id}`} className="rp" tabIndex={-1} aria-description="Press l to like, r for replies, j and k to move between posts." aria-label={`Post by ${p.author_name}`}>
                 <PersonLink id={p.author_id} className="rp-avlink" decorative><span className="rp-av" style={{ background: gradientFor(p.author_name) }} aria-hidden="true">{initials(p.author_name)}</span></PersonLink>
                 <div className="rp-main">
                   <div className="rp-head">
@@ -337,8 +337,10 @@ export default function Feed() {
         </div>
       </div>
       {!phone && <aside className="rail" id="your-list" tabIndex={-1} ref={rail} aria-label="Your campus summary">
-        <UpcomingList limit={5} moreTo="/app/plans" hide={["hangout"]} title="On your list" />
-        <div className="cs-wide"><CampusSoon compact /></div>
+        <div className="rail-card">
+          <UpcomingList limit={4} moreTo="/app/plans" hide={["hangout"]} title="On your list" />
+          <div className="cs-wide"><CampusSoon compact /></div>
+        </div>
         <button type="button" className="kb-link" onClick={() => window.dispatchEvent(new CustomEvent("orbit-shortcuts"))}><kbd>?</kbd> Keyboard shortcuts</button>
         <section className="cal-fold">
           <button type="button" className="cal-toggle" aria-expanded={calOpen} onClick={toggleCal}>

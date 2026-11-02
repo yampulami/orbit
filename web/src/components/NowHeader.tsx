@@ -91,6 +91,7 @@ export default function NowHeader() {
     <section className="now" aria-labelledby="now-h">
       <h2 id="now-h" className="now-head">{head}</h2>
       {sub && <p className="now-sub">{sub}{prompt && <> <Link to="/app/plans">Add classes</Link></>}</p>}
+      {!late && toAnswer > 0 && confirmed.length > 0 && <p className="now-sub">{toAnswer} plan{toAnswer === 1 ? "" : "s"} from friends need your answer below.</p>}
       {inGap && <p className="now-sub">{inGap.title} at {clock(inGap.at)} falls in this gap.</p>}
       {alsoFree.length > 0 && <p className="now-sub">{alsoFree.slice(0, 3).map(first).join(", ")}{alsoFree.length > 3 ? ` and ${alsoFree.length - 3} more` : ""} {alsoFree.length === 1 ? "is" : "are"} free too.</p>}
 
@@ -114,7 +115,7 @@ export default function NowHeader() {
         {alsoFree.length > 0
           ? <Link className="btn now-main" to="/app/sync" state={{ syncWith: alsoFree.map((p) => p.id) }}>Plan with {first(alsoFree[0])}{alsoFree.length > 1 ? ` +${alsoFree.length - 1}` : ""}</Link>
           : <Link className="btn now-main" to="/app/sync">Find a time</Link>}
-        <button type="button" className="btn" aria-label="Ask the Orbit assistant" onClick={() => window.dispatchEvent(new CustomEvent("orbit-assistant-open"))}>Ask Orbit</button>
+        <button type="button" className="btn quiet" aria-label="Ask the Orbit assistant" onClick={() => window.dispatchEvent(new CustomEvent("orbit-assistant-open"))}>Ask Orbit</button>
       </div>
     </section>
   );

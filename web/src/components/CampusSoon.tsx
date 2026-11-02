@@ -41,7 +41,7 @@ export default function CampusSoon({ compact = false }: { compact?: boolean }) {
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
     .slice(0, 3);
   if (next.length === 0) return null;
-  const shown = phone ? next.slice(0, 1) : next;
+  const shown = phone ? next.slice(0, 1) : compact ? next.slice(0, 2) : next;
   // When everyone on the list has the same host, say it once under the heading instead of on every row.
   const sameHost = next.every((e) => hostLine(e) === hostLine(next[0]));
   return (
