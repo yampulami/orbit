@@ -4417,3 +4417,42 @@ body.feed-page .asst-fab{display:none}
 .audience.choosing .aud-who{padding:0 4px 4px}
 @media (max-width:1300px){.frow{gap:0 12px}}
 .sc-h{margin:14px 0 4px;font-size:var(--t-meta);font-weight:600;color:var(--ink-soft)}
+
+/* ---- Spotlight-style search: a pill that opens into its own results, rows that light up with a chevron, an empty box that borrows the name of the row you point at ---- */
+@media (min-width:901px){
+  .topline .gsearch,.gsearch{border-radius:22px;padding:0 18px}
+  .gsearch.has-panel{border-radius:22px 22px 0 0}
+  .topline .bell{border-radius:50%}
+}
+.gs-panel{border-radius:0 0 22px 22px;padding:6px;background:var(--panel);animation:gs-pop .22s cubic-bezier(.22,1,.36,1) both}
+@keyframes gs-pop{from{opacity:0;transform:translateY(-6px) scale(.985);filter:blur(5px)}}
+@media (prefers-reduced-motion:reduce){.gs-panel{animation:none}}
+.gs-panel li.gs-chips{background:none;border-bottom:1px solid var(--line);margin:0 -6px 4px;padding:0 12px}
+.gs-panel li{border-radius:14px;min-height:48px}
+.gs-panel li.on,.gs-panel li:hover:not(.gs-head):not(.gs-chips):not(.gs-foot):not(.gs-none){background:var(--surface);box-shadow:0 1px 0 var(--line),0 6px 14px -8px rgba(0,0,0,.45)}
+.gs-go{flex:none;margin-left:auto;opacity:0;transition:opacity .15s;color:var(--ink-soft)}
+.gs-panel li.on .gs-go,.gs-panel li:hover .gs-go{opacity:1}
+.gs-kind{margin-left:auto}
+.gs-kind + .gs-go{margin-left:6px}
+.gs-panel li.gs-foot{border-top:1px solid var(--line);margin:4px -6px 0;padding:8px 18px 4px}
+
+/* ---- Composer audience: a button that opens a list and closes again ---- */
+.aud-wrap{position:relative;flex:1 1 auto}
+.aud-trigger{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 10px 0 0;border:0;background:none;font:inherit;font-size:var(--t-meta);color:var(--ink-soft);cursor:pointer}
+.aud-trigger b{color:var(--ink);font-weight:600}
+.aud-trigger:hover b{color:var(--accent)}
+.aud-wrap .audience.choosing{top:calc(100% + 2px)}
+
+/* ---- The left bar: pages, then the new-post button, then a quiet group of settings ---- */
+.side-utils{display:grid;gap:2px;width:100%;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)}
+.side-utils .navlink.extra{opacity:.7}
+.side-utils .navlink.extra:hover{opacity:1}
+
+/* ---- Orange, for the brand: text selection, the caret, the orbit mark, the active filter, the day bar's marker ---- */
+::selection{background:color-mix(in srgb,var(--accent) 38%,transparent)}
+textarea,input{caret-color:var(--accent)}
+.logo-toggle{border-radius:50%;box-shadow:0 0 0 2px var(--accent)}
+.frow button[aria-pressed=true],.audience button[aria-checked=true]{border-bottom-color:var(--accent)}
+.now-needle{background:var(--accent)}
+.now-key i.needle{background:var(--accent)}
+.feed-h::before{content:"";display:inline-block;width:10px;height:10px;margin-right:2px;border-radius:50%;background:var(--accent);align-self:center}

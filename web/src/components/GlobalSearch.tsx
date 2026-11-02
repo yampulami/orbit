@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, CalendarClock, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, Users, X, type LucideIcon } from "lucide-react";
+import { Bell, CalendarClock, ChevronRight, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, Users, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi, type Row } from "../lib/feedData";
 import { friendsLive, useFriends } from "../lib/friends";
@@ -13,7 +13,7 @@ import { isOpen, useCampusEvents } from "../lib/campusEvents";
 
 type Hit = { id: string; kind: string; Icon: LucideIcon; title: string; sub: string; to: string; state?: Record<string, unknown> };
 /** One row in the list under the search box, whichever section it is in. */
-type Option = { section: "top" | "people" | "pages"; id: string; go: () => void };
+type Option = { section: "top" | "people" | "pages"; id: string; label: string; go: () => void };
 /** Where you can jump to from the search box before you have typed anything. */
 const PAGES: { id: string; title: string; sub: string; to: string; Icon: LucideIcon }[] = [
   { id: "feed", title: "Feed", sub: "What is happening on campus", to: "/app/feed", Icon: Newspaper },
@@ -45,6 +45,7 @@ export default function GlobalSearch() {
   const [phoneOpen, setPhoneOpen] = useState(false); // on a phone the box is an icon until tapped
   const [scope, setScope] = useState<Scope>("all");
   const [active, setActive] = useState(0);
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null); // the row under the mouse, whose name the empty box borrows as its placeholder
   const [posts, setPosts] = useState<Row[] | null>(null);
   const [people, setPeople] = useState<PersonHit[]>([]);
   const root = useRef<HTMLDivElement>(null);
@@ -128,9 +129,9 @@ export default function GlobalSearch() {
   const close = () => { setOpen(false); setQ(""); };
   const pages = scope === "all" && !longEnough(q) ? PAGES.filter((p) => !q.trim() || p.title.toLowerCase().includes(q.trim().toLowerCase())) : [];
   const options: Option[] = [
-    ...pages.map((p): Option => ({ section: "pages", id: p.id, go: () => { close(); nav(p.to); } })),
-    ...things.map((h): Option => ({ section: "top", id: h.id, go: () => { close(); nav(h.to, { state: h.state }); } })),
-    ...shownPeople.map((p): Option => ({ section: "people", id: `person-${p.id}`, go: () => { close(); nav(`/app/people/${p.id}`); } })),
+    ...pages.map((p): Option => ({ section: "pages", id: p.id, label: p.title, go: () => { close(); nav(p.to); } })),
+    ...things.map((h): Option => ({ section: "top", id: h.id, label: h.title, go: () => { close(); nav(h.to, { state: h.state }); } })),
+    ...shownPeople.map((p): Option => ({ section: "people", id: `person-${p.id}`, label: p.name, go: () => { close(); nav(`/app/people/${p.id}`); } })),
   ];
 
   /** How you stand with a person in the results, for the small label on the right. */
@@ -149,7 +150,8 @@ export default function GlobalSearch() {
   const showPanel = open && (longEnough(q) || scoped || pages.length > 0);
   const idx = (section: Option["section"], id: string) => options.findIndex((o) => o.section === section && o.id === id);
   const label = scoped ? SCOPES.find((s) => s.id === scope)!.label : "";
-  const placeholder = scoped ? label : friendsLive ? "Search, or @username" : "Search";
+  const hovered = hoverIdx !== null && !q ? options[hoverIdx]?.label : undefined;
+  const placeholder = hovered ?? (scoped ? label : friendsLive ? "Search, or @username" : "Search");
 
   const scopeRow = (
     <div className="gs-scopes" role="group" aria-label="Search in">
@@ -173,7 +175,7 @@ export default function GlobalSearch() {
           <kbd aria-hidden="true">Ctrl K</kbd>
           <button type="button" className="gs-close" aria-label="Close search" onClick={() => { setPhoneOpen(false); setOpen(false); setQ(""); setScope("all"); }}><X size={20} aria-hidden="true" /></button>
           {showPanel && (
-            <ul id={listId} role="listbox" className="gs-panel" aria-label="Search results">
+            <ul id={listId} role="listbox" className="gs-panel" aria-label="Search results" onMouseLeave={() => setHoverIdx(null)}>
               <li className="gs-chips" role="presentation">{scopeRow}</li>
               {options.length === 0 ? (
                 <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />{noneText}{scoped ? <button type="button" className="gs-more" onClick={() => pick("all")}>Search everything</button> : <button type="button" className="gs-more" onClick={() => { setQ(""); input.current?.focus(); }}>Clear</button>}</li>
@@ -183,9 +185,10 @@ export default function GlobalSearch() {
                   {pages.map((p) => {
                     const i = idx("pages", p.id);
                     return (
-                      <li key={p.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onClick={() => options[i].go()}>
+                      <li key={p.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => { setActive(i); setHoverIdx(i); }} onClick={() => options[i].go()}>
                         <span className="gs-ico"><p.Icon size={18} strokeWidth={1.8} aria-hidden="true" /></span>
                         <span className="gs-text"><strong>{p.title}</strong><span>{p.sub}</span></span>
+                        <ChevronRight className="gs-go" size={18} aria-hidden="true" />
                       </li>
                     );
                   })}
@@ -193,10 +196,11 @@ export default function GlobalSearch() {
                   {things.map((h) => {
                     const i = idx("top", h.id);
                     return (
-                      <li key={h.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onClick={() => options[i].go()}>
+                      <li key={h.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => { setActive(i); setHoverIdx(i); }} onClick={() => options[i].go()}>
                         <span className="gs-ico"><h.Icon size={18} strokeWidth={1.8} aria-hidden="true" /></span>
                         <span className="gs-text"><strong>{h.title}</strong><span>{h.sub}</span></span>
                         <span className="gs-kind">{h.kind}</span>
+                        <ChevronRight className="gs-go" size={18} aria-hidden="true" />
                       </li>
                     );
                   })}
@@ -204,10 +208,11 @@ export default function GlobalSearch() {
                   {shownPeople.map((p) => {
                     const i = idx("people", `person-${p.id}`);
                     return (
-                      <li key={p.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onClick={() => options[i].go()}>
+                      <li key={p.id} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => { setActive(i); setHoverIdx(i); }} onClick={() => options[i].go()}>
                         <span className="gs-ico gs-av" aria-hidden="true">{p.name.slice(0, 1).toUpperCase()}</span>
                         <span className="gs-text"><strong>{p.name}</strong><span>{p.username ? `@${p.username}` : "No username yet"}</span></span>
                         <span className="gs-kind">{relation(p.id)}</span>
+                        <ChevronRight className="gs-go" size={18} aria-hidden="true" />
                       </li>
                     );
                   })}

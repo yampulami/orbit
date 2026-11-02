@@ -129,6 +129,12 @@ export default function Feed() {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
+  useEffect(() => {
+    if (!choosing) return;
+    const away = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest?.(".aud-wrap")) setChoosing(false); };
+    document.addEventListener("mousedown", away);
+    return () => document.removeEventListener("mousedown", away);
+  }, [choosing]);
   const [open, setOpen] = useState<string | null>(null);
   const [filter, setFilter] = useState<"All" | Community>("All");
   // Writing a post while looking at one audience posts to that audience.
@@ -243,19 +249,18 @@ export default function Feed() {
             <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } else if (e.key === "Escape") { if (choosing) setChoosing(false); else e.currentTarget.blur(); } }} placeholder={`Lost a lanyard? Found a seat? Tell ${campus.name}.`} />
           </label>
           <div className="composer-row">
-            {choosing ? (
-              <div className="audience choosing" role="radiogroup" aria-label="Post to" onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setChoosing(false); composerRef.current?.focus(); } }}>
-                <span aria-hidden="true">Audience</span>
-                {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); composerRef.current?.focus(); }}>{SHOW[c]}</button>)}
-                {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); composerRef.current?.focus(); }}>{SHOW.Marketplace}</button></>}
-                <small className="aud-who">{WHO[community]}</small>
-              </div>
-            ) : (
-              <div className="audience">
-                <span title={WHO[community]}>Audience <b>{SHOW[community]}</b></span>
-                <button type="button" className="aud-change" onClick={() => setChoosing(true)}>Change</button>
-              </div>
-            )}
+            <div className="aud-wrap">
+              <button type="button" className="aud-trigger" aria-haspopup="true" aria-expanded={choosing} title={WHO[community]} onClick={() => setChoosing((v) => !v)}>
+                <span>Audience</span> <b>{SHOW[community]}</b> <ChevronDown size={16} aria-hidden="true" style={{ transform: choosing ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
+              </button>
+              {choosing && (
+                <div className="audience choosing" role="radiogroup" aria-label="Post to" onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setChoosing(false); composerRef.current?.focus(); } }}>
+                  {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); composerRef.current?.focus(); }}>{SHOW[c]}</button>)}
+                  {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); composerRef.current?.focus(); }}>{SHOW.Marketplace}</button></>}
+                  <small className="aud-who">{WHO[community]}</small>
+                </div>
+              )}
+            </div>
             <EmojiButton value={body} onChange={setBody} inputRef={composerRef} max={MAX} />
             {body.length > MAX * 0.8 ? <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span> : <span className="composer-hint">Ctrl+Enter to post</span>}
             <button className="btn primary" disabled={posting || !body.trim()}>{posting ? "Posting…" : community === "Everyone" ? "Post" : community === "Marketplace" ? "Post for sale" : `Post to ${SHOW[community]}`}</button>
@@ -345,7 +350,6 @@ export default function Feed() {
           <UpcomingList limit={4} moreTo="/app/plans" hide={["hangout"]} title="On your list" />
           <div className="cs-wide"><CampusSoon compact /></div>
         </div>
-        <button type="button" className="kb-link" onClick={() => window.dispatchEvent(new CustomEvent("orbit-shortcuts"))}><kbd>?</kbd> Keyboard shortcuts</button>
         <section className="cal-fold">
           <button type="button" className="cal-toggle" aria-expanded={calOpen} onClick={toggleCal}>
             <span>Calendar{day ? " · 1 day selected" : ""}</span>

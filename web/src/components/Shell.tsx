@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ComponentType } from "react";
-import { CalendarClock, LayoutGrid, LogOut, Megaphone, Moon, SquarePen, Sun } from "lucide-react";
+import { CalendarClock, Keyboard, LayoutGrid, LogOut, Megaphone, Moon, SquarePen, Sun } from "lucide-react";
 import { HomeIcon, MapIcon, MessagesIcon, PlansIcon, RoommatesIcon } from "./icons";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
@@ -141,6 +141,11 @@ export default function Shell() {
         </nav>
         <button className="compose-btn solo" title="New post" aria-label="New post" onClick={newPost}><SquarePen size={24} strokeWidth={1.9} aria-hidden="true" /><span className="navtext">New post</span></button>
         <span className="spacer" />
+        <div className="side-utils" role="group" aria-label="Settings">
+          <button className="navlink extra" title="Keyboard shortcuts (press ?)" aria-label="Keyboard shortcuts" onClick={() => window.dispatchEvent(new CustomEvent("orbit-shortcuts"))}>
+            <Keyboard size={22} strokeWidth={1.75} />
+            <span className="navtext">Shortcuts</span>
+          </button>
         <button className="navlink extra" title={dark ? "Switch to light mode" : "Switch to dark mode"} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} aria-pressed={dark} onClick={() => setTheme(dark ? "light" : "dark")}>
           {dark ? <Sun size={22} strokeWidth={1.75} /> : <Moon size={22} strokeWidth={1.75} />}
           <span className="navtext">{dark ? "Light mode" : "Dark mode"}</span>
@@ -149,6 +154,7 @@ export default function Shell() {
           <LogOut size={22} strokeWidth={1.75} />
           <span className="navtext">Sign out</span>
         </button>
+        </div>
         <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="me">{name.slice(0, 1).toUpperCase()}</NavLink>
       </aside>
       <div className="content">
