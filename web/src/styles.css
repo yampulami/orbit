@@ -4682,3 +4682,46 @@ textarea,input{caret-color:var(--accent)}
 .chats .thread.on,.chats .threadpill{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
 .chats .thread.on{border-top-color:transparent}
 .chats .convo-actions>.cf-act:last-child{background:none!important;border:0!important;box-shadow:none!important}
+
+/* ---- Roommates, in the Orbit look: a sentence on top, text tabs, a flat list with hairlines, one orange Add ---- */
+.rm-head{align-items:flex-start;gap:16px;margin:8px 0 10px}
+.rm-head h2{font-family:var(--display);font-size:clamp(1.5rem,2.5vw,var(--t-hero));font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.rm-house{font-size:var(--t-meta);color:var(--ink-soft);margin:2px 0 8px}
+.rm-tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin:6px 0 16px;overflow-x:auto;scrollbar-width:none}
+.rm-tabs button{min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-ui);font-weight:500;cursor:pointer;white-space:nowrap}
+.rm-tabs button:hover{color:var(--ink)}
+.rm-tabs button[aria-selected=true]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.rm-card{background:none;border:0;box-shadow:none;border-radius:0;padding:0}
+.rm-add,.rm-add[data-tone]{background:none;box-shadow:none;border-radius:0;padding:0 0 14px;border-bottom:1px solid var(--line)}
+.rm-add .field input{height:44px;border-radius:8px;border:1px solid var(--ink-soft);background:var(--surface);padding:0 14px;font-size:var(--t-ui)}
+.rm-add .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;border-radius:8px;min-height:44px}
+[data-theme=dark] .rm-add .btn.primary{color:#1a1210}
+.rm-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;flex-wrap:wrap}
+.segment{display:inline-flex;gap:16px;background:none;box-shadow:none;border-radius:0;padding:0}
+.segment button,.segment label{min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-meta);font-weight:500;cursor:pointer}
+.segment button[aria-checked=true],.segment button[aria-pressed=true],.segment label:has(input:checked){background:none;color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.rm-search{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.rm-search input{border:0;outline:none;background:none;min-width:0;font-size:var(--t-meta)}
+.rm-list{display:block}
+.rm-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);background:none;border-radius:0;box-shadow:none}
+.rm-row:first-child{border-top:0}
+.rm-main strong,.rm-main .rm-title{font-size:var(--t-ui);font-weight:600}
+.rm-sub{font-size:var(--t-meta);color:var(--ink-soft)}
+.rm-sub .late{color:var(--accent);font-weight:600}
+.rm-foot,.rm-hint,.rm-empty{font-size:var(--t-meta);color:var(--ink-soft)}
+.rm-row .picker-btn,.rm-add .picker-btn{border-radius:8px;background:none;border:1px solid var(--line);min-height:44px;font-size:var(--t-meta)}
+.rm-row .ghost-btn{width:44px;height:44px;border-radius:8px}
+.rm-setup{background:none;border:0;box-shadow:none;border-radius:0;padding:0;max-width:520px}
+.rm-setup .btn.primary,.rm-setup .btn:first-child{border-radius:8px}
+.page{width:min(1100px,100%)}
+.sl,.sl-bar{border-radius:8px}
+.sl{box-shadow:none;border:1px solid var(--line);background:var(--surface)}
+.rm-head .sl{max-width:420px}
+.rm-notes{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.rm-notes li{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:none;padding:14px}
+.rm-balance,.rm-balance.owed,.rm-balance.owe{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:0 0 14px}
+.rm-exp,.rm-pay{background:none;border-radius:0;box-shadow:none;border-top:1px solid var(--line);padding:12px 0}
+.rm-group{margin-top:12px}
+.rm-h{font-size:var(--t-ui);font-weight:600}
+.rm-count{font-size:var(--t-meta);color:var(--ink-soft)}
+.rm-add .field.price input,.rm-add .field.due input{height:44px;border-radius:8px}

@@ -9,7 +9,6 @@ import GroupAddFriend from "../components/GroupAddFriend";
 import GroupSync from "../components/GroupSync";
 import StackedList from "../components/StackedList";
 import { Avatar } from "./roommates/Avatar";
-import GradientMenu, { type GMItem } from "../components/GradientMenu";
 import Tasks from "./roommates/Tasks";
 import Groceries from "./roommates/Groceries";
 import Expenses from "./roommates/Expenses";
@@ -17,12 +16,12 @@ import Fairness from "./roommates/Fairness";
 import Notes from "./roommates/Notes";
 
 type Section = "tasks" | "groceries" | "expenses" | "fairness" | "notes";
-const SECTIONS: { id: Section; label: string; Icon: LucideIcon; tone: GMItem["tone"] }[] = [
-  { id: "tasks", label: "Tasks", Icon: ListChecks, tone: "purple" },
-  { id: "groceries", label: "Groceries", Icon: ShoppingBasket, tone: "green" },
-  { id: "expenses", label: "Expenses", Icon: Receipt, tone: "orange" },
-  { id: "fairness", label: "Fairness", Icon: Scale, tone: "pink" },
-  { id: "notes", label: "House notes", Icon: StickyNote, tone: "blue" },
+const SECTIONS: { id: Section; label: string; Icon: LucideIcon }[] = [
+  { id: "tasks", label: "Tasks", Icon: ListChecks },
+  { id: "groceries", label: "Groceries", Icon: ShoppingBasket },
+  { id: "expenses", label: "Expenses", Icon: Receipt },
+  { id: "fairness", label: "Fairness", Icon: Scale },
+  { id: "notes", label: "House notes", Icon: StickyNote },
 ];
 
 const names = (s: string) => [...new Set(s.split(",").map((m) => m.trim()).filter((m) => m && m !== YOU))];
@@ -114,12 +113,15 @@ export default function Roommates() {
     );
   }
 
+  const open = space.tasks.filter((t) => !t.done).length;
+  const mine = space.tasks.filter((t) => !t.done && t.assignee === YOU).length;
   return (
     <div className="page">
       <h1 className="sr">Roommates</h1>
       <header className="rm-head">
         <div>
-          <h2>{space.name}</h2>
+          <h2>{open === 0 ? "Nothing left to do" : `${open} chore${open === 1 ? "" : "s"} open${mine > 0 ? `, ${mine} yours` : ""}`}</h2>
+          <p className="rm-house">{space.name}</p>
           <StackedList
             title="Roommates"
             subtitle={space.members.map((m) => (m === YOU ? "You" : m.split(" ")[0])).slice(0, 4).join(", ") + (space.members.length > 4 ? ` +${space.members.length - 4}` : "")}
@@ -166,11 +168,9 @@ export default function Roommates() {
         </div>
       )}
 
-      <GradientMenu
-        className="gm-bar"
-        label="Household sections" captions
-        items={SECTIONS.map(({ id, label, Icon, tone }): GMItem => ({ key: id, label, icon: Icon, tone, on: section === id, onClick: () => setSection(id) }))}
-      />
+      <div className="rm-tabs" role="tablist" aria-label="Household sections">
+        {SECTIONS.map(({ id, label }) => <button key={id} type="button" role="tab" aria-selected={section === id} onClick={() => setSection(id)}>{label}</button>)}
+      </div>
 
       {section === "tasks" && <Tasks space={space} />}
       {section === "groceries" && <Groceries space={space} />}
