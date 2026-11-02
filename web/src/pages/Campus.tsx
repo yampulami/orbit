@@ -42,6 +42,10 @@ export default function Campus() {
   const reviewCount = reviewer ? pending.length + reported.length + waitingOrgs.length : 0;
   const current: View = view === "review" && !reviewer ? "discover" : view;
   const go = (v: View) => { setCreating(null); setView(v); };
+  // One sentence about what is on.
+  const weekEnd = Date.now() + 7 * 24 * 3600_000;
+  const thisWeek = events.filter((e) => e.status === "published" && !e.canceled && new Date(e.startsAt).getTime() > Date.now() - 3 * 3600_000 && new Date(e.startsAt).getTime() < weekEnd).length;
+  const head = tab === "clubs" ? `${mine.length === 0 ? "Find a club" : `${mine.length} club${mine.length === 1 ? "" : "s"} you are in`}` : thisWeek === 0 ? "Nothing on this week" : `${thisWeek} event${thisWeek === 1 ? "" : "s"} this week`;
 
   return (
     <div className="page campus">
@@ -96,6 +100,7 @@ export default function Campus() {
           ) : (
             <>
               <header className="campus-head">
+                <h2 className="campus-sentence">{head}</h2>
                 <div className="segment campus-seg" role="tablist" aria-label="Events or clubs">
                   <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}>Events</button>
                   <button type="button" role="tab" aria-selected={tab === "clubs"} onClick={() => setTab("clubs")}>Clubs</button>

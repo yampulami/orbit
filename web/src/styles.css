@@ -4770,3 +4770,33 @@ textarea,input{caret-color:var(--accent)}
 .sr-main,.sr-main.best,.sync-list .sr-main{background:var(--surface);border:1px solid var(--accent);color:var(--ink)}
 .ft-how summary,.ft-how>*{border:0;background:none;box-shadow:none}
 .sync-head+.freetime .sl{max-width:none}
+
+/* ---- Campus, in the Orbit look: a sentence, text tabs and filters, flat event rows with hairlines, quiet tags ---- */
+.campus-sentence{font-family:var(--display);font-size:clamp(1.5rem,2.5vw,var(--t-hero));font-weight:600;letter-spacing:-.02em;line-height:1.15;margin:0 0 8px}
+.campus-head{display:block}
+.campus-seg{display:flex;gap:22px;border-bottom:1px solid var(--line);width:100%;margin-top:10px}
+.campus-seg button{min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:0;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-ui);font-weight:500;cursor:pointer}
+.campus-seg button[aria-selected=true]{background:none;color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.cevent-demo{display:flex;gap:8px;align-items:center;font-size:var(--t-meta);color:var(--ink-soft);margin:8px 0}
+.cevent-demo select{height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);padding:0 10px}
+.cohost-invites{background:none;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:12px 0}
+.cohost-invites .btn{border-radius:8px}
+.chip-row{display:flex;gap:18px;flex-wrap:wrap}
+.chip-btn{min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;border-radius:0;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-meta);font-weight:500;box-shadow:none}
+.chip-btn[aria-pressed=true],.chip-btn.on,.chip-btn[aria-checked=true]{background:none;color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.chip-n{font-size:var(--t-micro);color:var(--ink-soft);margin-left:4px;background:none}
+.ev{background:none;border:0;border-top:1px solid var(--line);border-radius:0;box-shadow:none;padding:16px 0;gap:14px}
+.ev.official,.ev.student{background:none}
+.ev-list{display:block}
+.ev-stub{background:none;border-radius:0}
+.ev-title{font-family:var(--display);font-size:var(--t-h2);font-weight:600}
+.ev-meta,.ev-host,.ev-desc{font-size:var(--t-meta);color:var(--ink-soft)}
+.ebadge,.ev-count{border-radius:6px;background:none;border:1px solid var(--line);color:var(--ink-soft);font-size:var(--t-micro);font-weight:500;padding:1px 8px}
+.ev-count.soon{border-color:var(--accent);color:var(--accent)}
+.ev-actions .gm-item,.ev-actions .btn{border-radius:8px}
+.chip-row .chip-btn{background:none!important;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;box-shadow:none!important;color:var(--ink-soft)!important;min-height:44px}
+.chip-row .chip-btn[aria-pressed=true],.chip-row .chip-btn.on,.chip-row .chip-btn[aria-checked=true]{color:var(--ink)!important;font-weight:600;border-bottom-color:var(--accent)!important}
+.ev-tags .ebadge,.ev-tags .ev-flavor,.ev-tags .ev-count{background:none!important;border:1px solid var(--line)!important;color:var(--ink-soft)!important;border-radius:6px!important}
+.ev-tags .ebadge.official{border-color:var(--accent)!important;color:var(--accent)!important}
+.campus-seg{border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;box-shadow:none;padding:0}
+.crail .crail-btn,.crail button,.crail a{border-radius:12px}
