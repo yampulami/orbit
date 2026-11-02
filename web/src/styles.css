@@ -4593,3 +4593,13 @@ textarea,input{caret-color:var(--accent)}
   .shell.side-collapsed .side .navlink:hover::after,.shell.side-collapsed .side .compose-btn.solo:hover::after,.shell.side-collapsed .side .side-me:hover::after,.shell.side-collapsed .side .navlink:focus-visible::after{opacity:1;transition-delay:.3s}
   .shell.side-collapsed .side .side-me{position:relative}
 }
+
+/* the Orbit face fits the slim rail without being squeezed or clipped */
+@media (min-width:901px){
+  .shell.shell .side .logo{padding-left:7px;overflow:visible}
+  .shell.shell .side .logo>span:first-child{flex:none}
+  .shell.shell .side .logo i{display:none}
+}
+/* the page uses the room it has: the rail on the right stays on the right edge and the main column grows to meet it; reading lines keep a comfortable length */
+.feed-layout{grid-template-columns:minmax(0,1fr) clamp(320px,24vw,440px);justify-content:stretch}
+.feed-main .rp-body,.feed-main .rp-title,.feed-main .comments{max-width:72ch}
