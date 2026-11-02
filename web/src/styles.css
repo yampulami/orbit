@@ -4410,3 +4410,10 @@ body.feed-page .asst-fab{display:none}
 .composer .btn.primary:disabled{opacity:1;color:var(--ink-soft)}
 .frow .sep{align-self:center;width:1px;height:18px;margin:0 4px;background:var(--line);flex:none}
 .gs-scopes{flex-wrap:wrap}
+
+/* ---- Feed critique pass 9: the audience list is a popover (nothing below it moves); the filter row fits at laptop width ---- */
+.composer-row{position:relative}
+.audience.choosing{position:absolute;top:calc(100% + 6px);left:0;order:0;flex:none;z-index:20;max-width:100%;padding:6px 10px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 16px 32px -18px rgba(0,0,0,.6)}
+.audience.choosing .aud-who{padding:0 4px 4px}
+@media (max-width:1300px){.frow{gap:0 12px}}
+.sc-h{margin:14px 0 4px;font-size:var(--t-meta);font-weight:600;color:var(--ink-soft)}

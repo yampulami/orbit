@@ -4,6 +4,7 @@ import { useMyBusy } from "../lib/useMyBusy";
 import { useFriends } from "../lib/friends";
 import { hangActions, isVisible, useHang, YOU, type Hangout } from "../lib/hangouts";
 import { undo } from "../lib/undo";
+import { leadPlan } from "../lib/leadPlan";
 import { useReminders, ymd } from "../lib/reminders";
 import { useCampusEvents } from "../lib/campusEvents";
 import { loadFriendFree } from "../lib/availability";
@@ -51,6 +52,8 @@ export default function NowHeader() {
   // The plan that needs you first, when it comes before anything you have confirmed on the day shown.
   const nextConfirmed = confirmed.find((i) => i.end > now)?.start;
   const lead: Hangout | undefined = !(late ? undefined : confirmed.find((i) => i.start <= now && i.end > now)) && pending[0] && new Date(pending[0].when).toDateString() === shownDay.toDateString() && (!nextConfirmed || new Date(pending[0].when) < nextConfirmed) ? pending[0] : undefined;
+  const leadId = lead?.id ?? null;
+  useEffect(() => { leadPlan.set(leadId); return () => leadPlan.set(null); }, [leadId]);
   const answer = (h: Hangout, a: "yes" | "no") => {
     hangActions.setRsvp(h.id, a);
     undo.show(a === "yes" ? `You’re in for “${h.title}”` : `You said you can’t make “${h.title}”`, { onUndo: () => hangActions.setRsvp(h.id, null), commit: () => {} });

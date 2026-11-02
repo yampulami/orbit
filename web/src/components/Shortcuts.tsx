@@ -36,14 +36,22 @@ export default function Shortcuts({ onNew }: { onNew: () => void }) {
         <motion.div className="modal-back" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setHelp(false); }} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: enter }} exit={{ opacity: 0, transition: exit }}>
           <motion.div className="shortcuts" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts" initial={{ opacity: 0, y: 12, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, y: 6, transition: exit }}>
             <header><h2><Keyboard size={18} aria-hidden="true" /> Keyboard shortcuts</h2><button type="button" className="ghost-btn" aria-label="Close" onClick={() => setHelp(false)}><X size={16} aria-hidden="true" /></button></header>
+            <h3 className="sc-h">Go to a page</h3>
             <dl>
               {Object.entries(GO).map(([k, v]) => <div key={k}><dt><kbd>g</kbd> <kbd>{k}</kbd></dt><dd>Go to {v.label}</dd></div>)}
-              <div><dt><kbd>n</kbd></dt><dd>New post</dd></div>
-              <div><dt><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>K</kbd></dt><dd>Search</dd></div>
-              <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Next or previous post on the feed</dd></div>
+            </dl>
+            <h3 className="sc-h">On the feed</h3>
+            <dl>
+              <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Next or previous post</dd></div>
               <div><dt><kbd>l</kbd></dt><dd>Like the post you are on</dd></div>
               <div><dt><kbd>r</kbd></dt><dd>Open its replies</dd></div>
+              <div><dt><kbd>n</kbd></dt><dd>New post</dd></div>
               <div><dt><kbd>Ctrl</kbd> <kbd>Enter</kbd></dt><dd>Post what you have written</dd></div>
+            </dl>
+            <h3 className="sc-h">Anywhere</h3>
+            <dl>
+              <div><dt><kbd>/</kbd> or <kbd>Ctrl</kbd> <kbd>K</kbd></dt><dd>Search</dd></div>
+              <div><dt><kbd>Esc</kbd></dt><dd>Close a list or leave a box</dd></div>
               <div><dt><kbd>?</kbd></dt><dd>This list</dd></div>
             </dl>
           </motion.div>

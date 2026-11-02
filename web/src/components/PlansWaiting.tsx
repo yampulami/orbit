@@ -5,6 +5,7 @@ import { useMyBusy } from "../lib/useMyBusy";
 import { busyOn } from "../lib/myBusy";
 import { undo } from "../lib/undo";
 import { clock, dayWord } from "../lib/dayWords";
+import { useLeadPlan } from "../lib/leadPlan";
 
 const HOUR = 3600000;
 
@@ -37,8 +38,9 @@ export default function PlansWaiting() {
   const { groups, hangouts } = useHang();
   const { input } = useMyBusy(new Date());
   const [all, setAll] = useState(false);
+  const lead = useLeadPlan();
   const asking = hangouts
-    .filter((h) => isVisible(h, groups) && !h.canceled && new Date(h.when).getTime() > Date.now() - 3 * HOUR && !h.rsvps[YOU])
+    .filter((h) => h.id !== lead).filter((h) => isVisible(h, groups) && !h.canceled && new Date(h.when).getTime() > Date.now() - 3 * HOUR && !h.rsvps[YOU])
     .sort((a, b) => a.when.localeCompare(b.when));
   if (asking.length === 0) return null;
   // One plan shows itself; several fold into a single line that opens the list.

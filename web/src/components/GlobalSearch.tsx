@@ -176,7 +176,7 @@ export default function GlobalSearch() {
             <ul id={listId} role="listbox" className="gs-panel" aria-label="Search results">
               <li className="gs-chips" role="presentation">{scopeRow}</li>
               {options.length === 0 ? (
-                <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />{noneText}{scoped && <button type="button" className="gs-more" onClick={() => pick("all")}>Search everything</button>}</li>
+                <li className="gs-none" role="presentation"><MessageSquare size={16} aria-hidden="true" />{noneText}{scoped ? <button type="button" className="gs-more" onClick={() => pick("all")}>Search everything</button> : <button type="button" className="gs-more" onClick={() => { setQ(""); input.current?.focus(); }}>Clear</button>}</li>
               ) : (
                 <>
                   {pages.length > 0 && <li className="gs-head" role="presentation">Go to</li>}

@@ -240,11 +240,11 @@ export default function Feed() {
         {!phone && <form className={"composer" + (body ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
             <span className="sr">Write a post</span>
-            <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder={`Lost a lanyard? Found a seat? Tell ${campus.name}.`} />
+            <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } else if (e.key === "Escape") { if (choosing) setChoosing(false); else e.currentTarget.blur(); } }} placeholder={`Lost a lanyard? Found a seat? Tell ${campus.name}.`} />
           </label>
           <div className="composer-row">
             {choosing ? (
-              <div className="audience choosing" role="radiogroup" aria-label="Post to">
+              <div className="audience choosing" role="radiogroup" aria-label="Post to" onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setChoosing(false); composerRef.current?.focus(); } }}>
                 <span aria-hidden="true">Audience</span>
                 {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); composerRef.current?.focus(); }}>{SHOW[c]}</button>)}
                 {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); composerRef.current?.focus(); }}>{SHOW.Marketplace}</button></>}
