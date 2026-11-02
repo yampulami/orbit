@@ -4815,3 +4815,22 @@ textarea,input{caret-color:var(--accent)}
 .map-note{font-size:var(--t-micro);color:var(--ink-soft)}
 .map-stage,.map-box{border-radius:12px}
 .map-add{border-radius:8px;box-shadow:0 0 0 1px var(--line)}
+
+/* ---- The round-icon menu is a row of plain text choices now, everywhere it is used (profile tabs, club actions, event answers) ---- */
+.gm,.gm.gm-bar{display:flex;align-items:center;gap:0 20px;flex-wrap:wrap;padding:0;margin:0;overflow:visible}
+.gm-bar{border-bottom:1px solid var(--line);margin-bottom:12px}
+.gm .gm-item{position:relative;display:inline-flex;align-items:center;gap:6px;width:auto!important;height:auto;min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:0;background:none;color:var(--ink-soft);box-shadow:none;font:inherit}
+.gm .gm-item:hover{color:var(--ink)}
+.gm .gm-bg{display:none}
+.gm .gm-ic{position:static;opacity:1!important;transform:none!important;width:16px;height:16px}
+.gm .gm-label,.gm[data-quiet] .gm-item .gm-label{position:static;inset:auto;display:inline;padding:0;opacity:1!important;transform:none!important;color:inherit;font-size:var(--t-meta);font-weight:500;letter-spacing:0;text-transform:none;max-width:none;font-family:var(--font)}
+.gm .gm-item[data-on]{color:var(--ink);border-bottom-color:var(--accent)}
+.gm .gm-item[data-on] .gm-label{font-weight:600}
+.gm .gm-badge{position:static;background:none;color:var(--accent);min-width:0;height:auto;padding:0;font-size:var(--t-meta);font-weight:600;box-shadow:none}
+.gm[data-caps] .gm-item::after,.gm .gm-item::after{display:none}
+.sync-kinds .gm-item{border:1px solid var(--line)!important;border-radius:8px;padding:0 14px;margin:0}
+.sync-kinds .gm-item[data-on]{border-color:var(--accent)!important}
+.sync-kinds.gm{gap:8px}
+.gm .gm-cap,.gm[data-caps] .gm-cap{display:none}
+.pf-head{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;box-shadow:none;padding:8px 0 18px}
+.pf-head h1,.pf-head h2{font-family:var(--display);font-size:clamp(1.5rem,2.5vw,var(--t-hero));font-weight:600;letter-spacing:-.02em}

@@ -301,4 +301,7 @@ Recurring items still worth improving: too many time-related blocks at once, the
 | Plans | done (sentence about the day, flat cards, plain calendar numbers, answers as links); the week grid still has dashed blocks for unanswered plans |
 | Free time | done ("Find an hour you are both free", text choices for kind, length and horizon, flat result) |
 | Campus: Events | done ("N events this week", text tabs and filters, flat event rows, quiet tags); the club rail on the left and the Clubs tab still need a pass |
-| Map, Profile, Clubs, People, Landing, Sign in, Onboarding | to do |
+| Map | done (flat side panel, text categories) |
+| Profile and People | done (text tabs through the shared menu, flat header); the settings and edit-profile forms inside still need a pass |
+| Shared round-icon menu (`GradientMenu`) | now a row of plain text choices everywhere it is used (profile tabs, club actions, event answers) |
+| Clubs (club page), Landing, Sign in, Onboarding | to do |
