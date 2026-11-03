@@ -5021,3 +5021,26 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .sync-page .ft-side .ft-blk .ft-how{background:none;border:0;border-radius:0;padding:0}
 .sync-page .ft-how summary{min-height:44px;display:flex;align-items:center;font-size:var(--t-meta);font-weight:500;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .sync .sync-grid .chip-row .chip-btn,.sync .sync-adv .chip-row .chip-btn{min-height:44px;height:auto}
+
+/* ---- Campus pass 2 (critique, desktop): flat club rail, readable counts and badges, no pills, quiet help ---- */
+.chip-btn[aria-pressed=true] .chip-n,.chip-btn .chip-n{background:none;color:var(--ink-soft)}
+.chip-btn[aria-pressed=true] .chip-n{color:var(--ink);font-weight:700}
+.chip-btn:disabled{opacity:.45;cursor:default}
+.ebadge.official,[data-theme=dark] .ebadge.official{background:none;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);border-radius:6px}
+[data-theme=dark] .ebadge.official{color:#ff9a6e;box-shadow:inset 0 0 0 1px #ff9a6e}
+.crail .rail-ico{width:44px;height:44px;border-radius:8px;background:none;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);font-size:1rem}
+.crail .rail-ico:hover{background:var(--panel);color:var(--ink);border-radius:8px}
+.crail .rail-ico[aria-current]{background:var(--ink);color:var(--on-ink);box-shadow:none;border-radius:8px}
+.crail .rail-ico[aria-current]::before{display:none}
+.crail .rail-ico.rail-plus{color:var(--accent)}
+.act,.act.active,.act.steady,.act.new{border-radius:6px;background:none;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink-soft);padding:1px 8px;font-size:var(--t-micro)}
+.ev-go,.ev-maybe{border-radius:8px}
+.club-row{border-radius:8px}
+.club-in{font-size:var(--t-meta);color:var(--ink-soft);margin:0 0 10px}
+.club-in a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.toolbar .btn.sm,.cevents .btn.sm{min-height:44px;border-radius:8px}
+.explain .link-btn{min-height:44px;font-size:var(--t-meta);color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;border-radius:0;padding:0}
+.cevents .link-btn{min-height:44px}
+.ev-actions button,.ev .link-btn{min-height:44px}
+.cevent-demo{margin-top:24px;padding-top:12px;border-top:1px solid var(--line)}
+[data-theme=dark] .cevents .btn.primary{background:var(--accent);border-color:var(--accent);color:#1a1210}
