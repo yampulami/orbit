@@ -1,5 +1,6 @@
 import { isTyping } from "../lib/shortcuts";
 import PersonName from "../components/PersonName";
+import { spoken, useLiveNames } from "../lib/directory";
 import { AttachButton, AttachPreview, useAttachment } from "../components/Attach";
 import Avatar from "../components/Avatar";
 import { Fragment, Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "react";
@@ -234,13 +235,6 @@ export default function Feed() {
   const feed = posts.filter((p) => !p.payload.repostOf);
   const countFor = (c: "All" | Community) => (c === "All" ? feed.length : feed.filter((p) => p.community === c).length);
   const shown = feed.filter((p) => filter === "All" || p.community === filter);
-  const repliedBy = (p: Row) => {
-    const names = [...new Set(p.post_comments.map((c) => c.author_name))];
-    if (names.length === 0) return "";
-    const first = names[0].split(" ")[0];
-    return names.length === 1 ? `${first} replied` : names.length === 2 ? `${first} and ${names[1].split(" ")[0]} replied` : `${first} and ${names.length - 1} others replied`;
-  };
-
   return (
     <div className="feed-layout">
       <div className="feed-main">
@@ -332,7 +326,7 @@ export default function Feed() {
                     <button type="button" aria-pressed={liked} aria-label={`${liked ? "Liked" : "Like"}${p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}, ${p.author_name}’s post`} onClick={() => like(p)}><Heart size={16} aria-hidden="true" fill={liked ? "currentColor" : "none"} />{liked ? "Liked" : "Like"}{p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}</button>
                     <button type="button" aria-label={`Share, ${p.author_name}’s post`} onClick={() => setSharing(p)}><Send size={16} aria-hidden="true" />Share</button>
                     {p.author_id === me && <button type="button" aria-label={`Delete, your post “${subject}”`} onClick={() => remove(p)}><Trash2 size={16} aria-hidden="true" />Delete</button>}
-                    {repliedBy(p) && <span className="rp-who">{repliedBy(p)}</span>}
+                    <RepliedBy comments={p.post_comments} />
                     <span className="rp-keys" aria-hidden="true">j next · k back · l like · r replies</span>
                   </div>
                   <AnimatePresence initial={false}>
@@ -372,4 +366,13 @@ export default function Feed() {
       </aside>}
     </div>
   );
+}
+
+/** "Maya and 2 others replied", with each person's name as it is now. */
+function RepliedBy({ comments }: { comments: Row["post_comments"] }) {
+  const unique = comments.filter((c, i) => comments.findIndex((x) => x.user_id === c.user_id) === i).map((c) => ({ id: c.user_id, name: c.author_name }));
+  const names = useLiveNames(unique).map((n) => spoken(n).split(" ")[0]);
+  if (names.length === 0) return null;
+  const text = names.length === 1 ? `${names[0]} replied` : names.length === 2 ? `${names[0]} and ${names[1]} replied` : `${names[0]} and ${names.length - 1} others replied`;
+  return <span className="rp-who">{text}</span>;
 }

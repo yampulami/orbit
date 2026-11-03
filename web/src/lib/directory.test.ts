@@ -28,3 +28,11 @@ describe("the live directory of people", () => {
     expect(personNow(undefined)).toBeUndefined();
   });
 });
+
+import { spoken } from "./directory";
+describe("saying a name", () => {
+  it("shortens an email address to the part before the @, and leaves real names alone", () => {
+    expect(spoken("siddant@gmail.com")).toBe("siddant");
+    expect(spoken("Maya Rose")).toBe("Maya Rose");
+  });
+});

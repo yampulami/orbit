@@ -112,5 +112,15 @@ export function useLiveName(id: string | undefined, fallback: string): string {
   return usePerson(id)?.name || fallback;
 }
 
+/** The current names for several people at once (their saved names are the fallback), in the same order. */
+export function useLiveNames(people: { id?: string; name: string }[]): string[] {
+  useSyncExternalStore(subscribe, () => version);
+  ensurePeople(people.map((p) => p.id));
+  return people.map((p) => (p.id ? store.get(p.id)?.name : undefined) || p.name);
+}
+
+/** A name for saying out loud: an email address (some accounts were named from theirs) is shortened to the part before the @. */
+export const spoken = (name: string) => (name.includes("@") ? name.split("@")[0] : name);
+
 /** For tests. */
 export function resetDirectory() { store.clear(); asked.clear(); version = 0; }
