@@ -110,10 +110,9 @@ export default function Profile() {
         <span className="pf-av" aria-hidden="true" style={{ background: gradientFor(name) }}>{name.slice(0, 1).toUpperCase()}</span>
         <div className="pf-info">
           <h2>{name}</h2>
-          <p className="muted pf-sub">{username ? `@${username}` : email ?? ""}</p>
+          {(username || (email && !email.endsWith("@guest.orbit"))) && <p className="muted pf-sub">{username ? `@${username}` : email}</p>}
           {about?.bio ? <p className="pf-bio"><RichText text={about.bio} /></p> : <p className="pf-bio muted">No bio yet. <button type="button" className="link-btn" onClick={() => setTab("edit")}>Add one</button></p>}
           {about && about.hobbies.length > 0 && <ul className="person-tags" aria-label="Free time">{about.hobbies.map((t) => <li key={t}><RichText text={t} /></li>)}</ul>}
-          <p className="pf-stats"><span><b>{data.posts.length}</b> posts</span><span><b>{data.reposts.length}</b> reposts</span></p>
         </div>
       </header>
 
@@ -123,25 +122,22 @@ export default function Profile() {
 
       {tab === "edit" && (
         <>
-      <section className="me-card">
-        <span className="me big" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
-        <div className="me-info">
-          {editing ? (
-            <form className="name-edit" onSubmit={saveName}>
-              <label className="sr" htmlFor="name-edit">Your name</label>
-              <input id="name-edit" autoFocus value={draft} maxLength={NAME_MAX} onChange={(e) => setDraft(e.target.value)} placeholder="Your name" />
-              <button className="btn primary" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
-              <button type="button" className="btn" onClick={() => { setEditing(false); setNameError(""); }}>Cancel</button>
-              {nameError && <p className="error" role="alert">{nameError}</p>}
-            </form>
-          ) : (
-            <>
-              <h2>{name}</h2>
-              {email && <p className="muted">{email}</p>}
-              <button type="button" className="btn" onClick={() => { setDraft(name); setEditing(true); }}><Pencil size={16} aria-hidden="true" />Edit name</button>
-            </>
-          )}
-        </div>
+      <section className="pf-row" aria-label="Name">
+        <span className="pf-k">Name</span>
+        {editing ? (
+          <form className="name-edit" onSubmit={saveName}>
+            <label className="sr" htmlFor="name-edit">Your name</label>
+            <input id="name-edit" autoFocus value={draft} maxLength={NAME_MAX} onChange={(e) => setDraft(e.target.value)} placeholder="Your name" />
+            <button className="btn primary" disabled={saving}>{saving ? "Saving…" : "Save"}</button>
+            <button type="button" className="link-btn" onClick={() => { setEditing(false); setNameError(""); }}>Cancel</button>
+            {nameError && <p className="error" role="alert">{nameError}</p>}
+          </form>
+        ) : (
+          <>
+            <b className="pf-v">{name}</b>
+            <button type="button" className="link-btn" onClick={() => { setDraft(name); setEditing(true); }}>Change</button>
+          </>
+        )}
       </section>
 
       {supabase && username !== undefined && (
