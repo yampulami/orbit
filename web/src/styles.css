@@ -5171,3 +5171,22 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .avp-save{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .bubble:has(.media-img){width:fit-content;max-width:min(360px,82%)}
 .bubble .media-img{margin:6px 0 0}
+
+/* ---- New post window and pickers in the Orbit look: 12px window, 8px controls, no circles or pills ---- */
+.modal{border-radius:12px;padding:12px 20px 16px;box-shadow:0 24px 60px -24px rgba(16,20,18,.55)}
+.modal-back>*{border-radius:12px}
+@media (max-width:640px){.modal-back>*{border-radius:12px 12px 0 0!important}}
+.round-btn{border-radius:8px;background:none}
+.round-btn:hover{background:var(--panel)}
+.picker-btn,.picker-menu li{border-radius:8px}
+.picker-btn{background:none;padding:6px 12px 6px 8px}
+.picker-menu{border-radius:12px}
+.picker-ico{border-radius:6px;width:28px;height:28px;box-shadow:none;background:var(--panel)}
+.compose-body .av{box-shadow:0 0 0 1px var(--line);border:0}
+.compose-body textarea{font-size:var(--t-row)}
+.compose-foot{gap:8px}
+.compose-foot .emoji-btn{width:44px;height:44px;border-radius:8px}
+.compose-foot .count{font-size:var(--t-meta);color:var(--ink-soft);margin:0 4px}
+.compose-foot .btn.primary{border-radius:8px;min-height:44px;background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .compose-foot .btn.primary{color:#1a1210}
+.compose-foot .btn.primary:disabled{background:none;border-color:var(--line);color:var(--ink-soft);opacity:1}
