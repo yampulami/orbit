@@ -5440,3 +5440,9 @@ p,li{text-wrap:pretty}
 .esrc-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px}
 .esrc-field{flex:1 1 280px;min-width:0}
 .esrc-note{margin:0;font-size:14px}
+.esrc .btn{min-height:44px;border-radius:8px;padding:0 16px;font-weight:600}
+.esrc .btn.primary{background:var(--accent);border:1px solid var(--accent);color:#fff}
+[data-theme=dark] .esrc .btn.primary{color:#1a1210}
+.esrc .btn:not(.primary){background:none;border:1px solid var(--line);color:var(--ink)}
+.esrc .btn:disabled,.esrc .btn.primary:disabled{background:none;border:1px solid var(--line);color:var(--ink-soft);opacity:1;cursor:default}
+.esrc .field input{min-height:44px}
