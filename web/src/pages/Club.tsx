@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import ClubGlyph from "../components/ClubGlyph";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, ChevronDown, Clock, ClipboardList, Hash, Info, Lock, Megaphone, Orbit, Plus, Users, X } from "lucide-react";
 import { isOpen, useCampusEvents } from "../lib/campusEvents";
@@ -114,7 +115,7 @@ export default function Club() {
     <div className="page club-page club-wide" style={{ ["--h" as string]: orgHue(org) }}>
       <header className="club-bar">
         <Link className="club-back" to="/app/campus" aria-label="Back to Campus"><ArrowLeft size={18} aria-hidden="true" /></Link>
-        <span className="club-planet sm" aria-hidden="true">{org.icon || org.name.slice(0, 1).toUpperCase()}</span>
+        <span className="club-planet sm" aria-hidden="true"><ClubGlyph icon={org.icon} name={org.name} /></span>
         <div className="club-bar-text">
           <h1><RichText text={org.name} />{org.status === "active" && !circle && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
           <span className="club-bar-sub">

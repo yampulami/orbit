@@ -5410,3 +5410,19 @@ p,li{text-wrap:pretty}
 .about-actions .btn.primary:disabled{background:none;border-color:var(--line);color:var(--ink-soft);opacity:1}
 .about-actions .btn:not(.primary){border:0;background:none;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;padding:0 6px}
 .about-actions .btn:not(.primary):hover{background:none;color:var(--ink)}
+
+/* ---- Club icon library (Phosphor via Iconify) ---- */
+.club-glyph{display:block;width:1.15em;height:1.15em;fill:currentColor;flex:none}
+.rail-ico .club-glyph{width:22px;height:22px}
+.club-mark .club-glyph{width:58%;height:58%}
+.club-planet .club-glyph,.club-planet.sm .club-glyph{width:56%;height:56%}
+.look-ic .club-glyph{width:22px;height:22px;color:var(--ink)}
+.look-search{display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border:1px solid var(--ink-soft);border-radius:8px;color:var(--ink-soft);max-width:420px}
+.look-search:focus-within{border-color:var(--ink)}
+.look-search input{flex:1;min-width:0;border:0;outline:0;background:none;color:var(--ink);font:inherit;font-size:var(--t-meta)}
+.look-groups{display:flex;gap:16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
+.look-groups::-webkit-scrollbar{display:none}
+.look-groups [role=tab]{flex:none;min-height:44px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-meta);font-weight:500;padding:0 2px;cursor:pointer;white-space:nowrap}
+.look-groups [aria-selected=true]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.look-none{flex-basis:100%;font-size:var(--t-meta);margin:4px 0 0}
+.look-ic[role=radio]{display:grid;place-items:center}

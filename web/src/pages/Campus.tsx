@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ClubGlyph from "../components/ClubGlyph";
 import { Link, useNavigate } from "react-router-dom";
 import { BadgeCheck, CalendarDays, ChevronDown, Compass, Info, Plus, ShieldCheck, UserRound, Users } from "lucide-react";
 import { isOpen, setDemoRole, useCampusEvents, type Role } from "../lib/campusEvents";
@@ -63,7 +64,7 @@ export default function Campus() {
             {railClubs.map((o) => (
               <ArrangeItem key={o.id} as="div" id={o.id} className="rail-item">
                 <Link to={`/app/campus/clubs/${o.id}`} className="rail-ico" style={{ ["--h" as string]: orgHue(o) }} aria-label={o.name} data-tip={o.name} draggable={false}>
-                  {o.icon || o.name.slice(0, 1).toUpperCase()}
+                  <ClubGlyph icon={o.icon} name={o.name} />
                   {o.status === "pending" && <span className="rail-badge wait" aria-hidden="true" />}
                 </Link>
               </ArrangeItem>
@@ -214,7 +215,7 @@ function ClubRow({ o }: { o: Org }) {
   return (
     <li>
       <Link className="club-row" style={{ ["--h" as string]: orgHue(o) }} to={`/app/campus/clubs/${o.id}`}>
-        <span className="club-mark" aria-hidden="true">{o.icon || o.name.slice(0, 1).toUpperCase()}</span>
+        <span className="club-mark" aria-hidden="true"><ClubGlyph icon={o.icon} name={o.name} /></span>
         <span className="club-text">
           <strong><RichText text={o.name} />{o.status === "active" && !circle && <VerifiedBadge label={o.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</strong>
           <span className="club-sub">{o.description || (o.kind === "official" ? "Official office" : circle ? "Student circle" : "Student club")}</span>

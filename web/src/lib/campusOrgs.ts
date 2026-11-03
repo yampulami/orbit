@@ -1,4 +1,5 @@
 import { calmHue, hueFor } from "./look";
+import { cleanClubIcon } from "./clubIcons";
 import { useSyncExternalStore } from "react";
 import { supabase } from "./supabase";
 import { loadNames, watchTables } from "./people";
@@ -252,7 +253,7 @@ export const orgActions = {
   },
   /** The president picks the club's colour (a hue, or null for the default) and icon (one emoji, or empty for its first letter). */
   async updateLook(id: string, d: { accent: number | null; icon: string }): Promise<string | null> {
-    const row = { accent: d.accent, icon: Array.from(d.icon.trim()).slice(0, 2).join("") };
+    const row = { accent: d.accent, icon: cleanClubIcon(d.icon) };
     const before = state;
     set({ ...state, orgs: state.orgs.map((o) => (o.id === id ? { ...o, accent: row.accent ?? undefined, icon: row.icon } : o)) });
     if (!live) return null;

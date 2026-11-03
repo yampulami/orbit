@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ClubGlyph from "./ClubGlyph";
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Megaphone, Newspaper, Pencil, Repeat2, Settings, type LucideIcon } from "lucide-react";
 import { feedApi, type Row } from "../lib/feedData";
@@ -79,7 +80,7 @@ export default function ProfileActivity({ tab, userId, isMe, name, data }: { tab
             {clubs.map((o) => (
               <li key={o.id}>
                 <Link className="club-row" style={{ ["--h" as string]: typeof o.accent === "number" ? calmHue(o.accent) : hueFor(o.name) }} to={`/app/campus/clubs/${o.id}`}>
-                  <span className="club-mark" aria-hidden="true">{o.icon || o.name.slice(0, 1).toUpperCase()}</span>
+                  <span className="club-mark" aria-hidden="true"><ClubGlyph icon={o.icon} name={o.name} /></span>
                   <span className="club-text"><strong>{o.name}{o.kind !== "circle" && <VerifiedBadge label="Verified" />}</strong><span className="club-sub">{o.description || (o.kind === "circle" ? "Student circle" : "Student club")}</span></span>
                 </Link>
               </li>

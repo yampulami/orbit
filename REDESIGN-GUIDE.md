@@ -315,3 +315,7 @@ Recurring items still worth improving: too many time-related blocks at once, the
 - Long names wrap or clamp instead of breaking rows.
 - Copy: "Group hangouts · private plans with your groups" became "Plans · from your groups"; plan card tags show just the group name.
 - Motion: one short rise-in when a tab's content changes (`orbit-in`, 220 ms) and a small pop on a ticked box (`orbit-tick`); both off under reduced motion.
+
+## Club icon library
+
+`web/scripts/pull-club-icons.mjs` fetches 183 Phosphor icons (MIT) from Iconify and writes `web/src/lib/clubIcons.generated.ts`. Nothing is requested from Iconify while the app runs. A club stores `i:XX` (two-character id, fits the 8-character database column). Only append to the script's lists, never reorder, so saved ids keep their meaning. `ClubGlyph` draws any icon, emoji or first letter; the picker is in the club About window.
