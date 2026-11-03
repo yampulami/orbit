@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Avatar from "./Avatar";
 import { Check, Link2, Mail, MessageSquare, Share2, X } from "lucide-react";
 import { dmActions } from "../lib/dms";
 import { friendsLive, useFriends } from "../lib/friends";
@@ -83,7 +84,7 @@ export default function ShareMenu({ text, author, url, onClose }: Props) {
               <ul>
                 {friends.map((f) => (
                   <li key={f.id}>
-                    <span className="gs-ico gs-av" aria-hidden="true">{f.name.slice(0, 1).toUpperCase()}</span>
+                    <Avatar name={f.name} id={f.id} size={32} className="gs-ico gs-av" />
                     <span className="grow"><strong>{f.name}</strong>{f.username && <span className="muted"> @{f.username}</span>}</span>
                     <button type="button" className="btn sm" disabled={sent.includes(f.id)} onClick={() => void toFriend(f.id, f.name)}>{sent.includes(f.id) ? "Sent" : "Send"}</button>
                   </li>

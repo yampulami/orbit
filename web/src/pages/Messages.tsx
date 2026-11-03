@@ -6,6 +6,8 @@ import { ArrowLeft, Plus, Send, Trash2 } from "lucide-react";
 import ConfirmButton from "../components/ConfirmButton";
 import { useChatOpenClass, useIsPhone } from "../lib/phone";
 import { threadKeys } from "../lib/threadKeys";
+import { AttachButton, AttachPreview, useAttachment } from "../components/Attach";
+import { previewOf } from "../lib/media";
 import EmojiButton from "../components/EmojiButton";
 import RichText from "../components/RichText";
 import { enter, slide } from "../lib/motion";
@@ -35,6 +37,7 @@ function LiveMessages() {
   const [chatOpen, setChatOpen] = useState(false); // phone: false shows the list of chats, true shows one chat full screen
   const [active, setActive] = useState<string>("");
   const [text, setText] = useState("");
+  const att = useAttachment();
   const [picking, setPicking] = useState(false);
   const [q, setQ] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
@@ -91,10 +94,11 @@ function LiveMessages() {
 
   function send(e: FormEvent) {
     e.preventDefault();
-    if (!current || !text.trim()) return;
-    dmActions.send(current.id, text);
+    const body = att.compose(text);
+    if (!current || !body.trim()) return;
+    dmActions.send(current.id, body);
     if (session) sendTyping(current.id, session.user.id, true);
-    setText("");
+    setText(""); att.clear();
   }
 
   async function startWith(id: string) {
@@ -113,7 +117,7 @@ function LiveMessages() {
             <button key={t.id} role="tab" aria-selected={!picking && t.id === shownId} className={"thread" + (!picking && t.id === shownId ? " on" : "")} data-unread={t.unread > 0 ? "" : undefined} onClick={() => { setPicking(false); setActive(t.id); setChatOpen(true); }}>
               {!picking && t.id === shownId && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
               <strong>{t.name}{onlineNow.has(t.otherId) && <Orb size={14} variant="green" poke={false} className="active-orb" />}{t.unread > 0 && <span className="dm-unread" aria-label={`${t.unread} unread`}>{t.unread}</span>}</strong>
-              <span className="muted">{t.messages.length ? t.messages[t.messages.length - 1].text : "No messages yet"}</span>
+              <span className="muted">{t.messages.length ? previewOf(t.messages[t.messages.length - 1].text) : "No messages yet"}</span>
             </button>
           ))}
         </div>
@@ -147,10 +151,12 @@ function LiveMessages() {
                   </div>
                 )}
               </div>
+              <AttachPreview a={att} />
               <form className="comment-form" onSubmit={send}>
                 <input ref={dmInput} aria-label="Message" value={text} onChange={(e) => { setText(e.target.value); if (session) sendTyping(current.id, session.user.id, !e.target.value); }} maxLength={2000} placeholder={`Message ${current.name}…`} />
                 <EmojiButton value={text} onChange={setText} inputRef={dmInput} max={2000} />
-                <button className="btn primary" aria-label="Send" disabled={!text.trim()}><Send size={16} /></button>
+                <AttachButton a={att} />
+                <button className="btn primary" aria-label="Send" disabled={!text.trim() && !att.has}><Send size={16} /></button>
               </form>
             </>
           ) : (
@@ -176,6 +182,7 @@ function SampleMessages() {
   const [threads, setThreads] = useState(seedThreads);
   const [active, setActive] = useState("Maya");
   const [text, setText] = useState("");
+  const att = useAttachment();
   const [fresh, setFresh] = useState("");
   const phone = useIsPhone();
   const [chatOpen, setChatOpen] = useState(false);
@@ -186,10 +193,10 @@ function SampleMessages() {
 
   function send(e: FormEvent) {
     e.preventDefault();
-    const t = text.trim(); if (!t) return;
+    const t = att.compose(text).trim(); if (!t) return;
     setThreads((s) => ({ ...s, [active]: [...s[active], { mine: true, text: t }] }));
     setFresh(`${active}-${threads[active].length}`);
-    setText("");
+    setText(""); att.clear();
   }
 
   return (
@@ -202,7 +209,7 @@ function SampleMessages() {
             <button key={n} role="tab" aria-selected={n === active} className={"thread" + (n === active ? " on" : "")} onClick={() => { setActive(n); setChatOpen(true); }}>
               {n === active && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
               <strong>{n}</strong>
-              <span className="muted">{threads[n][threads[n].length - 1].text}</span>
+              <span className="muted">{previewOf(threads[n][threads[n].length - 1].text)}</span>
             </button>
           ))}
         </div>
@@ -214,9 +221,11 @@ function SampleMessages() {
               return <motion.p key={`${active}-${i}`} className={"bubble" + (m.mine ? " mine" : "")} initial={isNew ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }} transition={enter}><RichText text={m.text} /></motion.p>;
             })}
           </div>
+          <AttachPreview a={att} />
           <form className="comment-form" onSubmit={send}>
             <input aria-label="Message" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Message ${active}…`} />
-            <button className="btn primary" aria-label="Send" disabled={!text.trim()}><Send size={16} /></button>
+            <AttachButton a={att} />
+            <button className="btn primary" aria-label="Send" disabled={!text.trim() && !att.has}><Send size={16} /></button>
           </form>
         </div>
       </div>

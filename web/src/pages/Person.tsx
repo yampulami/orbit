@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Avatar from "../components/Avatar";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Check, MessageSquare, UserMinus, UserPlus, X } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -58,7 +59,7 @@ export default function Person() {
     <div className="page">
       <h1 className="sr">{profile.name}</h1>
       <section className="person-card me-card">
-        <span className="me big" aria-hidden="true">{profile.name.slice(0, 1).toUpperCase()}</span>
+        <Avatar name={profile.name} id={id} size={72} className="me big" />
         <div className="me-info">
           <div className="person-title"><h2>{profile.name}</h2><SafetyMenu userId={id} name={profile.name} context="profile" onBlocked={() => nav("/app/feed")} /></div>
           {profile.username && <p className="muted">@{profile.username}</p>}

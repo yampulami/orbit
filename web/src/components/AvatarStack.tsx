@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Avatar from "./Avatar";
 import { Link } from "react-router-dom";
 import { gradientFor } from "../lib/look";
 
@@ -22,7 +23,7 @@ export default function AvatarStack({ names = [], people, max = 4, size = 28, on
         const style = { background: gradientFor(p.name), zIndex: shown.length - i };
         const inner = (
           <>
-            <b aria-hidden="true">{p.name.trim().slice(0, 1).toUpperCase()}</b>
+            <Avatar name={p.name} id={p.id} size={size} className="avs-av" />
             {on.has(p.name) && <span className="avs-on" aria-hidden="true" />}
           </>
         );

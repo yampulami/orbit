@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { AttachButton, AttachPreview, useAttachment } from "./Attach";
 import EmojiButton from "./EmojiButton";
 import RichText from "./RichText";
 import { motion, useReducedMotion } from "framer-motion";
@@ -39,6 +40,7 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
   const reduce = useReducedMotion();
   const [focusId, setFocusId] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const att = useAttachment();
   const commentInput = useRef<HTMLTextAreaElement>(null);
   const [sending, setSending] = useState(false);
 
@@ -54,10 +56,10 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const t = text.trim();
+    const t = att.compose(text).trim();
     if (!t || sending) return;
     setSending(true);
-    try { if (focus) await onReply(focus.id, t); else await onComment(t); setText(""); } finally { setSending(false); }
+    try { if (focus) await onReply(focus.id, t); else await onComment(t); setText(""); att.clear(); } finally { setSending(false); }
   }
 
   /** One comment or reply as a card: who, when, what they said, and the reply icon with how many replies it has. */
@@ -91,8 +93,10 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
       <div className="ct-box">
         <textarea ref={commentInput} rows={2} aria-label={focus ? `Reply to ${focus.author_name}` : "Write a reply"} maxLength={500} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); void submit(e as unknown as FormEvent); } else if (e.key === "Escape") { e.currentTarget.blur(); } }} placeholder={focus ? `Reply to ${focus.author_name}…` : "Write a reply"} />
         <EmojiButton value={text} onChange={setText} inputRef={commentInput} max={500} />
+        <AttachButton a={att} />
+        <AttachPreview a={att} />
       </div>
-      <button className="ct-post" data-ready={text.trim() && !sending ? "" : undefined} disabled={!text.trim() || sending}>{sending ? "Posting…" : "Reply"}</button>
+      <button className="ct-post" data-ready={(text.trim() || att.has) && !sending ? "" : undefined} disabled={(!text.trim() && !att.has) || sending}>{sending ? "Posting…" : "Reply"}</button>
     </form>
   );
 

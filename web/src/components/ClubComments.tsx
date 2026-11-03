@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AttachButton, AttachPreview, useAttachment } from "./Attach";
 import { X } from "lucide-react";
 import RichText from "./RichText";
 
@@ -23,16 +24,17 @@ export default function ClubComments({ id, comments, canWrite, canModerate, me, 
   onPost: (body: string) => Promise<string | null | void>; onRemove: (id: string) => void;
 }) {
   const [text, setText] = useState("");
+  const att = useAttachment();
   const [busy, setBusy] = useState(false);
-  const ready = text.trim().length > 0 && !busy;
+  const ready = (text.trim().length > 0 || att.has) && !busy;
 
   async function post(e?: React.FormEvent) {
     e?.preventDefault();
     if (!ready) return;
     setBusy(true);
-    const err = await onPost(text);
+    const err = await onPost(att.compose(text));
     setBusy(false);
-    if (!err) setText("");
+    if (!err) { setText(""); att.clear(); }
   }
 
   return (
@@ -43,7 +45,9 @@ export default function ClubComments({ id, comments, canWrite, canModerate, me, 
           <Avatar name={me} />
           <div className="ct-box">
             <label className="sr" htmlFor={`ct-${id}`}>Write a comment</label>
+            <AttachPreview a={att} />
             <textarea id={`ct-${id}`} rows={2} value={text} maxLength={500} placeholder="Enter your comment" onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void post(); }} />
+            <AttachButton a={att} />
           </div>
           <button className="ct-post" data-ready={ready ? "" : undefined} disabled={!ready}>{busy ? "Posting…" : "Post comment"}</button>
         </form>

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { AttachButton, AttachPreview, useAttachment } from "./Attach";
+import Avatar from "./Avatar";
 import EmojiButton from "./EmojiButton";
 import { useDisplayName } from "../lib/displayName";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +29,7 @@ export default function ComposeModal({ open, onClose, initialCommunity }: { open
   const name = useDisplayName();
   const drafts = useDrafts();
   const [text, setText] = useState("");
+  const att = useAttachment();
   const [community, setCommunity] = useState<Community>("Everyone");
   const [campus, setCampus] = useState<Campus | null | undefined>(undefined); // undefined = still checking
   const [view, setView] = useState<"write" | "drafts">("write");
@@ -75,7 +78,7 @@ export default function ComposeModal({ open, onClose, initialCommunity }: { open
 
   async function post(e: FormEvent) {
     e.preventDefault();
-    const body = text.trim();
+    const body = att.compose(text).trim();
     if (!body || !campus || busy) return;
     setBusy(true); setError("");
     try {
@@ -128,15 +131,17 @@ export default function ComposeModal({ open, onClose, initialCommunity }: { open
             ) : (
               <form onSubmit={post}>
                 <div className="compose-body">
-                  <span className="me" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
+                  <Avatar name={name} id={me || undefined} size={44} className="me" />
                   <textarea ref={area} id="compose-text" value={text} maxLength={MAX} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder="What’s happening on campus?" aria-label="What’s happening on campus?" />
                 </div>
                 {error && <p className="error" role="alert">{error}</p>}
+                <AttachPreview a={att} />
                 <div className="compose-foot">
                   <div className="compose-to"><span id="compose-to">Post to</span><CommunityPicker value={community} onChange={setCommunity} labelledBy="compose-to" id="compose-community" /></div>
                   <EmojiButton value={text} onChange={setText} inputRef={area} max={MAX} />
+                  <AttachButton a={att} />
                   <span className={"count" + (text.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{text.length}/{MAX}</span>
-                  <button className="btn primary" disabled={busy || !text.trim() || campus === undefined}>{busy ? "Posting…" : "Post"}</button>
+                  <button className="btn primary" disabled={busy || (!text.trim() && !att.has) || campus === undefined}>{busy ? "Posting…" : "Post"}</button>
                 </div>
               </form>
             )}

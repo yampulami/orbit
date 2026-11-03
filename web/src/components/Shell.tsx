@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import Avatar from "./Avatar";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ComponentType } from "react";
@@ -190,7 +191,7 @@ export default function Shell() {
             )}
           </div>
         </div>
-        <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="side-me"><span className="me-av">{name.slice(0, 1).toUpperCase()}</span><span className="navtext">Profile</span></NavLink>
+        <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="side-me"><Avatar name={name} id={session?.user.id} size={32} className="me-av" /><span className="navtext">Profile</span></NavLink>
       </aside>
       <div className="content">
         <div className="topline">
@@ -198,7 +199,7 @@ export default function Shell() {
           <span className="top-title" aria-hidden="true">{pageTitle}</span>
           <GlobalSearch />
           <NotificationBell />
-          <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="me topme">{name.slice(0, 1).toUpperCase()}</NavLink>
+          <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="me topme has-av"><Avatar name={name} id={session?.user.id} size={36} /></NavLink>
         </div>
         <motion.main key={loc.pathname} id="main" tabIndex={-1} ref={main} className="main" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={enter}>
           <Outlet />
@@ -229,7 +230,7 @@ export default function Shell() {
             {i.to === "/app/chats" && unread > 0 && <b className="drawer-count">{unread > 9 ? "9+" : unread}</b>}
           </NavLink>
         ))}
-        <NavLink to="/app/profile" className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}><span className="me">{name.slice(0, 1).toUpperCase()}</span><span>Profile</span></NavLink>
+        <NavLink to="/app/profile" className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}><Avatar name={name} id={session?.user.id} size={26} className="me" /><span>Profile</span></NavLink>
         <button type="button" className="drawer-link" onClick={() => { setDrawer(false); newPost(); }}><SquarePen size={22} strokeWidth={1.75} /><span>New post</span></button>
         <span className="spacer" />
         <button type="button" className="drawer-link" onClick={() => setTheme(dark ? "light" : "dark")}>{dark ? <Sun size={22} strokeWidth={1.75} /> : <Moon size={22} strokeWidth={1.75} />}<span>{dark ? "Light mode" : "Dark mode"}</span></button>

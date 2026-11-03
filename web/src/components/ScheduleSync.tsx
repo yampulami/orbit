@@ -1,4 +1,5 @@
 import { SweepLi, SweepUl } from "./Sweep";
+import Avatar from "./Avatar";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, CalendarDays, Check, ChevronDown, ChevronUp, Flag, Sparkles, Star, Users, Utensils } from "lucide-react";
@@ -181,7 +182,7 @@ export default function ScheduleSync({ groupId, people: given, initialPicked, ti
           empty="Add a friend first, then find a time that works for both of you."
           renderItem={(f) => (
             <button type="button" className="sl-row" aria-pressed={picked.includes(f.id)} onClick={() => toggle(f.id)}>
-              <span className="sl-face" style={{ background: gradientFor(f.name) }} aria-hidden="true">{f.name.trim().slice(0, 1).toUpperCase()}</span>
+              <Avatar name={f.name} id={f.id} size={32} className="sl-face" />
               <span className="sl-name">{f.name}{f.username && <small>@{f.username}</small>}</span>
               <span className="sl-tick" aria-hidden="true"><Check size={13} /></span>
             </button>

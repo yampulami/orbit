@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AttachButton, AttachPreview, useAttachment } from "./Attach";
 import { BarChart3, Check, MessageCircle, Megaphone, PenLine, Pin, PinOff, Plus, Trash2, X } from "lucide-react";
 import { useClubFeed, type Post } from "../lib/clubFeed";
 import type { Org } from "../lib/campusOrgs";
@@ -30,6 +31,7 @@ export default function ClubFeed({ org, reviewer, feed }: { org: Org; reviewer: 
   const [mode, setMode] = useState<Mode | null>(null);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const att = useAttachment();
   const [choices, setChoices] = useState(["", ""]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -41,10 +43,11 @@ export default function ClubFeed({ org, reviewer, feed }: { org: Org; reviewer: 
     e.preventDefault();
     if (!active) return;
     setBusy(true);
-    const err = active === "announcement" ? await actions.announce(title, body) : active === "poll" ? await actions.poll(title, choices) : await actions.discuss(body);
+    const full = att.compose(body);
+    const err = active === "announcement" ? await actions.announce(title, full) : active === "poll" ? await actions.poll(title, choices) : await actions.discuss(full);
     setBusy(false);
     if (err) { setError(err); return; }
-    setTitle(""); setBody(""); setChoices(["", ""]); setError("");
+    att.clear(); setTitle(""); setBody(""); setChoices(["", ""]); setError("");
   }
 
   return (
@@ -75,7 +78,8 @@ export default function ClubFeed({ org, reviewer, feed }: { org: Org; reviewer: 
             <textarea aria-label={active === "announcement" ? "Details" : "Post"} rows={active === "announcement" ? 3 : 2} value={body} maxLength={2000} placeholder={active === "announcement" ? "Details (optional). Everyone on campus can read announcements." : "Share something with the club"} onChange={(e) => { setBody(e.target.value); setError(""); }} />
           )}
           {error && <p className="error" role="alert">{error}</p>}
-          <div className="cf-send"><button className="btn primary" disabled={busy}>{busy ? "Posting…" : active === "announcement" ? "Announce" : active === "poll" ? "Start poll" : "Post"}</button></div>
+          {active !== "poll" && <AttachPreview a={att} />}
+          <div className="cf-send">{active !== "poll" && <AttachButton a={att} />}<button className="btn primary" disabled={busy}>{busy ? "Posting…" : active === "announcement" ? "Announce" : active === "poll" ? "Start poll" : "Post"}</button></div>
         </form>
       )}
       {!inClub && org.status === "active" && <p className="muted cf-note">Join to see the club's discussion and polls. Announcements are open to everyone.</p>}

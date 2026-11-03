@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import Avatar from "./Avatar";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Bell, CalendarClock, ChevronRight, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, UserRound, Users, X, type LucideIcon } from "lucide-react";
@@ -205,7 +206,7 @@ export default function GlobalSearch() {
                       {things.length > 0 && <li className="gs-head" role="presentation">{scoped ? (longEnough(q) ? "Results" : "Closest") : "Top results"}</li>}
                       {things.map((h) => { const i = idx("top", h.id); return row(options[i], i, <span className="gs-ico"><h.Icon size={18} strokeWidth={1.7} aria-hidden="true" /></span>, h.title, h.sub, h.kind); })}
                       {shownPeople.length > 0 && <li className="gs-head" role="presentation">{scope === "people" && !longEnough(q) ? "Your friends" : "People"}</li>}
-                      {shownPeople.map((p) => { const i = idx("people", `person-${p.id}`); return row(options[i], i, <span className="gs-ico gs-av" aria-hidden="true">{p.name.slice(0, 1).toUpperCase()}</span>, p.name, p.username ? `@${p.username}` : "No username yet", relation(p.id)); })}
+                      {shownPeople.map((p) => { const i = idx("people", `person-${p.id}`); return row(options[i], i, <Avatar name={p.name} id={p.id} size={32} className="gs-ico gs-av" />, p.name, p.username ? `@${p.username}` : "No username yet", relation(p.id)); })}
                     </>
                   )}
                 </ul>

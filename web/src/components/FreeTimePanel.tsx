@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Avatar from "./Avatar";
 import { Check, Clock, UserCheck, Users } from "lucide-react";
 import StackedList from "./StackedList";
 import { gradientFor } from "../lib/look";
@@ -76,7 +77,7 @@ export default function FreeTimePanel({ preselect }: { /** Friends to start with
                           defaultOpen={who.allowed.length === 0}
                           renderItem={(f) => (
                             <button type="button" className="sl-row" aria-pressed={who.allowed.includes(f.id)} onClick={() => togglePerson(f.id)}>
-                              <span className="sl-face" style={{ background: gradientFor(f.name) }} aria-hidden="true">{f.name.trim().slice(0, 1).toUpperCase()}</span>
+                              <Avatar name={f.name} id={f.id} size={32} className="sl-face" />
                               <span className="sl-name">{f.name}{f.username && <small>@{f.username}</small>}</span>
                               <span className="sl-tick" aria-hidden="true"><Check size={13} /></span>
                             </button>

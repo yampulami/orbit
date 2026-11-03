@@ -1,4 +1,6 @@
 import { isTyping } from "../lib/shortcuts";
+import { AttachButton, AttachPreview, useAttachment } from "../components/Attach";
+import Avatar from "../components/Avatar";
 import { Fragment, Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "react";
 import { useIsPhone } from "../lib/phone";
 import EmojiButton from "../components/EmojiButton";
@@ -79,6 +81,7 @@ export default function Feed() {
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const draftKey = `orbit-feed-draft:${me}`;
+  const att = useAttachment();
   const [body, setBody] = useState(() => { try { return localStorage.getItem(`orbit-feed-draft:${session?.user.id ?? ""}`) ?? ""; } catch { return ""; } });
   // A half-written post survives leaving the page or closing the tab.
   useEffect(() => { try { if (body) localStorage.setItem(draftKey, body); else localStorage.removeItem(draftKey); } catch { /* storage unavailable */ } }, [body, draftKey]);
@@ -174,9 +177,9 @@ export default function Feed() {
 
   async function publish(e: FormEvent) {
     e.preventDefault();
-    const text = body.trim(); if (!campus || !text) return;
+    const text = att.compose(body).trim(); if (!campus || !text) return;
     setPosting(true);
-    await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community, body: text }); progress.log("post"); setBody(""); setChoosing(false); await load();
+    await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community, body: text }); progress.log("post"); setBody(""); att.clear(); setChoosing(false); await load();
       setPosted(filter !== "All" && filter !== community ? `Posted for ${audience(community)}. Switch to Everything to see it.` : `Posted for ${audience(community)}. It is at the top of the list below.`);
       window.setTimeout(() => setPosted(""), 8000);
     });
@@ -262,8 +265,9 @@ export default function Feed() {
               )}
             </div>
             <EmojiButton value={body} onChange={setBody} inputRef={composerRef} max={MAX} />
+            <AttachButton a={att} />
             {body.length > MAX * 0.8 ? <span className={"count" + (body.length > MAX * 0.9 ? " warn" : "")} aria-live="polite">{body.length}/{MAX}</span> : <span className="composer-hint">Ctrl+Enter to post</span>}
-            <button className="btn primary" disabled={posting || !body.trim()}>{posting ? "Posting…" : community === "Everyone" ? "Post" : community === "Marketplace" ? "Post for sale" : `Post to ${SHOW[community]}`}</button>
+            <button className="btn primary" disabled={posting || (!body.trim() && !att.has)}>{posting ? "Posting…" : community === "Everyone" ? "Post" : community === "Marketplace" ? "Post for sale" : `Post to ${SHOW[community]}`}</button>
           </div>
         </form>}
         {posted && <p className="composer-note" role="status">{posted}</p>}
@@ -310,7 +314,7 @@ export default function Feed() {
             const replies = p.post_comments.length;
             return (
               <article key={p.id} id={`post-${p.id}`} className="rp" tabIndex={-1} aria-description="Press l to like, r for replies, j and k to move between posts." aria-label={`Post by ${p.author_name}`}>
-                <PersonLink id={p.author_id} className="rp-avlink" decorative><span className="rp-av" style={{ background: gradientFor(p.author_name) }} aria-hidden="true">{initials(p.author_name)}</span></PersonLink>
+                <PersonLink id={p.author_id} className="rp-avlink" decorative><Avatar name={p.author_name} id={p.author_id} size={40} className="rp-av" /></PersonLink>
                 <div className="rp-main">
                   <div className="rp-head">
                     <PersonLink id={p.author_id} className="rp-name"><strong>{p.author_name}</strong></PersonLink>

@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import { AttachButton, AttachPreview, useAttachment } from "./Attach";
 import { Hash, Lock, Megaphone, MessageSquare, Plus, Send, Trash2, X } from "lucide-react";
 import type { Org } from "../lib/campusOrgs";
 import type { useClubChat } from "../lib/clubChat";
@@ -34,6 +35,7 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
   const setActiveId = (id: string) => { if (controlled) onPick?.(id); else setOwnId(id); };
   const active = channels.find((c) => c.id === activeId) ?? channels[0];
   const [text, setText] = useState("");
+  const att = useAttachment();
   const [makingOwn, setMaking] = useState(false);
   const making = controlled ? creating : makingOwn;
   const [name, setName] = useState("");
@@ -58,10 +60,11 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
-    if (!active || !text.trim()) return;
-    const t = text; setText("");
+    const t = att.compose(text);
+    if (!active || !t.trim()) return;
+    setText(""); att.clear();
     const err = await chat.actions.send(active.id, t);
-    if (err) setText(t);
+    if (err) setText(text);
     input.current?.focus();
   }
   async function make(e: React.FormEvent) {
@@ -126,11 +129,12 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
                 );
               })}
             </div>
-            {active.announceOnly && !canAnnounce ? <p className="muted cc-readonly"><Megaphone size={14} aria-hidden="true" /> Only officers post here.</p> : <form className="cc-compose" onSubmit={send}>
+            {active.announceOnly && !canAnnounce ? <p className="muted cc-readonly"><Megaphone size={14} aria-hidden="true" /> Only officers post here.</p> : <><AttachPreview a={att} /><form className="cc-compose" onSubmit={send}>
               <input ref={input} aria-label={`Message #${active.name}`} value={text} maxLength={2000} placeholder={`Message #${active.name}`} onChange={(e) => setText(e.target.value)} />
               <EmojiButton value={text} onChange={setText} inputRef={input} max={2000} />
-              <button className="btn primary" disabled={!text.trim()} aria-label="Send"><Send size={16} aria-hidden="true" /></button>
-            </form>}
+              <AttachButton a={att} />
+              <button className="btn primary" disabled={!text.trim() && !att.has} aria-label="Send"><Send size={16} aria-hidden="true" /></button>
+            </form></>}
           </>
         )}
       </div>

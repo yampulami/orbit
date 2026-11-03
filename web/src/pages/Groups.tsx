@@ -1,4 +1,5 @@
 import { siteUrl } from "../lib/siteUrl";
+import { AttachButton, AttachPreview, useAttachment } from "../components/Attach";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -37,6 +38,7 @@ export default function Groups() {
   const [activeId, setActiveId] = useState(asked && groups.some((g) => g.id === asked) ? asked : groups[0]?.id ?? "");
   useEffect(() => { if (asked && groups.some((g) => g.id === asked)) { setActiveId(asked); setCreating(false); } }, [asked, loc.key]);
   const [text, setText] = useState("");
+  const att = useAttachment();
   const chatInput = useRef<HTMLInputElement>(null);
   useChatOpenClass(phone && paneOpen);
   const [creating, setCreating] = useState(false);
@@ -103,10 +105,10 @@ export default function Groups() {
 
   function send(e: FormEvent) {
     e.preventDefault();
-    const t = text.trim();
+    const t = att.compose(text).trim();
     if (!group || !t) return;
     hangActions.send(group.id, t);
-    setText("");
+    setText(""); att.clear();
   }
 
   function plan(e: FormEvent) {
@@ -273,10 +275,12 @@ export default function Groups() {
                 );
               })}
             </div>
+            <AttachPreview a={att} />
             <form className="comment-form" onSubmit={send}>
               <input ref={chatInput} aria-label="Message" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Message ${group.name}…`} />
               <EmojiButton value={text} onChange={setText} inputRef={chatInput} />
-              <button className="btn primary" aria-label="Send" disabled={!text.trim()}><Send size={16} /></button>
+              <AttachButton a={att} />
+              <button className="btn primary" aria-label="Send" disabled={!text.trim() && !att.has}><Send size={16} /></button>
             </form>
           </div>
         )}

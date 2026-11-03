@@ -1,4 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
+import Avatar from "../components/Avatar";
+import AvatarPicker from "../components/AvatarPicker";
 import { useSearchParams } from "react-router-dom";
 import GradientMenu from "../components/GradientMenu";
 import ProfileActivity, { profileTabs, useProfileRows, type ProfileTab } from "../components/ProfileActivity";
@@ -122,7 +124,7 @@ export default function Profile() {
     <div className="page">
       <h1 className="sr">Profile</h1>
       <header className="pf-head">
-        <span className="pf-av" aria-hidden="true" style={{ background: gradientFor(name) }}>{name.slice(0, 1).toUpperCase()}</span>
+        <Avatar name={name} id={uid} size={88} className="pf-av" />
         <div className="pf-info">
           <h2>{name}</h2>
           {(username || (email && !email.endsWith("@guest.orbit"))) && <p className="muted pf-sub">{username ? `@${username}` : email}</p>}
@@ -139,6 +141,8 @@ export default function Profile() {
 
       {tab === "edit" && (
         <>
+      <AvatarPicker name={name} />
+
       <section className="pf-row" aria-label="Name">
         <span className="pf-k">Name</span>
         {editing ? (

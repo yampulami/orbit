@@ -5121,3 +5121,53 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .plans-head.plans-head{margin:4px 0 12px}
 .chats-head.chats-head{margin:4px 0 8px}
 .rm-head.rm-head{margin:4px 0 8px}
+
+/* ---- Pictures: avatars, photos in messages and posts, the avatar picker ---- */
+.av{display:inline-grid;place-items:center;flex:none;border-radius:50%;overflow:hidden;font-weight:700;color:#1a1210;line-height:1;vertical-align:middle}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.av b{font-weight:700}
+.topme.has-av{padding:0;background:none;border:0;overflow:hidden;display:grid;place-items:center}
+.avs-face .av{width:100%!important;height:100%!important}
+.attach-btn-wrap{display:inline-flex}
+.attach-btn{width:44px;height:44px}
+.attach-prev{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 2px}
+.attach-thumb{position:relative;display:inline-block;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
+.attach-thumb img{display:block;max-width:160px;max-height:120px;object-fit:cover}
+.attach-x{position:absolute;top:4px;right:4px;width:28px;height:28px;border:0;border-radius:6px;background:var(--ink);color:var(--on-ink);display:grid;place-items:center;cursor:pointer}
+.attach-x::after{content:"";position:absolute;inset:-8px}
+.attach-wait{font-size:var(--t-meta)}
+.media-img{display:block;margin:6px 0 2px;padding:0;border:0;background:none;border-radius:8px;overflow:hidden;box-shadow:0 0 0 1px var(--line);cursor:zoom-in;max-width:min(320px,100%)}
+.media-img img{display:block;width:100%;height:auto;max-height:320px;object-fit:cover}
+.media-wait{width:240px;height:160px}
+.media-gone{padding:10px 12px;font-size:var(--t-meta);color:var(--ink-soft);cursor:default}
+.media-view{position:fixed;inset:0;z-index:90;background:color-mix(in srgb,#000 80%,transparent);display:grid;place-items:center;padding:24px;cursor:zoom-out}
+.media-view img{max-width:min(1100px,100%);max-height:100%;border-radius:8px;object-fit:contain}
+.media-close{position:absolute;top:16px;right:16px;width:44px;height:44px;border:0;border-radius:8px;background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.bubble .media-img{box-shadow:none}
+
+.avp{display:grid;gap:14px;max-width:680px;padding:6px 0 18px;border-bottom:1px solid var(--line);margin-bottom:16px}
+.avp h2{font-size:var(--t-h2);font-weight:600}
+.avp-top{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.avp-big{box-shadow:0 0 0 1px var(--line)}
+.avp-modes{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.avp-modes [role=tab],.avp-parts [role=tab]{min-height:44px;border:0;border-bottom:2px solid transparent;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-ui);font-weight:500;padding:0 2px;cursor:pointer}
+.avp-modes [aria-selected=true],.avp-parts [aria-selected=true]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+.avp-grid,.avp-opts,.avp-colors ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.avp-grid button,.avp-opts button{padding:3px;border:0;border-radius:50%;background:none;box-shadow:0 0 0 1px var(--line);cursor:pointer;display:grid;place-items:center}
+.avp-grid button:hover,.avp-opts button:hover{box-shadow:0 0 0 1px var(--ink-soft)}
+.avp-grid button[aria-pressed=true],.avp-opts button[aria-pressed=true]{box-shadow:0 0 0 2px var(--accent)}
+.avp-shape{display:grid;gap:10px}
+.avp-bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.avp-bar b{font-size:var(--t-meta);font-weight:600}
+.avp-parts{display:flex;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.avp-parts [role=tab]{margin-bottom:-1px;font-size:var(--t-meta)}
+.avp-colors{display:grid;gap:10px}
+.avp-colors>div{display:grid;gap:6px}
+.avp-colors span{font-size:var(--t-meta);color:var(--ink-soft);font-weight:600}
+.avp-colors button{width:28px;height:28px;border-radius:50%;border:0;box-shadow:inset 0 0 0 1px color-mix(in srgb,#000 15%,transparent);cursor:pointer;position:relative}
+.avp-colors button::after{content:"";position:absolute;inset:-8px}
+.avp-colors button[aria-pressed=true]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.avp-photo{display:grid;gap:10px;justify-items:start}
+.avp-save{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.bubble:has(.media-img){width:fit-content;max-width:min(360px,82%)}
+.bubble .media-img{margin:6px 0 0}
