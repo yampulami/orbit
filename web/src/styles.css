@@ -5226,3 +5226,19 @@ p,li{text-wrap:pretty}
 [data-theme=dark] .av b{color:#fff}
 [data-theme=dark] .rail-badge{color:#1a1210}
 [data-theme=dark] .bell-count{background:#ff7a45;color:#1a1210}
+
+/* ---- Free time, how it feels: labels beside their choices, the best time stands out, help sits under the list when it is the only thing aside ---- */
+.sync-row{grid-template-columns:88px minmax(0,1fr);align-items:center;gap:4px 12px}
+.sync-row .sync-k{padding-top:0}
+.sync-opts{gap:2px;padding-top:8px}
+.sync-list li[data-best]{padding:16px 0}
+.sync-list li[data-best] .sr-main b{font-family:var(--display);font-size:var(--t-h2);font-weight:600;letter-spacing:-.01em;white-space:normal}
+.sync-list li[data-best] .sr-main small{font-size:var(--t-meta)}
+.sync-list li[data-best] .sr-best{font-family:var(--font,inherit);font-size:var(--t-meta);font-weight:600}
+.sync-list li:not([data-best]) .sr-main b{font-weight:500}
+.ft-cols:has(.ft-side>.ft-blk:only-child){grid-template-columns:minmax(0,680px)}
+.ft-cols:has(.ft-side>.ft-blk:only-child) .ft-side{padding:0}
+.sync-foot{align-items:flex-start}
+.sync-foot svg{margin-top:3px;flex:none}
+.sync-foot span{min-width:0}
+@media (max-width:640px){.sync-row{grid-template-columns:1fr}}
