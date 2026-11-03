@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import { claimStaffAccess } from "./lib/staffAccess";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "./lib/auth";
 import OrbLoader from "./components/OrbLoader";
@@ -110,6 +111,9 @@ function InApp({ children }: { children: ReactNode }) {
     bindNotifs(uid);
     bindBlocks(uid);
     bindCampusEvents(uid);
+    // If the school's staff directory lists this person, they get their role now; the campus events then load again with it.
+    let alive = true;
+    void claimStaffAccess().then((role) => { if (alive && role) { unbindCampusEvents(); bindCampusEvents(uid); } });
     bindCampusOrgs(uid);
     bindCheckins(uid);
     // An invite link opened before signing in leaves its code here. Use it now that the person is in.
@@ -121,7 +125,7 @@ function InApp({ children }: { children: ReactNode }) {
         else { notice.show({ icon: "pin", title: "You joined the group", message: "It is on your Groups list.", ms: 4000 }); nav("/app/chats?tab=groups"); }
       });
     }
-    return () => { unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); unbindCampusOrgs(); unbindCheckins(); clearVerified(); };
+    return () => { alive = false; unbindHang(); unbindReminders(); unbindPins(); unbindPlaces(); unbindRoommates(); unbindDms(); unbindFriends(); unbindNotifs(); unbindBlocks(); unbindCampusEvents(); unbindCampusOrgs(); unbindCheckins(); clearVerified(); };
   }, [done, uid, campusKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (done === "checking") return <div className="ol-page"><OrbLoader label="Finding your campus" state="searching" look="stack" /></div>;
   return done === "yes" ? <>{children}</> : <Navigate to="/onboarding" replace />;
