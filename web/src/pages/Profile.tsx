@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import GradientMenu from "../components/GradientMenu";
 import ProfileActivity, { profileTabs, useProfileRows, type ProfileTab } from "../components/ProfileActivity";
 import RichText from "../components/RichText";
@@ -84,7 +85,21 @@ export default function Profile() {
   const showingActive = useShowActive();
   const installable = useInstall();
   const uid = session?.user.id;
-  const [tab, setTab] = useState<ProfileTab>("posts");
+  const [params, setParams] = useSearchParams();
+  const TABS: ProfileTab[] = ["posts", "reposts", "clubs", "edit", "settings"];
+  const asked = params.get("tab");
+  const tab: ProfileTab = TABS.includes(asked as ProfileTab) ? (asked as ProfileTab) : "posts";
+  const setTab = (t: ProfileTab) => setParams(t === "posts" ? {} : { tab: t }, { replace: true });
+  // 1 to 5 switch sections (not while typing).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || (e.target as HTMLElement)?.closest?.("input,textarea,select,[contenteditable=true]")) return;
+      const n = Number(e.key);
+      if (n >= 1 && n <= TABS.length) setParams(TABS[n - 1] === "posts" ? {} : { tab: TABS[n - 1] }, { replace: true });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const data = useProfileRows(uid ?? "");
   const [about, setAbout] = useState<About | null>(null);
   useEffect(() => { if (!uid) return; let alive = true; loadAbout(uid).then((a) => { if (alive) setAbout(a); }, () => undefined); return () => { alive = false; }; }, [uid, tab]);
@@ -116,7 +131,9 @@ export default function Profile() {
         </div>
       </header>
 
-      <div className="pf-tabs"><GradientMenu className="gm-bar" label="Profile sections" captions items={profileTabs(true, { posts: data.posts.length, reposts: data.reposts.length }, setTab, tab)} /></div>
+      <div className="pf-tabs"><GradientMenu className="gm-bar" label="Profile sections" captions tabs items={profileTabs(true, { posts: data.posts.length, reposts: data.reposts.length }, setTab, tab)} /></div>
+
+      <p className="plans-keys">Press 1 to 5 to switch sections.</p>
 
       {(tab === "posts" || tab === "reposts" || tab === "clubs") && uid && <ProfileActivity tab={tab} userId={uid} isMe name={name} data={data} />}
 

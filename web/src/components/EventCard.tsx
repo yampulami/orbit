@@ -108,7 +108,7 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
                   {ciError && <p className="error" role="alert">{ciError}</p>}
                 </form>
               : <button type="button" className="btn" onClick={() => setCi(true)}><QrCode size={14} aria-hidden="true" /> Check in</button>)}
-            {e.manage && !e.canceled && <button type="button" className="btn" aria-expanded={runCi} onClick={() => setRunCi((v) => !v)}><QrCode size={14} aria-hidden="true" /> {checkinOpen(e, new Date()) ? "Check-in" : "Attendance"}</button>}
+            {e.manage && !e.canceled && <button type="button" className="link-btn" aria-expanded={runCi} onClick={() => setRunCi((v) => !v)}>{checkinOpen(e, new Date()) ? "Check-in" : "Attendance"}</button>}
             <span className="ev-more">
               {!e.mineHost && !e.canceled && (reporting
                 ? <form className="cevent-report" onSubmit={async (ev) => { ev.preventDefault(); await eventActions.report(e.id, why); setReporting(false); setWhy(""); notice.show({ icon: "pin", title: "Thanks for telling us", message: "A coordinator will take a look.", ms: 4000 }); }}>

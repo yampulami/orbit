@@ -27,7 +27,7 @@ export type GMItem = {
 };
 
 /** A row of round icon buttons. Point at one (or tap it) and it opens into a gradient pill with its name, and the others make room. */
-export default function GradientMenu({ items, label, className = "", quietOnScroll = false, captions = false }: { items: GMItem[]; label: string; className?: string; /** Write every item's name under its icon, not only the open one's. */ captions?: boolean; /** Scrolling down shrinks it to small icons (the chosen one ringed); scrolling back up, or reaching the top, opens it again. */ quietOnScroll?: boolean }) {
+export default function GradientMenu({ items, label, className = "", quietOnScroll = false, captions = false, tabs = false }: { items: GMItem[]; label: string; className?: string; /** Behave as a row of tabs: one is selected, Left and Right move between them. */ tabs?: boolean; /** Write every item's name under its icon, not only the open one's. */ captions?: boolean; /** Scrolling down shrinks it to small icons (the chosen one ringed); scrolling back up, or reaching the top, opens it again. */ quietOnScroll?: boolean }) {
   const [quiet, setQuiet] = useState(false);
   useEffect(() => {
     if (!quietOnScroll) return;
@@ -43,7 +43,7 @@ export default function GradientMenu({ items, label, className = "", quietOnScro
     return () => window.removeEventListener("scroll", on);
   }, [quietOnScroll]);
   return (
-    <div className={"gm " + className} role="group" aria-label={label} data-quiet={quiet ? "" : undefined} data-caps={captions ? "" : undefined}>
+    <div className={"gm " + className} role={tabs ? "tablist" : "group"} aria-label={label} onKeyDown={tabs ? (e) => { if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return; const bs = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("[role=tab]")); const at = bs.indexOf(document.activeElement as HTMLButtonElement); if (at < 0) return; e.preventDefault(); const next = bs[(at + (e.key === "ArrowRight" ? 1 : -1) + bs.length) % bs.length]; next.focus(); next.click(); } : undefined} data-quiet={quiet ? "" : undefined} data-caps={captions ? "" : undefined}>
       {items.map((it) => {
         const [a, b] = GM[it.tone];
         return (
@@ -53,7 +53,10 @@ export default function GradientMenu({ items, label, className = "", quietOnScro
             className="gm-item"
             data-label={it.label}
             data-on={it.on ? "" : undefined}
-            aria-pressed={it.on === undefined ? undefined : it.on}
+            role={tabs ? "tab" : undefined}
+            aria-selected={tabs ? !!it.on : undefined}
+            tabIndex={tabs ? (it.on ? 0 : -1) : undefined}
+            aria-pressed={tabs || it.on === undefined ? undefined : it.on}
             aria-label={it.label}
             disabled={it.disabled}
             style={{ ["--a" as string]: a, ["--b" as string]: b, ["--w" as string]: `${pill(it.label)}px` }}
