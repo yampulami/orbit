@@ -5266,3 +5266,48 @@ p,li{text-wrap:pretty}
 }
 .ev-go[aria-pressed=true],.ev-maybe[aria-pressed=true]{font-weight:600}
 .cohost-invites li{background:none;border-radius:0;padding:0}
+
+/* ---- Clubs, the club page and their forms in the Orbit look ---- */
+.attach-btn-wrap{position:relative}
+.attach-btn-wrap input.sr{left:0;top:0}
+.club-search{border-radius:8px;background:none;border:1px solid var(--ink-soft);box-shadow:none}
+.club-search:focus-within{border-color:var(--ink)}
+.club-mark{border-radius:8px;background:none;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.club-row{padding:12px 8px}
+.rows-block h2{font-size:var(--t-meta);font-weight:600;color:var(--ink-soft)}
+.club-bar h1,.club-bar-text h1{font-size:var(--t-hero);font-family:var(--display);font-weight:600;letter-spacing:-.01em;line-height:1.15}
+.club-planet,.club-planet.sm{border-radius:8px;background:none;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.chan{border-radius:6px;min-height:44px}
+.chan:hover{background:var(--panel)}
+.chan[aria-current]{background:var(--panel);color:var(--ink)}
+.my-tasks{background:none;border-radius:0;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.my-tasks li,.my-tasks li.late{background:none;border:0;border-radius:0;padding:6px 0}
+.my-tasks .btn{border-radius:8px;min-height:44px}
+.cf-compose{background:none;border-radius:0;padding:0}
+.cf-compose input,.cf-compose textarea,.cf-reply-form input{border-radius:8px;border:1px solid var(--ink-soft);background:var(--surface)}
+.cf-compose textarea:focus,.cf-compose input:focus{border-color:var(--ink)}
+.cf-send{align-items:center;gap:8px}
+.cf-send .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;border-radius:8px;min-height:44px}
+[data-theme=dark] .cf-send .btn.primary{color:#1a1210}
+.cf-list>.cf-post.cf-post{background:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:16px 0;box-shadow:none}
+.cf-list>.cf-post.cf-post:first-child{border-top:0}
+.cf-post footer .cf-act{border-radius:8px;background:none;min-height:44px;color:var(--ink-soft)}
+.cf-post footer .cf-act:hover{background:var(--panel);color:var(--ink)}
+.cf-post footer .cf-act.icon{width:44px}
+.cf-post .cf-title-chip,.cf-post .cf-tag,.cf-post header [class*=chip]{border-radius:6px}
+.my-tasks .btn{border:1px solid var(--ink-soft);background:none}
+/* forms (the step-by-step ones for events, clubs and circles) */
+.cv{max-width:560px;margin:0}
+.cv-n{font-size:var(--t-meta);color:var(--ink-soft);font-variant-numeric:tabular-nums;min-width:48px}
+.cv-x{width:44px;height:44px;border-radius:8px}
+.cv-progress i{border-radius:2px}
+.cv-ask{font-size:clamp(1.25rem,2.4vw,var(--t-hero));font-weight:600;letter-spacing:-.01em}
+.cv-hint{font-size:var(--t-meta)}
+.cv-input{font-size:var(--t-row)}
+.cv-foot .btn,.cv-foot .btn.sm{border-radius:8px;min-height:44px;padding:0 18px;font-size:var(--t-ui)}
+.cv-foot .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .cv-foot .btn.primary{color:#1a1210}
+.cv-foot .link-btn{min-height:44px}
+.cv-chips button,.cv-chips .chip-btn{border-radius:8px;min-height:44px}
+.cv-review dt{font-size:var(--t-meta)}
+.chan-compose{border-radius:8px;background:none;min-height:44px;padding:0 14px}
