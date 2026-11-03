@@ -119,7 +119,7 @@ export default function Club() {
         <Link className="club-back" to="/app/campus" aria-label="Back to Campus"><ArrowLeft size={18} aria-hidden="true" /></Link>
         <span className="club-planet sm" aria-hidden="true"><ClubGlyph icon={org.icon} name={org.name} /></span>
         <div className="club-bar-text">
-          <h1><RichText text={org.name} />{org.status === "active" && !circle && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
+          <h1><span className="club-bar-name" title={org.name}><RichText text={org.name} /></span>{org.status === "active" && !circle && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
           <span className="club-bar-sub">
             {org.status === "pending" && <><Clock size={12} aria-hidden="true" /> Waiting for approval</>}
             {org.status === "paused" && "Paused"}
@@ -134,7 +134,7 @@ export default function Club() {
             ...(canPost ? [{ key: "post", label: "Post event", icon: Plus, tone: "orange" as const, onClick: () => { setView("events"); setPosting(true); } }] : []),
             ...(org.owner && org.status === "active" && !circle ? [{ key: "import", label: "Import events", icon: CalendarSync, tone: "green" as const, on: importing, onClick: () => setImporting(true) }] : []),
             { key: "about", label: "About", icon: Info, tone: "blue" as const, on: info, onClick: () => setInfo(true) },
-            { key: "people", label: "Members", icon: Users, tone: "purple" as const, on: people, badge: requests > 0 ? String(requests) : undefined, onClick: () => setPeople((v) => !v) },
+            { key: "people", label: "People", icon: Users, tone: "purple" as const, on: people, badge: requests > 0 ? String(requests) : undefined, onClick: () => setPeople((v) => !v) },
           ]}
         />
       </header>
@@ -212,7 +212,7 @@ export default function Club() {
           )}
         </main>
 
-        {people && <ClubMembers org={org} here={here} canRoles={canRoles} canMembers={canMembers} onClose={() => setPeople(false)} />}
+        {people && <ClubMembers org={org} here={here} canRoles={canRoles} canMembers={canMembers} reviewer={reviewer} onClose={() => setPeople(false)} />}
       </div>
 
       {importing && <ClubEventSourceSheet org={org} onClose={() => setImporting(false)} />}

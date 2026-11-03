@@ -17,7 +17,7 @@ export const ALL_PERMS: Perm[] = PERMS.map((p) => p.key);
 export const LEGACY_OFFICER_PERMS: Perm[] = ["announce", "events", "polls"];
 
 export type RawRole = { id: string; org_id: string; name: string; permissions: string[]; position?: number };
-export type Role = { id: string; name: string; permissions: Perm[]; people: number };
+export type Role = { id: string; name: string; permissions: Perm[]; people: number; position: number };
 
 const isPerm = (p: string): p is Perm => (ALL_PERMS as string[]).includes(p);
 
@@ -31,3 +31,29 @@ export function permsOf(member: { role: "owner" | "officer"; role_id?: string | 
 
 /** The permissions the owner alone may hand out. A role manager cannot make more role managers. */
 export const OWNER_ONLY: Perm[] = ["roles"];
+
+/* ---------- rank ----------
+ * A club has an order: the president, then its roles from the top of the list down, then people on the team with no role, then members.
+ * Lower is more powerful. This mirrors the database (org_rank), which is what really enforces it: you can only act on people, and hand out
+ * roles, that rank below you. A coordinator outranks everyone (-1). */
+export const RANK = { coordinator: -1, president: 0, role: 10, team: 5000, member: 9000, none: 10000 } as const;
+
+/** Pure: where one person stands. `position` of their role comes from the roles list. */
+export function rankOf(member: { role: "owner" | "officer"; role_id?: string | null } | undefined, roles: { id: string; position?: number }[], isMember = false): number {
+  if (member) {
+    if (member.role === "owner") return RANK.president;
+    if (member.role_id) return RANK.role + (roles.find((r) => r.id === member.role_id)?.position ?? 4000);
+    return RANK.team;
+  }
+  return isMember ? RANK.member : RANK.none;
+}
+export const roleRank = (role: { position?: number }) => RANK.role + (role.position ?? 0);
+
+/** May someone of rank `mine` act on someone of rank `theirs` (change their role, remove them)? Never on your own rank or above. */
+export const outranks = (mine: number, theirs: number) => mine < 0 || theirs > mine;
+
+/** The roles `mine` may give out: only those below their own rank (the president and a coordinator may give any). */
+export const rolesBelow = <T extends { position?: number }>(mine: number, roles: T[]): T[] => roles.filter((r) => mine <= 0 || roleRank(r) > mine);
+
+/** Plain words for a rank, for the list of people. */
+export const rankLabel = (rank: number, roleName?: string) => (rank === RANK.president ? "President" : rank === RANK.member ? "Member" : roleName ?? "Team");

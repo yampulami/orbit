@@ -5,7 +5,7 @@ import { supabase } from "./supabase";
 import { loadNames, watchTables } from "./people";
 import { findByUsername } from "./username";
 import { notice } from "./notice";
-import { permsOf, type Perm, type RawRole, type Role } from "./clubRoles";
+import { permsOf, rankOf, type Perm, type RawRole, type Role } from "./clubRoles";
 
 /** Organizations: the clubs, departments and offices that put on campus events. A coordinator approves an organization once; after that its officers
  *  post events as the organization and they go live at once. "official" organizations are staff-run offices; "student" ones are clubs. */
@@ -27,9 +27,11 @@ export type Org = {
   /** Its events go live at once (an official office, or a club a coordinator trusts). Otherwise each new event waits for approval. */
   trusted: boolean;
   /** I am an officer or owner of it. */
-  mine: boolean; owner: boolean; members: { id: string; name: string; role: "owner" | "officer"; roleId?: string; title?: string }[];
+  mine: boolean; owner: boolean; members: { id: string; name: string; role: "owner" | "officer"; roleId?: string; title?: string; rank: number }[];
   /** The roles the club has made, and what I may do here. */
   roles: Role[]; myPerms: Perm[];
+  /** Where I stand in the club (0 president, then each role down the list, then the team, then members). Lower is more powerful. */
+  myRank: number;
   application: Application; createdAt: string; decidedAt?: string; creator: string;
   /** The longer text on the club page, written by its president. */
   about: string;
@@ -64,10 +66,11 @@ export function buildOrgs(orgs: RawOrg[], members: RawMember[], me: string, name
         clubMembers: cm.filter((c) => c.status === "member").map((c) => ({ id: c.user_id, name: c.user_id === me ? "You" : names[c.user_id] ?? "Member" })),
         myJoin: (ms.some((m) => m.user_id === me) ? "officer" : mineJoin ?? "none") as Org["myJoin"],
         requests: cm.filter((c) => c.status === "pending" && c.user_id !== me).map((c) => ({ id: c.user_id, name: names[c.user_id] ?? "Student", message: c.message ?? "", at: c.created_at ?? "" })).sort((a, b) => a.at.localeCompare(b.at)),
-        roles: rs.sort((a, b) => (a.position ?? 0) - (b.position ?? 0)).map((r) => ({ id: r.id, name: r.name, permissions: permsOf({ role: "officer", role_id: r.id }, rs), people: ms.filter((m) => m.role_id === r.id).length })),
+        roles: rs.sort((a, b) => (a.position ?? 0) - (b.position ?? 0)).map((r) => ({ id: r.id, name: r.name, permissions: permsOf({ role: "officer", role_id: r.id }, rs), people: ms.filter((m) => m.role_id === r.id).length, position: r.position ?? 0 })),
         myPerms: permsOf(ms.find((m) => m.user_id === me), rs),
+        myRank: rankOf(ms.find((m) => m.user_id === me), rs, mineJoin === "member"),
         mine: ms.some((m) => m.user_id === me), owner: ms.some((m) => m.user_id === me && m.role === "owner"),
-        members: ms.map((m) => ({ id: m.user_id, name: m.user_id === me ? "You" : names[m.user_id] ?? "Student", role: m.role, roleId: m.role_id ?? undefined, title: m.role === "owner" ? "President" : rs.find((r) => r.id === m.role_id)?.name })).sort((a, b) => (a.role === b.role ? a.name.localeCompare(b.name) : a.role === "owner" ? -1 : 1)),
+        members: ms.map((m) => ({ id: m.user_id, name: m.user_id === me ? "You" : names[m.user_id] ?? "Student", role: m.role, roleId: m.role_id ?? undefined, title: m.role === "owner" ? "President" : rs.find((r) => r.id === m.role_id)?.name, rank: rankOf(m, rs) })).sort((a, b) => (a.role === b.role ? a.name.localeCompare(b.name) : a.role === "owner" ? -1 : 1)),
       };
     })
     .sort((a, b) => rank[a.status] - rank[b.status] || a.name.localeCompare(b.name));
@@ -323,9 +326,13 @@ export const orgActions = {
     await reload();
     return null;
   },
-  /** Give someone a role (adding them to the team if they are not on it yet). */
-  async setMemberRole(orgId: string, userId: string, roleId: string): Promise<string | null> {
+  /** Give someone a role (adding them to the team if they are not on it yet), or with null take their role away so they are an ordinary member. */
+  async setMemberRole(orgId: string, userId: string, roleId: string | null): Promise<string | null> {
     if (!live) {
+      if (roleId === null) {
+        set({ ...state, members: state.members.filter((m) => !(m.org_id === orgId && m.user_id === userId && m.role !== "owner")), club: [...state.club.filter((c) => !(c.org_id === orgId && c.user_id === userId)), { org_id: orgId, user_id: userId, status: "member" }] });
+        return null;
+      }
       const has = state.members.some((m) => m.org_id === orgId && m.user_id === userId);
       set({ ...state, members: has ? state.members.map((m) => (m.org_id === orgId && m.user_id === userId && m.role !== "owner" ? { ...m, role_id: roleId } : m)) : [...state.members, { org_id: orgId, user_id: userId, role: "officer", role_id: roleId }] });
       return null;
@@ -335,22 +342,55 @@ export const orgActions = {
     await reload();
     return null;
   },
+  /** Add a person to the club: straight in as a member, or onto the team with a role. */
+  async addPerson(orgId: string, person: { id: string; name: string }, roleId: string | null): Promise<string | null> {
+    if (!live) {
+      const names = { ...state.names, [person.id]: person.name };
+      if (roleId) return orgActions.setMemberRole(orgId, person.id, roleId).then((r) => { set({ ...state, names }); return r; });
+      if (state.members.some((m) => m.org_id === orgId && m.user_id === person.id)) return null;
+      set({ ...state, names, club: [...state.club.filter((c) => !(c.org_id === orgId && c.user_id === person.id)), { org_id: orgId, user_id: person.id, status: "member" }] });
+      return null;
+    }
+    const { error } = roleId ? await supabase!.rpc("set_member_role", { org: orgId, member: person.id, role: roleId }) : await supabase!.rpc("add_club_member", { org: orgId, member: person.id });
+    if (error) return fail("Could not add them", error.message);
+    await reload();
+    return null;
+  },
+  /** The president hands the presidency to someone else. */
+  async transferOwnership(orgId: string, userId: string): Promise<string | null> {
+    if (!live) {
+      set({ ...state, members: state.members.map((m) => (m.org_id !== orgId ? m : m.user_id === userId ? { ...m, role: "owner" as const, role_id: null } : m.role === "owner" ? { ...m, role: "officer" as const } : m)) });
+      return null;
+    }
+    const { error } = await supabase!.rpc("transfer_org_ownership", { org: orgId, member: userId });
+    if (error) return fail("That did not work", error.message);
+    await reload();
+    return null;
+  },
+  /** Move a role up or down the list (the president only). Higher roles outrank lower ones. */
+  async moveRole(roleId: string, direction: -1 | 1): Promise<string | null> {
+    if (!live) {
+      const r = state.roles.find((x) => x.id === roleId);
+      if (!r) return null;
+      const sorted = state.roles.filter((x) => x.org_id === r.org_id).sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+      const i = sorted.findIndex((x) => x.id === roleId), n = sorted[i + direction];
+      if (!n) return null;
+      set({ ...state, roles: state.roles.map((x) => (x.id === r.id ? { ...x, position: n.position } : x.id === n.id ? { ...x, position: r.position } : x)) });
+      return null;
+    }
+    const { error } = await supabase!.rpc("move_org_role", { role: roleId, direction });
+    if (error) return fail("That did not work", error.message);
+    await reload();
+    return null;
+  },
   /** An owner adds an officer by username. */
   async addMember(orgId: string, username: string, roleId?: string): Promise<string | null> {
     const found = await findByUsername(username);
     if (!found) return `Nobody on your campus has the username @${username.replace(/^@/, "")}.`;
-    if (!live) {
-      if (state.members.some((m) => m.org_id === orgId && m.user_id === found.id)) return null;
-      set({ ...state, members: [...state.members, { org_id: orgId, user_id: found.id, role: "officer", ...(roleId ? { role_id: roleId } : {}) }], names: { ...state.names, [found.id]: found.name } });
-      return null;
-    }
-    const { error } = roleId ? await supabase!.rpc("set_member_role", { org: orgId, member: found.id, role: roleId }) : await supabase!.rpc("add_org_member", { org: orgId, member: found.id });
-    if (error) return error.message;
-    await reload();
-    return null;
+    return orgActions.addPerson(orgId, found, roleId ?? null);
   },
   async removeMember(orgId: string, userId: string): Promise<string | null> {
-    if (!live) { set({ ...state, members: state.members.filter((m) => !(m.org_id === orgId && m.user_id === userId)) }); return null; }
+    if (!live) { set({ ...state, members: state.members.filter((m) => !(m.org_id === orgId && m.user_id === userId)), club: state.club.filter((c) => !(c.org_id === orgId && c.user_id === userId)) }); return null; }
     const { error } = await supabase!.rpc("remove_org_member", { org: orgId, member: userId });
     if (error) return fail("That did not work", error.message);
     await reload();

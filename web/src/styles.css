@@ -5446,3 +5446,58 @@ p,li{text-wrap:pretty}
 .esrc .btn:not(.primary){background:none;border:1px solid var(--line);color:var(--ink)}
 .esrc .btn:disabled,.esrc .btn.primary:disabled{background:none;border:1px solid var(--line);color:var(--ink-soft);opacity:1;cursor:default}
 .esrc .field input{min-height:44px}
+
+/* Club page title: wraps to two lines instead of being cut off mid-letter */
+.club-bar h1{display:block;white-space:normal;overflow:visible;line-height:1.15}
+.club-bar-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.club-bar h1 .verified,.club-bar h1>svg,.club-bar h1>span:not(.club-bar-name){vertical-align:middle;margin-left:6px}
+
+/* People and roles */
+.cmem-panel{min-width:0}
+.cp-tabs{display:flex;gap:20px;border-bottom:1px solid var(--line)}
+.cp-tabs button{min-height:44px;padding:0;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-ui);font-weight:600;cursor:pointer}
+.cp-tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+.cp-addbtn{min-height:44px;border-radius:8px;justify-content:center}
+.cp-sec h4{margin:14px 0 2px;font-size:var(--t-micro);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+.cp-sec ul{list-style:none;margin:0;padding:0}
+.cp-item{border-top:1px solid var(--line)}
+.cp-sec ul>.cp-item:first-child{border-top:0}
+.cp-row{display:flex;align-items:center;gap:10px;min-height:52px}
+.cp-who{flex:1;min-width:0;display:grid;gap:1px}
+.cp-who .cm-name{flex:none}
+.cp-you{color:var(--ink-soft);font-weight:400}
+.cp-sub{font-size:var(--t-micro);color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp-more{flex:none;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:8px;background:none;color:var(--ink-soft);cursor:pointer}
+.cp-more:hover,.cp-more[aria-expanded=true]{background:var(--panel);color:var(--ink)}
+.cp-card{display:grid;gap:10px;padding:2px 0 14px 42px}
+.cp-field{display:grid;gap:4px;font-size:var(--t-micro);font-weight:600;color:var(--ink-soft)}
+.cp-field .role-pick{width:100%;min-height:44px;border-radius:8px}
+.cp-acts{display:flex;align-items:center;flex-wrap:wrap;gap:4px 16px}
+.cp-acts .link-btn{min-height:44px;text-decoration:underline;text-underline-offset:3px}
+.cp-acts .link-btn.danger{color:var(--danger,#c0392b)}
+.cp-ask p{margin:0 0 8px;font-size:var(--t-meta);line-height:1.45}
+.cp-ask .btn{min-height:44px;border-radius:8px}
+.cp-add{display:grid;gap:10px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cp-add-top{display:flex;align-items:center;gap:6px}
+.cp-add-top .cm-search{flex:1;min-width:0}
+.cp-hits{list-style:none;margin:0;padding:0;display:grid}
+.cp-hit{display:flex;align-items:center;gap:10px;min-height:52px;border-top:1px solid var(--line)}
+.cp-hits>.cp-hit:first-child{border-top:0}
+.cp-hit .btn{min-height:44px;border-radius:8px}
+
+.roles-in{display:grid;gap:12px;padding:0}
+.rl-help{margin:0;font-size:var(--t-meta);line-height:1.5}
+.rl-list{list-style:none;margin:0;padding:0;display:grid}
+.rl-card{display:grid;gap:6px;padding:12px 0;border-top:1px solid var(--line)}
+.rl-list>.rl-card:first-child{border-top:0}
+.rl-fixed .role-head strong{color:var(--ink-soft)}
+.rl-card .role-head{flex-wrap:wrap}
+.rl-card .role-tools{margin-left:auto;display:flex;gap:0}
+.rl-card .role-tools .link-btn{min-width:44px;min-height:44px;display:inline-grid;place-items:center}
+.rl-card .role-tools .link-btn:disabled{opacity:.35;cursor:default}
+.rl-starters{display:grid;gap:8px}
+.rl-starters p{margin:0}
+.rl-starter-row{display:flex;flex-wrap:wrap;gap:8px}
+.rl-starter-row .btn,.rl-new{min-height:44px;border-radius:8px}
+.rl-new{justify-self:start}
+.role-form legend{font-size:var(--t-micro);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}

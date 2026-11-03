@@ -5,7 +5,6 @@ import { orgActions, orgHue, type Org } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
 import ClubAbout from "./ClubAbout";
 import ApplicationDetails from "./ApplicationDetails";
-import RolesPanel from "./RolesPanel";
 import RichText from "./RichText";
 
 /** Everything about the club that used to sit on its front: what it is, when it meets, the president's editing, roles, the application and the coordinator's controls. */
@@ -50,7 +49,6 @@ export default function ClubInfoSheet({ org, reviewer, canRoles, seesApplication
         <ClubAbout key={org.id + org.about + org.description + org.application.meeting + org.application.category} org={org} canEdit={org.owner} />
         {org.owner && org.status !== "rejected" && <LookPicker org={org} />}
         {seesApplication && <><h3 className="about-sub">The application</h3><ApplicationDetails org={org} /></>}
-        {canRoles && org.status === "active" && <RolesPanel org={org} />}
 
         {reviewer && !org.mine && (
           <div className="club-review" role="group" aria-label="Coordinator controls">
