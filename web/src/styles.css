@@ -5203,3 +5203,26 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .picker-check{color:var(--accent)}
 .picker-menu li .picker-ico,.picker-btn .picker-ico,.picker-menu li .picker-ico svg,.picker-btn .picker-ico svg{color:var(--ink-soft)!important}
 .picker-menu li .picker-ico svg,.picker-btn .picker-ico svg{stroke:currentColor!important}
+
+/* ---- How it feels: one baseline of state changes, press feedback, focus, selection, numerals and calm scrolling ---- */
+:root{accent-color:var(--accent);caret-color:var(--accent)}
+html{scrollbar-gutter:stable}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+:where(button,a,[role=tab],[role=switch],[role=radio],input,select,textarea,summary){transition:background-color .15s var(--ease,ease),color .15s var(--ease,ease),border-color .15s var(--ease,ease),box-shadow .15s var(--ease,ease),opacity .15s var(--ease,ease),text-decoration-color .15s var(--ease,ease)}
+:where(button:not(:disabled),[role=tab],[role=switch],[role=radio],summary,select){cursor:pointer}
+:where(button:disabled,[aria-disabled=true]){cursor:not-allowed}
+:where(.btn,.link-btn,.chip-btn,.rm-link,.convo-link,.sync-plan):active:not(:disabled){transform:translateY(1px)}
+:where(a,button,[role=tab],[role=switch],summary,input,select,textarea):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+:where(input,textarea,select):focus-visible{outline-offset:0}
+h1,h2,h3{text-wrap:balance}
+p,li{text-wrap:pretty}
+.up-sub,.cal-day,.wb-hr,.wb-dh b,.rm-price,.chip-n,.count,.sync-count,.ev-stub b,.ev-time,.rem-time,.gm-badge,.rail-badge,.bell-count,time{font-variant-numeric:tabular-nums}
+.picker-menu,.modal-back,.gs-card,.asst-panel{overscroll-behavior:contain}
+@keyframes orbit-fade{from{opacity:0}to{opacity:1}}
+.av img,.media-img img,.attach-thumb img{animation:orbit-fade .25s ease both}
+.rm-row:hover,.club-row:hover,.ev-list>li:hover,.up li:hover,.sync-list li:hover,.agenda-hangs li:hover,.rm-exp:hover{background:color-mix(in srgb,var(--panel) 55%,transparent)}
+.rm-row,.club-row,.ev-list>li,.up li,.sync-list li,.agenda-hangs li,.rm-exp{transition:background-color .15s var(--ease,ease)}
+@media (prefers-reduced-motion:reduce){.av img,.media-img img,.attach-thumb img{animation:none}:where(.btn,.link-btn,.chip-btn,.rm-link,.convo-link,.sync-plan):active{transform:none}}
+[data-theme=dark] .av b{color:#fff}
+[data-theme=dark] .rail-badge{color:#1a1210}
+[data-theme=dark] .bell-count{background:#ff7a45;color:#1a1210}
