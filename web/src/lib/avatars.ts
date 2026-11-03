@@ -1,7 +1,7 @@
-import { useSyncExternalStore } from "react";
 import { Avatar as DiceAvatar, Style } from "@dicebear/core";
 import definition from "@dicebear/styles/critters.json";
 import { supabase } from "./supabase";
+import { ensurePeople, patchPerson, usePerson } from "./directory";
 
 /** In-app avatars. Critters are drawn from the open "Critters" style by DiceBear (CC0), right here in the browser, so there is no outside request.
  *  A person's avatar is one short string: "" (their initial), "critter:SEED|eyes=round|..." (a critter), or "img:PATH" (their own photo). */
@@ -60,45 +60,18 @@ export const PRESET_SEEDS = ["Pip", "Mochi", "Bean", "Juniper", "Waffle", "Comet
 export const presets = (): string[] => PRESET_SEEDS.map((seed) => toSpec({ seed }));
 export const randomCritter = (): Critter => ({ seed: Math.random().toString(36).slice(2, 9) });
 
-/* ---- who has which avatar ---- */
-const store = new Map<string, string>();
-const asked = new Set<string>();
-const subs = new Set<() => void>();
-let version = 0;
-const bump = () => { version++; subs.forEach((f) => f()); };
+/* ---- who has which avatar (the live directory keeps them current) ---- */
 const localKey = (id: string) => `orbit-avatar-v1:${id}`;
-
 function readLocal(id: string): string {
   try { return localStorage.getItem(localKey(id)) ?? ""; } catch { return ""; }
 }
-let timer: number | undefined;
-const queue = new Set<string>();
-function flush() {
-  timer = undefined;
-  const ids = [...queue];
-  queue.clear();
-  if (!supabase || ids.length === 0) return;
-  void supabase.from("student_profiles").select("user_id,avatar").in("user_id", ids).then(({ data }) => {
-    for (const id of ids) store.set(id, "");
-    for (const r of (data ?? []) as { user_id: string; avatar: string | null }[]) store.set(r.user_id, r.avatar ?? "");
-    bump();
-  });
-}
-/** Ask for these people's avatars; they show up when loaded. Cheap to call again. */
-export function ensureAvatars(ids: (string | undefined)[]) {
-  for (const id of ids) {
-    if (!id || asked.has(id)) continue;
-    asked.add(id);
-    if (!supabase) { store.set(id, readLocal(id)); continue; }
-    queue.add(id);
-    if (timer === undefined) timer = window.setTimeout(flush, 40);
-  }
-}
+/** Ask for these people's avatars; they show up when loaded and change when they do. Cheap to call again. */
+export function ensureAvatars(ids: (string | undefined)[]) { ensurePeople(ids); }
 export function useAvatarSpec(id: string | undefined, explicit?: string): string {
-  useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => version);
+  const person = usePerson(id);
   if (explicit !== undefined) return explicit;
-  if (id) ensureAvatars([id]);
-  return (id && store.get(id)) || "";
+  if (!id) return "";
+  return supabase ? person?.avatar ?? "" : readLocal(id);
 }
 /** Save your own avatar. Resolves to a message if it did not work, or null. */
 export async function saveMyAvatar(userId: string, spec: string): Promise<string | null> {
@@ -108,8 +81,6 @@ export async function saveMyAvatar(userId: string, spec: string): Promise<string
   } else {
     try { if (spec) localStorage.setItem(localKey(userId), spec); else localStorage.removeItem(localKey(userId)); } catch { return "Could not save on this device."; }
   }
-  asked.add(userId);
-  store.set(userId, spec);
-  bump();
+  patchPerson(userId, { avatar: spec });
   return null;
 }

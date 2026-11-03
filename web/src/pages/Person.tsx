@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePerson } from "../lib/directory";
 import Avatar from "../components/Avatar";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Check, MessageSquare, UserMinus, UserPlus, X } from "lucide-react";
@@ -25,7 +26,9 @@ export default function Person() {
   const nav = useNavigate();
   const me = session?.user.id;
   const { relation, requestId } = useRelation(me, id);
-  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+  const [loaded, setProfile] = useState<Profile | null | undefined>(undefined);
+  const live = usePerson(id);
+  const profile: Profile | null | undefined = loaded ? { ...loaded, name: live?.name ?? loaded.name, username: live?.username ?? loaded.username, bio: live?.bio ?? loaded.bio, hobbies: live?.hobbies ?? loaded.hobbies } : loaded;
   const [busy, setBusy] = useState(false);
   const [sure, setSure] = useState(false);
   const [tab, setTab] = useState<"posts" | "reposts" | "clubs">("posts");

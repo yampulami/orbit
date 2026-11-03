@@ -1,4 +1,5 @@
 ﻿import { useMemo, useState, type FormEvent } from "react";
+import PersonName from "./PersonName";
 import Avatar from "./Avatar";
 import { useNavigate } from "react-router-dom";
 import { Search, UserPlus, X } from "lucide-react";
@@ -52,7 +53,7 @@ export default function ClubMembers({ org, here, canRoles, canMembers, onClose }
       <li key={p.id} className="cm-item">
         <button type="button" className="cm-row" aria-expanded={expanded} data-off={on ? undefined : ""} onClick={() => setOpen(expanded ? "" : p.id)}>
           <span className="cm-avw" aria-hidden="true"><Avatar name={p.name} id={p.id} size={32} />{on && <i className="cm-on" />}</span>
-          <span className="cm-name">{p.name}</span>
+          <span className="cm-name"><PersonName id={p.id} fallback={p.name} /></span>
           {p.title && <span className="cf-title-chip">{p.title}</span>}
         </button>
         {expanded && (

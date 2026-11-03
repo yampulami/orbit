@@ -317,3 +317,6 @@ export const useHangStatus = () => useSyncExternalStore((cb) => { subs.add(cb); 
 export const hangLive = live;
 
 export const useHang = () => useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => state);
+
+/** Someone changed their name or picture: look the names up again. */
+if (typeof window !== "undefined") window.addEventListener("orbit-people-changed", () => { if (who) void reload(); });

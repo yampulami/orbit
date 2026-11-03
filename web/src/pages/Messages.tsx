@@ -1,4 +1,5 @@
 import Orb from "../components/Orb";
+import PersonName from "../components/PersonName";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -116,7 +117,7 @@ function LiveMessages() {
           {threads.map((t) => (
             <button key={t.id} role="tab" aria-selected={!picking && t.id === shownId} className={"thread" + (!picking && t.id === shownId ? " on" : "")} data-unread={t.unread > 0 ? "" : undefined} onClick={() => { setPicking(false); setActive(t.id); setChatOpen(true); }}>
               {!picking && t.id === shownId && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
-              <strong>{t.name}{onlineNow.has(t.otherId) && <Orb size={14} variant="green" poke={false} className="active-orb" />}{t.unread > 0 && <span className="dm-unread" aria-label={`${t.unread} unread`}>{t.unread}</span>}</strong>
+              <strong><PersonName id={t.otherId} fallback={t.name} />{onlineNow.has(t.otherId) && <Orb size={14} variant="green" poke={false} className="active-orb" />}{t.unread > 0 && <span className="dm-unread" aria-label={`${t.unread} unread`}>{t.unread}</span>}</strong>
               <span className="muted">{t.messages.length ? previewOf(t.messages[t.messages.length - 1].text) : "No messages yet"}</span>
             </button>
           ))}

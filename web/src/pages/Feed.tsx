@@ -1,4 +1,5 @@
 import { isTyping } from "../lib/shortcuts";
+import PersonName from "../components/PersonName";
 import { AttachButton, AttachPreview, useAttachment } from "../components/Attach";
 import Avatar from "../components/Avatar";
 import { Fragment, Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "react";
@@ -318,7 +319,7 @@ export default function Feed() {
                 <PersonLink id={p.author_id} className="rp-avlink" decorative><Avatar name={p.author_name} id={p.author_id} size={40} className="rp-av" /></PersonLink>
                 <div className="rp-main">
                   <div className="rp-head">
-                    <PersonLink id={p.author_id} className="rp-name"><strong>{p.author_name}</strong></PersonLink>
+                    <PersonLink id={p.author_id} className="rp-name"><strong><PersonName id={p.author_id} fallback={p.author_name} /></strong></PersonLink>
                     {isVerified(p.author_id) && <span className="rp-tag">Campus staff</span>}
                     <span className="rp-time">{ago(p.created_at)}</span>
                     {p.community !== "Everyone" && <span className="rp-aud" data-aud={p.community}>{p.community === "Marketplace" ? "For sale" : `For ${audience(p.community)}`}</span>}

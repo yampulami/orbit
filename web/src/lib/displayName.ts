@@ -1,4 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
+import { patchPerson } from "./directory";
 import { supabase } from "./supabase";
 import { demoAuth } from "./demoAuth";
 import { ensureProfileRow, loadProfile, saveProfile } from "./profile";
@@ -43,6 +44,7 @@ export async function renameMe(session: Session | null, raw: string): Promise<st
   const p = loadProfile(u.id);
   if (p) saveProfile(u.id, { ...p, name });
   setHangName(name);
+  patchPerson(u.id, { name });
   profileChanged();
   return null;
 }

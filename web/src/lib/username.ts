@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { patchPerson } from "./directory";
 
 /** A username is how a student is found, added and signed in: lowercase letters, numbers and underscores, 3 to 20 long, and unique across Orbit
  *  (nobody else can take yours). */
@@ -68,7 +69,7 @@ export async function saveUsername(userId: string, raw: string): Promise<string 
   if (!supabase) return null;
   const username = normalizeUsername(raw);
   const { error } = await supabase.from("student_profiles").update({ username, updated_at: new Date().toISOString() }).eq("user_id", userId);
-  if (!error) return null;
+  if (!error) { patchPerson(userId, { username }); return null; }
   if (error.code === "23505" || /duplicate|unique/i.test(error.message)) return "That username is taken. Try another.";
   if (/column|schema cache/i.test(error.message)) return "Usernames are not switched on for this project yet.";
   return "We could not save that. Check your connection and try again.";

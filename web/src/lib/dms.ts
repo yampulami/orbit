@@ -164,3 +164,6 @@ async function campusKey(): Promise<string> {
 
 export const useDms = () => useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => state);
 export const unreadDms = (threads: DmThread[]) => threads.reduce((n, t) => n + t.unread, 0);
+
+/** Someone changed their name or picture: look the names up again. */
+if (typeof window !== "undefined") window.addEventListener("orbit-people-changed", () => { if (who) void reload(); });

@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { patchPerson } from "./directory";
 
 /** "About me": a short bio and what the person does in their free time. It shows on their profile to everyone on their campus.
  *  The bio is limited to 240 characters (what the database allows): long enough for a few lines, short enough to read at a glance. Emoji count as one. */
@@ -49,7 +50,9 @@ export async function saveAbout(userId: string, about: About): Promise<string | 
   const clean = { bio: cleanBio(about.bio), hobbies: cleanHobbies(about.hobbies) };
   if (supabase) {
     const { error } = await supabase.from("student_profiles").update({ ...clean, updated_at: new Date().toISOString() }).eq("user_id", userId);
-    return error ? (/check|violates/i.test(error.message) ? "That is a little too long. Shorten it and try again." : error.message) : null;
+    if (error) return /check|violates/i.test(error.message) ? "That is a little too long. Shorten it and try again." : error.message;
+    patchPerson(userId, { bio: clean.bio, hobbies: clean.hobbies });
+    return null;
   }
   try { localStorage.setItem(key(userId), JSON.stringify(clean)); } catch { return "Could not save on this device."; }
   return null;

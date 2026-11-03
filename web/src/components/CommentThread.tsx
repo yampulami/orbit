@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import PersonName from "./PersonName";
+import Avatar from "./Avatar";
 import { AttachButton, AttachPreview, useAttachment } from "./Attach";
 import EmojiButton from "./EmojiButton";
 import RichText from "./RichText";
@@ -68,8 +70,8 @@ export default function CommentThread({ postId, comments, onComment, onReply }: 
     return (
       <article key={c.id} className={"cmt-card" + (kind === "focus" ? " focus" : kind === "context" ? " context" : "")}>
         <div className="cmt-head">
-          <PersonLink id={c.user_id} className="who-link"><Face name={c.author_name} /></PersonLink>
-          <span className="cmt-who"><PersonLink id={c.user_id} className="who-link"><strong>{c.author_name}</strong></PersonLink>{isVerified(c.user_id) && <VerifiedBadge label="Verified campus staff" />}<span className="cmt-dot" aria-hidden="true">•</span><span className="cmt-when">{ago(c.created_at)}</span></span>
+          <PersonLink id={c.user_id} className="who-link"><Avatar name={c.author_name} id={c.user_id} size={40} className="ct-av" /></PersonLink>
+          <span className="cmt-who"><PersonLink id={c.user_id} className="who-link"><strong><PersonName id={c.user_id} fallback={c.author_name} /></strong></PersonLink>{isVerified(c.user_id) && <VerifiedBadge label="Verified campus staff" />}<span className="cmt-dot" aria-hidden="true">•</span><span className="cmt-when">{ago(c.created_at)}</span></span>
           <SafetyMenu userId={c.user_id} name={c.author_name} postId={postId} commentId={c.id} context="comment" />
         </div>
         <p className="cmt-body"><RichText text={c.body} /></p>
