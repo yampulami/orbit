@@ -5311,3 +5311,19 @@ p,li{text-wrap:pretty}
 .cv-chips button,.cv-chips .chip-btn{border-radius:8px;min-height:44px}
 .cv-review dt{font-size:var(--t-meta)}
 .chan-compose{border-radius:8px;background:none;min-height:44px;padding:0 14px}
+
+/* ---- Checked pass: initials readable in light too, the club "About" window and its controls in the Orbit look, 44px targets ---- */
+.av b{color:#fff}
+.chan .rem-count{color:color-mix(in srgb,var(--accent) 82%,#000)}
+[data-theme=dark] .chan .rem-count{color:#ff9a6e}
+.modal.cinfo{border-radius:12px}
+.cinfo-head .ac-icon{width:44px;height:44px;border-radius:8px}
+.cinfo .btn{border-radius:8px;min-height:44px;border:1px solid var(--ink-soft);background:none}
+.cinfo .btn:hover{background:var(--panel)}
+.look-row{display:flex;flex-wrap:wrap;gap:8px}
+.look-sw{width:44px;height:44px;border-radius:8px;position:relative}
+.look-ic{width:44px;height:44px;border-radius:8px;background:none;box-shadow:inset 0 0 0 1px var(--line)}
+.look-ic[aria-checked=true],.look-ic[aria-pressed=true]{box-shadow:inset 0 0 0 2px var(--accent)}
+.role-card{border-radius:0;background:none;border:0;border-top:1px solid var(--line);padding:14px 0}
+.role-tools .link-btn{min-width:44px;min-height:44px;display:inline-grid;place-items:center}
+.role-perms .ev-flavor{border-radius:6px;background:none;box-shadow:inset 0 0 0 1px var(--line);color:var(--ink-soft);padding:2px 8px;font-size:var(--t-micro)}
