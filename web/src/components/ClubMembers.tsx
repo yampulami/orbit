@@ -1,4 +1,5 @@
 ﻿import { useMemo, useState, type FormEvent } from "react";
+import Avatar from "./Avatar";
 import { useNavigate } from "react-router-dom";
 import { Search, UserPlus, X } from "lucide-react";
 import { orgActions, type Org } from "../lib/campusOrgs";
@@ -50,13 +51,13 @@ export default function ClubMembers({ org, here, canRoles, canMembers, onClose }
     return (
       <li key={p.id} className="cm-item">
         <button type="button" className="cm-row" aria-expanded={expanded} data-off={on ? undefined : ""} onClick={() => setOpen(expanded ? "" : p.id)}>
-          <span className="cm-av" aria-hidden="true">{initials(p.name)}{on && <i className="cm-on" />}</span>
+          <span className="cm-avw" aria-hidden="true"><Avatar name={p.name} id={p.id} size={32} />{on && <i className="cm-on" />}</span>
           <span className="cm-name">{p.name}</span>
           {p.title && <span className="cf-title-chip">{p.title}</span>}
         </button>
         {expanded && (
           <div className="cm-card">
-            <p className="muted">{p.owner ? "President" : p.title ?? (p.group === "Members" ? "Member" : "Officer")} Â· {on ? "online now" : "offline"}</p>
+            <p className="muted">{p.owner ? "President" : p.title ?? (p.group === "Members" ? "Member" : "Officer")} · {on ? "online now" : "offline"}</p>
             <div className="cm-actions">
               {canRoles && !p.owner && p.group !== "Members" && org.roles.length > 0 && (
                 <select className="role-pick" aria-label={`Role for ${p.name}`} value={p.roleId ?? ""} onChange={(e) => e.target.value && void orgActions.setMemberRole(org.id, p.id, e.target.value)}>
@@ -84,10 +85,10 @@ export default function ClubMembers({ org, here, canRoles, canMembers, onClose }
       {canMembers && org.requests.length > 0 && <JoinRequests org={org} />}
 
       <div className="cm-scroll">
-        {online.length > 0 && <h3 className="cm-label">Online Â· {online.length}</h3>}
-        {sections(online).map((s) => <section key={"on" + s.g}><h4>{s.g} Â· {s.items.length}</h4><ul>{s.items.map(Row)}</ul></section>)}
-        {offline.length > 0 && <h3 className="cm-label">Offline Â· {offline.length}</h3>}
-        {sections(offline).map((s) => <section key={"off" + s.g}><h4>{s.g} Â· {s.items.length}</h4><ul>{s.items.map(Row)}</ul></section>)}
+        {online.length > 0 && <h3 className="cm-label">Online · {online.length}</h3>}
+        {sections(online).map((s) => <section key={"on" + s.g}><h4>{s.g} · {s.items.length}</h4><ul>{s.items.map(Row)}</ul></section>)}
+        {offline.length > 0 && <h3 className="cm-label">Offline · {offline.length}</h3>}
+        {sections(offline).map((s) => <section key={"off" + s.g}><h4>{s.g} · {s.items.length}</h4><ul>{s.items.map(Row)}</ul></section>)}
         {shown.length === 0 && <p className="muted cm-none">No one matches.</p>}
         {org.memberCount > org.clubMembers.length && !needle && <p className="muted cm-none">and {org.memberCount - org.clubMembers.length} more</p>}
       </div>
