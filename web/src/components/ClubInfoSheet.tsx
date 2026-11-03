@@ -22,7 +22,7 @@ function LookPicker({ org }: { org: Org }) {
           <button key={h} type="button" role="radio" aria-checked={hue === h} aria-label={`Colour ${h}`} className="look-sw" style={{ ["--h" as string]: h }} onClick={() => void orgActions.updateLook(org.id, { accent: h, icon: org.icon })} />
         ))}
       </div>
-      <IconChooser value={org.icon} name={org.name} onChange={(icon) => void orgActions.updateLook(org.id, { accent: org.accent ?? null, icon })} />
+      <IconChooser value={org.icon} name={org.name} onChange={(icon) => void orgActions.updateLook(org.id, { accent: org.accent ?? null, icon }).then((m) => { if (m) notice.show({ icon: "alert", title: "Could not save the icon", message: m }); })} />
     </section>
   );
 }

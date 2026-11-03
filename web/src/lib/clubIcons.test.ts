@@ -15,6 +15,11 @@ describe("club icon library", () => {
     expect(cleanClubIcon("🤖🎬🎵")).toBe("🤖🎬");
     expect(cleanClubIcon("i:zz")).toBe("");
   });
+  it("draws the old emoji choices as library icons, and leaves other emoji alone", () => {
+    for (const e of ["🤖", "♟️", "🎬", "🎨", "🎵", "⚽", "📚", "🧪", "🌱", "🎮", "🍜", "🚀"]) expect(libraryIcon(e)).toBeDefined();
+    expect(libraryIcon("🦄")).toBeUndefined();
+    expect(libraryIcon("")).toBeUndefined();
+  });
   it("finds icons by name or group", () => {
     expect(searchIcons("chess").length + searchIcons("games").length).toBeGreaterThan(0);
     expect(searchIcons("")).toEqual([]);
