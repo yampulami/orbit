@@ -5501,3 +5501,13 @@ p,li{text-wrap:pretty}
 .rl-starter-row .btn,.rl-new{min-height:44px;border-radius:8px}
 .rl-new{justify-self:start}
 .role-form legend{font-size:var(--t-micro);font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+
+/* Themed dropdowns inside the people panel and the task board */
+.cp-field .dd,.tb-assign{width:100%}
+.cp-field .dd-btn{min-height:44px;border-radius:8px;border:1px solid var(--ink-soft);background:var(--surface);font-size:var(--t-ui)}
+.cp-field .dd-btn:hover,.cp-field .dd-btn[aria-expanded=true]{border-color:var(--ink)}
+.cmem-panel .dd-list,.tb-assign .dd-list{border-radius:8px;box-shadow:0 0 0 1px var(--line),0 14px 28px -16px rgba(0,0,0,.5)}
+.cmem-panel .dd-list li{min-height:44px;border-radius:6px;font-size:var(--t-ui)}
+.cmem-panel .dd-list li[aria-selected=true],.tb-assign .dd-list li[aria-selected=true]{color:var(--accent)}
+.tb-assign .dd-btn{min-height:44px;border-radius:8px}
+.tb-form .dd-btn{min-height:44px;border-radius:8px;border:1px solid var(--ink-soft);background:var(--surface)}

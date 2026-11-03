@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Dropdown from "./Dropdown";
 import { ArrowLeft, ArrowRight, CalendarClock, Plus, Trash2 } from "lucide-react";
 import type { Org } from "../lib/campusOrgs";
 import { isOverdue, NEXT, PREV, STATUS_LABEL, type Task, type TaskStatus, type useClubTasks } from "../lib/clubTasks";
@@ -48,9 +49,9 @@ export default function TaskBoard({ org, board }: { org: Org; board: ReturnType<
           <label className="field">What needs doing?<input autoFocus value={title} maxLength={120} placeholder="e.g. Book the room for Thursday" onChange={(e) => { setTitle(e.target.value); setError(""); }} /></label>
           <label className="field">Details (optional)<textarea rows={2} value={details} maxLength={500} onChange={(e) => setDetails(e.target.value)} /></label>
           <div className="cevent-times">
-            <label className="field">Who is it for?
-              <select value={who} onChange={(e) => setWho(e.target.value)}><option value="">Nobody yet</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-            </label>
+            <div className="field"><span>Who is it for?</span>
+              <Dropdown label="Who is it for?" value={who} onChange={setWho} options={[{ value: "", label: "Nobody yet" }, ...people.map((p) => ({ value: p.id, label: p.name }))]} />
+            </div>
             <DateTimeField label="Due (optional)" value={due} optional placeholder="No due date" onChange={setDue} />
           </div>
           {error && <p className="error" role="alert">{error}</p>}
@@ -93,9 +94,7 @@ export function TaskCard({ t, overdue, canManage, people, board, arrange = false
       <div className="tb-meta">
         {t.dueAt && <span className={"tb-due" + (overdue ? " late" : "")}><CalendarClock size={12} aria-hidden="true" /> {overdue ? "Overdue, " : "Due "}{when(t.dueAt)}</span>}
         {canManage ? (
-          <select className="role-pick" aria-label={`Who is ${t.title} for`} value={t.assigneeId ?? ""} onChange={(e) => void board.actions.assign(t.id, e.target.value || null)}>
-            <option value="">Unassigned</option>{people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <Dropdown className="tb-assign" label={`Who is ${t.title} for`} value={t.assigneeId ?? ""} onChange={(v) => void board.actions.assign(t.id, v || null)} options={[{ value: "", label: "Unassigned" }, ...people.map((p) => ({ value: p.id, label: p.name }))]} />
         ) : <span className="tb-who">{t.assignee ?? "Unassigned"}</span>}
       </div>
       {canMove && (

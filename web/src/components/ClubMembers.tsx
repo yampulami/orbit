@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
+import Dropdown from "./Dropdown";
 import { useNavigate } from "react-router-dom";
 import { MoreHorizontal, Search, UserPlus, X } from "lucide-react";
 import PersonName from "./PersonName";
@@ -59,14 +60,15 @@ export default function ClubMembers({ org, here, canRoles, canMembers, reviewer,
             {!ask && (
               <>
                 {mayRole && (
-                  <label className="cp-field">Role
-                    <select className="role-pick" value={p.roleId ?? ""} onChange={async (e) => { const v = e.target.value; if (v === (p.roleId ?? "")) return; if (!fail(await orgActions.setMemberRole(org.id, p.id, v || null))) notice.show({ icon: "calendar", title: v ? "Role changed" : "Now an ordinary member", message: `${p.name} has been told.`, ms: 2500 }); }}>
-                      {p.rank < RANK.member && <option value="">Member (no role)</option>}
-                      {p.rank >= RANK.member && <option value="">Choose a role</option>}
-                      {p.roleId && !giveable.some((r) => r.id === p.roleId) && <option value={p.roleId}>{p.roleName}</option>}
-                      {giveable.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                    </select>
-                  </label>
+                  <div className="cp-field"><span>Role</span>
+                    <Dropdown label={`Role for ${p.name}`} value={p.roleId ?? ""}
+                      options={[
+                        { value: "", label: p.rank < RANK.member ? "Member (no role)" : "Choose a role" },
+                        ...(p.roleId && !giveable.some((r) => r.id === p.roleId) ? [{ value: p.roleId, label: p.roleName ?? "Role" }] : []),
+                        ...giveable.map((r) => ({ value: r.id, label: r.name })),
+                      ]}
+                      onChange={async (v) => { if (v === (p.roleId ?? "")) return; if (!fail(await orgActions.setMemberRole(org.id, p.id, v || null))) notice.show({ icon: "calendar", title: v ? "Role changed" : "Now an ordinary member", message: `${p.name} has been told.`, ms: 2500 }); }} />
+                  </div>
                 )}
                 <div className="cp-acts">
                   {mayPresident && <button type="button" className="link-btn" onClick={() => setAsking({ id: p.id, what: "president" })}>Make president</button>}
@@ -160,12 +162,9 @@ function AddPeople({ org, people, giveable, canMembers, me, onDone }: { org: Org
         <button type="button" className="ac-icon" aria-label="Close add people" onClick={onDone}><X size={16} aria-hidden="true" /></button>
       </div>
       {(giveable.length > 0) && (
-        <label className="cp-field">Add them as
-          <select className="role-pick" value={role} onChange={(e) => setRole(e.target.value)}>
-            {canMembers && <option value="">Member</option>}
-            {giveable.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-          </select>
-        </label>
+        <div className="cp-field"><span>Add them as</span>
+          <Dropdown label="Add them as" value={choice} onChange={setRole} options={[...(canMembers ? [{ value: "", label: "Member" }] : []), ...giveable.map((r) => ({ value: r.id, label: r.name }))]} />
+        </div>
       )}
       {q.trim().length >= 2 && hits.length === 0 && <p className="muted cm-none">No one on your campus matches.</p>}
       <ul className="cp-hits">
