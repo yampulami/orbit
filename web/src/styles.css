@@ -5373,3 +5373,21 @@ p,li{text-wrap:pretty}
 .join-req .btn:not(.primary){border:0;background:none;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;padding:0 8px}
 .join-req .btn:not(.primary):hover{color:var(--ink);background:none}
 .cinfo-head .ac-icon,.cmem-panel .ac-icon,.ac-icon{width:44px;height:44px;border-radius:8px}
+
+/* ---- Pods ---- */
+.pod-meets{justify-items:start;text-align:left}
+.pod-meets>button,.pod-meets .link-btn{justify-self:start;min-height:44px;text-decoration:underline;text-underline-offset:3px}
+.pod-card .btn{border-radius:8px;min-height:44px}
+.pod-card .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .pod-card .btn.primary{color:#1a1210}
+.pod-card .btn:not(.primary){border:1px solid var(--ink-soft);background:none}
+.pod-actions .link-btn,.pod-head .link-btn{min-height:44px;min-width:44px;display:inline-grid;place-items:center}
+.pod-actions .link-btn{text-decoration:underline;text-underline-offset:3px}
+.faces i{border-radius:50%;border:2px solid var(--bg)}
+.pod-card h3,.pod-head strong{font-size:var(--t-ui);font-weight:600}
+.meet-list{list-style:none;margin:0;padding:0}
+.meet{background:none;border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 0;box-shadow:none}
+.meet-stub{background:none;border-radius:0;color:var(--ink);box-shadow:none;border:0;padding:0;min-width:44px}
+.meet-stub *{color:inherit}
+.meet-actions .btn,.pod-meets .btn{border-radius:8px;min-height:44px;border:1px solid var(--ink-soft);background:none;color:var(--ink)}
+.meet-actions .btn[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
