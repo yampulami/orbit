@@ -5391,3 +5391,22 @@ p,li{text-wrap:pretty}
 .meet-stub *{color:inherit}
 .meet-actions .btn,.pod-meets .btn{border-radius:8px;min-height:44px;border:1px solid var(--ink-soft);background:none;color:var(--ink)}
 .meet-actions .btn[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+
+/* choices inside the step forms are real, outlined options (the plain-text filter style is for tab rows only) */
+.cv .chip-btn,.cv-chips .chip-btn{border:1px solid var(--line);border-radius:8px;min-height:44px;padding:0 14px;background:none;color:var(--ink-soft);font-size:var(--t-meta);font-weight:500}
+.cv .chip-btn:hover{border-color:var(--ink-soft);color:var(--ink)}
+.cv .chip-btn[aria-pressed=true],.cv-chips .chip-btn[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink);background:none;font-weight:600}
+.cv-chips{gap:8px}
+
+/* small inline forms (pods, roles, channels): flat, outlined fields, one orange action */
+.role-form{background:none;border-radius:0;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.role-form .field{font-size:var(--t-meta);color:var(--ink-soft);font-weight:600}
+.role-form input,.role-form textarea,.role-form select{border-radius:8px;min-height:44px;border:1px solid var(--ink-soft);background:var(--surface);font-size:var(--t-ui)}
+.role-form input:focus,.role-form textarea:focus{border-color:var(--ink)}
+.about-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.about-actions .btn{border-radius:8px;min-height:44px}
+.about-actions .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .about-actions .btn.primary{color:#1a1210}
+.about-actions .btn.primary:disabled{background:none;border-color:var(--line);color:var(--ink-soft);opacity:1}
+.about-actions .btn:not(.primary){border:0;background:none;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;padding:0 6px}
+.about-actions .btn:not(.primary):hover{background:none;color:var(--ink)}
