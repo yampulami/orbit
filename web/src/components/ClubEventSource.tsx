@@ -36,7 +36,6 @@ export default function ClubEventSource({ org }: { org: Org }) {
 
   return (
     <section className="esrc" aria-label="Events from your website">
-      <h3 className="about-sub">Events from your website</h3>
       <p className="muted esrc-help">Paste the address of your events page, or of a calendar feed (the public iCal address from Google Calendar or Outlook). Orbit reads it every few hours and posts new events as {org.name}. A cancelled event is marked cancelled, and one taken off the page is taken down.</p>
       <form className="esrc-row" onSubmit={save}>
         <label className="field esrc-field">Events page or calendar address

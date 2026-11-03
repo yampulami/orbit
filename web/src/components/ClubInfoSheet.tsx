@@ -7,7 +7,6 @@ import ClubAbout from "./ClubAbout";
 import ApplicationDetails from "./ApplicationDetails";
 import RolesPanel from "./RolesPanel";
 import RichText from "./RichText";
-import ClubEventSource from "./ClubEventSource";
 
 /** Everything about the club that used to sit on its front: what it is, when it meets, the president's editing, roles, the application and the coordinator's controls. */
 const HUES = [12, 28, 45, 95, 150, 185, 210, 340];
@@ -50,7 +49,6 @@ export default function ClubInfoSheet({ org, reviewer, canRoles, seesApplication
 
         <ClubAbout key={org.id + org.about + org.description + org.application.meeting + org.application.category} org={org} canEdit={org.owner} />
         {org.owner && org.status !== "rejected" && <LookPicker org={org} />}
-        {org.owner && org.status === "active" && !circle && <ClubEventSource key={org.id + org.eventsUrl} org={org} />}
         {seesApplication && <><h3 className="about-sub">The application</h3><ApplicationDetails org={org} /></>}
         {canRoles && org.status === "active" && <RolesPanel org={org} />}
 

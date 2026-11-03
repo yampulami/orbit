@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import ClubGlyph from "../components/ClubGlyph";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarDays, ChevronDown, Clock, ClipboardList, Hash, Info, Lock, Megaphone, Orbit, Plus, Users, X } from "lucide-react";
+import { ArrowLeft, CalendarDays, CalendarSync, ChevronDown, Clock, ClipboardList, Hash, Info, Lock, Megaphone, Orbit, Plus, Users, X } from "lucide-react";
 import { isOpen, useCampusEvents } from "../lib/campusEvents";
 import { canHostEvents, eventsNeedApproval, orgHue, useCampusOrgs } from "../lib/campusOrgs";
 import { useClubFeed, lastPostAt } from "../lib/clubFeed";
@@ -24,6 +24,7 @@ import PodsPanel from "../components/PodsPanel";
 import ClubDashboard from "../components/ClubDashboard";
 import ClubMembers from "../components/ClubMembers";
 import ClubInfoSheet from "../components/ClubInfoSheet";
+import ClubEventSourceSheet from "../components/ClubEventSourceSheet";
 import ClubTimes from "../components/ClubTimes";
 import MyTasks from "../components/MyTasks";
 import GradientMenu from "../components/GradientMenu";
@@ -44,6 +45,7 @@ export default function Club() {
   const { events, canReview: reviewer } = useCampusEvents();
   const [view, setView] = useState<View>("feed");
   const [info, setInfo] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [people, setPeople] = useState(false);
   const [chans, setChans] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -130,6 +132,7 @@ export default function Club() {
           label="Club actions" captions
           items={[
             ...(canPost ? [{ key: "post", label: "Post event", icon: Plus, tone: "orange" as const, onClick: () => { setView("events"); setPosting(true); } }] : []),
+            ...(org.owner && org.status === "active" && !circle ? [{ key: "import", label: "Import events", icon: CalendarSync, tone: "green" as const, on: importing, onClick: () => setImporting(true) }] : []),
             { key: "about", label: "About", icon: Info, tone: "blue" as const, on: info, onClick: () => setInfo(true) },
             { key: "people", label: "Members", icon: Users, tone: "purple" as const, on: people, badge: requests > 0 ? String(requests) : undefined, onClick: () => setPeople((v) => !v) },
           ]}
@@ -212,6 +215,7 @@ export default function Club() {
         {people && <ClubMembers org={org} here={here} canRoles={canRoles} canMembers={canMembers} onClose={() => setPeople(false)} />}
       </div>
 
+      {importing && <ClubEventSourceSheet org={org} onClose={() => setImporting(false)} />}
       {info && <ClubInfoSheet org={org} reviewer={reviewer} canRoles={canRoles} seesApplication={seesApplication} onClose={() => setInfo(false)} />}
     </div>
   );
