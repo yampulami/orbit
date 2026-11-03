@@ -157,7 +157,7 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
     { id: "all", label: "All", keep: () => true },
     { id: "today", label: "Today", keep: (e) => dayKey(e.startsAt) === now.toDateString() },
     { id: "week", label: "This week", keep: (e) => inWeek(e.startsAt) },
-    { id: "going", label: "I am going", keep: (e) => e.mine === "going" || e.mine === "interested" },
+    { id: "going", label: "Going", keep: (e) => e.mine === "going" || e.mine === "interested" },
     { id: "official", label: "Official", keep: (e) => e.kind === "official" },
   ];
   const filters = base.map((f) => ({ ...f, count: everything.filter(f.keep).length }));
