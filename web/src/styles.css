@@ -5190,3 +5190,16 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .compose-foot .btn.primary{border-radius:8px;min-height:44px;background:var(--accent);border-color:var(--accent);color:#fff}
 [data-theme=dark] .compose-foot .btn.primary{color:#1a1210}
 .compose-foot .btn.primary:disabled{background:none;border-color:var(--line);color:var(--ink-soft);opacity:1}
+
+/* ---- Dropdown menus: a flat hairline list, plain icons, 44px rows (no icon tiles, no coloured icons) ---- */
+.picker-menu{padding:4px;border-radius:8px;box-shadow:0 8px 24px -12px rgba(16,20,18,.35);min-width:200px}
+[data-theme=dark] .picker-menu{box-shadow:0 8px 24px -12px rgba(0,0,0,.6)}
+.picker-menu li{min-height:44px;padding:0 10px;border-radius:6px;gap:12px;font-size:var(--t-ui);font-weight:400}
+.picker-menu li.on{background:var(--panel)}
+.picker-menu li[aria-selected=true]{font-weight:600}
+.picker-menu li .picker-ico,.picker-btn .picker-ico{width:20px;height:20px;border-radius:0;background:none;box-shadow:none;color:var(--ink-soft)}
+.picker-menu li .picker-ico svg,.picker-btn .picker-ico svg{width:18px;height:18px;color:inherit;stroke:currentColor}
+.picker-menu li .picker-ico:has(.mini),.picker-btn .picker-ico:has(.mini){width:auto;height:auto}
+.picker-check{color:var(--accent)}
+.picker-menu li .picker-ico,.picker-btn .picker-ico,.picker-menu li .picker-ico svg,.picker-btn .picker-ico svg{color:var(--ink-soft)!important}
+.picker-menu li .picker-ico svg,.picker-btn .picker-ico svg{stroke:currentColor!important}
