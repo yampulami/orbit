@@ -14,7 +14,7 @@ const CAMPUS_ZONE = "America/New_York";
 const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "authorization, x-client-info, apikey, content-type, x-cron-secret", "access-control-allow-methods": "POST, OPTIONS" };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "content-type": "application/json" } });
 
-type Org = { id: string; name: string; campus_key: string; created_by: string; events_url: string };
+type Org = { id: string; name: string; campus_key: string; created_by: string; events_url: string; kind: string; trusted: boolean };
 type Result = { org: string; ok: boolean; added: number; changed: number; canceled: number; hidden: number; restored: number; note: string };
 
 /** Fetch a public web page, by hand, so each redirect is checked too and the size is capped. */
@@ -74,7 +74,8 @@ async function syncOne(org: Org): Promise<Result> {
     for (const c of plan.change) { const { error: e } = await db.from("campus_events").update(c.patch).eq("id", c.id); if (e) throw new Error(e.message); r.changed++; }
     if (plan.cancel.length) { const { error: e } = await db.from("campus_events").update({ canceled_at: now.toISOString() }).in("id", plan.cancel); if (e) throw new Error(e.message); r.canceled = plan.cancel.length; }
     if (plan.hide.length) { const { error: e } = await db.from("campus_events").update({ status: "removed" }).in("id", plan.hide); if (e) throw new Error(e.message); r.hidden = plan.hide.length; }
-    if (plan.restore.length) { const { error: e } = await db.from("campus_events").update({ status: "published" }).in("id", plan.restore); if (e) throw new Error(e.message); r.restored = plan.restore.length; }
+    // An event that comes back goes where a new one would: live for an official or trusted organization, otherwise waiting for a coordinator.
+    if (plan.restore.length) { const { error: e } = await db.from("campus_events").update({ status: org.kind === "official" || org.trusted ? "published" : "pending" }).in("id", plan.restore); if (e) throw new Error(e.message); r.restored = plan.restore.length; }
     r.ok = true;
     const bits = [r.added && `${r.added} new`, r.changed && `${r.changed} updated`, r.canceled && `${r.canceled} cancelled`, r.hidden && `${r.hidden} taken down`, r.restored && `${r.restored} back`].filter(Boolean);
     return await finish(bits.length ? `${found.length} events on the page: ${bits.join(", ")}.` : `${found.length} events on the page, all up to date.`);
@@ -91,7 +92,7 @@ Deno.serve(async (req) => {
     const body = (await req.json().catch(() => ({}))) as { org?: string };
     let orgs: Org[];
     if (secret && req.headers.get("x-cron-secret") === secret) {
-      const q = db.from("campus_orgs").select("id,name,campus_key,created_by,events_url").eq("status", "active").not("events_url", "is", null);
+      const q = db.from("campus_orgs").select("id,name,campus_key,created_by,events_url,kind,trusted").eq("status", "active").not("events_url", "is", null);
       const { data, error } = await (body.org ? q.eq("id", body.org) : q);
       if (error) throw new Error(error.message);
       orgs = (data ?? []) as Org[];
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
       if (!u.user || !body.org) return json({ error: "Not allowed." }, 401);
       const { data: perms, error } = await db.rpc("org_perms", { org: body.org, uid: u.user.id });
       if (error || !(perms as string[] | null)?.includes("events")) return json({ error: "Only someone who can post this club's events can do that." }, 403);
-      const { data } = await db.from("campus_orgs").select("id,name,campus_key,created_by,events_url").eq("id", body.org).eq("status", "active").not("events_url", "is", null).maybeSingle();
+      const { data } = await db.from("campus_orgs").select("id,name,campus_key,created_by,events_url,kind,trusted").eq("id", body.org).eq("status", "active").not("events_url", "is", null).maybeSingle();
       // A person can read a page at most every two minutes, so the button cannot be used to hammer a school's website.
       const last = data ? (await db.from("campus_orgs").select("events_synced_at").eq("id", body.org).maybeSingle()).data?.events_synced_at : null;
       if (last && Date.now() - new Date(last).getTime() < 120_000) return json({ error: "That page was just read. Give it a couple of minutes." }, 429);
