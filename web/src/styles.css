@@ -5511,3 +5511,30 @@ p,li{text-wrap:pretty}
 .cmem-panel .dd-list li[aria-selected=true],.tb-assign .dd-list li[aria-selected=true]{color:var(--accent)}
 .tb-assign .dd-btn{min-height:44px;border-radius:8px}
 .tb-form .dd-btn{min-height:44px;border-radius:8px;border:1px solid var(--ink-soft);background:var(--surface)}
+
+/* Verify your staff role, and the staff team */
+.vs-entry{margin-top:20px;padding-top:12px;border-top:1px solid var(--line)}
+.vs-entry .link-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;text-decoration:underline;text-underline-offset:3px;color:var(--ink-soft)}
+.vs-entry .link-btn:hover{color:var(--ink)}
+.vs-lead{margin:0 0 4px;font-size:var(--t-ui);line-height:1.5}
+.vs-steps{display:grid;gap:10px;margin:8px 0 16px;padding-left:20px;font-size:var(--t-meta);line-height:1.5;color:var(--ink-soft)}
+.vs-steps b{color:var(--ink)}
+.vs-email{color:var(--ink);font-weight:600;overflow-wrap:anywhere}
+.vs-form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px}
+.vs-form .field{flex:1 1 260px;min-width:0}
+.vs-form .field input{min-height:44px}
+.vs-form .btn,.vs-done .btn,.vs-fail .btn{min-height:44px;border-radius:8px}
+.vs-form .btn.primary,.vs-done .btn.primary{background:var(--accent);border:1px solid var(--accent);color:#fff}
+[data-theme=dark] .vs-form .btn.primary,[data-theme=dark] .vs-done .btn.primary{color:#1a1210}
+.vs-form .btn:disabled{background:none;border:1px solid var(--line);color:var(--ink-soft);opacity:1}
+.vs-fail{display:grid;gap:10px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.vs-fail p,.vs-done p{margin:0;font-size:var(--t-meta);line-height:1.5}
+.vs-ok{display:flex;align-items:flex-start;gap:8px;color:var(--ink);font-weight:600}
+.vs-done{display:grid;gap:12px;justify-items:start}
+.staffp-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:10px 0;border-top:1px solid var(--line)}
+.staffp ul>.staffp-row:first-child{border-top:0}
+.staffp .htools-main{display:grid;gap:2px;min-width:0}
+.staffp .muted{font-size:var(--t-micro)}
+.staffp-link{display:inline-flex;align-items:center;gap:4px;font-size:var(--t-micro);color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.staffp .btn,.staffp .link-btn{min-height:44px;border-radius:8px}
+.staffp .link-btn{text-decoration:underline;text-underline-offset:3px;padding:0 8px}

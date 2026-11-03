@@ -36,3 +36,29 @@ The reader expects the layout Caldwell uses (table rows with `data-label="Name"`
 - If staff and students share one email domain, a student cannot be mistaken for staff because the match is on the exact address from the directory, not the domain.
 - Someone newly hired appears after the next read and signs in (or already has an account).
 - The setup is in `supabase/migrations/20261103200000_staff_directory.sql`; the scoring is in `supabase/functions/_shared/staffDirectory.ts`, tested in `web/src/lib/staffDirectory.test.ts`.
+
+## Any school: verify from your own school's website (no setup per school)
+
+The directory reader above needs a row per school and a directory in Caldwell's layout. For every other school a coordinator proves themselves.
+
+**Where they go.** Campus tab, bottom of the page: "Run student life at your school? Verify your staff role." It opens a sheet that explains three steps in plain words.
+
+**What they do.**
+1. Be signed in with their school email (a personal address is refused with an explanation).
+2. Copy the link to their page on their school's website: their staff directory entry, or their office's page. It must show their name, title and school email.
+3. Paste it and press Verify. The page is read on the spot (`verify-staff-claim`).
+
+**What the check requires, all of it** (`supabase/functions/_shared/staffClaim.ts`, tested in `web/src/lib/staffClaim.test.ts`):
+- the email on the account is **confirmed** (they own the mailbox) and is a school address;
+- the page is on that school's own main website (the email's domain, `www`, or the school's main domain), not a news, blog, events or student page, and every redirect is checked too;
+- their exact email address is on the page, in an entry that names nobody else's address;
+- the entry's title carries authority (Dean 90, Director 85, Associate Dean 75, Assistant Director 60 ...) and the entry mentions a student-life office (student life, student affairs, student engagement, student activities, dean of students and similar);
+- the page looks like a directory (several other addresses on the same domain) or an office or staff page.
+
+Score 80 or more gives **coordinator**, 60 to 79 **staff**. A campus gets at most 3 coordinators and 12 staff this way; further ones need an existing coordinator to approve. Five tries an hour.
+
+**If the page does not prove it.** They see exactly why ("We found you, but 'Administrative Assistant' is not a leadership title") and can press "Ask a coordinator to decide". The request goes to the campus's coordinators (bell notification and the Review tab). If a campus has no coordinator yet there is nobody to ask: they try another page, or you decide it from the SQL editor with `select public.decide_staff_claim('<claim id>', true, 'coordinator');`.
+
+**After it works.** The person is told, the campus's other coordinators are told, and their real title is the label on events they post. Coordinators have a **Staff team** list in the Review tab showing who has access and how they got it (by hand, from the directory, verified from the website) with a Remove button (not for yourself, never for the last coordinator) and the waiting requests with Approve and Decline. Every attempt, denied ones included, is kept in `staff_claims`.
+
+**What it cannot prove.** A page on the school's main website that lists someone's email with a leadership title is accepted as the school's word. If a school lets students edit pages on its main site, that could be abused; coordinators are notified of every grant and can remove access.

@@ -7,11 +7,12 @@ import { notice } from "../lib/notice";
 import RichText from "./RichText";
 import { eventWhen } from "./EventCard";
 import ApplicationsBoard from "./ApplicationsBoard";
+import StaffPanel from "./StaffPanel";
 
 /** For coordinators and staff: what is waiting for a decision (new clubs, new events from clubs that are not trusted yet), the events people have reported,
  *  and the list of clubs with pause and trust switches. */
 export default function ReviewPanel() {
-  const { pending, reported } = useCampusEvents();
+  const { pending, reported, role } = useCampusEvents();
   const { orgs } = useCampusOrgs();
   const [declining, setDeclining] = useState<string | null>(null);
   const [reason, setReason] = useState("");
@@ -19,6 +20,7 @@ export default function ReviewPanel() {
   return (
     <div className="review" role="region" aria-label="Review">
       <ApplicationsBoard />
+      {role === "coordinator" && <StaffPanel />}
 
       {pending.length > 0 && (
         <section className="htools-block" aria-label="Events waiting for approval">

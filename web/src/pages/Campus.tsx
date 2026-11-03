@@ -11,6 +11,7 @@ import { notice } from "../lib/notice";
 import EventCard from "../components/EventCard";
 import EventForm from "../components/EventForm";
 import ReviewPanel from "../components/ReviewPanel";
+import VerifyStaff from "../components/VerifyStaff";
 import ClubApplication from "../components/ClubApplication";
 import CohostInvites from "../components/CohostInvites";
 import AttendedList from "../components/AttendedList";
@@ -39,6 +40,7 @@ export default function Campus() {
   const phone = useIsPhone();
   const railClubs = applyOrder(mine, clubOrder);
   const [creating, setCreating] = useState<"club" | "circle" | null>(null);
+  const [verifying, setVerifying] = useState(false);
   const waitingOrgs = orgs.filter((o) => o.status === "pending");
   const reviewCount = reviewer ? pending.length + reported.length + waitingOrgs.length : 0;
   const current: View = view === "review" && !reviewer ? "discover" : view;
@@ -110,6 +112,11 @@ export default function Campus() {
               </header>
               {tab === "events" && <EventsView events={events} ready={ready} isHost={isHost} role={role} hostLabel={hostLabel} reviewer={reviewer} />}
               {tab === "clubs" && <ClubsView mine={mine} all={orgs} />}
+              {!reviewer && (
+                <div className="vs-entry">
+                  <button type="button" className="link-btn" onClick={() => setVerifying(true)}><BadgeCheck size={14} aria-hidden="true" /> Run student life at your school? Verify your staff role</button>
+                </div>
+              )}
               {!supabase && (
                 <label className="cevent-demo">Preview as
                   <select value={role ?? "coordinator"} onChange={(e) => setDemoRole(e.target.value as Role)}>
@@ -123,6 +130,7 @@ export default function Campus() {
           )}
         </div>
       </div>
+      {verifying && <VerifyStaff onClose={() => setVerifying(false)} />}
     </div>
   );
 }
