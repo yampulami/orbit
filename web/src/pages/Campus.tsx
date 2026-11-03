@@ -101,7 +101,7 @@ export default function Campus() {
           ) : (
             <>
               <header className="campus-head">
-                <h2 className="campus-sentence">{head}</h2>
+                <h2 className="sr">{head}</h2>
                 <div className="segment campus-seg" role="tablist" aria-label="Events or clubs">
                   <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}>Events</button>
                   <button type="button" role="tab" aria-selected={tab === "clubs"} onClick={() => setTab("clubs")}>Clubs</button>

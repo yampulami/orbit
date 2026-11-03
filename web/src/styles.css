@@ -5115,3 +5115,9 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .ev.ev .ev-stub b{font-size:var(--t-hero)}
 .empty-state.empty-state h2{font-size:var(--t-row)}
 .empty-state.empty-state p{font-size:var(--t-meta)}
+
+/* ---- The tab name is in the top bar, so the sentence on each page is a quiet status line at heading size ---- */
+.plans-head.plans-head,.rm-head.rm-head h2,.now-head.now-head,.chats-head.chats-head{font-size:var(--t-h2);line-height:1.25;letter-spacing:-.01em}
+.plans-head.plans-head{margin:4px 0 12px}
+.chats-head.chats-head{margin:4px 0 8px}
+.rm-head.rm-head{margin:4px 0 8px}

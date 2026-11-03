@@ -8,7 +8,7 @@ export default function Sync() {
   return (
     <div className="page sync-page">
       <h1 className="sr">Free time</h1>
-      <h2 className="sync-head">Find an hour you are both free</h2>
+      <h2 className="sr">Find an hour you are both free</h2>
       <FreeTimePanel preselect={syncWith} />
       <p className="sync-foot muted"><CalendarDays size={14} aria-hidden="true" /> Your classes and reminders come from <Link to="/app/plans">Plans</Link>, where you can add or import them.</p>
     </div>

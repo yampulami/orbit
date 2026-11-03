@@ -26,7 +26,7 @@ export default function Chats() {
 
   return (
     <div className="chats">
-      <h1 className="chats-head">
+      <h1 className={"chats-head" + ((tab === "groups" ? waiting > 0 : unread > 0 || waiting > 0) ? "" : " sr")}>
         {head}
         {pointToGroups && <> <button type="button" className="chats-link" onClick={() => go("groups")}>Open groups</button></>}
       </h1>
