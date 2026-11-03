@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BadgeCheck, CalendarDays, ChevronDown, Compass, Info, MapPin, Plus, ShieldCheck, UserRound, Users } from "lucide-react";
+import { BadgeCheck, CalendarDays, ChevronDown, Compass, Info, Plus, ShieldCheck, UserRound, Users } from "lucide-react";
 import { isOpen, setDemoRole, useCampusEvents, type Role } from "../lib/campusEvents";
 import { CATEGORIES, orgHue, useCampusOrgs, type Org } from "../lib/campusOrgs";
 import { dayLabel } from "../lib/look";
@@ -34,8 +34,6 @@ export default function Campus() {
   const [tab, setTab] = useState<Tab>("events");
   const [view, setView] = useState<View>("discover");
   const [menu, setMenu] = useState(false);
-  const addButton = useRef<HTMLButtonElement>(null);
-  const addMenu = useRef<HTMLDivElement>(null);
   const [clubOrder, setClubOrder] = useSavedOrder("orbit-club-rail");
   const phone = useIsPhone();
   const railClubs = applyOrder(mine, clubOrder);
@@ -44,69 +42,40 @@ export default function Campus() {
   const reviewCount = reviewer ? pending.length + reported.length + waitingOrgs.length : 0;
   const current: View = view === "review" && !reviewer ? "discover" : view;
   const go = (v: View) => { setCreating(null); setView(v); };
-  useEffect(() => {
-    if (!menu) return;
-    const first = addMenu.current?.querySelector<HTMLButtonElement>("button");
-    window.requestAnimationFrame(() => first?.focus());
-    const away = (event: MouseEvent) => {
-      if (!(event.target as HTMLElement).closest?.(".rail-add")) setMenu(false);
-    };
-    const keys = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setMenu(false);
-      addButton.current?.focus();
-    };
-    document.addEventListener("mousedown", away);
-    document.addEventListener("keydown", keys);
-    return () => {
-      document.removeEventListener("mousedown", away);
-      document.removeEventListener("keydown", keys);
-    };
-  }, [menu]);
   // One sentence about what is on.
   const weekEnd = Date.now() + 7 * 24 * 3600_000;
   const thisWeek = events.filter((e) => e.status === "published" && !e.canceled && new Date(e.startsAt).getTime() > Date.now() - 3 * 3600_000 && new Date(e.startsAt).getTime() < weekEnd).length;
-  const activeOrgs = orgs.filter((o) => o.status === "active");
   const toJoin = orgs.filter((o) => o.status === "active" && !mine.some((m) => m.id === o.id)).length;
-  const head = tab === "clubs"
-    ? activeOrgs.length === 0
-      ? "No clubs or circles to join yet"
-      : toJoin === 0
-        ? "You have joined every club and circle"
-        : `${toJoin} campus ${toJoin === 1 ? "community" : "communities"} to discover`
-    : thisWeek === 0
-      ? "Nothing on this week"
-      : `${thisWeek} event${thisWeek === 1 ? "" : "s"} happening this week`;
+  const head = tab === "clubs" ? (toJoin === 0 ? "You have joined every club" : `${toJoin} club${toJoin === 1 ? "" : "s"} and circle${toJoin === 1 ? "" : "s"} to join`) : thisWeek === 0 ? "Nothing on this week" : `${thisWeek} event${thisWeek === 1 ? "" : "s"} this week`;
 
   return (
     <div className="page campus">
       <div className="campus-shell">
         <nav className="crail" aria-label="Your clubs">
-          <button type="button" className="rail-ico rail-home" aria-label="Discover" aria-current={current === "discover" && !creating ? "page" : undefined} data-tip="Discover" onClick={() => go("discover")}><Compass size={22} aria-hidden="true" /><span className="rail-label">Discover</span></button>
+          <button type="button" className="rail-ico rail-home" aria-label="Discover" aria-current={current === "discover" && !creating ? "page" : undefined} data-tip="Discover" onClick={() => go("discover")}><Compass size={22} aria-hidden="true" /></button>
           {reviewer && (
             <button type="button" className="rail-ico rail-home" aria-label="Review" aria-current={current === "review" && !creating ? "page" : undefined} data-tip="Review" onClick={() => go("review")}>
-              <ShieldCheck size={22} aria-hidden="true" /><span className="rail-label">Review</span>{reviewCount > 0 && <span className="rail-badge">{reviewCount}</span>}
+              <ShieldCheck size={22} aria-hidden="true" />{reviewCount > 0 && <span className="rail-badge">{reviewCount}</span>}
             </button>
           )}
           <span className="rail-sep" aria-hidden="true" />
           <ArrangeList as="div" axis={phone ? "x" : "y"} ids={railClubs.map((o) => o.id)} onChange={setClubOrder} className="rail-clubs">
             {railClubs.map((o) => (
               <ArrangeItem key={o.id} as="div" id={o.id} className="rail-item">
-                <Link to={`/app/campus/clubs/${o.id}`} className="rail-ico" style={{ ["--h" as string]: orgHue(o) }} aria-label={`${o.name}${o.status === "pending" ? ", awaiting approval" : ""}`} data-tip={o.name} draggable={false}>
+                <Link to={`/app/campus/clubs/${o.id}`} className="rail-ico" style={{ ["--h" as string]: orgHue(o) }} aria-label={o.name} data-tip={o.name} draggable={false}>
                   {o.icon || o.name.slice(0, 1).toUpperCase()}
-                  <span className="rail-label">{o.name}{o.status === "pending" && <small>Pending</small>}</span>
                   {o.status === "pending" && <span className="rail-badge wait" aria-hidden="true" />}
                 </Link>
               </ArrangeItem>
             ))}
           </ArrangeList>
           <span className="rail-add">
-            <button ref={addButton} type="button" className="rail-ico rail-plus" aria-label="Start a club or circle" aria-expanded={menu} aria-controls="campus-start-menu" data-tip="Start something" onClick={() => setMenu((v) => !v)}><Plus size={22} aria-hidden="true" /><span className="rail-label">Start</span></button>
+            <button type="button" className="rail-ico rail-plus" aria-label="Start a club or circle" aria-expanded={menu} data-tip="Start something" onClick={() => setMenu((v) => !v)}><Plus size={22} aria-hidden="true" /></button>
             {menu && (
-              <div ref={addMenu} id="campus-start-menu" className="rail-menu" role="group" aria-label="Start something">
-                <button type="button" onClick={() => { setMenu(false); setCreating("club"); }}>{reviewer ? "Set up a club" : "Start a club"}</button>
-                <button type="button" onClick={() => { setMenu(false); setCreating("circle"); }}>Start a circle</button>
-              </div>
+              <span className="rail-menu" role="menu">
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); setCreating("club"); }}>{reviewer ? "Set up a club" : "Start a club"}</button>
+                <button type="button" role="menuitem" onClick={() => { setMenu(false); setCreating("circle"); }}>Start a circle</button>
+              </span>
             )}
           </span>
         </nav>
@@ -133,13 +102,13 @@ export default function Campus() {
             <>
               <header className="campus-head">
                 <h2 className="campus-sentence">{head}</h2>
-                <div className="segment campus-seg" role="group" aria-label="Campus view">
-                  <button type="button" aria-pressed={tab === "events"} onClick={() => setTab("events")}>Events</button>
-                  <button type="button" aria-pressed={tab === "clubs"} onClick={() => setTab("clubs")}>Clubs</button>
+                <div className="segment campus-seg" role="tablist" aria-label="Events or clubs">
+                  <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}>Events</button>
+                  <button type="button" role="tab" aria-selected={tab === "clubs"} onClick={() => setTab("clubs")}>Clubs</button>
                 </div>
               </header>
-              {tab === "events" && <EventsView events={events} ready={ready} isHost={isHost} role={role} hostLabel={hostLabel} reviewer={reviewer} onShowClubs={() => setTab("clubs")} />}
-              {tab === "clubs" && <ClubsView mine={mine} all={orgs} onStart={(kind) => setCreating(kind)} />}
+              {tab === "events" && <EventsView events={events} ready={ready} isHost={isHost} role={role} hostLabel={hostLabel} reviewer={reviewer} />}
+              {tab === "clubs" && <ClubsView mine={mine} all={orgs} />}
               {!supabase && (
                 <label className="cevent-demo">Preview as
                   <select value={role ?? "coordinator"} onChange={(e) => setDemoRole(e.target.value as Role)}>
@@ -173,32 +142,26 @@ function Explainer() {
   );
 }
 
-function EventsView({ events, ready, isHost, role, hostLabel, reviewer, onShowClubs }: { events: ReturnType<typeof useCampusEvents>["events"]; ready: boolean; isHost: boolean; role: Role | null; hostLabel: string | null; reviewer: boolean; onShowClubs: () => void }) {
+function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { events: ReturnType<typeof useCampusEvents>["events"]; ready: boolean; isHost: boolean; role: Role | null; hostLabel: string | null; reviewer: boolean }) {
   const [form, setForm] = useState(false);
   const [all, setAll] = useState(false);
-  const [q, setQ] = useState("");
-  const [when, setWhen] = useState<"all" | "today" | "weekend" | "week" | "going" | "official">("all");
+  const [when, setWhen] = useState<"all" | "today" | "week" | "going" | "official">("all");
   const now = new Date();
   const live = events.filter((e) => isOpen(e, now) && e.status === "published");
   const mineElsewhere = events.filter((e) => e.mineHost && !e.orgId && e.status !== "published" && isOpen(e, now));
   const everything = [...mineElsewhere, ...live].sort((a, b) => a.startsAt.localeCompare(b.startsAt));
   const dayKey = (iso: string) => new Date(iso).toDateString();
   const inWeek = (iso: string) => new Date(iso).getTime() - now.getTime() < 7 * 24 * 3600_000;
-  const onWeekend = (iso: string) => { const d = new Date(iso); return inWeek(iso) && (d.getDay() === 0 || d.getDay() === 6); };
   type Ev = (typeof everything)[number];
   const base: { id: typeof when; label: string; keep: (e: Ev) => boolean }[] = [
     { id: "all", label: "All", keep: () => true },
     { id: "today", label: "Today", keep: (e) => dayKey(e.startsAt) === now.toDateString() },
-    { id: "weekend", label: "This weekend", keep: (e) => onWeekend(e.startsAt) },
-    { id: "going", label: "I am going", keep: (e) => e.mine === "going" || e.mine === "interested" },
     { id: "week", label: "This week", keep: (e) => inWeek(e.startsAt) },
+    { id: "going", label: "I am going", keep: (e) => e.mine === "going" || e.mine === "interested" },
     { id: "official", label: "Official", keep: (e) => e.kind === "official" },
   ];
   const filters = base.map((f) => ({ ...f, count: everything.filter(f.keep).length }));
-  const needle = q.trim().toLowerCase();
-  const list = everything
-    .filter(filters.find((f) => f.id === when)!.keep)
-    .filter((e) => !needle || `${e.title} ${e.description} ${e.place} ${e.host}`.toLowerCase().includes(needle));
+  const list = everything.filter(filters.find((f) => f.id === when)!.keep);
   const next = list.find((e) => e.status === "published" && !e.canceled);
   const rest = list.filter((e) => e !== next);
   const shown = all ? rest : rest.slice(0, 6);
@@ -212,34 +175,19 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer, onShowCl
     <section className="cevents" aria-label="Campus events">
       {isHost && <div className="toolbar"><button type="button" className="btn sm primary" onClick={() => setForm(true)}>Post an event</button></div>}
       <CohostInvites />
-      <Explainer />
 
       {ready && everything.length > 0 && (
-        <div className="event-discovery">
-          <div className="event-find">
-            <label className="event-search"><Search size={16} aria-hidden="true" /><input value={q} maxLength={80} placeholder="Search events, places, or hosts" aria-label="Search campus events" onChange={(e) => { setQ(e.target.value); setAll(false); }} /></label>
-            <Link className="event-map-link" to="/app/map"><MapPin size={16} aria-hidden="true" /> Browse the map</Link>
-          </div>
-          <div className="event-filter-bar">
-            <div className="chip-row" role="group" aria-label="When and who with">
-              {filters.slice(0, 4).map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={when === f.id} disabled={f.id !== "all" && f.count === 0} onClick={() => { setWhen(f.id); setAll(false); }}>{f.label}{f.id !== "all" && <span className="chip-n">{f.count}</span>}</button>)}
-            </div>
-            <details className="event-more-filter">
-              <summary>{when === "week" ? "This week" : when === "official" ? "Official" : "More filters"}</summary>
-              <div className="event-more-options" role="group" aria-label="More event filters">
-                {filters.slice(4).map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={when === f.id} disabled={f.count === 0} onClick={(e) => { setWhen(f.id); setAll(false); (e.currentTarget.closest("details") as HTMLDetailsElement | null)?.removeAttribute("open"); }}>{f.label}<span className="chip-n">{f.count}</span></button>)}
-              </div>
-            </details>
-          </div>
+        <div className="chip-row" role="group" aria-label="Which events">
+          {filters.map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={when === f.id} disabled={f.id !== "all" && f.count === 0} onClick={() => { setWhen(f.id); setAll(false); }}>{f.label}{f.id !== "all" && <span className="chip-n">{f.count}</span>}</button>)}
         </div>
       )}
 
       {!ready ? (
         <div aria-busy="true" aria-label="Loading campus events"><div className="skeleton sk-tile" /></div>
       ) : everything.length === 0 ? (
-        <EmptyState title="No campus events yet" action={<button type="button" className="btn" onClick={onShowClubs}>Find a club or circle</button>}>When a department or club posts one, it will appear here and in your bell.</EmptyState>
+        <p className="rows-empty"><b>No campus events yet.</b> When a department or club posts one, it shows up here and in your bell.</p>
       ) : list.length === 0 ? (
-        <EmptyState title={needle ? "No events match that search" : when === "today" ? "Nothing happening today" : "Nothing in this view"} action={<button type="button" className="btn" onClick={() => { setQ(""); setWhen("all"); setAll(false); }}>Clear search and filters</button>}>Try the full campus list, or browse clubs to see who is active.</EmptyState>
+        <p className="rows-empty"><b>Nothing {when === "today" ? "today" : "here"}.</b> <button type="button" className="link-btn" onClick={() => { setWhen("all"); setAll(false); }}>Show all events</button></p>
       ) : (
         <>
           {next && <div className="club-next"><h2>Up next</h2><ul className="ev-list"><EventCard e={next} reviewer={reviewer} featured /></ul></div>}
@@ -249,6 +197,7 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer, onShowCl
         </>
       )}
       <AttendedList />
+      <Explainer />
       {rest.length > 6 && <button type="button" className="link-btn more-link" onClick={() => setAll((v) => !v)}>{all ? "Show fewer" : `Show all ${rest.length + 1}`}</button>}
     </section>
   );
@@ -282,7 +231,7 @@ function ClubRow({ o }: { o: Org }) {
 }
 
 /** Clubs to find. The ones you are in are on the rail, so they are not repeated here. */
-function ClubsView({ mine, all, onStart }: { mine: Org[]; all: Org[]; onStart: (kind: "club" | "circle") => void }) {
+function ClubsView({ mine, all }: { mine: Org[]; all: Org[] }) {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const mineIds = new Set(mine.map((o) => o.id));
@@ -292,19 +241,17 @@ function ClubsView({ mine, all, onStart }: { mine: Org[]; all: Org[]; onStart: (
   const others = everyone.filter((o) => (!cat || o.application.category === cat) && (!needle || `${o.name} ${o.description} ${o.application.category}`.toLowerCase().includes(needle)));
   const clubs = others.filter((o) => o.kind !== "circle");
   const circles = others.filter((o) => o.kind === "circle");
-  const mainCats = cats.slice(0, 4);
-  const moreCats = cats.slice(4);
 
   return (
     <section className="clubs" aria-label="Clubs">
+      {mine.length > 0 && <p className="club-in">You are in {mine.slice(0, 3).map((o, i) => <span key={o.id}>{i > 0 && ", "}<Link to={`/app/campus/clubs/${o.id}`}>{o.name}</Link></span>)}{mine.length > 3 ? ` and ${mine.length - 3} more` : ""}.</p>}
       {everyone.length > 0 && (
         <div className="club-find">
           <label className="club-search"><Search size={16} aria-hidden="true" /><input value={q} maxLength={40} placeholder="Find a club or circle" aria-label="Find a club or circle" onChange={(e) => setQ(e.target.value)} /></label>
           {cats.length > 1 && (
             <div className="chip-row" role="group" aria-label="Category">
               <button type="button" className="chip-btn" aria-pressed={!cat} onClick={() => setCat("")}>All</button>
-              {mainCats.map((c) => <button key={c} type="button" className="chip-btn" aria-pressed={cat === c} onClick={() => setCat(cat === c ? "" : c)}>{c}</button>)}
-              {moreCats.length > 0 && <details className="club-more-cats"><summary>{moreCats.includes(cat) ? cat : "More"}</summary><div>{moreCats.map((c) => <button key={c} type="button" className="chip-btn" aria-pressed={cat === c} onClick={(e) => { setCat(cat === c ? "" : c); (e.currentTarget.closest("details") as HTMLDetailsElement | null)?.removeAttribute("open"); }}>{c}</button>)}</div></details>}
+              {cats.map((c) => <button key={c} type="button" className="chip-btn" aria-pressed={cat === c} onClick={() => setCat(cat === c ? "" : c)}>{c}</button>)}
             </div>
           )}
         </div>
@@ -322,13 +269,7 @@ function ClubsView({ mine, all, onStart }: { mine: Org[]; all: Org[]; onStart: (
         </div>
       )}
       {others.length === 0 && everyone.length > 0 && <p className="rows-empty">Nothing matches. Try a different word or category.</p>}
-      {everyone.length === 0 && (
-        <EmptyState
-          title={all.some((o) => o.status === "active") ? "You have joined every club and circle" : "No clubs or circles yet"}
-          action={<span className="empty-actions"><button type="button" className="btn primary" onClick={() => onStart("club")}>{mine.length ? "Start another club" : "Start the first club"}</button><button type="button" className="btn" onClick={() => onStart("circle")}>Start a circle</button></span>}
-          mood={mine.length ? "happy" : "idle"}
-        >{mine.length ? "Your communities are in the dock above. You can create another whenever campus needs it." : "Be the first to make a place for a campus community."}</EmptyState>
-      )}
+      {everyone.length === 0 && <p className="rows-empty">{mine.length ? "You have joined every club and circle here. Tap + on the left to start a new one." : "Nothing here yet. Tap + on the left to start the first club or circle."}</p>}
     </section>
   );
 }
