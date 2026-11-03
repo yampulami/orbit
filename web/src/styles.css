@@ -5433,3 +5433,10 @@ p,li{text-wrap:pretty}
 .thread-mark.big{width:40px;height:40px;font-size:1rem}
 .convo-head h2{display:flex;align-items:center}
 .icon-chooser{display:grid;gap:10px}
+
+/* Events read from a club's own website */
+.esrc{display:grid;gap:8px;margin-top:10px;padding-top:4px}
+.esrc-help{margin:0;max-width:60ch;font-size:14px;line-height:1.5}
+.esrc-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px}
+.esrc-field{flex:1 1 280px;min-width:0}
+.esrc-note{margin:0;font-size:14px}

@@ -17,7 +17,7 @@ export type Application = { purpose: string; category: string; advisorName: stri
 export const CATEGORIES = ["Academic", "Arts and culture", "Sports and fitness", "Service and volunteering", "Faith and belief", "Career and professional", "Gaming and hobbies", "Other"];
 export type RawOrg = {
   id: string; name: string; description: string; kind: OrgKind; status: OrgStatus; created_by: string; review_note?: string | null; trusted?: boolean; created_at?: string; reviewed_at?: string | null;
-  about?: string; accent?: number | null; icon?: string; purpose?: string; category?: string; advisor_name?: string; advisor_email?: string; meeting?: string; expected_members?: number | null; first_event?: string; contact?: string;
+  about?: string; accent?: number | null; icon?: string; events_url?: string | null; events_synced_at?: string | null; events_sync_note?: string | null; purpose?: string; category?: string; advisor_name?: string; advisor_email?: string; meeting?: string; expected_members?: number | null; first_event?: string; contact?: string;
 };
 export type JoinStatus = "pending" | "member" | "declined";
 export type RawClubMember = { org_id: string; user_id: string; status: JoinStatus; message?: string; created_at?: string };
@@ -33,6 +33,8 @@ export type Org = {
   application: Application; createdAt: string; decidedAt?: string; creator: string;
   /** The longer text on the club page, written by its president. */
   about: string;
+  /** The address of the club's own events page or calendar feed, read every few hours into campus events; and how the last read went. */
+  eventsUrl: string; eventsSyncedAt?: string; eventsNote: string;
   /** The club's own look: a hue and an icon (an emoji) its president chose. */
   accent?: number; icon: string;
   /** People in the club besides its officers. */
@@ -57,7 +59,7 @@ export function buildOrgs(orgs: RawOrg[], members: RawMember[], me: string, name
       return {
         id: o.id, name: o.name, description: o.description, kind: o.kind, status: o.status, note: o.review_note ?? undefined, trusted: o.kind === "official" || !!o.trusted,
         application: { purpose: o.purpose ?? "", category: o.category ?? "", advisorName: o.advisor_name ?? "", advisorEmail: o.advisor_email ?? "", meeting: o.meeting ?? "", expectedMembers: o.expected_members ?? null, firstEvent: o.first_event ?? "", contact: o.contact ?? "" },
-        about: o.about ?? "", accent: typeof o.accent === "number" ? o.accent : undefined, icon: o.icon ?? "", createdAt: o.created_at ?? "", decidedAt: o.reviewed_at ?? undefined, creator: o.created_by === me ? "You" : names[o.created_by] ?? "A student",
+        about: o.about ?? "", eventsUrl: o.events_url ?? "", eventsSyncedAt: o.events_synced_at ?? undefined, eventsNote: o.events_sync_note ?? "", accent: typeof o.accent === "number" ? o.accent : undefined, icon: o.icon ?? "", createdAt: o.created_at ?? "", decidedAt: o.reviewed_at ?? undefined, creator: o.created_by === me ? "You" : names[o.created_by] ?? "A student",
         memberCount: cm.filter((c) => c.status === "member").length,
         clubMembers: cm.filter((c) => c.status === "member").map((c) => ({ id: c.user_id, name: c.user_id === me ? "You" : names[c.user_id] ?? "Member" })),
         myJoin: (ms.some((m) => m.user_id === me) ? "officer" : mineJoin ?? "none") as Org["myJoin"],
@@ -129,14 +131,16 @@ async function reload() {
   const me = who, mine = ++loadId;
   try {
     const [o0, m0, c, rl] = await Promise.all([
-      supabase!.from("campus_orgs").select("id,name,description,about,accent,icon,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500),
+      supabase!.from("campus_orgs").select("id,name,description,about,accent,icon,events_url,events_synced_at,events_sync_note,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500),
       supabase!.from("campus_org_members").select("org_id,user_id,role,role_id").limit(3000),
       supabase!.from("campus_club_members").select("org_id,user_id,status,message,created_at").limit(5000),
       supabase!.from("campus_org_roles").select("id,org_id,name,permissions,position").limit(2000),
     ]);
     // Before the profile migration is applied the about column is missing: ask for the clubs without it.
     // Before the look migration is applied the accent and icon columns are missing: ask without them first.
-    const o1 = o0.error ? await supabase!.from("campus_orgs").select("id,name,description,about,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500) : o0;
+    // Before the event sources migration is applied the events_url columns are missing: ask without them.
+    const oa = o0.error ? await supabase!.from("campus_orgs").select("id,name,description,about,accent,icon,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500) : o0;
+    const o1 = oa.error ? await supabase!.from("campus_orgs").select("id,name,description,about,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500) : oa;
     const o = o1.error ? await supabase!.from("campus_orgs").select("id,name,description,kind,status,created_by,review_note,trusted,created_at,reviewed_at,purpose,category,advisor_name,advisor_email,meeting,expected_members,first_event,contact").order("name", { ascending: true }).limit(500) : o1;
     // Before the roles migration is applied the role_id column and the roles table are missing: fall back to the plain list.
     const m = m0.error ? await supabase!.from("campus_org_members").select("org_id,user_id,role").limit(3000) : m0;
@@ -250,6 +254,36 @@ export const orgActions = {
     const { error } = await supabase!.from("campus_orgs").update(row).eq("id", id);
     if (error) { set(before); return /about/.test(error.message) ? "Editing the About text needs the latest database update. Try again soon." : error.message; }
     return null;
+  },
+  /** The owner sets (or clears, with an empty string) the address of the club's own events page or calendar feed. Resolves to a message if it did not save. */
+  async setEventsUrl(id: string, url: string): Promise<string | null> {
+    const clean = url.trim();
+    if (clean) {
+      let u: URL | null = null;
+      try { u = new URL(clean); } catch { /* checked below */ }
+      if (!u) return "That does not look like a web address.";
+      if (u.protocol !== "https:") return "Use an address that starts with https://.";
+      if (clean.length > 400) return "That address is too long.";
+    }
+    const before = state;
+    set({ ...state, orgs: state.orgs.map((o) => (o.id === id ? { ...o, events_url: clean || null, events_synced_at: null, events_sync_note: null } : o)) });
+    if (!live) return null;
+    const { error } = await supabase!.from("campus_orgs").update({ events_url: clean || null, events_synced_at: null, events_sync_note: null }).eq("id", id);
+    if (error) { set(before); return /events_url/.test(error.message) ? "Reading events from a website needs the latest database update. Try again soon." : /check/.test(error.message) ? "Use a public web address that starts with https://." : error.message; }
+    return null;
+  },
+  /** Read the club's events page now instead of waiting for the next scheduled read. Resolves to what happened, in words. */
+  async readEventsNow(id: string): Promise<{ ok: boolean; message: string }> {
+    if (!live) return { ok: false, message: "Reading a website needs the live database." };
+    const { data, error } = await supabase!.functions.invoke("sync-campus-events", { body: { org: id } });
+    if (error) {
+      let msg = error.message;
+      try { const ctx = (error as { context?: Response }).context; const body = ctx ? await ctx.json() as { error?: string } : null; if (body?.error) msg = body.error; } catch { /* keep the generic one */ }
+      return { ok: false, message: /not found|404|Failed to send/i.test(msg) ? "Reading websites is not switched on yet." : msg };
+    }
+    void reload();
+    const r = (data as { results?: { ok: boolean; note: string }[] } | null)?.results?.[0];
+    return r ? { ok: r.ok, message: r.note } : { ok: false, message: "Save the address first." };
   },
   /** The president picks the club's colour (a hue, or null for the default) and icon (one emoji, or empty for its first letter). */
   async updateLook(id: string, d: { accent: number | null; icon: string }): Promise<string | null> {
