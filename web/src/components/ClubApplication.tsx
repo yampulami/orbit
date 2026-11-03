@@ -1,8 +1,9 @@
 import { CATEGORIES, EMPTY_APP, orgActions, problemWithOrg, type Application, type OrgKind } from "../lib/campusOrgs";
+import IconChooser from "./IconChooser";
 import Converse, { CvChips, CvInput, CvText, type Step } from "./Converse";
 
-type S = { name: string; purpose: string; category: string; advisorName: string; advisorEmail: string; meeting: string; size: string; firstEvent: string; contact: string; office: string; line: string };
-const start: S = { name: "", purpose: "", category: "", advisorName: "", advisorEmail: "", meeting: "", size: "", firstEvent: "", contact: "", office: "", line: "" };
+type S = { name: string; purpose: string; category: string; advisorName: string; advisorEmail: string; meeting: string; size: string; firstEvent: string; contact: string; office: string; line: string; icon: string };
+const start: S = { name: "", purpose: "", category: "", advisorName: "", advisorEmail: "", meeting: "", size: "", firstEvent: "", contact: "", office: "", line: "", icon: "" };
 const nameStep = (what: string): Step<S> => ({ id: "name", ask: `What should we call ${what}?`, hint: "The name people will see.", check: (s) => (s.name.trim().length < 2 ? "Give it a name, at least 2 letters." : null),
   render: (s, set, go) => <CvInput label="Name" value={s.name} onChange={(v) => set({ name: v })} go={go} maxLength={80} placeholder="Chess Club" /> });
 
@@ -12,12 +13,16 @@ export default function ClubApplication({ reviewer, mode = "club", onSent, onCan
   const categoryStep: Step<S> = { id: "category", ask: circle ? "What is it about?" : "Which fits best?", hint: "Pick one so people can find it.", optional: true, empty: (s) => !s.category,
     render: (s, set) => <CvChips label="Category" options={CATEGORIES} value={s.category} onChange={(v) => set({ category: v as string })} /> };
 
+  const iconStep: Step<S> = { id: "icon", ask: "Pick an icon", hint: "Optional. It shows beside the name. You can change it later.", optional: true, empty: (s) => !s.icon,
+    render: (s, set) => <IconChooser value={s.icon} name={s.name} onChange={(v) => set({ icon: v })} /> };
+
   const steps: Step<S>[] = circle
     ? [
         nameStep("your circle"),
         { id: "line", ask: "What is it about, in a line?", hint: "Like a study group or a weekly run. Anyone can join it right away.", optional: true, empty: (s) => !s.line.trim(),
           render: (s, set, go) => <CvInput label="One line" value={s.line} onChange={(v) => set({ line: v })} go={go} maxLength={140} placeholder="Early morning runs around the lake" /> },
         categoryStep,
+        iconStep,
       ]
     : reviewer
       ? [
@@ -26,12 +31,14 @@ export default function ClubApplication({ reviewer, mode = "club", onSent, onCan
             render: (s, set, go) => <CvInput label="One line" value={s.line} onChange={(v) => set({ line: v })} go={go} maxLength={160} placeholder="Official events from the Student Life office" /> },
           { id: "office", ask: "Is it a club or a staff-run office?", hint: "A staff-run office posts Official campus events.", check: (s) => (s.office ? null : "Pick one."),
             render: (s, set) => <CvChips label="Kind" options={["Student club", "Staff-run office"]} value={s.office} onChange={(v) => set({ office: v as string })} /> },
+          iconStep,
         ]
       : [
           nameStep("your club"),
           { id: "purpose", ask: "What is it for, and who is it for?", hint: "A couple of sentences for the coordinator who decides.", check: (s) => (s.purpose.trim().length < 30 ? "Tell the coordinator a little more, a couple of sentences." : null),
             render: (s, set, go) => <CvText label="Purpose" value={s.purpose} onChange={(v) => set({ purpose: v })} go={go} maxLength={600} placeholder="We play casual games, run beginner lessons and hold a spring tournament. Everyone is welcome." /> },
           categoryStep,
+          iconStep,
           { id: "adviser", ask: "Who is your faculty or staff adviser?", hint: "Every club needs one. Their name and email.",
             check: (s) => (s.advisorName.trim().length < 2 || !/^\S+@\S+\.\S+$/.test(s.advisorEmail.trim()) ? "Add the adviser's name and a valid email." : null),
             render: (s, set, go) => (
@@ -52,7 +59,7 @@ export default function ClubApplication({ reviewer, mode = "club", onSent, onCan
         ];
 
   const summary = circle || reviewer ? undefined : (s: S): [string, string, string][] => [
-    ["Name", s.name, "name"], ["Purpose", s.purpose, "purpose"], ["Category", s.category, "category"], ["Adviser", s.advisorName ? `${s.advisorName}, ${s.advisorEmail}` : "", "adviser"],
+    ["Name", s.name, "name"], ["Purpose", s.purpose, "purpose"], ["Category", s.category, "category"], ["Icon", s.icon ? "Chosen" : "", "icon"], ["Adviser", s.advisorName ? `${s.advisorName}, ${s.advisorEmail}` : "", "adviser"],
     ["Meets", s.meeting, "meeting"], ["Expected size", s.size ? `${s.size} people` : "", "more"], ["First event", s.firstEvent, "more"], ["Contact", s.contact, "contact"],
   ];
 
@@ -64,6 +71,7 @@ export default function ClubApplication({ reviewer, mode = "club", onSent, onCan
     if (bad) return bad;
     const r = await orgActions.request({ name: s.name, description, reviewer, kind, application });
     if (r.error) return r.error;
+    if (s.icon && r.id) await orgActions.updateLook(r.id, { accent: null, icon: s.icon });
     onSent(r);
     return null;
   }

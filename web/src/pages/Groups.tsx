@@ -1,4 +1,6 @@
 import { siteUrl } from "../lib/siteUrl";
+import IconChooser from "../components/IconChooser";
+import ClubGlyph from "../components/ClubGlyph";
 import { AttachButton, AttachPreview, useAttachment } from "../components/Attach";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -53,6 +55,7 @@ export default function Groups() {
   const [when, setWhen] = useState("");
   const [openToCampus, setOpenToCampus] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [iconing, setIconing] = useState(false);
   const [joining, setJoining] = useState(false);
   const [friendsOpen, setFriendsOpen] = useState(false);
   const { incoming: friendRequests } = useFriends();
@@ -140,7 +143,7 @@ export default function Groups() {
           {groups.map((g) => (
             <button key={g.id} className={"thread" + (g.id === group?.id && !showCreate && !friendsOpen ? " on" : "")} aria-current={g.id === group?.id && !showCreate && !friendsOpen} onClick={() => { setActiveId(g.id); setFriendsOpen(false); setCreating(false); setPlanning(false); setSyncing(false); setAdding(false); setError(""); setPaneOpen(true); }}>
               {g.id === group?.id && !showCreate && !friendsOpen && <motion.span layoutId="group-indicator" className="threadpill" transition={slide} />}
-              <strong>{g.name}</strong>
+              <strong><span className="thread-mark" aria-hidden="true"><ClubGlyph icon={g.icon} name={g.name} /></span>{g.name}</strong>
               <span className="muted">{g.members.length} people{toAnswer(g.id) > 0 && <> · <span className="thread-ask">{toAnswer(g.id)} to answer</span></>}</span>
             </button>
           ))}
@@ -184,13 +187,14 @@ export default function Groups() {
         ) : group && (
           <div className="convo card">
             <div className="convo-head">
-              <div><h2>{group.name}</h2><div className="convo-people"><AvatarStack people={group.members.filter((m) => m !== YOU).map((m) => ({ name: m, id: friendIds.get(m) }))} max={5} size={30} expandable /><span className="muted">{group.members.length} {group.members.length === 1 ? "person" : "people"}</span></div></div>
+              <div><h2><span className="thread-mark big" aria-hidden="true"><ClubGlyph icon={group.icon} name={group.name} /></span>{group.name}</h2><div className="convo-people"><AvatarStack people={group.members.filter((m) => m !== YOU).map((m) => ({ name: m, id: friendIds.get(m) }))} max={5} size={30} expandable /><span className="muted">{group.members.length} {group.members.length === 1 ? "person" : "people"}</span></div></div>
               <div className="convo-actions">
                 <button className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setSyncing(false); setError(""); }} aria-expanded={planning}>Plan a hangout</button>
                 <button type="button" className="link-btn convo-link" onClick={() => { setSyncing((v) => !v); setAdding(false); setPlanning(false); setError(""); }} aria-expanded={syncing}>Find a time when everyone is free</button>
                 <details className="convo-more">
                   <summary>More</summary>
                   <div>
+                    <button type="button" className="link-btn convo-link" aria-expanded={iconing} onClick={() => setIconing((v) => !v)}>Group icon</button>
                     <button type="button" className="link-btn convo-link" onClick={() => { setAdding((v) => !v); setPlanning(false); setSyncing(false); setError(""); }} aria-expanded={adding}>{hangLive ? "Add people" : "Add friends"}</button>
                     {group.mine
                       ? <ConfirmButton label="Delete group" question={`Delete ${group.name} for everyone? Its chat, hangouts and invite link go too.`} confirm="Delete" onConfirm={() => { void hangActions.deleteGroup(group.id); setPaneOpen(false); }} />
@@ -199,6 +203,12 @@ export default function Groups() {
                 </details>
               </div>
             </div>
+            {iconing && (
+              <div className="plan-form">
+                <h3>Group icon</h3>
+                <IconChooser value={group.icon ?? ""} name={group.name} onChange={(v) => void hangActions.setGroupIcon(group.id, v)} />
+              </div>
+            )}
             {!syncing && !planning && !adding && <GroupMoment groupId={group.id} />}
             {syncing && (
               <div className="plan-form">

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { cleanClubIcon } from "./clubIcons";
 import { progress } from "./progress";
 import { supabase } from "./supabase";
 import { notice } from "./notice";
@@ -204,6 +205,17 @@ export const hangActions = {
     const { error } = await supabase!.rpc("leave_group", { gid: id });
     if (error) { set(before); notice.show({ icon: "alert", title: "Could not leave the group", message: /function|schema cache/i.test(error.message) ? "This is not switched on yet." : error.message }); return; }
     void reload();
+  },
+  /** Give a group chat an icon (a library code, an emoji, or "" for its first letter). It shows at once; the database keeps it for everyone in the group. */
+  async setGroupIcon(id: string, icon: string) {
+    const g = state.groups.find((x) => x.id === id);
+    if (!g) return;
+    const clean = cleanClubIcon(icon);
+    const before = state;
+    patchGroup(id, (x) => ({ ...x, icon: clean || undefined }));
+    if (!live || !who) return;
+    const { error } = await supabase!.rpc("set_group_icon", { gid: id, gicon: clean });
+    if (error) { set(before); notice.show({ icon: "alert", title: "Could not change the icon", message: /function|schema cache|icon/i.test(error.message) ? "Group icons are not switched on yet." : error.message }); }
   },
   /** Delete a group for everyone (only whoever made it can): its chat, hangouts and invite code go with it. */
   async deleteGroup(id: string) {

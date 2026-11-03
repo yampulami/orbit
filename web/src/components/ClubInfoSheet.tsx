@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { BadgeCheck, Check, Pause, Play, Search, ShieldCheck, UserRound, Users, X } from "lucide-react";
-import ClubGlyph from "./ClubGlyph";
-import { CLUB_ICON_GROUPS, iconCode, iconsIn, libraryIcon, searchIcons } from "../lib/clubIcons";
+import { BadgeCheck, Check, Pause, Play, ShieldCheck, UserRound, Users, X } from "lucide-react";
+import IconChooser from "./IconChooser";
 import { orgActions, orgHue, type Org } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
 import ClubAbout from "./ClubAbout";
@@ -11,21 +10,10 @@ import RichText from "./RichText";
 
 /** Everything about the club that used to sit on its front: what it is, when it meets, the president's editing, roles, the application and the coordinator's controls. */
 const HUES = [12, 28, 45, 95, 150, 185, 210, 340];
-const ICONS = ["🤖", "♟️", "🎬", "🎨", "🎵", "⚽", "📚", "🧪", "🌱", "🎮", "🍜", "🚀"];
 
-/** The president picks the club's colour and icon. They tint its rail icon, header and highlights for everyone.
- *  Icons come from the library (drawn icons by group, or a search) and a few emoji. */
+/** The president picks the club's colour and icon. They tint its rail icon, header and highlights for everyone. */
 function LookPicker({ org }: { org: Org }) {
   const hue = orgHue(org);
-  const [group, setGroup] = useState<string>(libraryIcon(org.icon) ? libraryIcon(org.icon)!.group : "Emoji");
-  const [q, setQ] = useState("");
-  const set = (icon: string) => void orgActions.updateLook(org.id, { accent: org.accent ?? null, icon });
-  const found = searchIcons(q);
-  const list: { code: string; label: string; emoji?: string }[] = q.trim()
-    ? found.map((r) => ({ code: iconCode(r), label: r.label }))
-    : group === "Emoji"
-      ? ICONS.map((i) => ({ code: i, label: `Icon ${i}`, emoji: i }))
-      : iconsIn(group).map((r) => ({ code: iconCode(r), label: r.label }));
   return (
     <section className="look" aria-label="Colour and icon">
       <h3 className="about-sub">Colour and icon</h3>
@@ -34,21 +22,7 @@ function LookPicker({ org }: { org: Org }) {
           <button key={h} type="button" role="radio" aria-checked={hue === h} aria-label={`Colour ${h}`} className="look-sw" style={{ ["--h" as string]: h }} onClick={() => void orgActions.updateLook(org.id, { accent: h, icon: org.icon })} />
         ))}
       </div>
-      <label className="look-search"><Search size={16} aria-hidden="true" /><input value={q} maxLength={30} placeholder="Search icons, like chess or music" aria-label="Search icons" onChange={(e) => setQ(e.target.value)} /></label>
-      {!q.trim() && (
-        <div className="look-groups" role="tablist" aria-label="Icon groups">
-          {["Emoji", ...CLUB_ICON_GROUPS].map((g) => <button key={g} type="button" role="tab" aria-selected={group === g} onClick={() => setGroup(g)}>{g}</button>)}
-        </div>
-      )}
-      <div className="look-row" role="radiogroup" aria-label="Icon">
-        <button type="button" role="radio" aria-checked={!org.icon} className="look-ic" aria-label="First letter" onClick={() => set("")}>{org.name.slice(0, 1).toUpperCase()}</button>
-        {list.map((it) => (
-          <button key={it.code} type="button" role="radio" aria-checked={org.icon === it.code} className="look-ic" aria-label={it.label} title={it.label} onClick={() => set(it.code)}>
-            {it.emoji ?? <ClubGlyph icon={it.code} name="" />}
-          </button>
-        ))}
-        {q.trim() && list.length === 0 && <p className="muted look-none">No icon matches that. Try a broader word.</p>}
-      </div>
+      <IconChooser value={org.icon} name={org.name} onChange={(icon) => void orgActions.updateLook(org.id, { accent: org.accent ?? null, icon })} />
     </section>
   );
 }
