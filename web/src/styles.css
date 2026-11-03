@@ -4775,7 +4775,7 @@ textarea,input{caret-color:var(--accent)}
 .campus-sentence{font-family:var(--display);font-size:clamp(1.5rem,2.5vw,var(--t-hero));font-weight:600;letter-spacing:-.02em;line-height:1.15;margin:0 0 8px}
 .campus-head{display:block}
 .campus-seg{display:flex;gap:22px;border-bottom:1px solid var(--line);width:100%;margin-top:10px}
-.campus-seg button{min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:0;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-ui);font-weight:500;cursor:pointer}
+.campus-seg button{height:44px;min-height:44px;padding:0 2px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:0;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-ui);font-weight:500;cursor:pointer}
 .campus-seg button[aria-selected=true]{background:none;color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
 .cevent-demo{display:flex;gap:8px;align-items:center;font-size:var(--t-meta);color:var(--ink-soft);margin:8px 0}
 .cevent-demo select{height:44px;border-radius:8px;border:1px solid var(--line);background:var(--surface);padding:0 10px}
@@ -5044,6 +5044,84 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .ev-actions button,.ev .link-btn{min-height:44px}
 .cevent-demo{margin-top:24px;padding-top:12px;border-top:1px solid var(--line)}
 [data-theme=dark] .cevents .btn.primary{background:var(--accent);border-color:var(--accent);color:#1a1210}
+
+/* ---- Campus pass 3: an intent-led discovery surface with a readable dock and one clear focal event ---- */
+@media (min-width:901px){
+  .shell.side-hover:has(.campus):has(.side:hover),
+  .shell.side-hover:has(.campus):has(.side:focus-within){--rail:220px}
+}
+.campus-main{gap:20px}
+.campus-head{display:grid;justify-items:start;gap:12px}
+.campus-sentence{max-width:22ch;margin:0;text-wrap:balance}
+.campus-seg{display:inline-flex;width:auto;margin:0;padding:4px;border:0;border-radius:12px;background:var(--panel);gap:4px}
+.campus-seg button{min-width:92px;min-height:40px;margin:0;padding:0 16px;border:0;border-radius:8px;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-ui);font-weight:600;cursor:pointer}
+.campus-seg button[aria-pressed=true]{border:0;background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(60,40,25,.08),0 8px 20px -16px rgba(60,40,25,.36)}
+.campus-seg button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.cevents{display:grid;gap:18px}
+.event-discovery{display:grid;gap:4px;padding:2px 0 4px}
+.event-find{display:flex;align-items:center;gap:12px}
+.event-search{display:flex;align-items:center;gap:10px;flex:1;min-width:0;height:46px;padding:0 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink-soft);transition:border-color .15s,box-shadow .15s}
+.event-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent)}
+.event-search input{flex:1;min-width:0;border:0;outline:0;background:none;color:var(--ink);font:inherit;font-size:1rem}
+.event-search input::placeholder{color:var(--ink-soft);opacity:.85}
+.event-map-link{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 4px;color:var(--accent);font-size:var(--t-meta);font-weight:600;text-underline-offset:3px;white-space:nowrap}
+.event-filter-bar{display:flex;align-items:flex-start;justify-content:space-between;gap:8px 18px;border-bottom:1px solid var(--line)}
+.event-filter-bar>.chip-row{gap:18px}
+.event-more-filter,.club-more-cats{position:relative}
+.event-more-filter summary,.club-more-cats summary{display:flex;align-items:center;min-height:44px;padding:0 2px;color:var(--ink-soft);font-size:var(--t-meta);font-weight:500;cursor:pointer;list-style:none;text-decoration:underline;text-underline-offset:4px}
+.event-more-filter summary::-webkit-details-marker,.club-more-cats summary::-webkit-details-marker{display:none}
+.event-more-filter[open] summary,.club-more-cats[open] summary{color:var(--ink);font-weight:600}
+.event-more-options,.club-more-cats>div{position:absolute;right:0;top:calc(100% + 6px);z-index:30;display:grid;min-width:170px;padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:0 18px 36px -18px rgba(30,20,60,.38)}
+.event-more-options .chip-btn,.club-more-cats>div .chip-btn{justify-content:space-between;width:100%;min-height:42px;padding:0 10px!important;border:0!important;border-radius:8px!important;text-align:left}
+.event-more-options .chip-btn:hover,.club-more-cats>div .chip-btn:hover{background:var(--panel)!important}
+.event-more-options .chip-btn[aria-pressed=true],.club-more-cats>div .chip-btn[aria-pressed=true]{background:var(--panel)!important;color:var(--ink)!important}
+.explain{margin:0}
+.explain .link-btn{min-height:36px}
+.club-next{display:grid;gap:10px;margin-top:2px}
+.club-next h2{margin:0;font-family:var(--display);font-size:1.1rem;font-weight:650;letter-spacing:-.01em;color:var(--ink)}
+.club-next .ev.featured{background:var(--tint);border:0;border-radius:16px;padding:22px 24px;grid-template-columns:78px minmax(0,1fr);box-shadow:0 1px 2px rgba(60,40,25,.06),0 18px 34px -24px var(--solid)}
+.club-next .ev.featured .ev-stub{background:color-mix(in srgb,var(--surface) 62%,transparent);color:var(--tint-ink);border-radius:12px;padding:10px;place-content:center;justify-items:center;text-align:center}
+.club-next .ev.featured .ev-title{font-size:clamp(1.25rem,2vw,1.55rem)}
+.ev-day{margin-top:8px}
+.ev-day h2{margin:0 0 6px;color:var(--ink-soft);font-size:var(--t-meta);font-weight:600}
+.ev-list>.ev:not(.featured){grid-template-columns:58px minmax(0,1fr);gap:14px}
+.ev-list>.ev:not(.featured) .ev-stub{align-self:start;min-height:58px;padding:8px 6px;border-radius:12px;background:var(--tint);color:var(--tint-ink);place-content:center;justify-items:center;text-align:center}
+.ev-list>.ev:not(.featured) .ev-stub b{color:inherit;font-size:1.45rem}
+.ev-list>.ev:not(.featured) .ev-ico{display:none}
+.empty-state{padding-block:42px}
+.empty-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.rail-label{display:none}
+.crail .rail-ico[data-tip]:focus-visible::after{content:attr(data-tip);position:absolute;left:calc(100% + 14px);top:50%;transform:translateY(-50%);padding:6px 10px;border-radius:8px;background:var(--ink);color:var(--on-ink);font-size:.78rem;font-weight:600;white-space:nowrap;z-index:40}
+.rail-menu button:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.club-find{gap:12px}
+.club-more-cats{align-self:flex-start}
+@media (max-width:720px){
+  .campus-head{gap:10px}
+  .campus-sentence{font-size:clamp(1.45rem,7vw,2rem)}
+  .campus-seg{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .campus-seg button{width:100%;min-width:0}
+  .crail{align-items:stretch;margin-inline:-2px;padding-bottom:8px}
+  .rail-clubs{flex-direction:row;align-items:stretch;gap:8px}
+  .crail .rail-ico{display:inline-flex;justify-content:center;gap:8px;width:auto;min-width:44px;max-width:190px;padding:0 12px;white-space:nowrap}
+  .crail .rail-item .rail-ico{justify-content:flex-start}
+  .rail-label{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:.78rem;font-weight:600}
+  .rail-label small{color:var(--ink-soft);font-size:.66rem;font-weight:500}
+  .crail .rail-badge.wait{right:2px;top:2px}
+  .crail .rail-ico[data-tip]:focus-visible::after{display:none}
+  .event-find{align-items:stretch;flex-direction:column}
+  .event-map-link{align-self:flex-start}
+  .event-filter-bar{display:block}
+  .event-filter-bar>.chip-row{gap:0 16px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .event-filter-bar>.chip-row::-webkit-scrollbar{display:none}
+  .event-more-filter summary{width:max-content}
+  .event-more-options,.club-more-cats>div{position:static;margin-bottom:8px;box-shadow:none}
+  .club-next .ev.featured{grid-template-columns:58px minmax(0,1fr);padding:18px}
+  .club-next .ev.featured .ev-stub{padding:7px 4px}
+  .club-next .ev.featured .ev-body{min-width:0}
+  .ev-actions{align-items:flex-start}
+  .ev-more{margin-left:0}
+  .empty-state{padding-block:32px}
+}
 
 /* ---- Profile pass 2 (critique, desktop): switches readable in dark, one Name row in Edit, ruled Settings, no pills ---- */
 .switch{background:var(--raised);box-shadow:inset 0 0 0 1px var(--line)}
