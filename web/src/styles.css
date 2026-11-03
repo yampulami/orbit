@@ -5079,3 +5079,39 @@ body.chat-open .asst-fab,body.chat-open .asst-sphere{display:none}
 .badge-area li{background:none;border-radius:8px;box-shadow:inset 0 0 0 1px var(--line);padding:14px}
 .badge-area li span:not(.badge-ico){font-size:var(--t-meta);color:var(--ink-soft)}
 .cevents .link-btn,.ev .link-btn{min-height:44px;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;font-weight:500;border-radius:0}
+
+/* ---- Typeset and polish across every tab: off-scale sizes snap to the seven steps, pills go square, small targets get a 44px hit area ---- */
+.up-tag.up-tag.up-tag,.mini.mini.mini,.cal-wd.cal-wd.cal-wd,.agenda-sub.agenda-sub,.rem-time.rem-time.rem-time,.wb-hr.wb-hr.wb-hr,.wb-chip.wb-chip.wb-chip,.rail-badge.rail-badge.rail-badge,.ev-mon.ev-mon,.ev-dow.ev-dow,.ev-flavor.ev-flavor{font-size:var(--t-micro)}
+.up-more.up-more.up-more,.picker-label.picker-label,.rem-title.rem-title,.wb-sub.wb-sub,.wb-today.wb-today.wb-today,.dd-val.dd-val,.chip-btn.chip-btn.chip-btn,.sync-foot.sync-foot,.ev-people.ev-people,.pf-bio.pf-bio{font-size:var(--t-meta)}
+.pf-bio.pf-bio{font-size:var(--t-ui)}
+.campus-sentence.campus-sentence,.ev-title.ev-title{font-size:var(--t-h2)}
+.rem-count.rem-count,.rem-time.rem-time,.rem-count,.rem-time{border-radius:6px}
+.up li .pin-btn,.up li .check,.cal-rem .pin-btn,.cal-rem .check,.agenda .pin-btn,.agenda .check{position:relative}
+.up li .pin-btn::after,.up li .check::after,.cal-rem .pin-btn::after,.cal-rem .check::after,.agenda .pin-btn::after,.agenda .check::after{content:"";position:absolute;inset:-8px;border-radius:8px}
+.rm-link,.rm-edit,.chats-link,.sync-foot a,.rm-house .rm-link{position:relative}
+.rm-link::after,.rm-edit::after,.chats-link::after,.sync-foot a::after{content:"";position:absolute;inset:-12px -4px}
+.picker-btn,.rm-search input{min-height:44px}
+
+/* ---- Harden: long names wrap instead of breaking the row; a short, quiet tab-change motion; a tick that answers the tap ---- */
+.rm-main,.sr-main,.thread strong,.thread .muted,.agenda-info,.up-text,.club-row,.ev-title,.pf-info,.convo-head h2{min-width:0;overflow-wrap:anywhere}
+.thread .muted{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@keyframes orbit-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes orbit-tick{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.rm-card,.cevents,.clubs,.chats .chat,.pf-tabs~*:not(.plans-keys),.sync-opts{animation:orbit-in .22s cubic-bezier(.22,1,.36,1) both}
+.check[aria-checked=true]{animation:orbit-tick .28s cubic-bezier(.22,1,.36,1)}
+@media (prefers-reduced-motion:reduce){.rm-card,.cevents,.clubs,.chats .chat,.pf-tabs~*,.sync-opts,.check{animation:none!important}}
+
+/* ---- Typeset, second sweep: the remaining in-between sizes on Plans, Free time, Campus and Profile ---- */
+.cal.cal header h2,.wb-head.wb-head h2{font-size:var(--t-row)}
+.agenda.agenda header p,.agenda-info.agenda-info span,.agenda-info.agenda-info small{font-size:var(--t-meta)}
+.agenda-hangs.agenda-hangs h3,.cal-rem.cal-rem h3,.cevents.cevents .club-next h2,.cevents.cevents .ev-day h2,.cohost-invites.cohost-invites h3{font-size:var(--t-meta);font-weight:600}
+.agenda-info.agenda-info strong{font-size:var(--t-ui)}
+.rem-times.rem-times button,.wb-legend.wb-legend li,.wb-hours.wb-hours span,.wb-dh.wb-dh span,.wb-ev.wb-ev span,.wb-ev.wb-ev em,.sl-t.sl-t small,.sr-main.sr-main small,.ft-how.ft-how small,.gm-cap.gm-cap{font-size:var(--t-micro)}
+.wb-dh.wb-dh b{font-size:var(--t-row)}
+.wb-ev.wb-ev strong,.sync-toggles.sync-toggles label,.ft-how.ft-how p,.ft-how.ft-how li,.ft-how.ft-how b{font-size:var(--t-meta)}
+.sl-t.sl-t b,.sr-main.sr-main b{font-size:var(--t-ui)}
+.cevents.cevents .toolbar .btn,.cevents.cevents .ev-more .link-btn{font-size:var(--t-meta)}
+.ev.ev .ev-title{font-size:var(--t-h2)}
+.ev.ev .ev-stub b{font-size:var(--t-hero)}
+.empty-state.empty-state h2{font-size:var(--t-row)}
+.empty-state.empty-state p{font-size:var(--t-meta)}

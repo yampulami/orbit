@@ -307,3 +307,11 @@ Recurring items still worth improving: too many time-related blocks at once, the
 | Club page | done (plain channel rows, flat posts, quiet tags) |
 | Sign in | done by CSS only (12px card, 8px fields, orange primary); not looked at in the browser |
 | Landing, Onboarding | not restyled beyond the shared button and corner rules; Onboarding has many custom screens and should be done one screen at a time |
+
+## Cross-tab sweep (typeset, polish, harden, clarify, animate)
+
+- Every text size on Feed, Chats, Roommates, Plans, Free time, Campus and Profile now sits on the seven steps (12, 14, 16, 17, 18, 20, 30 px). Checked by measuring computed sizes in the demo; only avatar letters differ on purpose.
+- Pills are gone from tags and counts (6px). Small inline links keep their look but get a 44px hit area.
+- Long names wrap or clamp instead of breaking rows.
+- Copy: "Group hangouts · private plans with your groups" became "Plans · from your groups"; plan card tags show just the group name.
+- Motion: one short rise-in when a tab's content changes (`orbit-in`, 220 ms) and a small pop on a ticked box (`orbit-tick`); both off under reduced motion.
