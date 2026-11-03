@@ -246,11 +246,12 @@ export default function Feed() {
         <h1 className="sr">Campus feed</h1>
         {!phone && <nav className="skip-row" aria-label="Skip within the feed"><a className="skip" href="#posts" onClick={(e) => { e.preventDefault(); document.getElementById("posts")?.focus(); }}>Skip to posts</a><a className="skip" href="#your-list" onClick={(e) => { e.preventDefault(); document.getElementById("your-list")?.focus(); }}>Skip to your list</a></nav>}
         <NowHeader />
-        {!phone && <form className={"composer" + (body ? " has-text" : "")} onSubmit={publish}>
+        {!phone && <form className={"composer" + (body || att.has ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
             <span className="sr">Write a post</span>
             <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } else if (e.key === "Escape") { if (choosing) setChoosing(false); else e.currentTarget.blur(); } }} placeholder={`Lost a lanyard? Found a seat? Tell ${campus.name}.`} />
           </label>
+          <AttachPreview a={att} />
           <div className="composer-row">
             <div className="aud-wrap" onKeyDown={(e) => { if (e.key === "Escape" && choosing) { e.stopPropagation(); setChoosing(false); (e.currentTarget.querySelector(".aud-trigger") as HTMLElement | null)?.focus(); } }}>
               <button type="button" className="aud-trigger" aria-haspopup="true" aria-expanded={choosing} title={WHO[community]} onClick={() => setChoosing((v) => !v)}>
