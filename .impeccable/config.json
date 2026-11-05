@@ -24,6 +24,16 @@
         "rule": "design-system-font",
         "value": "noto color emoji",
         "createdAt": "2026-10-27T01:16:26.155Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "roboto",
+        "createdAt": "2026-11-05T04:55:26.995Z"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "sfmono-regular",
+        "createdAt": "2026-11-05T04:55:27.077Z"
       }
     ]
   }
