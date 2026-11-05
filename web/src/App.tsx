@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
+import ConfirmEmail from "./pages/ConfirmEmail";
 import { claimStaffAccess } from "./lib/staffAccess";
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "./lib/auth";
@@ -160,6 +161,7 @@ export default function App() {
         <Route path="/login" element={<AuthPage mode="login" />} />
         <Route path="/signup" element={<AuthPage mode="signup" />} />
         <Route path="/forgot" element={<ForgotPassword />} />
+        <Route path="/auth/confirm" element={<ConfirmEmail />} />
         <Route path="/terms" element={<Legal kind="terms" />} />
         <Route path="/privacy" element={<Legal kind="privacy" />} />
         <Route path="/join/:code" element={<JoinLink />} />

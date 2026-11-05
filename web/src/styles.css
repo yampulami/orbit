@@ -5538,3 +5538,7 @@ p,li{text-wrap:pretty}
 .staffp-link{display:inline-flex;align-items:center;gap:4px;font-size:var(--t-micro);color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 .staffp .btn,.staffp .link-btn{min-height:44px;border-radius:8px}
 .staffp .link-btn{text-decoration:underline;text-underline-offset:3px;padding:0 8px}
+
+/* Confirm your email */
+.ce-ok{display:flex;align-items:flex-start;gap:8px;margin:0;font-weight:600;line-height:1.45}
+.auth .card .btn.primary{min-height:44px}
