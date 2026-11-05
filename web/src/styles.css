@@ -5551,3 +5551,17 @@ p,li{text-wrap:pretty}
 .ce-new .btn,.auth .card a.btn{min-height:44px;border-radius:8px}
 .campus-fail{display:grid;gap:10px;justify-items:start}
 .campus-fail .btn{min-height:44px;border-radius:8px}
+
+/* Confirm your email: same look as sign-in */
+.merc-note{margin:0;font-size:1rem;line-height:1.55;color:var(--ink-soft)}
+.merc-ok{display:flex;align-items:flex-start;gap:10px;margin:0;font-size:1rem;line-height:1.5;font-weight:600;color:var(--ink)}
+.merc-ok svg{flex:none;margin-top:2px;color:var(--accent)}
+.merc-why{display:grid;gap:10px;margin:-10px 0 0;padding:0;list-style:none;font-size:.95rem;line-height:1.5;color:var(--ink-soft)}
+.merc-why li{padding-left:16px;position:relative}
+.merc-why li::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.merc-why b{color:var(--ink)}
+.merc-or{display:flex;align-items:center;gap:12px;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.merc-or::before,.merc-or::after{content:"";flex:1;height:1px;background:var(--line)}
+.merc-new{display:grid;gap:16px}
+.merc-link{justify-self:start;min-height:44px;padding:0;border:0;background:none;color:var(--ink);font:inherit;font-size:.95rem;font-weight:600;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.merc-link:disabled{color:var(--ink-soft);cursor:default;text-decoration:none}

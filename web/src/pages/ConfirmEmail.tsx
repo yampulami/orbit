@@ -1,8 +1,20 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { BadgeCheck } from "lucide-react";
+import MercuryStage from "../components/MercuryStage";
+import { ThemeToggleButton } from "../components/ThemeControls";
 import { confirmWithToken, readConfirmParams, resendConfirmation, type ConfirmFailure } from "../lib/confirmEmail";
 import { useCooldown } from "../lib/cooldown";
+
+/** The big button the sign-in screen uses. */
+function Primary({ children, onClick, disabled, autoFocus }: { children: ReactNode; onClick: () => void; disabled?: boolean; autoFocus?: boolean }) {
+  return (
+    <div className="merc-submit">
+      <span className="merc-goo" aria-hidden="true"><i className="merc-base" /><i className="merc-drop" /></span>
+      <button type="button" className="merc-btn" disabled={disabled} autoFocus={autoFocus} onClick={onClick}>{children}</button>
+    </div>
+  );
+}
 
 /** Where the link in the confirmation email lands. It shows a button; pressing it confirms the account and says so. If the link cannot be used, it says
  *  why and what to do next, and lets the person ask for a new one. */
@@ -17,10 +29,10 @@ export default function ConfirmEmail() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [problem, setProblem] = useState("");
-  const wait = useCooldown("resend:" + email.trim());
+  const wait = useCooldown("resend:" + email.trim().toLowerCase());
 
   async function confirm() {
-    if (!params) return;
+    if (!params || busy) return;
     setBusy(true); setFailure(null);
     const f = await confirmWithToken(params);
     setBusy(false);
@@ -40,41 +52,45 @@ export default function ConfirmEmail() {
   const stuck = failure === "used" || !params;
 
   return (
-    <main className="auth">
-      <div className="card" role="region" aria-label="Confirm your email">
-        <Link to="/" className="logo"><i />Orbit</Link>
+    <main className="merc">
+      <MercuryStage />
+      <div className="merc-theme"><ThemeToggleButton /></div>
+      <div className="merc-form" role="region" aria-label="Confirm your email">
+        <header className="merc-head">
+          <Link to="/" className="merc-brand"><i aria-hidden="true" />Orbit</Link>
+          <h1>{done ? <>Account<br />created</> : stuck ? <>Link can't<br />be used</> : <>Confirm<br />your email</>}</h1>
+        </header>
+
         {done ? (
           <>
-            <h1 style={{ fontSize: "1.6rem" }}>Account created</h1>
-            <p className="ce-ok" role="status"><BadgeCheck size={18} aria-hidden="true" /> Your account was created successfully, and you are signed in.</p>
-            <button type="button" className="btn primary" autoFocus onClick={() => nav("/app", { replace: true })}>Continue to Orbit</button>
+            <p className="merc-ok" role="status"><BadgeCheck size={20} aria-hidden="true" /><span>Your account was created successfully, and you are signed in.</span></p>
+            <Primary autoFocus onClick={() => nav("/app", { replace: true })}>Continue to Orbit</Primary>
           </>
         ) : stuck ? (
           <>
-            <h1 style={{ fontSize: "1.6rem" }}>This link can't be used</h1>
-            <p className="muted">A confirmation link works once, and stops working after a day. That means one of two things:</p>
-            <ol className="ce-why">
-              <li><b>You already confirmed your account.</b> Then you're all set. Log in to carry on.</li>
-              <li><b>The link is old, or a newer email replaced it.</b> Ask for a new one below, and use the newest email.</li>
-            </ol>
-            <Link to="/login" className="btn primary">Log in</Link>
-            <form className="ce-new" onSubmit={sendNew}>
-              <h2>Need a new link?</h2>
-              <label className="field">Your email
+            <p className="merc-note">A confirmation link works once, and stops working after a day. So either:</p>
+            <ul className="merc-why">
+              <li><b>You already confirmed.</b> You're all set. Log in to carry on.</li>
+              <li><b>The link is old</b>, or a newer email replaced it. Get a new one below.</li>
+            </ul>
+            <Primary onClick={() => nav("/login")}>Log in</Primary>
+            <div className="merc-or" role="separator"><span>or get a new link</span></div>
+            <form className="merc-new" onSubmit={sendNew}>
+              <label className="merc-group"><span>Your email</span>
                 <input type="email" required autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setProblem(""); setSent(false); }} placeholder="you@yourschool.edu" />
+                <i className="merc-glow" />
               </label>
               {problem && <p className="error" role="alert">{problem}</p>}
               {sent && <p className="notice" role="status">If {email.trim()} is waiting to be confirmed, a new link is on its way. It can take a few minutes, so check your spam folder too.</p>}
-              <button className="btn" disabled={!email.trim() || sending || wait.left > 0}>{sending ? "Sending…" : wait.left > 0 ? `Email me a new link (wait ${wait.left}s)` : "Email me a new link"}</button>
+              <button className="merc-link" disabled={!email.trim() || sending || wait.left > 0}>{sending ? "Sending…" : wait.left > 0 ? `Email me a new link (wait ${wait.left}s)` : "Email me a new link"}</button>
             </form>
           </>
         ) : (
           <>
-            <h1 style={{ fontSize: "1.6rem" }}>Confirm your email</h1>
-            <p className="muted">Press the button to finish creating your Orbit account.</p>
+            <p className="merc-note">Press the button to finish creating your Orbit account.</p>
             {failure === "slow" && <p className="error" role="alert">Too many tries. Wait a minute, then press the button again.</p>}
             {failure === "other" && <p className="error" role="alert">We could not confirm your account. Check your connection and press the button again.</p>}
-            <button type="button" className="btn primary" autoFocus disabled={busy} onClick={() => void confirm()}>{busy ? "Confirming…" : "Confirm my account"}</button>
+            <Primary autoFocus disabled={busy} onClick={() => void confirm()}>{busy ? "Confirming…" : "Confirm my account"}</Primary>
           </>
         )}
       </div>
