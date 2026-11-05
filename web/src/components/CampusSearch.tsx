@@ -14,7 +14,10 @@ export default function CampusSearch({ value, onPick, autoFocus }: { value: Univ
   const root = useRef<HTMLDivElement>(null);
 
   // Fetch the list the first time the field is used.
+  const [retrying, setRetrying] = useState(false);
   const warm = () => { if (!list && !failed) loadUniversities().then(setList).catch(() => setFailed(true)); };
+  // After a failure, try the download again when asked.
+  const retry = () => { setRetrying(true); loadUniversities().then((l) => { setList(l); setFailed(false); }).catch(() => setFailed(true)).finally(() => setRetrying(false)); };
   useEffect(() => { if (autoFocus) warm(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     const away = (e: MouseEvent) => { if (!root.current?.contains(e.target as Node)) setOpen(false); };
@@ -24,7 +27,8 @@ export default function CampusSearch({ value, onPick, autoFocus }: { value: Univ
 
   const results = useMemo(() => (list ? searchUniversities(list, q, 8, preferredCountry()) : []), [list, q]);
   const typed = q.trim();
-  const canUseTyped = typed.length >= 2 && !results.some((r) => r.name.toLowerCase() === typed.toLowerCase());
+  // A typed name is only offered once the list has loaded and the name is not on it. Without the list, a half-typed name ("caldwell") would become its own campus.
+  const canUseTyped = !!list && typed.length >= 2 && !results.some((r) => r.name.toLowerCase() === typed.toLowerCase());
   const total = results.length + (canUseTyped ? 1 : 0);
 
   function choose(i: number) {
@@ -65,7 +69,12 @@ export default function CampusSearch({ value, onPick, autoFocus }: { value: Univ
       {open && typed && (
         <ul className="campus-list" id={listId} role="listbox" aria-label="Universities">
           {!list && !failed && <li className="campus-note" role="presentation">Loading universities…</li>}
-          {failed && <li className="campus-note" role="presentation">The list did not load. You can still use what you typed.</li>}
+          {failed && (
+            <li className="campus-note campus-fail" role="presentation">
+              <span>We could not load the list of universities. Check your connection, then try again.</span>
+              <button type="button" className="btn sm" disabled={retrying} onMouseDown={(e) => { e.preventDefault(); retry(); }}>{retrying ? "Trying…" : "Try again"}</button>
+            </li>
+          )}
           {results.map((u, i) => (
             <motion.li key={`${u.name}-${u.country}-${i}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, transition: { delay: i * 0.035, duration: 0.2 } }} id={`${listId}-${i}`} role="option" aria-selected={i === active} className={i === active ? "on" : ""} onMouseEnter={() => setActive(i)} onMouseDown={(e) => { e.preventDefault(); choose(i); }}>
               <span className="campus-ico" aria-hidden="true"><GraduationCap size={16} /></span>
@@ -73,9 +82,9 @@ export default function CampusSearch({ value, onPick, autoFocus }: { value: Univ
               {i === active && <Check size={15} aria-hidden="true" />}
             </motion.li>
           ))}
-          {canUseTyped && (list || failed) && (
+          {canUseTyped && (
             <li id={`${listId}-${results.length}`} role="option" aria-selected={active === results.length} className={"custom" + (active === results.length ? " on" : "")} onMouseEnter={() => setActive(results.length)} onMouseDown={(e) => { e.preventDefault(); choose(results.length); }}>
-              <span><strong>Use "{typed}"</strong><em>Not on the list? Add it as your university.</em></span>
+              <span><strong>Use "{typed}"</strong><em>Not on the list? Add it exactly as its official name.</em></span>
             </li>
           )}
           {list && results.length === 0 && !canUseTyped && <li className="campus-note" role="presentation">Keep typing the name of your university.</li>}

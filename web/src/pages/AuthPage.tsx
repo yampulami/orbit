@@ -4,6 +4,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { ThemeToggleButton } from "../components/ThemeControls";
 import { linkProblem } from "../lib/siteUrl";
+import { useCooldown } from "../lib/cooldown";
+import { resendConfirmation } from "../lib/confirmEmail";
 import { checkUsername, normalizeUsername, USERNAME_MAX, usernameIsFree } from "../lib/username";
 
 /** The liquid-metal backdrop: soft blobs of violet that drift, merge through a goo filter, and lean a little towards the pointer. */
@@ -56,6 +58,9 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(mode === "login" ? linkProblem : "");
   const [notice, setNotice] = useState("");
+  const [resending, setResending] = useState(false);
+  // After a sign-up email goes out, the same address cannot be sent another for a minute, however many times the button is pressed.
+  const wait = useCooldown("signup:" + email.trim().toLowerCase());
 
   const needsUsername = mode === "signup" && !demo; // usernames need the database
   const loginByName = mode === "login" && !demo;    // so does signing in with one
@@ -85,6 +90,7 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
+    if (busy || (mode === "signup" && wait.left > 0)) return;
     setError(""); setNotice("");
     if (mode === "signup" && !agreed) { setError("Please agree to the Terms and Privacy Policy to make an account."); return; }
     if (needsUsername) {
@@ -95,9 +101,17 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
     setBusy(true);
     const problem = mode === "login" ? await signIn(email, password) : await signUp(email, password, needsUsername ? normalizeUsername(username) : undefined);
     if (problem) setError(problem);
-    else if (mode === "signup" && !demo) setNotice("Check your email to confirm your account, then sign in.");
+    else if (mode === "signup" && !demo) { setNotice(`We emailed a link to ${email.trim()}. Open it and press the button to confirm your account. It can take a few minutes, so check your spam folder too.`); wait.start(); }
     else nav(mode === "signup" ? "/onboarding" : "/app", { replace: true });
     setBusy(false);
+  }
+
+  async function sendAgain() {
+    if (resending || wait.left > 0) return;
+    setResending(true); setError("");
+    const problem = await resendConfirmation(email);
+    setResending(false);
+    if (problem) setError(problem); else { setNotice(`We sent a new link to ${email.trim()}. Use the newest email.`); wait.start(); }
   }
 
   async function asGuest() {
@@ -144,10 +158,15 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
           </label>
         )}
         {error && <p className="error" role="alert">{error}</p>}
-        {notice && <p className="notice">{notice}</p>}
+        {notice && <p className="notice" role="status">{notice}</p>}
+        {notice && mode === "signup" && !demo && (
+          <button type="button" className="merc-guest" disabled={resending || wait.left > 0} onClick={() => void sendAgain()}>
+            {resending ? "Sending…" : wait.left > 0 ? `Send the email again (wait ${wait.left}s)` : "Send the email again"}
+          </button>
+        )}
         <div className="merc-submit">
           <span className="merc-goo" aria-hidden="true"><i className="merc-base" /><i className="merc-drop" /></span>
-          <button className="merc-btn" disabled={busy || (needsUsername && availability === "checking")}>{busy ? "Please wait…" : mode === "login" ? "Sign in" : "Sign up"}</button>
+          <button className="merc-btn" disabled={busy || (needsUsername && availability === "checking") || (mode === "signup" && wait.left > 0)}>{busy ? "Please wait…" : mode === "login" ? "Sign in" : wait.left > 0 ? `Email sent (${wait.left}s)` : "Sign up"}</button>
         </div>
         <button type="button" className="merc-guest" onClick={asGuest} disabled={busy}>Continue as a guest</button>
         <p className="merc-foot">

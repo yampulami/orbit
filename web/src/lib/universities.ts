@@ -5,11 +5,27 @@ export type University = { name: string; country: string; region: string; domain
 let cache: University[] | null = null;
 let loading: Promise<University[]> | null = null;
 
+/** Download the list. A single failed download (a dropped connection, a busy moment) is retried a couple of times before giving up. */
+async function fetchList(): Promise<University[]> {
+  let last: unknown = new Error("Could not load the university list.");
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch(`${import.meta.env.BASE_URL}data/universities.json`, { cache: attempt === 0 ? "default" : "reload" });
+      if (!r.ok) throw new Error("Could not load the university list.");
+      const rows = (await r.json()) as string[][];
+      return rows.map(([name, country, region, domain]) => ({ name, country, region, domain }));
+    } catch (e) {
+      last = e;
+      if (attempt < 2) await new Promise((done) => setTimeout(done, 500 * (attempt + 1)));
+    }
+  }
+  throw last;
+}
+
 export function loadUniversities(): Promise<University[]> {
   if (cache) return Promise.resolve(cache);
-  loading ??= fetch(`${import.meta.env.BASE_URL}data/universities.json`)
-    .then((r) => { if (!r.ok) throw new Error("Could not load the university list."); return r.json() as Promise<string[][]>; })
-    .then((rows) => (cache = rows.map(([name, country, region, domain]) => ({ name, country, region, domain }))))
+  loading ??= fetchList()
+    .then((rows) => (cache = rows))
     .catch((e) => { loading = null; throw e; });
   return loading;
 }

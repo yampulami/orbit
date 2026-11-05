@@ -5542,3 +5542,12 @@ p,li{text-wrap:pretty}
 /* Confirm your email */
 .ce-ok{display:flex;align-items:flex-start;gap:8px;margin:0;font-weight:600;line-height:1.45}
 .auth .card .btn.primary{min-height:44px}
+
+/* Confirm page and campus search recovery */
+.ce-why{display:grid;gap:8px;margin:0;padding-left:20px;font-size:var(--t-meta);line-height:1.5;color:var(--ink-soft)}
+.ce-why b{color:var(--ink)}
+.ce-new{display:grid;gap:10px;margin-top:8px;padding-top:14px;border-top:1px solid var(--line)}
+.ce-new h2{margin:0;font-size:var(--t-ui);font-weight:600}
+.ce-new .btn,.auth .card a.btn{min-height:44px;border-radius:8px}
+.campus-fail{display:grid;gap:10px;justify-items:start}
+.campus-fail .btn{min-height:44px;border-radius:8px}
