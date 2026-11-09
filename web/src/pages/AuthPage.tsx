@@ -109,7 +109,7 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
           </label>
         )}
         <label className="merc-group"><span>Password</span>
-          <span className="pw">
+          <span className="pwfield">
             <input type={show ? "text" : "password"} required minLength={8} autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} />
             <button type="button" className="pw-eye" aria-label={show ? "Hide password" : "Show password"} aria-pressed={show} onClick={() => setShow((v) => !v)}>{show ? <EyeOff size={18} /> : <Eye size={18} />}</button>
           </span>
