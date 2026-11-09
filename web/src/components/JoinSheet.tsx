@@ -11,15 +11,19 @@ export default function JoinSheet({ open, name, onSend, onClose }: { open: boole
   const [busy, setBusy] = useState(false);
   const area = useRef<HTMLTextAreaElement>(null);
 
+  // The page behind this window re-renders often (people coming online, live updates) and hands over a new onClose each time. Keep the latest one in a ref,
+  // so that does not restart anything here, and start with an empty note only when the window opens (not on every re-render, which wiped what was typed).
+  const close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => { if (open) setNote(""); }, [open]);
   useEffect(() => {
     if (!open) return;
-    setNote("");
     const lock = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close.current(); };
     window.addEventListener("keydown", onKey);
     return () => { document.body.style.overflow = lock; window.removeEventListener("keydown", onKey); };
-  }, [open, onClose]);
+  }, [open]);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
