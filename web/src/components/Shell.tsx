@@ -151,7 +151,7 @@ export default function Shell() {
                     {isActive && <motion.span layoutId="side-indicator" className="navpill" transition={slide} />}
                     <i.icon size={22} strokeWidth={1.75} />
                     <span className="navtext">{i.label}</span>
-                    {i.to === "/app/chats" && unread > 0 && <span className="nav-count" role="img" aria-label={`${unread} unread ${unread === 1 ? "message" : "messages"}`}>{unread > 9 ? "9+" : unread}</span>}
+                    {i.to === "/app/chats" && unread > 0 && <span className="nav-dot" role="img" aria-label={`${unread} unread ${unread === 1 ? "message" : "messages"}`} />}
                     {i.to === "/app/plans" && waiting > 0 && <span className="nav-dot" role="img" aria-label={waiting === 1 ? "1 hangout needs your answer" : `${waiting} hangouts need your answer`} />}
                   </>
                 )}

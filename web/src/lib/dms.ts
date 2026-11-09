@@ -7,7 +7,7 @@ import { haptic } from "./haptics";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
 import { syncActive } from "./active";
 import { notice } from "./notice";
-import { applyDmChange, buildThreads, loadDms, loadPeople, pairOf, type DmThread, type Person } from "./dmDb";
+import { addSent, applyDmChange, buildThreads, loadDms, loadPeople, pairOf, type DmThread, type Person } from "./dmDb";
 
 /** Direct messages with students on your campus. With a database they arrive live; without one (demo mode) the Messages page shows a sample. */
 type State = { threads: DmThread[]; people: Person[]; status: "idle" | "loading" | "ready" | "error" };
@@ -112,7 +112,7 @@ export const dmActions = {
     if (!body || !who) return;
     const me = who, id = crypto.randomUUID(), at = new Date().toISOString();
     haptic("send");
-    patchThread(threadId, (t) => ({ ...t, messages: [...t.messages, { id, mine: true, text: body, at }], updatedAt: at }));
+    set({ ...state, threads: addSent(state.threads, threadId, { id, text: body, at }) }); // shows now, and the conversation moves to the top
     dbRun("Sending that message", () => supabase!.from("direct_messages").insert({ id, conversation_id: threadId, sender_id: me, body }), () => void reload(), () => {
       const note = { table: "direct_messages", id, op: "upsert" } as const;
       sendNudge(threadId, note);

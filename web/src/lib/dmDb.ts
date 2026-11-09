@@ -15,16 +15,36 @@ export function buildThreads(raw: RawDms): DmThread[] {
   const others = raw.conversations.map((c) => (c.user_low === raw.me ? c.user_high : c.user_low));
   const label = makeLabeler(raw.me, others, raw.names);
   return [...raw.conversations]
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+    .sort((a, b) => when(b.updated_at) - when(a.updated_at))
     .map((c) => {
       const otherId = c.user_low === raw.me ? c.user_high : c.user_low;
       const messages = raw.messages
         .filter((m) => m.conversation_id === c.id)
-        .sort((a, b) => a.created_at.localeCompare(b.created_at))
+        .sort((a, b) => when(a.created_at) - when(b.created_at))
         .map((m) => ({ id: m.id, mine: m.sender_id === raw.me, text: m.body, at: m.created_at, ...(m.sender_id === raw.me && m.read_at ? { seenAt: m.read_at } : {}) }));
       const unread = raw.messages.filter((m) => m.conversation_id === c.id && m.sender_id !== raw.me && !m.read_at).length;
       return { id: c.id, otherId, name: label(otherId), messages, unread, updatedAt: c.updated_at };
     });
+}
+
+const when = (iso: string) => { const n = Date.parse(iso); return Number.isNaN(n) ? 0 : n; };
+
+/** When a conversation last had anything happen, as a time: its stored time, or its newest message if that is later. Compared as times, not as text,
+ *  because the database writes "+00:00" and the phone writes "Z", and the two do not sort the same as text. */
+export const recency = (t: DmThread): number => Math.max(when(t.updatedAt), when(t.messages[t.messages.length - 1]?.at ?? ""));
+
+/** Pure: the conversation with the newest activity first. */
+export const byRecent = (threads: DmThread[]): DmThread[] => [...threads].sort((a, b) => recency(b) - recency(a));
+
+/** Pure: you sent a message. It shows in its conversation at once, and that conversation moves to the top of the list. (A phone clock a little behind
+ *  the server must not leave it below a conversation that is really older, so it is placed just ahead of whatever is on top.) */
+export function addSent(threads: DmThread[], threadId: string, msg: { id: string; text: string; at: string }): DmThread[] {
+  const t = threads.find((x) => x.id === threadId);
+  if (!t) return threads;
+  const top = threads.reduce((m, x) => Math.max(m, recency(x)), 0);
+  const updatedAt = new Date(Math.max(when(msg.at), top + 1)).toISOString();
+  const next: DmThread = { ...t, messages: [...t.messages, { id: msg.id, mine: true, text: msg.text, at: msg.at }], updatedAt };
+  return byRecent(threads.map((x) => (x.id === threadId ? next : x)));
 }
 
 /** Pure: one change from the database applied to the threads on screen. Returns null when it cannot be applied on its own
@@ -45,14 +65,14 @@ export function applyDmChange(threads: DmThread[], me: string, e: ChangeEvent): 
     }
     if (t.messages.some((x) => x.id === m.id)) return threads; // your own message, already shown
     const mine = m.sender_id === me;
-    const next = { ...t, messages: [...t.messages, { id: m.id, mine, text: m.body, at: m.created_at, ...(mine && m.read_at ? { seenAt: m.read_at } : {}) }], unread: t.unread + (!mine && !m.read_at ? 1 : 0), updatedAt: m.created_at > t.updatedAt ? m.created_at : t.updatedAt };
-    return threads.map((x) => (x.id === t.id ? next : x)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const next = { ...t, messages: [...t.messages, { id: m.id, mine, text: m.body, at: m.created_at, ...(mine && m.read_at ? { seenAt: m.read_at } : {}) }], unread: t.unread + (!mine && !m.read_at ? 1 : 0), updatedAt: when(m.created_at) > when(t.updatedAt) ? m.created_at : t.updatedAt };
+    return byRecent(threads.map((x) => (x.id === t.id ? next : x)));
   }
   if (e.table === "direct_conversations" && e.type === "UPDATE") {
     const c = e.row as unknown as RawConv;
     const t = threads.find((x) => x.id === c.id);
     if (!t) return null;
-    return threads.map((x) => (x.id === t.id && c.updated_at > x.updatedAt ? { ...x, updatedAt: c.updated_at } : x)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return byRecent(threads.map((x) => (x.id === t.id && when(c.updated_at) > when(x.updatedAt) ? { ...x, updatedAt: c.updated_at } : x)));
   }
   return null;
 }

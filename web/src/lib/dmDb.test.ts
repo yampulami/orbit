@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildThreads, pairOf, type RawDms } from "./dmDb";
+import { addSent, buildThreads, byRecent, pairOf, type RawDms } from "./dmDb";
 
 const ME = "22222222-bbbb", MAYA = "11111111-aaaa", JO = "33333333-cccc", JO2 = "44444444-dddd";
 const raw: RawDms = {
@@ -48,5 +48,27 @@ describe("pairOf", () => {
   it("puts the lower id first whichever way round", () => {
     expect(pairOf(ME, MAYA)).toEqual({ user_low: MAYA, user_high: ME });
     expect(pairOf(MAYA, ME)).toEqual({ user_low: MAYA, user_high: ME });
+  });
+});
+
+describe("sending moves a conversation to the top", () => {
+  const threads = buildThreads(raw); // Jo first, then Maya
+  it("puts the conversation you wrote in first, and shows the message", () => {
+    const next = addSent(threads, "c1", { id: "n1", text: "See you there", at: "2026-10-21T13:00:00Z" });
+    expect(next.map((t) => t.id)).toEqual(["c1", "c2"]);
+    expect(next[0].messages.at(-1)).toMatchObject({ id: "n1", mine: true, text: "See you there" });
+    expect(threads.map((t) => t.id)).toEqual(["c2", "c1"]); // the old list is untouched
+  });
+  it("still goes first when the phone clock is behind the server", () => {
+    const next = addSent(threads, "c1", { id: "n2", text: "Hi", at: "2026-10-21T08:00:00Z" });
+    expect(next[0].id).toBe("c1");
+  });
+  it("keeps the order when it is already first, and ignores an unknown conversation", () => {
+    expect(addSent(threads, "c2", { id: "n3", text: "ok", at: "2026-10-21T14:00:00Z" }).map((t) => t.id)).toEqual(["c2", "c1"]);
+    expect(addSent(threads, "nope", { id: "n4", text: "x", at: "2026-10-21T14:00:00Z" })).toBe(threads);
+  });
+  it("orders by the newest message even if the stored time is older", () => {
+    const stale = threads.map((t) => (t.id === "c1" ? { ...t, updatedAt: "2026-10-20T00:00:00Z", messages: [...t.messages, { id: "z", mine: false, text: "late", at: "2026-10-21T15:00:00Z" }] } : t));
+    expect(byRecent(stale).map((t) => t.id)).toEqual(["c1", "c2"]);
   });
 });

@@ -27,8 +27,9 @@ export default function CampusSearch({ value, onPick, autoFocus }: { value: Univ
 
   const results = useMemo(() => (list ? searchUniversities(list, q, 8, preferredCountry()) : []), [list, q]);
   const typed = q.trim();
-  // A typed name is only offered once the list has loaded and the name is not on it. Without the list, a half-typed name ("caldwell") would become its own campus.
-  const canUseTyped = !!list && typed.length >= 2 && !results.some((r) => r.name.toLowerCase() === typed.toLowerCase());
+  // A typed name is only offered once the list has loaded and nothing on it matches. Offering it next to real matches, or without the list, would let a
+  // half-typed name ("caldwell") become its own campus, separate from "Caldwell University".
+  const canUseTyped = !!list && typed.length >= 2 && results.length === 0;
   const total = results.length + (canUseTyped ? 1 : 0);
 
   function choose(i: number) {

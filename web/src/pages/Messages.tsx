@@ -195,7 +195,8 @@ function SampleMessages() {
   function send(e: FormEvent) {
     e.preventDefault();
     const t = att.compose(text).trim(); if (!t) return;
-    setThreads((s) => ({ ...s, [active]: [...s[active], { mine: true, text: t }] }));
+    // The conversation you just wrote in moves to the top, as it does with a database.
+    setThreads((s) => ({ [active]: [...s[active], { mine: true, text: t }], ...Object.fromEntries(Object.entries(s).filter(([k]) => k !== active)) }));
     setFresh(`${active}-${threads[active].length}`);
     setText(""); att.clear();
   }
