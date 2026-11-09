@@ -1,0 +1,7 @@
+# Who must approve a change before it can be merged. With "Require review from Code Owners" switched on, nothing here reaches main without this person.
+# Everything:
+*                      @yampulami
+# The things that can hurt real people or real data get named on their own, so they are never missed:
+/supabase/             @yampulami
+/.github/              @yampulami
+/web/src/lib/auth.tsx  @yampulami
