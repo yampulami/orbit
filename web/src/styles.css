@@ -482,8 +482,8 @@ input[type=datetime-local]{accent-color:var(--accent);min-height:44px}
 .field input,.field textarea,.comment-form input{min-width:0;max-width:100%}
 .plan-form .field input{width:100%}
 
-.pw{position:relative;display:block}
-.pw input{width:100%;padding-right:48px}
+.pwfield{position:relative;display:block}
+.pwfield input{width:100%;padding-right:48px}
 .pw-eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;border-radius:50%;background:none;color:var(--ink-soft);display:grid;place-items:center;cursor:pointer}
 .pw-eye:hover{background:var(--panel);color:var(--ink)}
 
@@ -2945,8 +2945,8 @@ body.chat-open .asst-fab{display:none}
 .merc-group small{display:block;margin-top:8px;font-size:.8rem;line-height:1.4}
 .merc-group small.ok{color:#1e7a4a}
 [data-theme=dark] .merc-group small.ok{color:#5eeab5}
-.merc-group .pw{position:relative;display:block}
-.merc-group .pw input{padding-right:40px}
+.merc-group .pwfield{position:relative;display:block}
+.merc-group .pwfield input{padding-right:40px}
 .merc-forgot{margin:-12px 0 0;text-align:right;font-size:.84rem}
 .merc-forgot a,.merc-foot a,.merc-fine a{text-decoration:underline;text-underline-offset:3px}
 .merc-submit{position:relative;margin-top:6px}

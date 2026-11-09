@@ -87,7 +87,7 @@ export default function ForgotPassword() {
             <input className="auth-code" type="text" inputMode="numeric" required autoFocus autoComplete="one-time-code" maxLength={10} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} placeholder="123456" />
           </label>
           <label className="field">New password
-            <span className="pw">
+            <span className="pwfield">
               <input type={show ? "text" : "password"} required minLength={MIN_PASSWORD} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
               <button type="button" className="pw-eye" aria-label={show ? "Hide password" : "Show password"} aria-pressed={show} onClick={() => setShow((v) => !v)}>{show ? <EyeOff size={18} /> : <Eye size={18} />}</button>
             </span>
