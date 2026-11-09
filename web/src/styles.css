@@ -5576,3 +5576,26 @@ p,li{text-wrap:pretty}
 .sheet-starters{display:flex;flex-wrap:wrap;gap:8px}
 .sheet-starters .chip-btn{min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ink);font-size:var(--t-meta);font-weight:500;text-align:left}
 .sheet-starters .chip-btn:hover{border-color:var(--ink-soft)}
+
+/* Week board: readable blocks, and long events in the all-day strip */
+.wb-chip.event{background:color-mix(in srgb,var(--butter) 70%,var(--surface));color:var(--butter-ink)}
+.plans2 .wb-chip.event{background:none;color:var(--ink-soft);box-shadow:inset 0 0 0 1px var(--line)}
+.wb-allday .wb-chip{margin-bottom:4px}
+/* Words wrap at the spaces and end in "...", never letter by letter */
+.wb-ev strong,.wb-ev span{overflow-wrap:break-word;word-break:normal;hyphens:auto}
+.wb-ev span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+/* Three or more side by side: just the title, a little smaller, so each block still reads */
+.wb-ev.tight{padding:4px 6px}
+.wb-ev.tight strong{font-size:.72rem;-webkit-line-clamp:3}
+.wb-ev.tight span,.wb-ev.tight em{display:none}
+.wb-ev.tight:hover span,.wb-ev.tight:focus-visible span,.wb-ev.tight:hover em,.wb-ev.tight:focus-visible em{display:-webkit-box}
+
+/* Several things at once: one block that lists them */
+.wb-ev.group{background:var(--panel);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);padding:6px 8px;display:block}
+.wb-ev.group.m-pending{box-shadow:inset 0 0 0 1px var(--ink-soft)}
+.wb-ev.group ul{list-style:none;margin:0;padding:0;display:grid;gap:3px}
+.wb-ev.group li{display:grid;grid-template-columns:auto 1fr;align-items:baseline;column-gap:6px;min-width:0}
+.wb-ev.group li span{display:block;-webkit-line-clamp:unset;font-size:.68rem;color:var(--ink-soft);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wb-ev.group li strong{display:block;-webkit-line-clamp:unset;font-size:.74rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wb-ev.group li.m-pending strong{text-decoration:underline dotted;text-underline-offset:3px}
+.wb-ev.group:hover li strong,.wb-ev.group:focus-visible li strong{white-space:normal}
