@@ -7,7 +7,7 @@ import { haptic } from "./haptics";
 import { fetchChange, listenRooms, sendNudge, type Nudge } from "./nudge";
 import { syncActive } from "./active";
 import { notice } from "./notice";
-import { addSent, applyDmChange, buildThreads, loadDms, loadPeople, pairOf, type DmThread, type Person } from "./dmDb";
+import { addSent, applyDmChange, buildThreads, loadDms, loadPeople, pairOf, REQUEST_LIMIT, type DmThread, type Person } from "./dmDb";
 
 /** Direct messages with students on your campus. With a database they arrive live; without one (demo mode) the Messages page shows a sample. */
 type State = { threads: DmThread[]; people: Person[]; status: "idle" | "loading" | "ready" | "error" };
@@ -110,6 +110,9 @@ export const dmActions = {
   send(threadId: string, text: string) {
     const body = text.trim().slice(0, 2000);
     if (!body || !who) return;
+    const cur = state.threads.find((t) => t.id === threadId);
+    if (cur?.incoming) return; // answer the request first
+    if (cur?.waiting && (cur.sent ?? 0) >= REQUEST_LIMIT) { notice.show({ icon: "alert", title: "Waiting for a reply", message: "You can send more once they reply or accept." }); return; }
     const me = who, id = crypto.randomUUID(), at = new Date().toISOString();
     haptic("send");
     set({ ...state, threads: addSent(state.threads, threadId, { id, text: body, at }) }); // shows now, and the conversation moves to the top
@@ -143,6 +146,15 @@ export const dmActions = {
     return id;
   },
 
+  /** Accept a message request (it becomes a normal conversation) or delete it (it disappears for you, and the sender is not told). */
+  async answerRequest(threadId: string, accept: boolean): Promise<boolean> {
+    if (!who) return false;
+    const { error } = await supabase!.rpc("answer_message_request", { conv: threadId, accept });
+    if (error) { notice.show({ icon: "alert", title: accept ? "Could not accept that" : "Could not delete that", message: "Check your connection and try again." }); return false; }
+    await reload();
+    return true;
+  },
+
   /** Mark what the other person sent as read. Safe to call again and again. */
   markRead(threadId: string) {
     const t = state.threads.find((x) => x.id === threadId);
@@ -163,7 +175,10 @@ async function campusKey(): Promise<string> {
 }
 
 export const useDms = () => useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => state);
-export const unreadDms = (threads: DmThread[]) => threads.reduce((n, t) => n + t.unread, 0);
+/** Unread messages in your real conversations. Message requests are counted separately (see requestCount), so a stranger cannot fill your unread number. */
+export const unreadDms = (threads: DmThread[]) => threads.reduce((n, t) => n + (t.incoming ? 0 : t.unread), 0);
+/** People who wrote to you without being your friend and are waiting for you to accept or delete. */
+export const requestCount = (threads: DmThread[]) => threads.filter((t) => t.incoming).length;
 
 /** Someone changed their name or picture: look the names up again. */
 if (typeof window !== "undefined") window.addEventListener("orbit-people-changed", () => { if (who) void reload(); });

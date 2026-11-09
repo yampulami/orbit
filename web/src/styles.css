@@ -5686,3 +5686,14 @@ p,li{text-wrap:pretty}
 .settings-grid>.signout,.settings-grid>.blocked-card,.settings-grid>.danger-zone{grid-column:1/-1}
 .rm-setup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:24px 64px;align-items:start}
 .rm-setup-grid .rm-setup{max-width:560px}
+
+/* Message requests: a row in the list, and a bar that replaces the composer until you accept or delete. */
+.req-row strong{display:flex;align-items:center;gap:8px}
+.req-row strong svg{color:var(--accent);flex:none}
+.req-back{color:var(--ink-soft)}
+.req-back strong{display:flex;align-items:center;gap:8px}
+.req-bar{display:grid;gap:12px;padding:16px 4px 4px;border-top:1px solid var(--line)}
+.req-bar p{margin:0;font-size:var(--t-meta);line-height:1.5}
+.req-actions{display:flex;gap:8px;flex-wrap:wrap}
+.req-actions .btn{min-height:44px;border-radius:8px}
+.req-note{margin:0;padding:10px 4px 0;font-size:var(--t-meta)}

@@ -1,6 +1,6 @@
 import { Suspense, lazy } from "react";
 import { useSearchParams } from "react-router-dom";
-import { unreadDms, useDms } from "../lib/dms";
+import { requestCount, unreadDms, useDms } from "../lib/dms";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
 
 // Each side loads only when it is opened.
@@ -11,7 +11,8 @@ const Groups = lazy(() => import("./Groups"));
 export default function Chats() {
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") === "groups" ? "groups" : "messages";
-  const unread = unreadDms(useDms().threads);
+  const dmThreads = useDms().threads;
+  const unread = unreadDms(dmThreads) + requestCount(dmThreads);
   const { groups, hangouts } = useHang();
   const waiting = hangouts.filter((h) => isVisible(h, groups) && !h.rsvps[YOU] && new Date(h.when).getTime() > Date.now()).length;
   const go = (t: "messages" | "groups") => setParams(t === "groups" ? { tab: "groups" } : {}, { replace: true, state: undefined });

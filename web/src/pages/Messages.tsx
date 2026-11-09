@@ -3,7 +3,8 @@ import PersonName from "../components/PersonName";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Inbox, Plus, Send, Trash2 } from "lucide-react";
+import { REQUEST_LIMIT } from "../lib/dmDb";
 import ConfirmButton from "../components/ConfirmButton";
 import { useChatOpenClass, useIsPhone } from "../lib/phone";
 import { threadKeys } from "../lib/threadKeys";
@@ -48,15 +49,21 @@ function LiveMessages() {
   const [, tick] = useState(0);
   // Arriving from someone's profile ("Message") opens that conversation.
   const asked = (useLocation().state as { thread?: string } | null)?.thread;
-  useEffect(() => { if (asked) { setActive(asked); setPicking(false); setChatOpen(true); } }, [asked]);
-  const current = threads.find((t) => t.id === active) ?? (picking ? undefined : threads[0]);
+  // Someone who is not your friend wrote to you: it waits under "Message requests" until you accept or delete it.
+  const requests = threads.filter((t) => t.incoming);
+  const regular = threads.filter((t) => !t.incoming);
+  const [inRequests, setInRequests] = useState(false);
+  useEffect(() => { if (asked) { setActive(asked); setPicking(false); setChatOpen(true); setInRequests(!!threads.find((t) => t.id === asked)?.incoming); } }, [asked]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (inRequests && requests.length === 0) { setInRequests(false); setActive(""); } }, [inRequests, requests.length]);
+  const current = threads.find((t) => t.id === active) ?? (picking ? undefined : (inRequests ? requests[0] : regular[0]));
   const shownId = current?.id ?? "";
   const inChat = !phone || chatOpen || picking;
   useChatOpenClass(phone && inChat);
 
   // Keep the newest message in view, and mark what you are looking at as read.
   useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [shownId, current?.messages.length]);
-  useEffect(() => { if (current && current.unread > 0 && document.visibilityState === "visible") dmActions.markRead(current.id); }, [current?.id, current?.unread]);
+  // A request is not marked read until you accept it, so a stranger cannot see "Seen" on what you have not agreed to receive.
+  useEffect(() => { if (current && !current.incoming && current.unread > 0 && document.visibilityState === "visible") dmActions.markRead(current.id); }, [current?.id, current?.unread, current?.incoming]);
 
   // "typing…" while the other person is typing in this chat (a quiet note that fades after a few seconds).
   useEffect(() => {
@@ -102,6 +109,14 @@ function LiveMessages() {
     setText(""); att.clear();
   }
 
+  async function answer(accept: boolean) {
+    if (!current) return;
+    const ok = await dmActions.answerRequest(current.id, accept);
+    if (!ok) return;
+    if (accept) { setActive(current.id); setInRequests(false); } // it is a normal conversation now, and stays open
+    else { setActive(""); setChatOpen(false); }
+  }
+
   async function startWith(id: string) {
     const made = await dmActions.start(id);
     if (made) { setActive(made); setPicking(false); setQ(""); }
@@ -114,7 +129,15 @@ function LiveMessages() {
       <div className={"chat" + (phone ? (inChat ? " phone-chat" : " phone-list") : "")}>
         <div className="threads" role="tablist" aria-label="Conversations" onKeyDown={threadKeys}>
           <button type="button" className="thread new" onClick={() => { setPicking((v) => !v); setActive(""); setChatOpen(true); }} aria-expanded={picking}><Plus size={16} aria-hidden="true" /><strong>New message</strong></button>
-          {threads.map((t) => (
+          {inRequests ? (
+            <button type="button" className="thread req-back" onClick={() => { setInRequests(false); setActive(""); }}><ArrowLeft size={16} aria-hidden="true" /><strong>All messages</strong></button>
+          ) : requests.length > 0 && (
+            <button type="button" className="thread req-row" onClick={() => { setInRequests(true); setPicking(false); setActive(""); }}>
+              <strong><Inbox size={16} aria-hidden="true" />Message requests<span className="dm-unread" aria-label={`${requests.length} waiting`}>{requests.length}</span></strong>
+              <span className="muted">From people who are not your friends yet</span>
+            </button>
+          )}
+          {(inRequests ? requests : regular).map((t) => (
             <button key={t.id} role="tab" aria-selected={!picking && t.id === shownId} className={"thread" + (!picking && t.id === shownId ? " on" : "")} data-unread={t.unread > 0 ? "" : undefined} onClick={() => { setPicking(false); setActive(t.id); setChatOpen(true); }}>
               {!picking && t.id === shownId && <motion.span layoutId="thread-indicator" className="threadpill" transition={slide} />}
               <strong><PersonName id={t.otherId} fallback={t.name} />{onlineNow.has(t.otherId) && <Orb size={14} variant="green" poke={false} className="active-orb" />}{t.unread > 0 && <span className="dm-unread" aria-label={`${t.unread} unread`}>{t.unread}</span>}</strong>
@@ -136,7 +159,7 @@ function LiveMessages() {
             </div>
           ) : current ? (
             <>
-              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link>{onlineNow.has(current.otherId) && <Orb size={16} variant="green" poke={false} className="active-orb" />}</h2><p className="muted">{onlineNow.has(current.otherId) ? "Active now" : "Direct message"}</p></div><div className="convo-tools"><ConfirmButton icon={<Trash2 size={14} aria-hidden="true" />} label="Remove" question="Remove this conversation from your messages? They keep their copy." confirm="Remove" onConfirm={() => { dmActions.removeConversation(current.id); setActive(""); setChatOpen(false); }} /><SafetyMenu userId={current.otherId} name={current.name} context="direct message" /></div></div>
+              <div className="convo-head"><div><h2><Link to={`/app/people/${current.otherId}`} className="person-link">{current.name}</Link>{onlineNow.has(current.otherId) && <Orb size={16} variant="green" poke={false} className="active-orb" />}</h2><p className="muted">{current.incoming ? "Message request" : current.waiting ? "Request sent" : onlineNow.has(current.otherId) ? "Active now" : "Direct message"}</p></div><div className="convo-tools"><ConfirmButton icon={<Trash2 size={14} aria-hidden="true" />} label="Remove" question="Remove this conversation from your messages? They keep their copy." confirm="Remove" onConfirm={() => { dmActions.removeConversation(current.id); setActive(""); setChatOpen(false); }} /><SafetyMenu userId={current.otherId} name={current.name} context="direct message" /></div></div>
               <div className="bubbles" ref={scroller} aria-live="polite">
                 {current.messages.length === 0 && <p className="rm-empty">Say hello to {current.name}.</p>}
                 {current.messages.map((m) => (
@@ -152,13 +175,27 @@ function LiveMessages() {
                   </div>
                 )}
               </div>
+              {current.incoming ? (
+                <div className="req-bar" role="group" aria-label="Message request">
+                  <p><strong>{current.name} is not your friend yet.</strong> They cannot see that you have read this, and you will not get alerts from them, until you accept.</p>
+                  <div className="req-actions">
+                    <button type="button" className="btn primary" onClick={() => void answer(true)}>Accept</button>
+                    <button type="button" className="btn" onClick={() => void answer(false)}>Delete</button>
+                  </div>
+                  <p className="muted">Delete removes it for you and does not tell them. To stop them writing, use the menu at the top to block.</p>
+                </div>
+              ) : (
+              <>
+              {current.waiting && <p className="req-note muted">{(current.sent ?? 0) >= REQUEST_LIMIT ? `You have sent ${REQUEST_LIMIT} messages. You can send more once ${current.name} replies or accepts.` : `${current.name} is not your friend yet, so this arrives as a request. You can send ${REQUEST_LIMIT - (current.sent ?? 0)} more until they reply.`}</p>}
               <AttachPreview a={att} />
               <form className="comment-form" onSubmit={send}>
                 <input ref={dmInput} aria-label="Message" value={text} onChange={(e) => { setText(e.target.value); if (session) sendTyping(current.id, session.user.id, !e.target.value); }} maxLength={2000} placeholder={`Message ${current.name}…`} />
                 <EmojiButton value={text} onChange={setText} inputRef={dmInput} max={2000} />
                 <AttachButton a={att} />
-                <button className="btn primary" aria-label="Send" disabled={!text.trim() && !att.has}><Send size={16} /></button>
+                <button className="btn primary" aria-label="Send" disabled={(!text.trim() && !att.has) || (!!current.waiting && (current.sent ?? 0) >= REQUEST_LIMIT)}><Send size={16} /></button>
               </form>
+              </>
+              )}
             </>
           ) : (
             status === "loading" ? (

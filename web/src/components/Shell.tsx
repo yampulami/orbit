@@ -25,7 +25,7 @@ import type { Community } from "../shared/feed";
 import GlobalSearch from "./GlobalSearch";
 import { setTheme, useTheme } from "../lib/theme";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
-import { unreadDms, useDms } from "../lib/dms";
+import { requestCount, unreadDms, useDms } from "../lib/dms";
 import OfflineBanner from "./OfflineBanner";
 import Shortcuts from "./Shortcuts";
 import PullToRefresh from "./PullToRefresh";
@@ -53,7 +53,8 @@ export default function Shell() {
   const main = useRef<HTMLElement>(null);
   useEffect(() => { arrival.shellReady(); }, []); // the screen that follows onboarding fades once the app is up
   const { groups, hangouts } = useHang();
-  const unread = unreadDms(useDms().threads);
+  const dmThreads = useDms().threads;
+  const unread = unreadDms(dmThreads) + requestCount(dmThreads); // a waiting message request shows on the Chats icon too
   // The logo orb perks up for a few seconds when something new lands in the bell.
   const bellCount = useNotifs().filter((n) => n.unread).length;
   const prevBell = useRef(bellCount);
