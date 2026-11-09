@@ -90,6 +90,7 @@ export default function Roommates() {
     return (
       <div className="page">
         <h1 className="sr">Roommates</h1>
+        <div className="rm-setup-grid">
         <form className="rm-setup" onSubmit={create}>
           <h2>Set up your household</h2>
           <p className="muted">One shared place for chores, groceries, bills and house rules. You also get a private group chat for it.</p>
@@ -109,6 +110,7 @@ export default function Roommates() {
             <div className="rm-setup-actions"><button className="btn" disabled={joining}>{joining ? "Joining…" : "Join household"}</button></div>
           </form>
         )}
+        </div>
       </div>
     );
   }

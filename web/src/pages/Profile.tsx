@@ -196,7 +196,7 @@ export default function Profile() {
       )}
 
       {tab === "settings" && (
-        <>
+        <div className="settings-grid">
       {email && !email.endsWith("@guest.orbit") && <AccountCard email={email} username={shownUsername} />}
 
       <section className="track">
@@ -336,7 +336,7 @@ export default function Profile() {
           </div>
         )}
       </section>
-        </>
+        </div>
       )}
     </div>
   );

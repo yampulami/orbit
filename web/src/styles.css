@@ -5677,3 +5677,12 @@ p,li{text-wrap:pretty}
 @media (max-width:640px){.pv-head{grid-template-columns:1fr;gap:16px}.pv-name h2{font-size:1.625rem}}
 .gs-scope{min-height:36px;border-radius:8px}
 .gs-card .gs-scopes{gap:8px;padding:12px}
+
+/* Wide screens: use the room. Pages grow to 1400px, settings cards sit in columns, and the household set-up forms sit side by side. */
+.page{width:min(1400px,100%)}
+.page.mapview,.page:has(.plans2){width:min(1400px,100%)}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));column-gap:56px;align-items:start}
+.page .settings-grid .track,.page .settings-grid .notif-card{max-width:none}
+.settings-grid>.signout,.settings-grid>.blocked-card,.settings-grid>.danger-zone{grid-column:1/-1}
+.rm-setup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:24px 64px;align-items:start}
+.rm-setup-grid .rm-setup{max-width:560px}
