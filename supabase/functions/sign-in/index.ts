@@ -33,9 +33,10 @@ Deno.serve(async (req) => {
   let email: string | null = identifier.includes("@") ? identifier.toLowerCase() : null;
   if (!email) {
     const username = identifier.replace(/^@+/, "").toLowerCase();
-    const found = await admin.from("student_profiles").select("user_id").eq("username", username).maybeSingle();
-    if (found.data?.user_id) {
-      const u = await admin.auth.admin.getUserById(found.data.user_id);
+    // Looks in finished profiles first, then in the name chosen at sign up (it only lives there until onboarding is done).
+    const found = await admin.rpc("login_user_for_username", { candidate: username });
+    if (typeof found.data === "string") {
+      const u = await admin.auth.admin.getUserById(found.data);
       email = u.data.user?.email ?? null;
     }
   }
