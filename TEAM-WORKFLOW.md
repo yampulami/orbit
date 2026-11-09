@@ -33,7 +33,13 @@ GitHub does not let someone approve their own pull request, so a teammate's chan
 ### 2. Supabase: a separate dev database
 Teammates must never hold keys to the live database.
 1. In Supabase make a **new organization** called "Orbit Dev" and a project in it called `orbit-dev` (the free plan allows two projects: live plus dev).
-2. Run every file in `supabase/migrations/`, oldest first, in the dev project's SQL editor. (Or ask for a script that does it.)
+2. Build its structure from the migrations with one command (needs you logged in to the Supabase CLI: `npx supabase login`). It refuses to run against the live project, and copies no data:
+
+   ```bash
+   node web/scripts/build-dev-database.mjs <dev-project-ref>
+   ```
+
+   The ref is the code in the dev project's address, `supabase.com/dashboard/project/<ref>`. To also make your own dev test account a coordinator (sign up in the dev app first): add `--coordinator you@school.edu`. If a file fails, it stops and says which; fix the cause and run it again (they are safe to run twice).
 3. Invite the teammates to the **Orbit Dev** organization as **Developer**. Do **not** add them to your live organization: on the free and Pro plans everyone in an organization can see all of its projects.
 4. Dev needs its own secrets for any edge function a teammate works on (`supabase secrets set ... --project-ref <dev ref>`). They never get the live ones.
 
