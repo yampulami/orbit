@@ -36,7 +36,20 @@ export async function resetWithCode(email: string, code: string, password: strin
   if (!supabase) return "Resetting a password needs an account on the server.";
   const verified = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "recovery" });
   if (verified.error || !verified.data.session) return "That code is not right, or it has expired. Ask for a new one.";
-  const { error } = await supabase.auth.updateUser({ password });
+  return savePassword(password);
+}
+
+async function savePassword(password: string): Promise<string | null> {
+  const { error } = await supabase!.auth.updateUser({ password });
   if (error) return /different|same/i.test(error.message) ? "Choose a password you have not used before." : error.message || "We could not save the new password. Try again.";
   return null;
+}
+
+/** Change the password while signed in. The current password is checked first, so someone at an unlocked device cannot lock the owner out.
+ *  Resolves to a message to show, or null on success. */
+export async function changePassword(email: string, current: string, next: string): Promise<string | null> {
+  if (!supabase) return "Changing a password needs an account on the server.";
+  const check = await supabase.auth.signInWithPassword({ email: email.trim(), password: current });
+  if (check.error) return /rate|too many/i.test(check.error.message) ? "Too many tries. Please wait a minute." : "Your current password is not right.";
+  return savePassword(next);
 }

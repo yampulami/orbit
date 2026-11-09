@@ -17,6 +17,7 @@ import AboutEditor from "../components/AboutEditor";
 import { disableDeviceAlerts, enableDeviceAlerts, notifyDevice, useDeviceAlerts } from "../lib/deviceAlerts";
 import { setNudge, useNudges } from "../lib/nudges";
 import { notice } from "../lib/notice";
+import { AccountCard } from "../components/AccountCard";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import BadgeIcon from "../components/BadgeIcon";
@@ -196,6 +197,8 @@ export default function Profile() {
 
       {tab === "settings" && (
         <>
+      {email && !email.endsWith("@guest.orbit") && <AccountCard email={email} username={shownUsername} />}
+
       <section className="track">
         <div>
           <h2>Appearance</h2>
