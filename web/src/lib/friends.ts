@@ -9,7 +9,9 @@ import { buildFriends, loadFriends, relationTo, type FriendsState, type Person, 
 export const friendsLive = !!supabase;
 
 const EMPTY: FriendsState = { friends: [], incoming: [], outgoing: [] };
-let state: FriendsState = EMPTY;
+/** Demo only: one made-up friend request so Accept and Ignore can be tried. */
+const demoState = (): FriendsState => ({ friends: [], incoming: [{ id: "demo-req-1", from: { id: "demo-cam", name: "Cam", username: "cam" }, at: new Date().toISOString() }], outgoing: [] });
+let state: FriendsState = friendsLive ? EMPTY : demoState();
 const subs = new Set<() => void>();
 function set(next: FriendsState) { state = next; subs.forEach((f) => f()); }
 
@@ -44,6 +46,13 @@ export function unbindFriends() {
 
 /** Run a friends change on the server; say why in plain words if it was refused, and return that message (or null on success). */
 async function call(fn: string, args: Record<string, unknown>): Promise<{ message: string | null; data: unknown }> {
+  if (!friendsLive) {
+    // No database: answering the made-up request works on this device only.
+    if (fn !== "respond_friend_request") return { message: "Friends need an account on the server.", data: null };
+    const r = state.incoming.find((x) => x.id === args.request_id);
+    set({ ...state, incoming: state.incoming.filter((x) => x.id !== args.request_id), friends: r && args.accept ? [...state.friends, r.from] : state.friends });
+    return { message: null, data: null };
+  }
   const { data, error } = await supabase!.rpc(fn, args);
   if (error) return { message: /function|schema cache|could not find/i.test(error.message) ? "Friends are not switched on for this project yet." : error.message, data: null };
   await reload();

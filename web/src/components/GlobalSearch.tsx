@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import Avatar from "./Avatar";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ease } from "../lib/motion";
 import { useNavigate } from "react-router-dom";
 import { Bell, CalendarClock, ChevronRight, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, UserRound, Users, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -170,26 +171,34 @@ export default function GlobalSearch() {
     </li>
   );
 
+  // One continuous motion: the field grows out of the icon's own circle (its magnifier never moves), on one ease-out curve, while the contents fade in a
+  // beat later. Nothing waits for anything else, and no blur is animated.
+  const calm = useReducedMotion();
+  // The open width as a plain number: a number can be animated from the icon's 44px, a CSS min() string cannot (it just snaps).
+  const openWidth = typeof window === "undefined" ? 440 : Math.min(440, window.innerWidth - 32);
+  const grow = calm ? { duration: 0 } : { duration: 0.36, ease };
+  const shrink = calm ? { duration: 0 } : { duration: 0.24, ease };
   return (
     <div className="gs-dock" ref={box}>
-      <AnimatePresence mode="wait" initial={false}>
-        {!open ? (
+      <AnimatePresence initial={false}>
+        {!open && (
           <motion.button key="icon" ref={trigger} type="button" className="gs-icon" aria-label="Search Orbit" aria-haspopup="dialog" title="Search (Ctrl K)"
-            initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.15 }} onClick={openSearch}>
+            initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: calm ? 0 : 0.18, delay: calm ? 0 : 0.12 } }} exit={{ opacity: 0, transition: { duration: 0.08 } }} onClick={openSearch}>
             <Search size={20} aria-hidden="true" />
           </motion.button>
-        ) : (
+        )}
+        {open && (
           <motion.div key="field" className="gs-open" role="search" onKeyDown={key}
-            initial={{ width: 44, opacity: 0 }} animate={{ width: "min(440px, calc(100vw - 32px))", opacity: 1 }} exit={{ width: 44, opacity: 0 }} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
-            <motion.div className="gs-pill" initial={{ backdropFilter: "blur(0px)" }} animate={{ backdropFilter: "blur(12px)" }}>
-              <Search size={18} aria-hidden="true" className="gs-glass" />
+            initial={{ width: 44 }} animate={{ width: openWidth, transition: grow }} exit={{ width: 44, transition: shrink }}>
+            <div className="gs-pill">
+              <Search size={20} aria-hidden="true" className="gs-glass" />
               <input ref={input} type="text" value={q} placeholder={placeholder} aria-label={scoped ? `Search ${label}` : "Search Orbit"} role="combobox" aria-expanded={showResults} aria-controls={listId} aria-autocomplete="list" aria-activedescendant={showResults && options.length ? `${listId}-${active}` : undefined}
                 autoComplete="off" spellCheck={false} onChange={(e) => { setQ(e.target.value); setActive(0); }} />
-              <motion.button type="button" className="gs-x" aria-label="Close search" initial={{ scale: 0 }} animate={{ scale: 1 }} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => closeSearch()}>
+              <button type="button" className="gs-x" aria-label="Close search" onClick={() => closeSearch()}>
                 <X size={16} aria-hidden="true" />
-              </motion.button>
-            </motion.div>
-            <div className="gs-card">
+              </button>
+            </div>
+            <motion.div className="gs-card" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0, transition: { duration: calm ? 0 : 0.24, ease, delay: calm ? 0 : 0.14 } }} exit={{ opacity: 0, transition: { duration: 0.06 } }}>
               <div className="gs-scopes" role="group" aria-label="Search in">
                 {SCOPES.map(({ id, label: l, Icon }) => (
                   <button key={id} type="button" className="gs-scope" aria-pressed={scope === id} onClick={() => pick(id)}>{Icon && <Icon size={14} aria-hidden="true" />}{l}</button>
@@ -211,7 +220,7 @@ export default function GlobalSearch() {
                   )}
                 </ul>
               )}
-            </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

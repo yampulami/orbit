@@ -78,10 +78,11 @@ export default function NotificationBell() {
     const votes = proposals.filter((p) => p.campusKey === campusKey && statusOf(p) === "open" && p.by !== YOU && p.votes[YOU] === undefined);
     if (votes.length) rows.push({ id: "places", icon: MapPinCheck, title: `${votes.length} ${votes.length === 1 ? "place needs" : "places need"} your vote`, sub: "Students added them to the map", go: go("/app/map") });
   }
-  const count = rows.length - social.filter((r) => !r.unread).length;
-  const needs = rows.filter((r) => !r.id.startsWith("n-"));
-  const fresh = rows.filter((r) => r.id.startsWith("n-") && r.unread);
-  const earlier = rows.filter((r) => r.id.startsWith("n-") && !r.unread);
+  // A friend request you have not answered stays under "Needs you" with its Accept and Ignore, even once you have seen it.
+  const needs = rows.filter((r) => !r.id.startsWith("n-") || r.request);
+  const fresh = rows.filter((r) => r.id.startsWith("n-") && r.unread && !r.request);
+  const earlier = rows.filter((r) => r.id.startsWith("n-") && !r.unread && !r.request);
+  const count = needs.length + fresh.length;
 
   return (
     <div className="bell-wrap" ref={root}>
@@ -91,7 +92,7 @@ export default function NotificationBell() {
       </button>
       <AnimatePresence>
         {open && (
-          <motion.div className="bell-pop" role="region" aria-label="Notifications" initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1, transition: enter }} exit={{ opacity: 0, y: -6, transition: exit }}>
+          <motion.div className="bell-pop" role="region" aria-label="Notifications" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0, transition: enter }} exit={{ opacity: 0, y: -4, transition: exit }}>
             <div className="bell-head">
               <strong>Notifications</strong>
               {unreadSocial > 0 && <button type="button" className="bell-markall" onClick={() => notifActions.markAllRead()}>Mark all as read</button>}
@@ -106,13 +107,14 @@ export default function NotificationBell() {
                     {(list as Row[]).map((r) => (
                       <li key={r.id} className={r.unread === false ? "seen" : undefined}>
                         <button type="button" onClick={r.go}>
-                          <span className="bell-ico" aria-hidden="true"><r.icon size={16} strokeWidth={1.9} /></span>
+                          <span className="bell-ico" aria-hidden="true"><r.icon size={20} strokeWidth={1.75} /></span>
                           <span className="bell-text"><strong>{r.title}</strong><em>{r.sub}</em></span>
+                          {r.unread && !r.request && <i className="bell-dot" role="img" aria-label="Unread" />}
                         </button>
                         {r.request && (
-                          <div className="bell-actions">
-                            <button type="button" className="btn primary" onClick={async () => friendActions.tell(await friendActions.accept(r.request!.id), "Could not accept")}>Accept</button>
-                            <button type="button" className="btn" onClick={async () => friendActions.tell(await friendActions.ignore(r.request!.id), "Could not ignore")}>Ignore</button>
+                          <div className="bell-actions" role="group" aria-label={`Answer: ${r.title}`}>
+                            <button type="button" className="bell-act accept" onClick={async () => friendActions.tell(await friendActions.accept(r.request!.id), "Could not accept")}>Accept</button>
+                            <button type="button" className="bell-act ignore" onClick={async () => friendActions.tell(await friendActions.ignore(r.request!.id), "Could not ignore")}>Ignore</button>
                           </div>
                         )}
                       </li>
