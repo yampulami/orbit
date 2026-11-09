@@ -49,6 +49,10 @@ export default function Profile() {
     return () => { alive = false; };
   }, [session]);
 
+  // Until onboarding is finished the name chosen at sign up lives only in the account's sign-up data, so show that rather than nothing.
+  const signupName = session?.user.user_metadata?.username;
+  const shownUsername = username || (typeof signupName === "string" && signupName ? normalizeUsername(signupName) : null);
+
   async function submitUsername(e: FormEvent) {
     e.preventDefault();
     if (!session) return;
@@ -127,7 +131,9 @@ export default function Profile() {
         <Avatar name={name} id={uid} size={88} className="pf-av" />
         <div className="pf-info">
           <h2>{name}</h2>
-          {(username || (email && !email.endsWith("@guest.orbit"))) && <p className="muted pf-sub">{username ? `@${username}` : email}</p>}
+          {shownUsername
+            ? <p className="pf-handle" aria-label={`Username ${shownUsername}`}>@{shownUsername}</p>
+            : email && !email.endsWith("@guest.orbit") && <p className="muted pf-sub">{email}</p>}
           {about?.bio ? <p className="pf-bio"><RichText text={about.bio} /></p> : <p className="pf-bio muted">No bio yet. <button type="button" className="link-btn" onClick={() => setTab("edit")}>Add one</button></p>}
           {about && about.hobbies.length > 0 && <ul className="person-tags" aria-label="Free time">{about.hobbies.map((t) => <li key={t}><RichText text={t} /></li>)}</ul>}
         </div>
@@ -173,13 +179,13 @@ export default function Profile() {
                 <button type="button" className="btn" onClick={() => { setEditingUser(false); setUserError(""); }}>Cancel</button>
                 <p className={userError || (userDraft && checkUsername(userDraft)) ? "error" : "muted"} role={userError ? "alert" : undefined}>{userError || (userDraft && checkUsername(userDraft)) || "Letters, numbers and underscores. Nobody else can have the same one. You can also sign in with it."}</p>
               </form>
-            ) : username ? (
-              <p className="muted">@{username}. Friends use this to find you and add you to groups.</p>
+            ) : shownUsername ? (
+              <p className="muted">@{shownUsername}. Friends use this to find you and add you to groups.</p>
             ) : (
               <p className="muted">You have not chosen one yet. Friends use it to find you and add you to groups.</p>
             )}
           </div>
-          {!editingUser && <button type="button" className="btn" onClick={() => { setUserDraft(username ?? suggestUsername(name.split(" ")[0] ?? "")); setUserError(""); setEditingUser(true); }}><Pencil size={16} aria-hidden="true" />{username ? "Change" : "Choose username"}</button>}
+          {!editingUser && <button type="button" className="btn" onClick={() => { setUserDraft(shownUsername ?? suggestUsername(name.split(" ")[0] ?? "")); setUserError(""); setEditingUser(true); }}><Pencil size={16} aria-hidden="true" />{shownUsername ? "Change" : "Choose username"}</button>}
         </section>
       )}
 

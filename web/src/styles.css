@@ -3280,6 +3280,7 @@ a.avs-face{text-decoration:none;cursor:pointer}
 .pf-info{display:grid;gap:6px;min-width:0}
 .pf-info h2{margin:0;font-family:var(--display);font-weight:500;font-size:1.7rem;letter-spacing:-.01em}
 .pf-sub{margin:0;font-size:.9rem}
+.pf-handle{margin:0;font-size:var(--t-ui);font-weight:600;color:var(--accent-ink,var(--accent));overflow-wrap:anywhere}
 .pf-bio{margin:6px 0 0;max-width:60ch;line-height:1.55;font-size:.98rem}
 .pf-stats{display:flex;gap:18px;margin-top:6px;font-size:.88rem;color:var(--ink-soft)}
 .pf-stats b{color:var(--ink);font-weight:700}
