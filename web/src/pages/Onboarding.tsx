@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Building2, Bus, Check, Home, Sofa } from "lucide-react";
 import CampusSearch from "../components/CampusSearch";
+import SetupPreview from "../components/SetupPreview";
 import { useAuth } from "../lib/auth";
 import { demoAuth, isGuestEmail } from "../lib/demoAuth";
 import { arrival } from "../lib/arrival";
@@ -178,7 +179,7 @@ export default function Onboarding() {
         <button type="button" className="onb-out" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}>Sign out</button>
       </header>
       <div className="onb-bar" aria-hidden="true">{STEPS.map((s, n) => <span key={s} className={n <= i ? "on" : ""} />)}</div>
-      <div className="onb-stage solo">
+      <div className="onb-stage two">
         <div className="onb-panel">
           <div key={step} className="onb-step onb-fade">
             <h1>{title[step]}</h1>
@@ -194,6 +195,7 @@ export default function Onboarding() {
             </div>
           </div>
         </div>
+        <SetupPreview step={step} uni={uni} name={name} username={supabase ? normalizeUsername(username) : ""} tenure={tenure} living={living} interests={interests} />
       </div>
       {demo && <p className="onb-demo">Demo mode: your answers are saved on this device.</p>}
     </main>
