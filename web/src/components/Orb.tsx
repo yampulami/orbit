@@ -4,9 +4,8 @@ import { attachOrb, type OrbMood } from "../lib/orbGaze";
 export type OrbVariant = "violet" | "light" | "auto" | "wash" | "green";
 
 /** Orbit's little round character. Its eyes follow the pointer, look toward the field you are typing in, glance around when nothing is happening, and blink.
- *  `mood` changes how it behaves (happy hops, excited bounces, sleepy droops, loading floats and looks about). Tap it and it giggles.
- *  `react` plays a single reaction on top of the mood (see OrbitMascot). */
-export default function Orb({ size, variant = "violet", mood = "idle", className = "", poke = true, onPoke, react = null, reactKey = 0 }: { size?: number; variant?: OrbVariant; mood?: OrbMood; className?: string; poke?: boolean; onPoke?: () => void; react?: string | null; reactKey?: number }) {
+ *  `mood` changes how it behaves (happy hops, excited bounces, sleepy droops, loading floats and looks about). Tap it and it giggles. */
+export default function Orb({ size, variant = "violet", mood = "idle", className = "", poke = true, onPoke }: { size?: number; variant?: OrbVariant; mood?: OrbMood; className?: string; poke?: boolean; onPoke?: () => void }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [giggle, setGiggle] = useState(0);
   const shown: OrbMood = giggle ? "happy" : mood;
@@ -14,15 +13,6 @@ export default function Orb({ size, variant = "violet", mood = "idle", className
   moodRef.current = shown;
 
   useEffect(() => (ref.current ? attachOrb(ref.current, () => moodRef.current) : undefined), []);
-  // A one-off reaction (a squash, a hop). The attribute is taken off and put back so the same reaction can play twice in a row.
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    el.removeAttribute("data-react");
-    if (!react) return;
-    void el.offsetWidth;
-    el.setAttribute("data-react", react);
-  }, [react, reactKey]);
   useEffect(() => {
     if (!giggle) return;
     const t = window.setTimeout(() => setGiggle(0), 1100);

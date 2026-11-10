@@ -1,7 +1,7 @@
 /** What Orbit's orbs look at. One shared watcher serves every orb on the page: they follow the pointer, look toward the field you are typing in, and
  *  glance around on their own when nothing is happening. It pauses for orbs that are off screen or in a hidden tab, and holds still under reduced motion. */
 export type Look = { x: number; y: number };
-export type OrbMood = "idle" | "happy" | "excited" | "sleepy" | "loading" | "calm";
+export type OrbMood = "idle" | "happy" | "excited" | "sleepy" | "loading";
 
 const REST: Look = { x: 0, y: 0.08 };
 /** How long the pointer (or a focused field) keeps the eyes before they start wandering. */
@@ -27,7 +27,6 @@ export function moodTiming(mood: OrbMood): { blink: [number, number]; glance: [n
     case "loading": return { blink: [2200, 4200], glance: [500, 900], spread: 0.9 };
     case "excited": return { blink: [3000, 5000], glance: [350, 700], spread: 0.9 };
     case "happy": return { blink: [2500, 4500], glance: [900, 1800], spread: 0.5 };
-    case "calm": return { blink: [3500, 7000], glance: [2500, 5000], spread: 0.3 };
     default: return { blink: [2200, 6000], glance: [900, 3000], spread: 0.8 };
   }
 }
@@ -47,13 +46,6 @@ const onFocus = (e: FocusEvent) => {
   if (t instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) { focus = { el: t, at: performance.now() }; kick(); }
 };
 const onVisible = () => kick();
-
-/** Make every orb look at this element for a moment (an option that was just picked, a switch that was just flipped). */
-export function glanceAt(el: Element | null | undefined) {
-  if (!el) return;
-  focus = { el, at: performance.now() };
-  kick();
-}
 
 function listen() {
   if (listening || typeof window === "undefined") return;
