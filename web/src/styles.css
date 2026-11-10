@@ -5887,3 +5887,4 @@ p,li{text-wrap:pretty}
   .onb-stage.two{grid-template-columns:minmax(0,1fr);gap:24px}
   .sp{position:static}
 }
+.media-view img{max-height:calc(100dvh - 48px)}
