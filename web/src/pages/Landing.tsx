@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "../lib/auth";
 import { ThemeToggleButton } from "../components/ThemeControls";
@@ -26,7 +26,15 @@ function useFooterLook() {
 }
 
 export default function Landing() {
-  const { session } = useAuth();
+  const { session, signInGuest } = useAuth();
+  const nav = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState("");
+  async function tryDemo() {
+    setBusy(true); setProblem("");
+    const err = await signInGuest();
+    if (err) { setProblem(err); setBusy(false); } else nav("/onboarding", { replace: true });
+  }
   const look = useFooterLook();
   return (
     <>
@@ -53,7 +61,9 @@ export default function Landing() {
           </motion.p>
           <motion.div className="row" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
             <Link className="btn primary" data-cta to={session ? "/app" : "/signup"}>{session ? "Open app" : "Create your account"}</Link>
+            {!session && <button type="button" className="land-demo" disabled={busy} onClick={() => void tryDemo()}>{busy ? "Opening…" : "Try the demo"}</button>}
           </motion.div>
+          {problem && <p className="muted" role="alert">{problem}</p>}
         </header>
 
       </div>

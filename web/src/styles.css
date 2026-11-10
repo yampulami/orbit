@@ -5821,3 +5821,5 @@ p,li{text-wrap:pretty}
 .nav .btn{border-color:transparent}
 .land-hero .btn:hover,.nav .btn:hover{background:none;border-color:var(--ink-soft)}
 [data-theme=dark] .land-hero .btn.primary,[data-theme=dark] .nav .btn.primary{color:var(--ink);background:none}
+.land-demo{min-height:44px;padding:0 12px;border:0;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-meta);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.land-demo:hover:not(:disabled){color:var(--ink)}
