@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
+import { loadSnapshot, snapshotLine } from "../lib/campusSnapshot";
+import { campusKey } from "../shared/campus";
 import { TENURE_LABEL, homeLine, interestsLine, stepNote } from "../lib/setupPreview";
 import { placeOf, type University } from "../lib/universities";
 import type { Living, Tenure } from "../lib/profile";
@@ -8,9 +11,19 @@ import type { Living, Tenure } from "../lib/profile";
 export default function SetupPreview({ step, uni, name, username, tenure, living, interests }: {
   step: "campus" | "you" | "life" | "interests"; uni: University | null; name: string; username: string; tenure: Tenure | ""; living: Living | null; interests: string[];
 }) {
+  // What is going on at the chosen campus (counts only). Stays quiet if the database cannot say.
+  const [snap, setSnap] = useState<string | null>(null);
+  const picked = uni?.name ?? "";
+  useEffect(() => {
+    setSnap(null);
+    if (!picked) return;
+    let current = true;
+    void loadSnapshot(campusKey(picked)).then((s) => { if (current) setSnap(snapshotLine(s)); });
+    return () => { current = false; };
+  }, [picked]);
   const first = name.trim().split(" ")[0] ?? "";
   const rows: { key: string; label: string; done: boolean; text: string }[] = [
-    { key: "campus", label: "Campus", done: !!uni, text: uni ? `${uni.name}${placeOf(uni) ? `, ${placeOf(uni)}` : ""}` : "Not chosen yet" },
+    { key: "campus", label: "Campus", done: !!uni, text: uni ? `${uni.name}${placeOf(uni) ? `, ${placeOf(uni)}` : ""}${snap ? `. ${snap[0].toUpperCase()}${snap.slice(1)}.` : ""}` : "Not chosen yet" },
     { key: "home", label: "Home", done: !!living, text: homeLine(living) },
     { key: "standing", label: "Standing", done: !!tenure, text: tenure ? `${TENURE_LABEL[tenure]}. Only you see this.` : "Only you will see this." },
     { key: "interests", label: "Interests", done: interests.length > 0, text: interestsLine(interests) },
