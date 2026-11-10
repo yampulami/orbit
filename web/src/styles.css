@@ -5815,3 +5815,9 @@ p,li{text-wrap:pretty}
 /* Landing: the faces are the hero; the dotted word is only the footer's signature. */
 .land-fine{margin:0;border-top:1px solid var(--line);padding:16px clamp(20px,3.4vw,44px) 28px;font-size:var(--t-meta);color:var(--ink-soft);background:var(--bg)}
 .land-fine a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+
+/* Landing: quiet. One hairline button, plain nav links, a dim dotted word. */
+.land-hero .btn,.nav .btn{background:none;border:1px solid var(--line);color:var(--ink);font-weight:500;box-shadow:none}
+.nav .btn{border-color:transparent}
+.land-hero .btn:hover,.nav .btn:hover{background:none;border-color:var(--ink-soft)}
+[data-theme=dark] .land-hero .btn.primary,[data-theme=dark] .nav .btn.primary{color:var(--ink);background:none}

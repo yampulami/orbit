@@ -7,13 +7,6 @@ import LandingOrbs from "../components/LandingOrbs";
 import Orb from "../components/Orb";
 import HalftoneWordmark from "../components/HalftoneWordmark";
 
-const inside = [
-  { title: "Your campus feed", body: "Posts, events and listings, only from your university." },
-  { title: "Messages and groups", body: "Chats for clubs, classes and friends." },
-  { title: "Plans that work", body: "Plan a hangout, answer yes or no, see it on one calendar." },
-  { title: "Safety built in", body: "Blocking, reporting and campus-only data from day one." },
-];
-
 /** The footer's dots are drawn on a canvas, which cannot read CSS variables, so the page's own colours and fonts are read here and follow light and dark. */
 function useFooterLook() {
   const [look, setLook] = useState<{ palette: { background: string; ink: string; warm: string }; display: string; text: string } | null>(null);
@@ -21,7 +14,7 @@ function useFooterLook() {
     const read = () => {
       const cs = getComputedStyle(document.documentElement);
       const v = (name: string) => cs.getPropertyValue(name).trim();
-      setLook({ palette: { background: v("--bg"), ink: v("--ink"), warm: v("--accent") }, display: v("--display"), text: v("--font") });
+      setLook({ palette: { background: v("--bg"), ink: v("--ink-soft"), warm: v("--accent") }, display: v("--display"), text: v("--font") });
     };
     read();
     // Watch the page's own theme switch rather than guessing when it has finished.
@@ -47,7 +40,6 @@ export default function Landing() {
             ) : (
               <>
                 <Link className="btn" to="/login">Sign in</Link>
-                <Link className="btn primary" to="/signup">Create account</Link>
               </>
             )}
           </div>
@@ -57,17 +49,13 @@ export default function Landing() {
           <LandingOrbs />
           <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>Campus life, in one place.</motion.h1>
           <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            Your feed, groups, messages and plans together. Built for students, private to your campus.
+            Feed, chats and plans for your campus.
           </motion.p>
           <motion.div className="row" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
             <Link className="btn primary" data-cta to={session ? "/app" : "/signup"}>{session ? "Open app" : "Create your account"}</Link>
-            <a className="btn" data-cta href="#inside">See what’s inside</a>
           </motion.div>
         </header>
 
-        <section id="inside" className="land-inside" aria-label="What is inside Orbit">
-          {inside.map((f) => <div key={f.title}><h2>{f.title}</h2><p className="muted">{f.body}</p></div>)}
-        </section>
       </div>
       {look && (
         <HalftoneWordmark
@@ -82,7 +70,7 @@ export default function Landing() {
           height="clamp(180px, 17vw, 260px)"
         />
       )}
-      <p className="land-fine">Orbit, a senior capstone project. Sign-up does not verify university enrollment. <Link to="/terms">Terms</Link> · <Link to="/privacy">Privacy</Link> · <a href="mailto:orbit.app.mails@gmail.com">Contact</a></p>
+      <p className="land-fine">Capstone project, not verified by any university. <Link to="/terms">Terms</Link> · <Link to="/privacy">Privacy</Link> · <a href="mailto:orbit.app.mails@gmail.com">Contact</a></p>
     </>
   );
 }
