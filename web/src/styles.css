@@ -5823,3 +5823,22 @@ p,li{text-wrap:pretty}
 [data-theme=dark] .land-hero .btn.primary,[data-theme=dark] .nav .btn.primary{color:var(--ink);background:none}
 .land-demo{min-height:44px;padding:0 12px;border:0;background:none;color:var(--ink-soft);font:inherit;font-size:var(--t-meta);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .land-demo:hover:not(:disabled){color:var(--ink)}
+
+/* Password strength: flat bars on hairlines, one accent for strong, no traffic lights. */
+.pws{display:grid;gap:8px;margin:10px 0 2px;text-align:left}
+.pws-bars{display:grid;gap:6px}
+.pws-cell{position:relative;height:4px;border-radius:2px;overflow:hidden;background:var(--line)}
+.pws-fill{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);border-radius:2px;background:var(--ink-soft);transition:background-color .2s}
+.pws-fair .pws-fill{background:var(--ink)}
+.pws-strong .pws-fill{background:var(--accent)}
+.pws-line{display:flex;justify-content:space-between;gap:12px;min-height:20px;font-size:var(--t-meta);line-height:20px;color:var(--ink-soft)}
+.pws-words{display:inline-grid;font-weight:600}
+.pws-words>span{grid-area:1/1;white-space:nowrap}
+.pws-bad{font-size:var(--t-micro);white-space:nowrap}
+.pws-rules{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.pws-rules li{display:flex;align-items:center;gap:8px;font-size:var(--t-meta);color:var(--ink-soft);transition:color .2s}
+.pws-rules li.met{color:var(--ink)}
+.pws-box{display:grid;place-items:center;flex:none;width:14px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--line);color:var(--bg);transition:background-color .2s}
+.pws-rules li.met .pws-box{background:var(--ink);box-shadow:none}
+.pws-box svg{width:9px;height:9px}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

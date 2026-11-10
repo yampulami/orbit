@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import PasswordStrength from "../components/PasswordStrength";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -92,6 +93,7 @@ export default function ForgotPassword() {
               <button type="button" className="pw-eye" aria-label={show ? "Hide password" : "Show password"} aria-pressed={show} onClick={() => setShow((v) => !v)}>{show ? <EyeOff size={18} /> : <Eye size={18} />}</button>
             </span>
           </label>
+          {password && <PasswordStrength value={password} />}
           <label className="field">New password again<input type={show ? "text" : "password"} required minLength={MIN_PASSWORD} autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} /></label>
           {error && <p className="error" role="alert">{error}</p>}
           <button className="btn primary" disabled={busy}>{busy ? "Saving…" : "Set new password"}</button>

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import PasswordStrength from "./PasswordStrength";
 import { Eye, EyeOff } from "lucide-react";
 import { changePassword, checkNewPassword, resetAvailable } from "../lib/passwordReset";
 
@@ -46,10 +47,11 @@ export function AccountCard({ email, username }: { email: string; username: stri
             <label>New password
               <input type={show ? "text" : "password"} required minLength={8} autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} />
             </label>
+            {next && <PasswordStrength value={next} />}
             <label>New password again
               <input type={show ? "text" : "password"} required minLength={8} autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} />
             </label>
-            <p className="muted">At least 8 characters.</p>
+            
             {error && <p className="error" role="alert">{error}</p>}
             <div className="account-actions">
               <button className="btn primary" disabled={busy}>{busy ? "Saving…" : "Save new password"}</button>

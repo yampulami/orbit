@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import PasswordStrength from "../components/PasswordStrength";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../lib/auth";
@@ -115,6 +116,7 @@ export default function AuthPage({ mode }: { mode: "login" | "signup" }) {
           </span>
           <i className="merc-glow" />
         </label>
+        {mode !== "login" && password && <PasswordStrength value={password} />}
         {mode === "login" && !demo && <p className="merc-forgot"><Link to="/forgot">Forgot password?</Link></p>}
         {mode === "signup" && (
           <label className="auth-agree">
