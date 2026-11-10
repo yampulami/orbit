@@ -5888,3 +5888,13 @@ p,li{text-wrap:pretty}
   .sp{position:static}
 }
 .media-view img{max-height:calc(100dvh - 48px)}
+
+/* Photo gallery: arrows at the sides, a count at the bottom */
+.media-nav{position:absolute;top:50%;margin-top:-24px;width:48px;height:48px;border:0;border-radius:8px;background:var(--surface);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.media-nav.prev{left:16px}
+.media-nav.next{right:16px}
+.media-nav:hover{background:var(--panel)}
+.media-count{position:absolute;bottom:16px;left:0;right:0;margin:0;text-align:center;font-size:var(--t-meta);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.media-view-wait{width:min(480px,70vw);height:min(320px,50vh);border-radius:8px}
+.media-view img{touch-action:pan-y}
+@media (max-width:600px){.media-nav{width:44px;height:44px;margin-top:-22px}.media-nav.prev{left:8px}.media-nav.next{right:8px}}
