@@ -5,7 +5,7 @@ import CampusSearch from "../components/CampusSearch";
 import { useAuth } from "../lib/auth";
 import { demoAuth, isGuestEmail } from "../lib/demoAuth";
 import { arrival } from "../lib/arrival";
-import { checkUsername, normalizeUsername, suggestUsername } from "../lib/username";
+import { checkUsername, normalizeUsername, suggestUsername, usernameIsFree } from "../lib/username";
 import { feedApi } from "../lib/feedData";
 import { resetCampus } from "../lib/campus";
 import { pushProfile, saveProfile, type Living, type Profile, type Tenure } from "../lib/profile";
@@ -53,6 +53,17 @@ export default function Onboarding() {
   const [interests, setInterests] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  // Say whether the username is free as it is typed (the same check the sign up form uses), so a taken one is never carried to the end.
+  const [availability, setAvailability] = useState<"idle" | "bad" | "checking" | "free" | "taken" | "unknown">("idle");
+  useEffect(() => {
+    if (!supabase) return;
+    if (!username) { setAvailability("idle"); return; }
+    if (checkUsername(username)) { setAvailability("bad"); return; }
+    setAvailability("checking");
+    let current = true;
+    const t = setTimeout(() => { void usernameIsFree(username).then((free) => { if (current) setAvailability(free === null ? "unknown" : free ? "free" : "taken"); }); }, 350);
+    return () => { current = false; clearTimeout(t); };
+  }, [username]);
   useEffect(() => { if (supabase && !userEdited) setUsername(suggestUsername(name.trim().split(" ")[0] ?? "")); }, [name, userEdited]);
 
   const meta = session?.user.user_metadata as { name?: string } | undefined;
@@ -69,7 +80,7 @@ export default function Onboarding() {
   const last = i === STEPS.length - 1;
   const can: Record<Step, boolean> = {
     campus: !!uni && validCampus(uni.name),
-    you: name.trim().length >= 1 && (!supabase || !checkUsername(username)),
+    you: name.trim().length >= 1 && (!supabase || (!checkUsername(username) && availability !== "checking" && availability !== "taken")),
     life: !!tenure && !!living,
     interests: true,
   };
@@ -120,7 +131,9 @@ export default function Onboarding() {
         {supabase && (
           <label className="field onb-username"><span className="onb-label">Username</span>
             <span className="onb-at"><span aria-hidden="true">@</span><input className="onb-input" value={username} maxLength={20} autoCapitalize="none" autoCorrect="off" spellCheck={false} aria-describedby="onb-username-help" onChange={(e) => { setUserEdited(true); setUsername(normalizeUsername(e.target.value).replace(/[^a-z0-9_]/g, "")); }} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder="username" /></span>
-            <small id="onb-username-help" className={username && checkUsername(username) ? "error" : "muted"}>{username && checkUsername(username) ? checkUsername(username) : "Friends find you and add you to groups with this. Letters, numbers and underscores."}</small>
+            <small id="onb-username-help" className={availability === "bad" || availability === "taken" ? "error" : availability === "free" ? "ok" : "muted"} role={availability === "taken" || availability === "bad" ? "alert" : undefined}>
+              {availability === "bad" ? checkUsername(username) : availability === "checking" ? "Checking…" : availability === "free" ? `@${normalizeUsername(username)} is available` : availability === "taken" ? "That username is taken. Try another." : availability === "unknown" ? "We could not check that just now. You can carry on." : "Friends find you and add you to groups with this. Letters, numbers and underscores."}
+            </small>
           </label>
         )}
       </>

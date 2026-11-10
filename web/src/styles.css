@@ -5861,3 +5861,4 @@ p,li{text-wrap:pretty}
 .onb.calm .onb-next{display:inline-flex;align-items:center;gap:8px}
 .onb.calm select.onb-input{appearance:auto}
 @media (prefers-reduced-motion:reduce){.onb-fade{animation:none}}
+.onb small.ok{color:var(--ink)}
