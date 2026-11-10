@@ -5720,3 +5720,8 @@ p,li{text-wrap:pretty}
 
 /* The name pill over a face sizes itself to the name. Inside a list row that breaks long words anywhere, it had shrunk to the width of one letter. */
 .avs-face::after{width:max-content;max-width:min(260px,70vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;overflow-wrap:normal;word-break:normal}
+
+/* While the audience list is open, the post box rises above the sticky filter row below it, so the list is never cut off. */
+.composer:has(.audience.choosing){position:relative;z-index:30}
+.audience.choosing{z-index:40}
+.audience.choosing{width:max-content;max-width:min(640px,calc(100vw - 48px))}
