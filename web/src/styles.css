@@ -5751,3 +5751,10 @@ p,li{text-wrap:pretty}
 .qcard-x{position:absolute;top:8px;right:8px;width:28px;height:28px;border:0;border-radius:6px;background:var(--panel);color:var(--ink);display:grid;place-items:center;cursor:pointer}
 .qcard-x::after{content:"";position:absolute;inset:-8px}
 .qcard-x:hover{background:var(--raised)}
+
+/* The repost button and its two-choice menu (Repost / Quote), like X's. */
+.rp-rep{position:relative;display:inline-flex}
+.rp-rep>button[aria-pressed=true]{color:var(--accent)}
+.rp-menu{position:absolute;left:0;top:calc(100% + 4px);z-index:40;display:grid;min-width:180px;padding:6px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 16px 32px -18px rgba(0,0,0,.6)}
+.rp-acts .rp-menu button{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--ink);font:inherit;font-size:var(--t-ui);font-weight:500;text-align:left;cursor:pointer}
+.rp-acts .rp-menu button:hover,.rp-acts .rp-menu button:focus-visible{background:var(--panel)}

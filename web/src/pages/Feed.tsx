@@ -14,7 +14,7 @@ import { MomentsBar } from "../components/Moments";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { Check, ChevronDown, Heart, MessageCircle, Quote, Send, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Heart, MessageCircle, Pencil, Repeat2, Send, Trash2 } from "lucide-react";
 import QuoteCard from "../components/QuoteCard";
 import { useAuth } from "../lib/auth";
 import { feedApi as api, type Row } from "../lib/feedData";
@@ -105,6 +105,15 @@ export default function Feed() {
   // Quoting: the post being quoted shows above the box, and the new post points at it. Quoted posts that are not in the newest list are fetched by id.
   const [quoting, setQuoting] = useState<Row | null>(null);
   const [fetched, setFetched] = useState<Record<string, Row | null>>({});
+  // The repost button opens a small menu, like X: Repost (or Undo repost) and Quote.
+  const [repostFor, setRepostFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!repostFor) return;
+    const away = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest?.(".rp-rep")) setRepostFor(null); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setRepostFor(null); };
+    document.addEventListener("mousedown", away); document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
+  }, [repostFor]);
   const [sp] = useSearchParams();
   const target = sp.get("post");
   // The assistant has its own button up here, so its floating one steps out of the way on this page.
@@ -225,6 +234,20 @@ export default function Feed() {
     await run(() => api.like(p.id, me, !liked));
   }
 
+  /** Repost: a copy of the post kept on your profile (Reposts tab), pointing at the original. It can be undone from here or from your profile. */
+  const myRepostOf = (p: Row) => posts.find((r) => r.author_id === me && r.payload.repostOf === p.id);
+  const unrepost = (id: string) => run(async () => { await api.remove(id); await load(); });
+  const repost = (p: Row) => {
+    const had = myRepostOf(p);
+    if (had) { void unrepost(had.id); return; }
+    if (!campus) return;
+    const id = crypto.randomUUID();
+    void run(async () => {
+      await api.publish({ id, campus_key: campus.key, author_id: me, author_name: name, community: p.community, body: p.payload.body ?? p.payload.text ?? "", repostOf: p.id, repostName: p.author_name });
+      await load();
+      undo.show(`Reposted ${p.author_name}’s post`, { onUndo: () => { void unrepost(id); }, commit: () => {} });
+    });
+  };
   // Deleting is undoable: the post leaves the feed now, and the real delete runs after the undo window.
   const remove = (p: Row) => {
     removing.current.add(p.id);
@@ -341,6 +364,7 @@ export default function Feed() {
             const expanded = open === p.id;
             const subject = (p.payload.title ?? p.payload.body ?? p.payload.text ?? "").slice(0, 40);
             const replies = p.post_comments.length;
+            const reposts = posts.filter((r) => r.payload.repostOf === p.id || r.payload.quote?.id === p.id).length; // reposts and quotes, among the posts loaded
             return (
               <article key={p.id} id={`post-${p.id}`} className="rp" tabIndex={-1} aria-description="Press l to like, r for replies, j and k to move between posts." aria-label={`Post by ${p.author_name}`}>
                 <PersonLink id={p.author_id} className="rp-avlink" decorative><Avatar name={p.author_name} id={p.author_id} size={40} className="rp-av" /></PersonLink>
@@ -358,7 +382,15 @@ export default function Feed() {
                   <div className="rp-acts">
                     <button type="button" aria-expanded={expanded} aria-label={`Reply${replies > 0 ? ` · ${replies}` : ""}, ${p.author_name}’s post`} onClick={() => setOpen(expanded ? null : p.id)}><MessageCircle size={16} aria-hidden="true" />Reply{replies > 0 ? ` · ${replies}` : ""}</button>
                     <button type="button" aria-pressed={liked} aria-label={`${liked ? "Liked" : "Like"}${p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}, ${p.author_name}’s post`} onClick={() => like(p)}><Heart size={16} aria-hidden="true" fill={liked ? "currentColor" : "none"} />{liked ? "Liked" : "Like"}{p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}</button>
-                    <button type="button" aria-label={`Quote ${p.author_name}’s post`} onClick={() => startQuote(p)}><Quote size={16} aria-hidden="true" />Quote</button>
+                    <span className="rp-rep">
+                      <button type="button" aria-haspopup="menu" aria-expanded={repostFor === p.id} aria-pressed={!!myRepostOf(p)} aria-label={`Repost or quote ${p.author_name}’s post${reposts > 0 ? `, ${reposts} so far` : ""}`} onClick={() => setRepostFor(repostFor === p.id ? null : p.id)}><Repeat2 size={16} aria-hidden="true" />Repost{reposts > 0 ? ` · ${reposts}` : ""}</button>
+                      {repostFor === p.id && (
+                        <div className="rp-menu" role="menu" aria-label="Repost or quote">
+                          <button type="button" role="menuitem" autoFocus onClick={() => { setRepostFor(null); repost(p); }}><Repeat2 size={18} aria-hidden="true" />{myRepostOf(p) ? "Undo repost" : "Repost"}</button>
+                          <button type="button" role="menuitem" onClick={() => { setRepostFor(null); startQuote(p); }}><Pencil size={18} aria-hidden="true" />Quote</button>
+                        </div>
+                      )}
+                    </span>
                     <button type="button" aria-label={`Share, ${p.author_name}’s post`} onClick={() => setSharing(p)}><Send size={16} aria-hidden="true" />Share</button>
                     {p.author_id === me && <button type="button" aria-label={`Delete, your post “${subject}”`} onClick={() => remove(p)}><Trash2 size={16} aria-hidden="true" />Delete</button>}
                     <RepliedBy comments={p.post_comments} />
