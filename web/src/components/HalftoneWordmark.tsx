@@ -1,6 +1,7 @@
-// Halftone Wordmark Footer, from 21st.dev, adapted for Orbit: links can be in-app routes (`to`), and the word waits for its font before it is drawn.
+// Halftone Wordmark, from 21st.dev ("Halftone Wordmark Footer"), adapted for Orbit: links can be in-app routes (`to`), the word waits for its font before it is drawn,
+// and it can be a full page header: `tag="header"`, `bare` (no link columns) and `children` laid over the dots.
 //
-// A site footer whose wordmark is set enormous and cropped by the bottom edge, printed as a field of halftone dots. Each dot is
+// A wordmark is set enormous and cropped by the bottom edge, printed as a field of halftone dots. Each dot is
 // sized by how much of the letter covers its cell, so the type keeps its edges at any scale. Move across it and the dots part
 // around the pointer on springs, warming in colour as they are pushed off their place; click and a shock ring runs through the
 // word. Above it sit the studio line, tracked link columns and a back-to-top, separated by a hairline, all over a fine print grain.
@@ -35,7 +36,7 @@ export interface FooterColumn {
   links: FooterLink[]
 }
 
-export interface HalftoneWordmarkFooterProps {
+export interface HalftoneWordmarkProps {
   /** The giant word printed in dots. Lowercase reads best. */
   wordmark?: string
   /** Top-left studio line. */
@@ -70,6 +71,12 @@ export interface HalftoneWordmarkFooterProps {
   height?: string
   /** Extra root class names. */
   className?: string
+  /** The element to render: a page footer by default, or "header" / "section" when the dots are the top of a page. */
+  tag?: "footer" | "header" | "section"
+  /** Leave out the link columns and the back-to-top row. Use with `children`. */
+  bare?: boolean
+  /** Anything to lay over the dots (a headline, buttons). It sits above the canvas and fills the root. */
+  children?: React.ReactNode
 }
 
 const PRESETS: { [K in HalftonePreset]: HalftonePalette } = {
@@ -169,6 +176,7 @@ const HWF_CSS = `
   border-top: 0.5px solid color-mix(in srgb, var(--hwf-ink) 16%, transparent);
   font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
 }
+.hwf-over { position: relative; z-index: 1; height: 100%; }
 .hwf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 720px) {
   .hwf-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 18px; }
@@ -179,7 +187,7 @@ const HWF_CSS = `
 }
 `
 
-export default function HalftoneWordmarkFooter({
+export default function HalftoneWordmark({
   wordmark = "halden",
   label = "Halden Studio",
   meta = "©2026 · Oslo / Lisbon",
@@ -197,7 +205,11 @@ export default function HalftoneWordmarkFooter({
   monoFamily = MONO_STACK,
   height = "560px",
   className = "",
-}: HalftoneWordmarkFooterProps) {
+  tag = "footer",
+  bare = false,
+  children,
+}: HalftoneWordmarkProps) {
+  const Root = tag as "footer" // the same element whichever tag is asked for
   const colors = { ...(PRESETS[preset] || PRESETS.night), ...(palette || {}) }
   const rootRef = React.useRef(null as HTMLElement | null)
   const canvasRef = React.useRef(null as HTMLCanvasElement | null)
@@ -456,7 +468,7 @@ export default function HalftoneWordmarkFooter({
   }
 
   return (
-    <footer
+    <Root
       ref={rootRef}
       className={"hwf-root " + className}
       style={
@@ -471,6 +483,8 @@ export default function HalftoneWordmarkFooter({
       <style>{HWF_CSS}</style>
       <canvas ref={canvasRef} aria-hidden="true" />
       <span className="hwf-sr">{wordmark}</span>
+      {children ? <div className="hwf-over">{children}</div> : null}
+      {!bare && (<>
       <div className="hwf-top">
         <div className="hwf-brand">
           <strong>{label}</strong>
@@ -496,7 +510,8 @@ export default function HalftoneWordmarkFooter({
           </button>
         ) : null}
       </div>
-    </footer>
+      </>)}
+    </Root>
   )
 }
 

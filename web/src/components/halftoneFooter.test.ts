@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hwfFitSize, hwfHex, hwfRadius, hwfStep, hwfWarmth } from "./HalftoneWordmarkFooter";
+import { hwfFitSize, hwfHex, hwfRadius, hwfStep, hwfWarmth } from "./HalftoneWordmark";
 
 describe("halftone footer helpers", () => {
   it("reads hex colours, short or long, and refuses anything else", () => {
