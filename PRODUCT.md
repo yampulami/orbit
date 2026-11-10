@@ -143,7 +143,7 @@ Schedule Sync answers "when can we meet?"; Moments answers "what could we do tog
 
 From the full-app critique (`.impeccable/critique/`): the app had eight equal tabs and told the same things in several places. Now:
 
-- **Four places and You.** The bar is Home, Chats, Plans, Campus, then You (your picture) and a New post button; **More** holds Shortcuts, light/dark, the sidebar choice and Sign out. **Roommates** shows on its own only for students who said they live in residence (`living: "residence"`); everyone else finds it under More. The phone's bottom bar is Home, Chats, Plans, Campus, More.
+- **Four places and You.** The bar is Home, Chats, Plans, Campus, then Roommates, You (your picture) and a New post button; **More** holds Shortcuts, light/dark, the sidebar choice and Sign out. **Roommates** is on the bar for everyone (anyone can share a household). The phone's bottom bar is Home, Chats, Plans, Campus, More.
 - **Free time is inside Plans** as the "Find a time" tab (`/app/plans?tab=free`); **the map is inside Campus** as the "Map" tab next to Events and Clubs (`/app/campus?tab=map`). The old `/app/sync` and `/app/map` addresses redirect, and keep any state a link carried.
 - **The labelled bar** (names beside the icons) is the default from 1360px wide; narrower windows keep the icons-only bar that opens on hover. Either can be changed under More, Sidebar.
 - **Said once.** Plans waiting for an answer are told on Home (one line) and Plans; Chats only counts them on the Groups tab. Campus events use "Going" everywhere; "I'm in / Can't" is only for answering a friend's plan.

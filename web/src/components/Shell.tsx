@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Check, Keyboard, LayoutGrid, LogOut, Megaphone, MoreHorizontal, Moon, PanelLeft, Sofa, SquarePen, Sun } from "lucide-react";
 import { HomeIcon, MessagesIcon, PlansIcon } from "./icons";
-import { loadProfile } from "../lib/profile";
 import { prefetchIdle, prefetchRoute } from "../lib/prefetch";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
@@ -44,7 +43,7 @@ const base = [
   { to: "/app/plans", label: "Plans", icon: PlansIcon },
   { to: "/app/campus", label: "Campus", icon: Megaphone },
 ];
-/** Shown on its own only to students who live in residence. Everyone else still finds it under "More". */
+/** On the bar for everyone: any group of housemates can share a household, in residence or off campus. */
 const roommates = { to: "/app/roommates", label: "Roommates", icon: Sofa };
 /** The student's own picture is the icon for their profile. */
 function YouIcon({ size = 22 }: { size?: number; strokeWidth?: number }) {
@@ -60,9 +59,7 @@ export default function Shell() {
   const nav = useNavigate();
   const { session, signOut } = useAuth();
   const dark = useTheme() === "dark";
-  // Roommates is for people who live in residence; it stays one tap away under "More" for everyone else.
-  const resident = (session ? loadProfile(session.user.id)?.living : undefined) === "residence";
-  const items = resident ? [...base, roommates] : base;
+  const items = [...base, roommates];
   const railItems = [...items, you];
   useEffect(() => { prefetchIdle(); }, []); // the other pages download quietly once this one is up, so tapping them is instant
   const main = useRef<HTMLElement>(null);
@@ -183,11 +180,6 @@ export default function Shell() {
         <span className="spacer" />
         <div className="side-more">
         {moreOpen && <div className="side-utils" role="group" aria-label="More">
-          {!resident && (
-            <NavLink to="/app/roommates" title="Roommates" aria-label="Roommates" className={({ isActive }) => "navlink extra" + (isActive ? " active" : "")}>
-              <Sofa size={22} strokeWidth={1.75} /><span className="navtext">Roommates</span>
-            </NavLink>
-          )}
           <button className="navlink extra" title="Keyboard shortcuts · ?" aria-label="Keyboard shortcuts" onClick={() => window.dispatchEvent(new CustomEvent("orbit-shortcuts"))}>
             <Keyboard size={22} strokeWidth={1.75} />
             <span className="navtext">Shortcuts</span>
