@@ -5807,3 +5807,11 @@ p,li{text-wrap:pretty}
 .hl-cta .btn{border:1px solid var(--line);border-radius:8px;min-height:44px;padding:0 20px;transition:border-color .15s,background .15s}
 .hl-cta .btn:hover{background:none;border-color:var(--ink-soft)}
 .hl .hl-nav-act .btn,.hl .hl-cta .btn,[data-theme=dark] .hl .hl-cta .btn.primary,[data-theme=dark] .hl .hl-nav-act .btn{color:var(--ink);background:none}
+
+/* Landing: the faces are the hero; the dotted word is only the footer's signature. */
+.land-fine{margin:0;border-top:1px solid var(--line);padding:16px clamp(20px,3.4vw,44px) 28px;font-size:var(--t-meta);color:var(--ink-soft);background:var(--bg)}
+.land-fine a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+
+/* Landing: the faces are the hero; the dotted word is only the footer's signature. */
+.land-fine{margin:0;border-top:1px solid var(--line);padding:16px clamp(20px,3.4vw,44px) 28px;font-size:var(--t-meta);color:var(--ink-soft);background:var(--bg)}
+.land-fine a{color:inherit;text-decoration:underline;text-underline-offset:3px}
