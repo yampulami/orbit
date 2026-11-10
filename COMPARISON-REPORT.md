@@ -73,7 +73,7 @@
 - **Real-account testing** of message requests, friends' reposts and the ranked feed: so far tried in the demo and in tests only.
 - **Phone push** needs its keys set; **email notifications** are not built.
 - `DESIGN.md` still describes the old cream-and-violet look.
-- **Terms and privacy** are rewritten but still need a read-through by the advisor or a lawyer, and the team should confirm three facts in them: the contact email, whether the assistant's AI is switched on and which provider it uses, and that 13 is the age limit **(check)**.
+- **Terms and privacy** are rewritten and the three facts in them are confirmed (contact email orbit.app.mails@gmail.com, the assistant uses Groq, age limit 13). They are still a plain-language draft that the advisor or a lawyer should read.
 
 ---
 
@@ -82,7 +82,7 @@
 **A. This week: get it safe to put in front of students** (first-week-of-November testing is already here)
 1. **Two-account test day** (Yam and a teammate): friend request, repost and the "reposted" label, quote, message request and accept, find a time. Fix what breaks.
 2. **Email to caldwell.edu:** ask Caldwell IT to allow orbitcampus.org and add the DMARC record, so confirmation emails arrive fast.
-3. **Terms and privacy** are done as a draft: have Dr. Veksler or an advisor read them, and confirm the three facts noted in section 3. Still to do: **login and signup attempt limits**.
+3. **Terms and privacy** are done as a draft: the three facts in them are confirmed, so the next step is to have Dr. Veksler or an advisor read them. Still to do: **login and signup attempt limits**.
 4. **Fill the live site** with realistic posts, clubs, events and plans, and write the demo around **a student's normal day** (Dr. Veksler's feedback), shown live.
 
 **B. Next two weeks: bring back what the old version had**
