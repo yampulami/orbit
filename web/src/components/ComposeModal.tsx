@@ -9,7 +9,8 @@ import { Trash2, X } from "lucide-react";
 import CommunityPicker from "./CommunityPicker";
 import { useAuth } from "../lib/auth";
 import { draftActions, useDrafts } from "../lib/drafts";
-import { feedApi, type Campus } from "../lib/feedData";
+import { feedApi, type Campus, type Row } from "../lib/feedData";
+import QuoteCard from "./QuoteCard";
 import { progress } from "../lib/progress";
 import { undo } from "../lib/undo";
 import { enter, exit } from "../lib/motion";
@@ -22,7 +23,7 @@ const ago = (iso: string) => {
 };
 
 /** The new-post window opened by the round button in the sidebar. Works from any page. */
-export default function ComposeModal({ open, onClose, initialCommunity }: { open: boolean; onClose: () => void; initialCommunity?: Community }) {
+export default function ComposeModal({ open, onClose, initialCommunity, initialQuote }: { open: boolean; onClose: () => void; initialCommunity?: Community; /** A post to quote: it shows above the box and the new post points at it. */ initialQuote?: Row | null }) {
   const { session } = useAuth();
   const nav = useNavigate();
   const me = session?.user.id ?? "";
@@ -32,6 +33,7 @@ export default function ComposeModal({ open, onClose, initialCommunity }: { open
   const att = useAttachment(4); // up to four photos per post
   const [community, setCommunity] = useState<Community>("Everyone");
   const [campus, setCampus] = useState<Campus | null | undefined>(undefined); // undefined = still checking
+  const [quote, setQuote] = useState<Row | null>(null);
   const [view, setView] = useState<"write" | "drafts">("write");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -42,7 +44,7 @@ export default function ComposeModal({ open, onClose, initialCommunity }: { open
   useEffect(() => {
     if (!open) return;
     opener.current = document.activeElement;
-    setCampus(undefined); setError("");
+    setCampus(undefined); setError(""); setQuote(initialQuote ?? null);
     if (initialCommunity) setCommunity(initialCommunity);
     feedApi.campus().then(setCampus).catch(() => setCampus(null));
     const lock = document.body.style.overflow;
@@ -83,7 +85,7 @@ export default function ComposeModal({ open, onClose, initialCommunity }: { open
     setBusy(true); setError("");
     try {
       const id = crypto.randomUUID();
-      await feedApi.publish({ id, campus_key: campus.key, author_id: me, author_name: name, community, body });
+      await feedApi.publish({ id, campus_key: campus.key, author_id: me, author_name: name, community, body, ...(quote ? { quote: quote.id } : {}) });
       progress.log("post");
       window.dispatchEvent(new Event("orbit-posts-changed"));
       undo.show(`Posted to ${community}`, {
@@ -132,8 +134,9 @@ export default function ComposeModal({ open, onClose, initialCommunity }: { open
               <form onSubmit={post}>
                 <div className="compose-body">
                   <Avatar name={name} id={me || undefined} size={44} className="me" />
-                  <textarea ref={area} id="compose-text" value={text} maxLength={MAX} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder="What’s happening on campus?" aria-label="What’s happening on campus?" />
+                  <textarea ref={area} id="compose-text" value={text} maxLength={MAX} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} placeholder={quote ? "Add your comment" : "What’s happening on campus?"} aria-label={quote ? "Add your comment" : "What’s happening on campus?"} />
                 </div>
+                {quote && <QuoteCard row={quote} onRemove={() => setQuote(null)} />}
                 {error && <p className="error" role="alert">{error}</p>}
                 <AttachPreview a={att} />
                 <div className="compose-foot">

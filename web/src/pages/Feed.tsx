@@ -14,7 +14,8 @@ import { MomentsBar } from "../components/Moments";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { Check, ChevronDown, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Heart, MessageCircle, Quote, Send, Trash2 } from "lucide-react";
+import QuoteCard from "../components/QuoteCard";
 import { useAuth } from "../lib/auth";
 import { feedApi as api, type Row } from "../lib/feedData";
 import { communities, type Community } from "../shared/feed";
@@ -101,6 +102,9 @@ export default function Feed() {
   const [posting, setPosting] = useState(false);
   const [posted, setPosted] = useState("");
   const [sharing, setSharing] = useState<Row | null>(null);
+  // Quoting: the post being quoted shows above the box, and the new post points at it. Quoted posts that are not in the newest list are fetched by id.
+  const [quoting, setQuoting] = useState<Row | null>(null);
+  const [fetched, setFetched] = useState<Record<string, Row | null>>({});
   const [sp] = useSearchParams();
   const target = sp.get("post");
   // The assistant has its own button up here, so its floating one steps out of the way on this page.
@@ -165,6 +169,13 @@ export default function Feed() {
     if (c) setCommunity(c);
     composerRef.current?.focus();
   };
+  /** Quote a post: on a phone the new-post window opens with it; on a computer the box on this page takes it. */
+  const startQuote = (p: Row) => {
+    if (phone) { window.dispatchEvent(new CustomEvent("orbit-compose", { detail: { quote: p } })); return; }
+    setQuoting(p);
+    composerRef.current?.focus();
+    composerRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  };
   const rail = useRef<HTMLElement>(null);
   useStickyRail(rail, !loading && !!campus);
   const run = async (fn: () => Promise<void>) => { try { await fn(); } catch (e) { notice.show({ icon: "wifi", title: "That did not go through", message: `${(e as Error).message || "Something went wrong."} Check your connection and try again.` }); } };
@@ -174,6 +185,16 @@ export default function Feed() {
     setLoading(false);
   };
   useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    const have = new Set(posts.map((p) => p.id));
+    const want = [...new Set(posts.map((p) => p.payload.quote?.id).filter((id): id is string => !!id && !have.has(id) && !(id in fetched)))];
+    if (want.length === 0) return;
+    let alive = true;
+    api.byIds(want).then((rows) => { if (alive) setFetched((f) => { const next = { ...f }; for (const id of want) next[id] = rows.find((r) => r.id === id) ?? null; return next; }); }).catch(() => undefined);
+    return () => { alive = false; };
+  }, [posts]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** The post a quote points at: undefined while it is being looked up, null when it is gone. */
+  const quotedRow = (id: string): Row | null | undefined => posts.find((x) => x.id === id) ?? (id in fetched ? fetched[id] : undefined);
 
   // Posts, comments and likes from other students arrive on their own. Posts you have just deleted (and can still undo) stay out of the way.
   const removing = useRef(new Set<string>());
@@ -191,7 +212,7 @@ export default function Feed() {
     e.preventDefault();
     const text = att.compose(body).trim(); if (!campus || !text) return;
     setPosting(true);
-    await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community, body: text }); progress.log("post"); setBody(""); att.clear(); setChoosing(false); await load();
+    await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community, body: text, ...(quoting ? { quote: quoting.id } : {}) }); setQuoting(null); progress.log("post"); setBody(""); att.clear(); setChoosing(false); await load();
       setPosted(filter !== "All" && filter !== "Mine" && filter !== community ? `Posted for ${audience(community)}. Switch to Everything to see it.` : `Posted for ${audience(community)}. It is at the top of the list below.`);
       window.setTimeout(() => setPosted(""), 8000);
     });
@@ -255,8 +276,9 @@ export default function Feed() {
         {!phone && <form className={"composer" + (body || att.has ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
             <span className="sr">Write a post</span>
-            <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } else if (e.key === "Escape") { if (choosing) setChoosing(false); else e.currentTarget.blur(); } }} placeholder={`Lost a lanyard? Found a seat? Tell ${campus.name}.`} />
+            <textarea ref={composerRef} id="composer" rows={1} maxLength={MAX} value={body} onChange={(e) => setBody(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } else if (e.key === "Escape") { if (choosing) setChoosing(false); else e.currentTarget.blur(); } }} placeholder={quoting ? "Add your comment" : `Lost a lanyard? Found a seat? Tell ${campus.name}.`} />
           </label>
+          {quoting && <QuoteCard row={quoting} onRemove={() => setQuoting(null)} />}
           <AttachPreview a={att} />
           <div className="composer-row">
             <div className="aud-wrap" onKeyDown={(e) => { if (e.key === "Escape" && choosing) { e.stopPropagation(); setChoosing(false); (e.currentTarget.querySelector(".aud-trigger") as HTMLElement | null)?.focus(); } }}>
@@ -332,9 +354,11 @@ export default function Feed() {
                   </div>
                   {p.payload.title && <h3 className="rp-title">{p.payload.title}</h3>}
                   <p className="rp-body"><RichText text={p.payload.body ?? p.payload.text ?? ""} /></p>
+                  {p.payload.quote && <QuoteCard row={quotedRow(p.payload.quote.id)} />}
                   <div className="rp-acts">
                     <button type="button" aria-expanded={expanded} aria-label={`Reply${replies > 0 ? ` · ${replies}` : ""}, ${p.author_name}’s post`} onClick={() => setOpen(expanded ? null : p.id)}><MessageCircle size={16} aria-hidden="true" />Reply{replies > 0 ? ` · ${replies}` : ""}</button>
                     <button type="button" aria-pressed={liked} aria-label={`${liked ? "Liked" : "Like"}${p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}, ${p.author_name}’s post`} onClick={() => like(p)}><Heart size={16} aria-hidden="true" fill={liked ? "currentColor" : "none"} />{liked ? "Liked" : "Like"}{p.post_likes.length > 0 ? ` · ${p.post_likes.length}` : ""}</button>
+                    <button type="button" aria-label={`Quote ${p.author_name}’s post`} onClick={() => startQuote(p)}><Quote size={16} aria-hidden="true" />Quote</button>
                     <button type="button" aria-label={`Share, ${p.author_name}’s post`} onClick={() => setSharing(p)}><Send size={16} aria-hidden="true" />Share</button>
                     {p.author_id === me && <button type="button" aria-label={`Delete, your post “${subject}”`} onClick={() => remove(p)}><Trash2 size={16} aria-hidden="true" />Delete</button>}
                     <RepliedBy comments={p.post_comments} />

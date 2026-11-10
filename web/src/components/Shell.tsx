@@ -23,6 +23,7 @@ import ReminderAlerts from "./ReminderAlerts";
 import ClassAlerts from "./ClassAlerts";
 import ComposeModal from "./ComposeModal";
 import type { Community } from "../shared/feed";
+import type { Row } from "../lib/feedData";
 import GlobalSearch from "./GlobalSearch";
 import { setTheme, useTheme } from "../lib/theme";
 import { isVisible, useHang, YOU } from "../lib/hangouts";
@@ -125,10 +126,11 @@ export default function Shell() {
 
   const [composing, setComposing] = useState(false);
   const [startAt, setStartAt] = useState<Community | undefined>(undefined);
-  const newPost = () => { setStartAt(undefined); setComposing(true); };
+  const [quote, setQuote] = useState<Row | null>(null); // a post the new-post window is quoting
+  const newPost = () => { setStartAt(undefined); setQuote(null); setComposing(true); };
   // A page can ask for the new-post window (the feed does on a phone, where the post box is this window), naming who it is for.
   useEffect(() => {
-    const open = (e: Event) => { setStartAt((e as CustomEvent<{ community?: Community }>).detail?.community); setComposing(true); };
+    const open = (e: Event) => { const d = (e as CustomEvent<{ community?: Community; quote?: Row }>).detail; setStartAt(d?.community); setQuote(d?.quote ?? null); setComposing(true); };
     window.addEventListener("orbit-compose", open);
     return () => window.removeEventListener("orbit-compose", open);
   }, []);
@@ -268,7 +270,7 @@ export default function Shell() {
       <NoticeHost />
       <ReminderAlerts />
       <ClassAlerts />
-      <ComposeModal open={composing} initialCommunity={startAt} onClose={() => setComposing(false)} />
+      <ComposeModal open={composing} initialCommunity={startAt} initialQuote={quote} onClose={() => setComposing(false)} />
     </div>
   );
 }

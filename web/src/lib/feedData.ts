@@ -6,17 +6,19 @@ import { samplePostsFor } from "./demoPosts";
 export type Comment = { id: string; user_id: string; author_name: string; body: string; created_at: string; parent_id?: string | null };
 export type Row = {
   id: string; author_id: string; author_name: string; kind: string; community: string;
-  payload: { body?: string; text?: string; title?: string; /** A repost: the post it repeats, and who wrote that one. */ repostOf?: string; repostName?: string };
+  payload: { body?: string; text?: string; title?: string; /** A repost: the post it repeats, and who wrote that one. */ repostOf?: string; repostName?: string; /** A quote post: the post it quotes. Only the id is kept; the quoted post is read live, so words can never be put in someone else's mouth. */ quote?: { id: string } };
   created_at: string;
   post_likes: { user_id: string }[]; post_comments: Comment[];
 };
 export type Campus = { name: string; key: string };
-export type NewPost = { id: string; campus_key: string; author_id: string; author_name: string; community: string; body: string; repostOf?: string; repostName?: string };
+export type NewPost = { id: string; campus_key: string; author_id: string; author_name: string; community: string; body: string; repostOf?: string; repostName?: string; /** The id of the post being quoted. */ quote?: string };
 
 export interface FeedApi {
   campus(): Promise<Campus | null>;
   join(c: Campus, me: string): Promise<void>;
   list(): Promise<Row[]>;
+  /** Posts by id, for the ones a quote points at that are not in the newest list. Posts that are gone, or that you cannot see, are simply missing. */
+  byIds(ids: string[]): Promise<Row[]>;
   publish(p: NewPost): Promise<void>;
   like(postId: string, me: string, liked: boolean): Promise<void>;
   remove(id: string): Promise<void>;
@@ -24,6 +26,8 @@ export interface FeedApi {
 }
 
 function fail(error: { message: string } | null) { if (error) throw new Error(error.message); }
+
+const POST_COLUMNS = "id,author_id,author_name,kind,community,payload,created_at,post_likes(user_id),post_comments(id,user_id,author_name,body,created_at,parent_id)";
 
 const supaApi: FeedApi = {
   async campus() {
@@ -33,15 +37,21 @@ const supaApi: FeedApi = {
   async join(c, me) {
     fail((await supabase!.from("campus_memberships").upsert({ user_id: me, campus_key: c.key, campus_name: c.name, updated_at: new Date().toISOString() })).error);
   },
+  async byIds(ids) {
+    if (ids.length === 0) return [];
+    const { data, error } = await supabase!.from("campus_posts").select(POST_COLUMNS).in("id", ids.slice(0, 50));
+    fail(error);
+    return ((data ?? []) as unknown as Row[]).map((r) => ({ ...r, post_comments: [...r.post_comments].sort((a, b) => a.created_at.localeCompare(b.created_at)) }));
+  },
   async list() {
     const { data, error } = await supabase!.from("campus_posts")
-      .select("id,author_id,author_name,kind,community,payload,created_at,post_likes(user_id),post_comments(id,user_id,author_name,body,created_at,parent_id)")
+      .select(POST_COLUMNS)
       .order("created_at", { ascending: false }).limit(50);
     fail(error);
     return ((data ?? []) as unknown as Row[]).map((r) => ({ ...r, post_comments: [...r.post_comments].sort((a, b) => a.created_at.localeCompare(b.created_at)) }));
   },
   async publish(p) {
-    fail((await supabase!.from("campus_posts").insert({ id: p.id, campus_key: p.campus_key, author_id: p.author_id, author_name: p.author_name, kind: "post", community: p.community, payload: { body: p.body, ...(p.repostOf ? { repostOf: p.repostOf, repostName: p.repostName } : {}) } })).error);
+    fail((await supabase!.from("campus_posts").insert({ id: p.id, campus_key: p.campus_key, author_id: p.author_id, author_name: p.author_name, kind: "post", community: p.community, payload: { body: p.body, ...(p.repostOf ? { repostOf: p.repostOf, repostName: p.repostName } : {}), ...(p.quote ? { quote: { id: p.quote } } : {}) } })).error);
   },
   async like(postId, me, liked) {
     fail((liked ? await supabase!.from("post_likes").upsert({ post_id: postId, user_id: me }) : await supabase!.from("post_likes").delete().eq("post_id", postId).eq("user_id", me)).error);
@@ -107,8 +117,9 @@ const demoApi: FeedApi = {
     } catch { /* storage unavailable */ }
     return structuredClone(read().filter((r) => ((r.payload as { campus?: string }).campus ?? "caldwell-university") === key));
   },
+  async byIds(ids) { return structuredClone(read().filter((r) => ids.includes(r.id))); },
   async publish(p) {
-    write([{ id: p.id, author_id: p.author_id, author_name: p.author_name, kind: "post", community: p.community, created_at: new Date().toISOString(), payload: { body: p.body, campus: p.campus_key, ...(p.repostOf ? { repostOf: p.repostOf, repostName: p.repostName } : {}) } as Row["payload"], post_likes: [], post_comments: [] }, ...read()]);
+    write([{ id: p.id, author_id: p.author_id, author_name: p.author_name, kind: "post", community: p.community, created_at: new Date().toISOString(), payload: { body: p.body, campus: p.campus_key, ...(p.repostOf ? { repostOf: p.repostOf, repostName: p.repostName } : {}), ...(p.quote ? { quote: { id: p.quote } } : {}) } as Row["payload"], post_likes: [], post_comments: [] }, ...read()]);
   },
   async like(postId, me, liked) {
     write(read().map((r) => r.id !== postId ? r : { ...r, post_likes: liked ? [...r.post_likes.filter((l) => l.user_id !== me), { user_id: me }] : r.post_likes.filter((l) => l.user_id !== me) }));

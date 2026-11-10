@@ -5737,3 +5737,17 @@ p,li{text-wrap:pretty}
 .media-grid .media-img{margin:0;max-width:none;width:100%;height:100%;min-height:0;border-radius:0;box-shadow:none}
 .media-grid .media-img img{width:100%;height:100%;max-height:none;object-fit:cover}
 .attach-count{font-size:var(--t-meta);align-self:center}
+
+/* A quoted post inside another: a flat, hairline card with the author and the words. */
+.qcard{position:relative;display:grid;gap:6px;margin:10px 0 2px;padding:12px 14px;max-width:min(520px,100%);border-radius:12px;box-shadow:0 0 0 1px var(--line);background:none}
+.qcard-head{display:flex;align-items:center;gap:8px;min-width:0;color:var(--ink);text-decoration:none;font-size:var(--t-meta)}
+.qcard-head strong{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qcard-head span{color:var(--ink-soft);white-space:nowrap}
+.qcard-head:hover strong{text-decoration:underline;text-underline-offset:3px}
+.qcard-body{margin:0;font-size:var(--t-meta);line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.qcard-body .media-grid,.qcard-body .media-img{max-width:100%}
+.qcard-gone{margin:0;font-size:var(--t-meta)}
+.qcard-edit{padding-right:44px}
+.qcard-x{position:absolute;top:8px;right:8px;width:28px;height:28px;border:0;border-radius:6px;background:var(--panel);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.qcard-x::after{content:"";position:absolute;inset:-8px}
+.qcard-x:hover{background:var(--raised)}
