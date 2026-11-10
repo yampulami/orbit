@@ -5798,3 +5798,12 @@ p,li{text-wrap:pretty}
 .hl-foot a:hover{color:var(--ink)}
 @media (max-width:900px){.hl-inside{grid-template-columns:repeat(2,minmax(0,1fr))}.hl-glimpse{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:560px){.hl-inside{grid-template-columns:minmax(0,1fr)}.hl-cta .btn{flex:1 1 100%}.hl-nav-act .btn{white-space:nowrap}.hl-nav-act .btn.primary{display:none}}
+
+/* Landing: quiet controls. The nav is a plain text link, and the one button is a hairline outline that fills only on hover. */
+.hl-nav-act{gap:4px}
+.hl-nav-act .btn,.hl-cta .btn{background:none;border:0;box-shadow:none;color:var(--ink);font-weight:500}
+.hl-nav-act .btn:hover{background:none;text-decoration:underline;text-underline-offset:4px}
+.hl-nav-act .btn.primary{display:none}
+.hl-cta .btn{border:1px solid var(--line);border-radius:8px;min-height:44px;padding:0 20px;transition:border-color .15s,background .15s}
+.hl-cta .btn:hover{background:none;border-color:var(--ink-soft)}
+.hl .hl-nav-act .btn,.hl .hl-cta .btn,[data-theme=dark] .hl .hl-cta .btn.primary,[data-theme=dark] .hl .hl-nav-act .btn{color:var(--ink);background:none}
