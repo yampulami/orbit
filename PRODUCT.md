@@ -149,3 +149,13 @@ From the full-app critique (`.impeccable/critique/`): the app had eight equal ta
 - **Said once.** Plans waiting for an answer are told on Home (one line) and Plans; Chats only counts them on the Groups tab. Campus events use "Going" everywhere; "I'm in / Can't" is only for answering a friend's plan.
 - **Home's feed opens on "For you"** (open posts, for sale, and your own group: residents see Residents and Roommates, commuters see Commuters) with "Everything" one tap away.
 - **Feel.** Pages show an outline while they download instead of a blank screen, the main pages download quietly once the app is idle and when you point at them (`web/src/lib/prefetch.ts`), and pages leave room at the bottom for the assistant orb.
+
+### How the feed is ordered (2026-11-10)
+
+Plain rules in `web/src/lib/feedRank.ts` (tested), no hidden model, and nothing about a student leaves their device. The weights are hypotheses, not measured.
+
+- **Reposts arrive in the feed.** When a friend (or you) reposts a post, the original rises into the feed with "Jordan reposted" on it. After **3 hours** the repost drops away (it stays on that person's profile, Reposts tab). Reposts by people who are not your friends are not shown.
+- **For you** (the default, ranked). Score = how new it is (half-life 8 hours) + a friend reposted it (+3, a little more for each extra friend) + a friend wrote it (+1.2) + how much you have liked, replied to, reposted or quoted that person (up to +2) + how well it matches what you said you like in onboarding and what you have engaged with (up to +2.5) + a little for likes and replies from others (up to +1). What you wrote in the last 15 minutes stays on top. Never three posts in a row from one person.
+- **Everything and the audience filters** stay newest first (a post a friend just reposted counts as new again).
+- **What it learns** (`web/src/lib/feedSignals.ts`): likes, replies, reposts and quotes raise that person and that kind of post (food, study, sports, outdoors, gaming, creative, clubs, social, read from the words). Kept on the device, capped, fading with a two-week half-life. The order is worked out when the set of posts changes, so posts do not jump while you read, and what you do shows up on your next visit.
+- **Not built:** learning across devices, reading hobbies from the profile About section, hiding or "show less of this", and any measurement of whether the weights work.

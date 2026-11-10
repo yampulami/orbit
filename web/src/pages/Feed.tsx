@@ -3,7 +3,7 @@ import PersonName from "../components/PersonName";
 import { spoken, useLiveNames } from "../lib/directory";
 import { AttachButton, AttachPreview, useAttachment } from "../components/Attach";
 import Avatar from "../components/Avatar";
-import { Fragment, Suspense, lazy, useEffect, useRef, useState, type FormEvent } from "react";
+import { Fragment, Suspense, lazy, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useIsPhone } from "../lib/phone";
 import EmojiButton from "../components/EmojiButton";
 import RichText from "../components/RichText";
@@ -38,6 +38,9 @@ import { refreshOnReturn } from "../lib/privateDb";
 import { ago } from "../lib/dayWords";
 import { gradientFor } from "../lib/look";
 import { loadProfile } from "../lib/profile";
+import { useFriends } from "../lib/friends";
+import { REPOST_HOURS, rankFeed } from "../lib/feedRank";
+import { loadSignals, recordSignal } from "../lib/feedSignals";
 
 const MAX = 1000;
 /** What each audience is called on the page. "Everyone" is the open one; "Marketplace" is things for sale, not a group of people. */
@@ -162,7 +165,11 @@ export default function Feed() {
     return () => document.removeEventListener("mousedown", away);
   }, [choosing]);
   const [open, setOpen] = useState<string | null>(null);
-  const living = loadProfile(me)?.living;
+  const profile = loadProfile(me);
+  const living = profile?.living;
+  const { friends } = useFriends();
+  // What this student has liked, replied to and reposted, read once per visit so the order holds still while they read.
+  const [signals] = useState(() => loadSignals(me));
   const mineTags = FOR_YOU[living ?? ""] ?? null; // null when we do not know how they live: then there is nothing to tailor to
   const [filter, setFilter] = useState<Filter>(mineTags ? "Mine" : "All");
   // Writing a post while looking at one audience posts to that audience.
@@ -196,14 +203,23 @@ export default function Feed() {
   useEffect(() => { void load(); }, []);
   useEffect(() => {
     const have = new Set(posts.map((p) => p.id));
-    const want = [...new Set(posts.map((p) => p.payload.quote?.id).filter((id): id is string => !!id && !have.has(id) && !(id in fetched)))];
+    const friendIds = new Set(friends.map((f) => f.id));
+    const fresh = posts.filter((p) => p.payload.repostOf && (friendIds.has(p.author_id) || p.author_id === me) && Date.now() - Date.parse(p.created_at) <= REPOST_HOURS * 3_600_000).map((p) => p.payload.repostOf);
+    const want = [...new Set([...posts.map((p) => p.payload.quote?.id), ...fresh].filter((id): id is string => !!id && !have.has(id) && !(id in fetched)))];
     if (want.length === 0) return;
     let alive = true;
     api.byIds(want).then((rows) => { if (alive) setFetched((f) => { const next = { ...f }; for (const id of want) next[id] = rows.find((r) => r.id === id) ?? null; return next; }); }).catch(() => undefined);
     return () => { alive = false; };
-  }, [posts]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [posts, friends]); // eslint-disable-line react-hooks/exhaustive-deps
   /** The post a quote points at: undefined while it is being looked up, null when it is gone. */
   const quotedRow = (id: string): Row | null | undefined => posts.find((x) => x.id === id) ?? (id in fetched ? fetched[id] : undefined);
+  // The order of the feed. "For you" is ranked (friends' reposts, friends, your interests, what you have engaged with); everything else is newest first.
+  // It is worked out when the set of posts changes, not on every like, so posts do not jump around while you read. The posts shown are always the current ones.
+  const orderKey = `${filter === "Mine" ? "r" : "l"}|${posts.map((p) => p.id).join(",")}|${Object.keys(fetched).join(",")}|${friends.map((f) => f.id).join(",")}`;
+  const order = useMemo(() => rankFeed({
+    rows: posts, lookup: (id) => fetched[id], now: Date.now(), me, friends: new Set(friends.map((f) => f.id)),
+    interests: profile?.interests ?? [], signals, mode: filter === "Mine" ? "forYou" : "latest",
+  }).map((it) => ({ id: it.row.id, repostedBy: it.repostedBy })), [orderKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Posts, comments and likes from other students arrive on their own. Posts you have just deleted (and can still undo) stay out of the way.
   const removing = useRef(new Set<string>());
@@ -221,7 +237,7 @@ export default function Feed() {
     e.preventDefault();
     const text = att.compose(body).trim(); if (!campus || !text) return;
     setPosting(true);
-    await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community, body: text, ...(quoting ? { quote: quoting.id } : {}) }); setQuoting(null); progress.log("post"); setBody(""); att.clear(); setChoosing(false); await load();
+    await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community, body: text, ...(quoting ? { quote: quoting.id } : {}) }); if (quoting) recordSignal(me, quoting, "quote"); setQuoting(null); progress.log("post"); setBody(""); att.clear(); setChoosing(false); await load();
       setPosted(filter !== "All" && filter !== "Mine" && filter !== community ? `Posted for ${audience(community)}. Switch to Everything to see it.` : `Posted for ${audience(community)}. It is at the top of the list below.`);
       window.setTimeout(() => setPosted(""), 8000);
     });
@@ -230,6 +246,7 @@ export default function Feed() {
 
   async function like(p: Row) {
     const liked = p.post_likes.some((l) => l.user_id === me);
+    if (!liked) recordSignal(me, p, "like");
     setPosts((ps) => ps.map((x) => x.id !== p.id ? x : { ...x, post_likes: liked ? x.post_likes.filter((l) => l.user_id !== me) : [...x.post_likes, { user_id: me }] }));
     await run(() => api.like(p.id, me, !liked));
   }
@@ -242,6 +259,7 @@ export default function Feed() {
     if (had) { void unrepost(had.id); return; }
     if (!campus) return;
     const id = crypto.randomUUID();
+    recordSignal(me, p, "repost");
     void run(async () => {
       await api.publish({ id, campus_key: campus.key, author_id: me, author_name: name, community: p.community, body: p.payload.body ?? p.payload.text ?? "", repostOf: p.id, repostName: p.author_name });
       await load();
@@ -258,8 +276,8 @@ export default function Feed() {
     });
   };
   // A reply is a comment that points at the comment it answers; the person who wrote that comment is told.
-  const sendReply = (p: Row, parentId: string, text: string) => run(async () => { await api.comment(p.id, me, name, text, parentId); progress.log("reply"); await load(); });
-  const sendComment = (p: Row, text: string) => run(async () => { await api.comment(p.id, me, name, text); progress.log("reply"); await load(); });
+  const sendReply = (p: Row, parentId: string, text: string) => run(async () => { recordSignal(me, p, "reply"); await api.comment(p.id, me, name, text, parentId); progress.log("reply"); await load(); });
+  const sendComment = (p: Row, text: string) => run(async () => { recordSignal(me, p, "reply"); await api.comment(p.id, me, name, text); progress.log("reply"); await load(); });
 
   if (loading)
     return (
@@ -289,7 +307,15 @@ export default function Feed() {
   const feed = posts.filter((p) => !p.payload.repostOf);
   const isMine = (p: Row) => !mineTags || mineTags.includes(p.community);
   const countFor = (c: Filter) => (c === "All" ? feed.length : c === "Mine" ? feed.filter(isMine).length : feed.filter((p) => p.community === c).length);
-  const shown = feed.filter((p) => filter === "All" || (filter === "Mine" ? isMine(p) : p.community === filter));
+  const rowOf = (id: string) => posts.find((x) => x.id === id) ?? fetched[id] ?? undefined;
+  const shown = order
+    .map((o) => ({ row: rowOf(o.id), repostedBy: o.repostedBy }))
+    .filter((x): x is { row: Row; repostedBy: { id: string; name: string }[] } => !!x.row && (filter === "All" || (filter === "Mine" ? isMine(x.row) : x.row.community === filter)));
+  /** "Jordan reposted", "Jordan and Lee reposted", "Jordan and 2 others reposted". */
+  const repostLine = (by: { id: string; name: string }[]) => {
+    const n = by.map((b) => (b.id === me ? "You" : b.name.split(" ")[0]));
+    return `${n.length === 1 ? n[0] : n.length === 2 ? `${n[0]} and ${n[1]}` : `${n[0]} and ${n.length - 1} others`} reposted`;
+  };
   return (
     <div className="feed-layout">
       <div className="feed-main">
@@ -359,7 +385,7 @@ export default function Feed() {
               )}
             </div>
           )}
-          {shown.map((p) => {
+          {shown.map(({ row: p, repostedBy }) => {
             const liked = p.post_likes.some((l) => l.user_id === me);
             const expanded = open === p.id;
             const subject = (p.payload.title ?? p.payload.body ?? p.payload.text ?? "").slice(0, 40);
@@ -369,6 +395,7 @@ export default function Feed() {
               <article key={p.id} id={`post-${p.id}`} className="rp" tabIndex={-1} aria-description="Press l to like, r for replies, j and k to move between posts." aria-label={`Post by ${p.author_name}`}>
                 <PersonLink id={p.author_id} className="rp-avlink" decorative><Avatar name={p.author_name} id={p.author_id} size={40} className="rp-av" /></PersonLink>
                 <div className="rp-main">
+                  {repostedBy.length > 0 && <p className="rp-reposted"><Repeat2 size={14} aria-hidden="true" />{repostLine(repostedBy)}</p>}
                   <div className="rp-head">
                     <PersonLink id={p.author_id} className="rp-name"><strong><PersonName id={p.author_id} fallback={p.author_name} /></strong></PersonLink>
                     {isVerified(p.author_id) && <span className="rp-tag">Campus staff</span>}
