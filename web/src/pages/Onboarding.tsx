@@ -1,4 +1,5 @@
-import Orb from "../components/Orb";
+import OrbitMascot from "../components/OrbitMascot";
+import OrbitProgress from "../components/OrbitProgress";
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
@@ -22,7 +23,8 @@ import { supabase } from "../lib/supabase";
 import { setThemePref, useThemePref } from "../lib/theme";
 import { campusKey, validCampus } from "../shared/campus";
 import type { University } from "../lib/universities";
-import { enter, exit } from "../lib/motion";
+import { emitOrbit } from "../lib/orbitEvents";
+import { glanceAt } from "../lib/orbGaze";
 
 const spring = { type: "spring" as const, stiffness: 520, damping: 30 };
 const soft = { type: "spring" as const, stiffness: 300, damping: 24 };
@@ -78,10 +80,45 @@ export default function Onboarding() {
   const [saving, setSaving] = useState(false);
   useEffect(() => { if (supabase && !userEdited) setUsername(suggestUsername(name.trim().split(" ")[0] ?? "")); }, [name, userEdited]);
   const [error, setError] = useState("");
+
+  // The name is only "valid" once it has been settled on for a moment, so half-typed letters never flash success.
+  const nameOk = name.trim().length >= 1;
+  const usernameOk = !supabase || (username.length > 0 && !checkUsername(username));
+  useEffect(() => {
+    if (!nameOk) return;
+    const t = window.setTimeout(() => emitOrbit({ type: "VALIDATION_SUCCESS", what: "name" }), 700);
+    return () => window.clearTimeout(t);
+  }, [nameOk]);
+  useEffect(() => {
+    if (!supabase || !usernameOk) return;
+    const t = window.setTimeout(() => emitOrbit({ type: "VALIDATION_SUCCESS", what: "username" }), 900);
+    return () => window.clearTimeout(t);
+  }, [usernameOk, username]);
+
+  // The last screen, in order: the small body starts its lap (the picture does that itself on the step change), the character notices and looks over,
+  // and when the lap is nearly done it joins in with one short celebration, then settles. The button works throughout.
+  // A field that grabs focus by itself when a screen appears (the campus search, the name box) does so before anyone is listening, so tell them once it has.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      const a = document.activeElement;
+      if (a instanceof HTMLElement && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.closest(".onb-panel")) emitOrbit({ type: "INPUT_FOCUSED", el: a });
+    }, 350);
+    return () => window.clearTimeout(t);
+  }, [i]);
+  const onDone = STEPS[i] === "done";
+  useEffect(() => {
+    if (!onDone) return;
+    const look = window.setTimeout(() => glanceAt(artRef.current), 800);
+    const cheer = window.setTimeout(() => emitOrbit({ type: "ONBOARDING_COMPLETED" }), 2300);
+    return () => { window.clearTimeout(look); window.clearTimeout(cheer); };
+  }, [onDone]);
   const [kick, setKick] = useState(0);
   const [burst, setBurst] = useState(0);
   const [wipe, setWipe] = useState<{ x: number; y: number } | null>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
+  const artRef = useRef<HTMLDivElement>(null);
+  const picked = useRef<Element | null>(null); // the option or switch that was just pressed, so the character can look at it
+  const lastTyping = useRef(0);
   const device = useDeviceAlerts();
 
   const meta = session?.user.user_metadata as { name?: string } | undefined;
@@ -108,15 +145,16 @@ export default function Onboarding() {
   const aboutEmpty = !bio.trim() && hobbies.length === 0;
   const first = name.trim().split(" ")[0];
 
-  const go = (n: number) => { setDir(n > i ? 1 : -1); setI(n); setError(""); };
+  const go = (n: number) => { const d = n > i ? 1 : -1; emitOrbit({ type: "STEP_CHANGED", from: STEPS[i], to: STEPS[n], dir: d }); setDir(d); setI(n); setError(""); };
   const next = () => { if (can[step] && i < STEPS.length - 1) { setBurst((b) => b + 1); setKick((k) => k + 1); go(i + 1); } };
   const back = () => { if (i > 0) go(i - 1); };
   /** Every answer makes the picture react. */
-  const answer = <T,>(set: (v: T) => void) => (v: T) => { set(v); setKick((k) => k + 1); };
+  const answer = <T,>(set: (v: T) => void) => (v: T, index?: number, count?: number) => { set(v); setKick((k) => k + 1); emitOrbit({ type: "SELECTION_MADE", step, index, count, el: picked.current }); };
 
   async function finish() {
     if (!uni || !tenure || !living || streaks === null) return;
     setSaving(true); setError("");
+    emitOrbit({ type: "THINKING" });
     try {
       const key = campusKey(uni.name);
       const profile: Profile = { name: name.trim(), username: supabase ? normalizeUsername(username) : undefined, campusName: uni.name.trim(), campusKey: key, campusDomain: uni.domain || undefined, tenure, living, interests, streaks, nudges, look, doneAt: new Date().toISOString() };
@@ -154,13 +192,14 @@ export default function Onboarding() {
 
   async function toggleDevice() {
     setKick((k) => k + 1);
+    emitOrbit({ type: "SELECTION_MADE", step: "nudges", el: picked.current });
     if (device.on) { disableDeviceAlerts(); return; }
     const r = await enableDeviceAlerts();
     if (r === "denied") notice.show({ icon: "alert", title: "Alerts are blocked", message: "Your browser is blocking notifications from Orbit. You can allow them later from the site settings next to the address bar." });
   }
 
   const planets = useMemo(() => interests.map((t) => INTERESTS.indexOf(t)), [interests]);
-  const toggleInterest = (t: string) => { setInterests((l) => (l.includes(t) ? l.filter((x) => x !== t) : [...l, t])); setKick((k) => k + 1); };
+  const toggleInterest = (t: string) => { const was = interests.includes(t); const count = was ? interests.length - 1 : interests.length + 1; setInterests((l) => (l.includes(t) ? l.filter((x) => x !== t) : [...l, t])); setKick((k) => k + 1); emitOrbit({ type: "SELECTION_MADE", step: "interests", off: was, count, index: INTERESTS.indexOf(t), el: picked.current }); };
 
   const title: Record<Step, string> = {
     campus: "Which campus is yours?", name: "What should we call you?", tenure: "How long have you been on campus?", living: "Where do you live?",
@@ -180,7 +219,7 @@ export default function Onboarding() {
   };
 
   const slide = reduce ? { initial: { opacity: 0 }, animate: { opacity: 1, transition: { duration: 0.12 } }, exit: { opacity: 0, transition: { duration: 0.1 } } } : {
-    initial: { opacity: 0, x: 40 * dir }, animate: { opacity: 1, x: 0, transition: enter }, exit: { opacity: 0, x: -40 * dir, transition: exit },
+    initial: { opacity: 0, x: 24 * dir }, animate: { opacity: 1, x: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] } }, exit: { opacity: 0, x: -24 * dir, transition: { duration: 0.22, ease: "easeIn" as const } },
   };
 
   const body: Record<Step, ReactNode> = {
@@ -197,8 +236,8 @@ export default function Onboarding() {
         <AnimatePresence>{first.length >= 2 && <motion.p key="hi" className="onb-hi" initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={soft}>Nice to meet you, <strong>{first}</strong>.</motion.p>}</AnimatePresence>
       </>
     ),
-    tenure: <div className="onb-choices" role="radiogroup" aria-label="How long you have been on campus">{TENURES.map((t, n) => <Choice key={t.id} group="tenure" index={n} on={tenure === t.id} onClick={() => answer(setTenure)(t.id)} label={t.label} hint={t.hint} />)}</div>,
-    living: <div className="onb-choices two" role="radiogroup" aria-label="Where you live">{LIVING.map((l, n) => <Choice key={l.id} group="living" index={n} on={living === l.id} onClick={() => answer(setLiving)(l.id)} label={l.label} hint={l.hint} icon={<l.icon size={20} aria-hidden="true" />} />)}</div>,
+    tenure: <div className="onb-choices" role="radiogroup" aria-label="How long you have been on campus">{TENURES.map((t, n) => <Choice key={t.id} group="tenure" index={n} on={tenure === t.id} onClick={() => answer(setTenure)(t.id, n, TENURES.length)} label={t.label} hint={t.hint} />)}</div>,
+    living: <div className="onb-choices two" role="radiogroup" aria-label="Where you live">{LIVING.map((l, n) => <Choice key={l.id} group="living" index={n} on={living === l.id} onClick={() => answer(setLiving)(l.id, n, LIVING.length)} label={l.label} hint={l.hint} icon={<l.icon size={20} aria-hidden="true" />} />)}</div>,
     interests: (
       <div className="onb-chips" role="group" aria-label="What you are here for">
         {INTERESTS.map((t, n) => {
@@ -229,25 +268,25 @@ export default function Onboarding() {
           <div className="onb-chips" role="group" aria-labelledby="onb-free">
             {[...HOBBY_IDEAS, ...hobbies.filter((h) => !HOBBY_IDEAS.some((i) => i.toLowerCase() === h.toLowerCase()))].map((t) => {
               const on = hobbies.some((x) => x.toLowerCase() === t.toLowerCase());
-              return <button key={t} type="button" aria-pressed={on} onClick={() => { setHobbies((l) => (on ? l.filter((x) => x.toLowerCase() !== t.toLowerCase()) : cleanHobbies([...l, t]))); setKick((k) => k + 1); }}>{on && <Check size={14} aria-hidden="true" />}{t}</button>;
+              return <button key={t} type="button" aria-pressed={on} onClick={() => { setHobbies((l) => (on ? l.filter((x) => x.toLowerCase() !== t.toLowerCase()) : cleanHobbies([...l, t]))); setKick((k) => k + 1); emitOrbit({ type: "SELECTION_MADE", step: "about", off: on, el: picked.current }); }}>{on && <Check size={14} aria-hidden="true" />}{t}</button>;
             })}
           </div>
           <input className="onb-input" aria-label="Add your own" value={hobbyText} maxLength={HOBBY_LEN} disabled={hobbies.length >= HOBBY_MAX} placeholder={hobbies.length >= HOBBY_MAX ? `Up to ${HOBBY_MAX}` : "Something else? Type it and press Enter"}
-            onChange={(e) => setHobbyText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && hobbyText.trim()) { e.preventDefault(); setHobbies((l) => cleanHobbies([...l, hobbyText])); setHobbyText(""); } }} />
+            onChange={(e) => setHobbyText(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && hobbyText.trim()) { e.preventDefault(); setHobbies((l) => cleanHobbies([...l, hobbyText])); setHobbyText(""); emitOrbit({ type: "SELECTION_MADE", step: "about", custom: true, el: e.currentTarget }); } }} />
         </div>
       </div>
     ),
     pace: <div className="onb-choices two" role="radiogroup" aria-label="Streaks and badges">
-      <Choice group="pace" index={0} on={streaks === true} onClick={() => answer(setStreaks)(true)} label="Yes, count me in" hint="A weekly show-up streak and badges" />
-      <Choice group="pace" index={1} on={streaks === false} onClick={() => answer(setStreaks)(false)} label="No thanks" hint="Keep it simple" />
+      <Choice group="pace" index={0} on={streaks === true} onClick={() => answer(setStreaks)(true, 0, 2)} label="Yes, count me in" hint="A weekly show-up streak and badges" />
+      <Choice group="pace" index={1} on={streaks === false} onClick={() => answer(setStreaks)(false, 1, 2)} label="No thanks" hint="Keep it simple" />
     </div>,
     nudges: <div className="onb-toggles">
       {([["hangouts", "Hangouts that need your answer"], ["reminders", "Reminders you set"], ["places", "Places on the map that need a vote"]] as const).map(([k, label], n) => (
-        <Switch key={k} index={n} on={nudges[k]} label={label} onClick={() => { setNudges((s) => ({ ...s, [k]: !s[k] })); setKick((c) => c + 1); }} />
+        <Switch key={k} index={n} on={nudges[k]} label={label} onClick={() => { setNudges((s) => ({ ...s, [k]: !s[k] })); setKick((c) => c + 1); emitOrbit({ type: "SELECTION_MADE", step: "nudges", el: picked.current }); }} />
       ))}
       {deviceSupported() && <Switch index={3} on={device.on} label="Alert me on my device" onClick={toggleDevice} />}
     </div>,
-    look: <div className="onb-choices three" role="radiogroup" aria-label="Look">{LOOKS.map((l, n) => <Choice key={l.id} group="look" index={n} on={look === l.id} onClick={() => { answer(setLook)(l.id); setThemePref(l.id); }} label={l.label} icon={<l.icon size={20} aria-hidden="true" />} />)}</div>,
+    look: <div className="onb-choices three" role="radiogroup" aria-label="Look">{LOOKS.map((l, n) => <Choice key={l.id} group="look" index={n} on={look === l.id} onClick={() => { answer(setLook)(l.id, n, LOOKS.length); setThemePref(l.id); emitOrbit({ type: "THEME_CHANGED", look: l.id }); }} label={l.label} icon={<l.icon size={20} aria-hidden="true" />} />)}</div>,
     done: <p className="onb-done-note">You can change any of this from your profile.</p>,
   };
 
@@ -255,17 +294,19 @@ export default function Onboarding() {
     <main className="onb" onPointerMove={onMove}>
       <header className="onb-top">
         <Link to="/" className="logo" aria-label="Orbit"><i />Orbit</Link>
-        <ol className="onb-progress" aria-label={`Step ${i + 1} of ${STEPS.length}`}>
-          {STEPS.slice(0, -1).map((s, n) => <li key={s} className={n < i ? "done" : n === i ? "now" : ""} aria-current={n === i ? "step" : undefined}><span /></li>)}
-        </ol>
+        <OrbitProgress steps={STEPS.slice(0, -1)} index={i} total={STEPS.length} />
         <button type="button" className="onb-out" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}>Sign out</button>
       </header>
       <div className="onb-stage">
-        <motion.div className="onb-art" aria-hidden="true" style={reduce ? undefined : { rotateX: rotX, rotateY: rotY, x: shiftX, y: shiftY, transformPerspective: 900 }}>
-          <OrbitArt step={step} rings={years} planets={planets} initial={name.trim().slice(0, 1) || "?"} campus={uni?.name} living={living} done={step === "done"} kick={kick} />
+        <motion.div ref={artRef} className="onb-art" aria-hidden="true" style={reduce ? undefined : { rotateX: rotX, rotateY: rotY, x: shiftX, y: shiftY, transformPerspective: 900 }}>
+          <OrbitArt step={step} rings={years} planets={planets} initial={name.trim().slice(0, 1) || "?"} campus={uni?.name} living={living} done={step === "done"} kick={kick} late={i >= STEPS.indexOf("about")} />
         </motion.div>
-        <div className="onb-panel">
-          <Orb size={64} variant="violet" className="onb-orb" mood={step === "done" ? "excited" : "idle"} />
+        <div className="onb-panel"
+          onClickCapture={(e) => { picked.current = (e.target as Element).closest("button"); }}
+          onFocusCapture={(e) => { const t = e.target as HTMLElement; if (/^(INPUT|TEXTAREA)$/.test(t.tagName)) emitOrbit({ type: "INPUT_FOCUSED", el: t }); }}
+          onBlurCapture={(e) => { const t = e.target as HTMLElement; if (/^(INPUT|TEXTAREA)$/.test(t.tagName)) emitOrbit({ type: "INPUT_BLURRED" }); }}
+          onInputCapture={() => { const now = Date.now(); if (now - lastTyping.current > 1200) { lastTyping.current = now; emitOrbit({ type: "TYPING_STARTED" }); } }}>
+          <span className="onb-orb"><OrbitMascot size={64} /></span>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div key={step} className="onb-step" {...slide}>
               <h1 aria-label={title[step]}><Words text={title[step]} reduce={!!reduce} /></h1>
