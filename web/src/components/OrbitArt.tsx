@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import OrbitSatellite, { useOrbitAngle } from "./OrbitSatellite";
+import { hopFor, onOrbit } from "../lib/orbitEvents";
 import { Building2, Bus, Home, Sofa, type LucideIcon } from "lucide-react";
 import type { Living } from "../lib/profile";
 
@@ -11,12 +14,32 @@ const spring = { type: "spring" as const, stiffness: 520, damping: 26 };
 
 /** The picture beside the onboarding questions: the campus as a circle with a dot in orbit, and it answers whatever you pick.
  *  The circle squashes and rings ripple outward on every answer. More years on campus add rings, each interest flies in as a planet,
- *  the finale bursts into flat confetti. Decorative only, and calm for people who prefer reduced motion. */
-export default function OrbitArt({ step, rings, planets, initial, campus, living, done, kick }: { step: string; rings: number; planets: number[]; initial: string; campus?: string; living: Living | null; done: boolean; kick: number }) {
-  const reduce = useReducedMotion();
+ *  the finale is one calm lap of both bodies and a ring pulse. Decorative only, and calm for people who prefer reduced motion. */
+export default function OrbitArt({ step, rings, planets, initial, campus, living, done, kick, late = false }: { step: string; rings: number; planets: number[]; initial: string; campus?: string; living: Living | null; done: boolean; kick: number; late?: boolean }) {
+  const reduce = useReducedMotion() ?? false;
   const showRings = Math.max(rings, 1);
   const outer = 70 + showRings * 20;
   const LivingIcon = living ? LIVING_ICON[living] : null;
+
+  // Two small bodies: the orange one on the outer ring, a pale one on the ring inside it that joins on the later questions. Both drift very slowly
+  // (faster while a field is in use), hop when you pick something, and take one full lap at the end.
+  const IDLE = 5, ENGAGED = 14;
+  const main = useOrbitAngle(-40, IDLE, reduce);
+  const second = useOrbitAngle(150, -IDLE * 1.4, reduce);
+  const [pulse, setPulse] = useState(0);
+  useEffect(() => onOrbit((e) => {
+    if (e.type === "INPUT_FOCUSED") { main.setSpeed(ENGAGED); second.setSpeed(-ENGAGED * 1.2); }
+    else if (e.type === "INPUT_BLURRED") { main.setSpeed(IDLE); second.setSpeed(-IDLE * 1.4); }
+    else if (e.type === "SELECTION_MADE" && !e.off) {
+      if (e.step === "about") void second.hopBy(hopFor(e.index, e.count) + (e.custom ? 40 : 0));
+      else if (e.step === "interests") { if ((e.count ?? 1) <= 1) void main.hopBy(40, 0.7); }
+      else { void main.hopBy(hopFor(e.index, e.count)); setPulse((n) => n + 1); }
+    }
+    else if (e.type === "VALIDATION_SUCCESS") setPulse((n) => n + 1);
+    else if (e.type === "STEP_CHANGED" && e.to === "done") { void main.hopBy(360, 2.4); void second.hopBy(-360, 2.4); }
+    else if (e.type === "ONBOARDING_COMPLETED") setPulse((n) => n + 1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
 
   return (
     <svg viewBox="0 0 400 400" className="orbit-art" role="presentation">
@@ -34,10 +57,13 @@ export default function OrbitArt({ step, rings, planets, initial, campus, living
         )}
       </AnimatePresence>
 
-      {/* the dot that travels around the outermost ring, faster for a moment after each answer */}
-      <motion.g key={`orbit-${kick}`} style={{ transformOrigin: "200px 200px" }} initial={reduce ? false : { rotate: -40 }} animate={reduce ? {} : { rotate: 320 }} transition={reduce ? undefined : { repeat: Infinity, ease: "linear", duration: done ? 5 : 13 }}>
-        <motion.circle cx={C} cy={C - outer} r={9} fill="var(--accent)" initial={false} animate={{ cy: C - outer }} transition={spring} />
-      </motion.g>
+      {/* the ring picks up a brief emphasis when something is chosen or confirmed */}
+      <AnimatePresence>
+        {!reduce && pulse > 0 && <motion.circle key={`pulse-${pulse}`} cx={C} cy={C} r={outer} fill="none" stroke="var(--accent)" strokeWidth={3} initial={{ opacity: 0.7 }} animate={{ opacity: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.9, ease: "easeOut" }} />}
+      </AnimatePresence>
+
+      <OrbitSatellite angle={second.angle} radius={Math.max(outer - 20, 62 + 18)} size={6} fill="var(--gold)" show={late} />
+      <OrbitSatellite angle={main.angle} radius={outer} size={9} fill="var(--accent)" />
 
       {/* planets: what you are here for. They shoot out of the campus and then drift gently */}
       {planets.map((p, n) => {
@@ -81,20 +107,6 @@ export default function OrbitArt({ step, rings, planets, initial, campus, living
         )}
       </AnimatePresence>
 
-      {/* the finale: a burst of flat circles and rounded rectangles from the campus, which then fall away */}
-      {done && !reduce && Array.from({ length: 34 }, (_, n) => {
-        const a = (n / 34) * Math.PI * 2 + (n % 5) * 0.2;
-        const d = 120 + ((n * 37) % 130);
-        const rect = n % 3 === 0;
-        return (
-          <motion.g key={n} initial={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 0.4 }} animate={{ x: Math.cos(a) * d, y: [0, Math.sin(a) * d, Math.sin(a) * d + 70], opacity: [1, 1, 0], rotate: rect ? 260 : 0, scale: 1 }}
-            transition={{ duration: 1.5, delay: (n % 6) * 0.03, ease: [0.16, 1, 0.3, 1], times: [0, 0.55, 1] }} style={{ transformOrigin: "200px 200px" }}>
-            {rect
-              ? <rect x={C - 6} y={C - 3} width={12} height={6} rx={3} fill={PASTELS[n % PASTELS.length]} stroke={INKS[n % INKS.length]} strokeWidth={1.5} />
-              : <circle cx={C} cy={C} r={n % 4 === 0 ? 7 : 5} fill={PASTELS[n % PASTELS.length]} stroke={INKS[n % INKS.length]} strokeWidth={1.5} />}
-          </motion.g>
-        );
-      })}
     </svg>
   );
 }
