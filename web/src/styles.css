@@ -1687,7 +1687,7 @@ kbd{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 
 .emoji-btn{width:36px;height:36px;border-radius:50%;border:0;background:none;color:var(--ink-soft);display:grid;place-items:center;cursor:pointer;transition:background .2s,color .2s,transform .18s var(--ease)}
 .emoji-btn:hover,.emoji-btn[aria-expanded=true]{background:var(--panel);color:var(--ink)}
 .emoji-btn:active{transform:scale(.9)}
-.emoji-pop{position:absolute;z-index:75;bottom:calc(100% + 8px);right:0;width:min(332px,calc(100vw - 32px));max-height:min(380px,60vh);display:flex;flex-direction:column;gap:8px;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 50px -18px rgba(16,20,18,.5);animation:emoji-in .18s var(--ease)}
+.emoji-pop{position:fixed;z-index:200;width:min(332px,calc(100vw - 32px));max-height:min(380px,60vh);display:flex;flex-direction:column;gap:8px;padding:10px;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 50px -18px rgba(16,20,18,.5);animation:emoji-in .18s var(--ease)}
 @keyframes emoji-in{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
 .emoji-search{width:100%;min-height:38px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:.9rem}
 .emoji-tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
@@ -5761,3 +5761,8 @@ p,li{text-wrap:pretty}
 
 /* "Jordan reposted": a quiet line above a post a friend has just reposted. */
 .rp-reposted{display:flex;align-items:center;gap:6px;margin:0 0 4px;font-size:var(--t-meta);font-weight:600;color:var(--ink-soft)}
+
+/* The emoji picker: the search box and the category row keep their size, and only the list of emoji scrolls. (They used to shrink to slivers when the picker was short.) */
+.emoji-pop>.emoji-search,.emoji-pop>.emoji-tabs{flex:none}
+.emoji-tabs{overflow-y:hidden;align-items:center;min-height:36px}
+.emoji-grid{flex:1 1 auto}
