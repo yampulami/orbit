@@ -5862,3 +5862,28 @@ p,li{text-wrap:pretty}
 .onb.calm select.onb-input{appearance:auto}
 @media (prefers-reduced-motion:reduce){.onb-fade{animation:none}}
 .onb small.ok{color:var(--ink)}
+
+/* ===== Setup: the form on the left, "Your Orbit so far" filling in on the right ===== */
+.onb.calm .onb-top,.onb.calm .onb-bar{max-width:1000px}
+.onb-stage.two{display:grid;grid-template-columns:minmax(0,520px) minmax(0,380px);gap:clamp(32px,6vw,88px);justify-content:center;align-items:start;max-width:1000px;width:100%;margin:0 auto;padding:32px 0}
+.onb-stage.two .onb-panel{max-width:520px}
+.sp{position:sticky;top:32px;padding:20px;border-radius:12px;box-shadow:0 0 0 1px var(--line);background:var(--surface)}
+.sp-k{margin:0 0 16px;font-size:var(--t-micro);font-weight:600;color:var(--ink-soft)}
+.sp-who{display:flex;align-items:center;gap:14px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.sp-av{display:grid;place-items:center;flex:none;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--display);font-size:1.4rem;font-weight:600}
+[data-theme=dark] .sp-av{color:#1a1210}
+.sp-who div{display:grid;min-width:0}
+.sp-who strong{font-family:var(--display);font-size:1.2rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-who em{font-style:normal;font-size:var(--t-meta);color:var(--ink-soft)}
+.sp-rows{margin:0;display:grid}
+.sp-rows>div{padding:14px 0;border-bottom:1px solid var(--line)}
+.sp-rows dt{display:flex;align-items:center;gap:8px;font-size:var(--t-micro);font-weight:600;color:var(--ink-soft)}
+.sp-rows dd{margin:4px 0 0 22px;font-size:var(--t-meta);line-height:1.45;color:var(--ink-soft)}
+.sp-rows .done dd{color:var(--ink)}
+.sp-tick{display:grid;place-items:center;flex:none;width:14px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--line);color:var(--bg)}
+.sp-rows .done .sp-tick{background:var(--accent);box-shadow:none}
+.sp-note{margin:14px 0 0;font-size:var(--t-meta);line-height:1.45;color:var(--ink-soft)}
+@media (max-width:900px){
+  .onb-stage.two{grid-template-columns:minmax(0,1fr);gap:24px}
+  .sp{position:static}
+}
