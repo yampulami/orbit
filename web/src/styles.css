@@ -5717,3 +5717,6 @@ p,li{text-wrap:pretty}
 /* The agenda's two columns (plans, reminders) stack as soon as their own column is narrow, whatever the window or the bar is doing. */
 .plans-main{container-type:inline-size}
 @container (max-width:640px){.agenda-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* The name pill over a face sizes itself to the name. Inside a list row that breaks long words anywhere, it had shrunk to the width of one letter. */
+.avs-face::after{width:max-content;max-width:min(260px,70vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;overflow-wrap:normal;word-break:normal}
