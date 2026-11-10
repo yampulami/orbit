@@ -2,9 +2,11 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState, type ComponentType } from "react";
-import { CalendarClock, Check, Keyboard, LayoutGrid, LogOut, Megaphone, Moon, PanelLeft, Sofa, SquarePen, Sun } from "lucide-react";
-import { HomeIcon, MapIcon, MessagesIcon, PlansIcon } from "./icons";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { Check, Keyboard, LayoutGrid, LogOut, Megaphone, MoreHorizontal, Moon, PanelLeft, Sofa, SquarePen, Sun } from "lucide-react";
+import { HomeIcon, MessagesIcon, PlansIcon } from "./icons";
+import { loadProfile } from "../lib/profile";
+import { prefetchIdle, prefetchRoute } from "../lib/prefetch";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../lib/auth";
 import { enter, slide } from "../lib/motion";
@@ -35,21 +37,34 @@ import { GO } from "../lib/shortcuts";
 type SideMode = "hover" | "expanded" | "collapsed";
 const SIDE_MODES: { id: SideMode; label: string }[] = [{ id: "expanded", label: "Expanded" }, { id: "collapsed", label: "Collapsed" }, { id: "hover", label: "Expand on hover" }];
 
-const items = [
-  { to: "/app/feed", label: "Feed", icon: HomeIcon },
+/** Four places that matter every day. Free time lives inside Plans ("Find a time") and the map inside Campus, so there is one door for each job. */
+const base = [
+  { to: "/app/feed", label: "Home", icon: HomeIcon },
   { to: "/app/chats", label: "Chats", icon: MessagesIcon },
-  { to: "/app/roommates", label: "Roommates", icon: Sofa },
   { to: "/app/plans", label: "Plans", icon: PlansIcon },
-  { to: "/app/sync", label: "Free time", icon: CalendarClock },
   { to: "/app/campus", label: "Campus", icon: Megaphone },
-  { to: "/app/map", label: "Map", icon: MapIcon },
 ];
+/** Shown on its own only to students who live in residence. Everyone else still finds it under "More". */
+const roommates = { to: "/app/roommates", label: "Roommates", icon: Sofa };
+/** The student's own picture is the icon for their profile. */
+function YouIcon({ size = 22 }: { size?: number; strokeWidth?: number }) {
+  const { session } = useAuth();
+  const name = useDisplayName();
+  return <Avatar name={name} id={session?.user.id} size={size + 4} className="me-av" />;
+}
+const you = { to: "/app/profile", label: "You", icon: YouIcon };
+const pageName = (path: string) => (path.startsWith("/app/profile") ? "Profile" : [...base, roommates].find((i) => path.startsWith(i.to))?.label);
 
 export default function Shell() {
   const loc = useLocation();
   const nav = useNavigate();
   const { session, signOut } = useAuth();
   const dark = useTheme() === "dark";
+  // Roommates is for people who live in residence; it stays one tap away under "More" for everyone else.
+  const resident = (session ? loadProfile(session.user.id)?.living : undefined) === "residence";
+  const items = resident ? [...base, roommates] : base;
+  const railItems = [...items, you];
+  useEffect(() => { prefetchIdle(); }, []); // the other pages download quietly once this one is up, so tapping them is instant
   const main = useRef<HTMLElement>(null);
   useEffect(() => { arrival.shellReady(); }, []); // the screen that follows onboarding fades once the app is up
   const { groups, hangouts } = useHang();
@@ -75,15 +90,19 @@ export default function Shell() {
 
   // Each page gets its own title, and focus moves to the content so keyboard and screen reader users start there.
   useEffect(() => {
-    const here = [...items, { to: "/app/profile", label: "Profile" }].find((i) => loc.pathname.startsWith(i.to));
-    document.title = (unread > 0 ? `(${unread > 9 ? "9+" : unread}) ` : "") + (here ? `${here.label} · Orbit` : "Orbit");
+    const here = pageName(loc.pathname);
+    document.title = (unread > 0 ? `(${unread > 9 ? "9+" : unread}) ` : "") + (here ? `${here} · Orbit` : "Orbit");
   }, [loc.pathname, unread]);
   useEffect(() => { main.current?.focus({ preventScroll: true }); }, [loc.pathname]);
   const name = useDisplayName();
 
   // The left bar works like the one in the Supabase dashboard: icons only that open over the page while you point at them, or pinned open
   // (the page makes room), or pinned shut. The choice is remembered on this device.
-  const [sideMode, setSideMode] = useState<SideMode>(() => { try { const m = localStorage.getItem("orbit-side-mode"); return m === "expanded" || m === "collapsed" || m === "hover" ? m : "hover"; } catch { return "hover"; } });
+  // Wide screens start with the names showing, so nobody has to guess what an icon is; narrower ones keep the icons-only bar that opens on hover.
+  const [sideMode, setSideMode] = useState<SideMode>(() => { const first: SideMode = window.innerWidth >= 1360 ? "expanded" : "hover"; try { const m = localStorage.getItem("orbit-side-mode"); return m === "expanded" || m === "collapsed" || m === "hover" ? m : first; } catch { return first; } });
+  // Settings and the less used things sit under "More", so the bar is the four places, you, and one button.
+  const [moreOpen, setMoreOpen] = useState(false);
+  useEffect(() => { setMoreOpen(false); }, [loc.pathname]);
   const chooseSide = (m: SideMode) => { setSideMode(m); setSideMenu(false); try { localStorage.setItem("orbit-side-mode", m); } catch { /* ignore */ } };
   const [sideMenu, setSideMenu] = useState(false);
   useEffect(() => {
@@ -132,8 +151,8 @@ export default function Shell() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [phone]);
   useEffect(() => { setHideTop(false); }, [loc.pathname]);
-  const pageTitle = [...items, { to: "/app/profile", label: "Profile" }].find((i) => loc.pathname.startsWith(i.to))?.label ?? "Orbit";
-  const tabs = items.filter((i) => ["/app/feed", "/app/chats", "/app/plans", "/app/sync", "/app/campus"].includes(i.to));
+  const pageTitle = pageName(loc.pathname) ?? "Orbit";
+  const tabs = base; // the phone's bottom bar: the four places, then More
 
   return (
     <div className={"shell side-" + sideClass + (hideTop ? " hide-top" : "")}>
@@ -143,10 +162,10 @@ export default function Shell() {
           <NavLink to="/app/feed" className="logo logo-toggle" aria-label="Orbit, home"><Orb variant="light" size={32} mood={logoMood} onPoke={wake} /><span className="navtext">Orbit</span></NavLink>
         </div>
         <nav className="navgroup" aria-label="Primary">
-          {items.map((i) => {
+          {railItems.map((i) => {
             const k = keyFor(i.to);
             return (
-              <NavLink key={i.to} to={i.to} title={k ? `${i.label} · G then ${k.toUpperCase()}` : i.label} aria-label={i.label} className={({ isActive }) => "navlink" + (isActive ? " active" : "")}>
+              <NavLink key={i.to} to={i.to} title={k ? `${i.label} · G then ${k.toUpperCase()}` : i.label} aria-label={i.label} onMouseEnter={() => prefetchRoute(i.to)} onFocus={() => prefetchRoute(i.to)} className={({ isActive }) => "navlink" + (isActive ? " active" : "")}>
                 {({ isActive }) => (
                   <>
                     {isActive && <motion.span layoutId="side-indicator" className="navpill" transition={slide} />}
@@ -162,7 +181,13 @@ export default function Shell() {
         </nav>
         <button className="compose-btn solo" title="New post · N" aria-label="New post" onClick={newPost}><SquarePen size={22} strokeWidth={1.9} aria-hidden="true" /><span className="navtext">New post</span></button>
         <span className="spacer" />
-        <div className="side-utils" role="group" aria-label="Settings">
+        <div className="side-more">
+        {moreOpen && <div className="side-utils" role="group" aria-label="More">
+          {!resident && (
+            <NavLink to="/app/roommates" title="Roommates" aria-label="Roommates" className={({ isActive }) => "navlink extra" + (isActive ? " active" : "")}>
+              <Sofa size={22} strokeWidth={1.75} /><span className="navtext">Roommates</span>
+            </NavLink>
+          )}
           <button className="navlink extra" title="Keyboard shortcuts · ?" aria-label="Keyboard shortcuts" onClick={() => window.dispatchEvent(new CustomEvent("orbit-shortcuts"))}>
             <Keyboard size={22} strokeWidth={1.75} />
             <span className="navtext">Shortcuts</span>
@@ -191,8 +216,12 @@ export default function Shell() {
               </div>
             )}
           </div>
+        </div>}
+        <button type="button" className="navlink more-btn" title="More" aria-label="More" aria-haspopup="true" aria-expanded={moreOpen} onClick={() => setMoreOpen((v) => !v)}>
+          <MoreHorizontal size={22} strokeWidth={1.75} />
+          <span className="navtext">More</span>
+        </button>
         </div>
-        <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="side-me"><Avatar name={name} id={session?.user.id} size={32} className="me-av" /><span className="navtext">Profile</span></NavLink>
       </aside>
       <div className="content">
         <div className="topline">
@@ -200,10 +229,12 @@ export default function Shell() {
           <span className="top-title" aria-hidden="true">{pageTitle}</span>
           <GlobalSearch />
           <NotificationBell />
-          <NavLink to="/app/profile" title="Profile" aria-label="Profile" className="me topme has-av"><Avatar name={name} id={session?.user.id} size={36} /></NavLink>
         </div>
         <motion.main key={loc.pathname} id="main" tabIndex={-1} ref={main} className="main" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={enter}>
-          <Outlet />
+          {/* A page that is still downloading shows its outline instead of an empty screen. */}
+          <Suspense fallback={<div className="page" aria-busy="true" aria-label="Loading"><div className="skeleton sk-line" /><div className="skeleton sk-card" /><div className="skeleton sk-card" /></div>}>
+            <Outlet />
+          </Suspense>
         </motion.main>
       </div>
       <Assistant />
@@ -225,7 +256,7 @@ export default function Shell() {
       <div className={"drawer-scrim" + (drawer ? " open" : "")} aria-hidden="true" onClick={() => setDrawer(false)} />
       <nav className={"drawer" + (drawer ? " open" : "")} aria-label="Menu" aria-hidden={!drawer} inert={!drawer}>
         <div className="drawer-head"><span className="logo"><Orb variant="violet" size={34} /><span>Orbit</span></span></div>
-        {items.map((i) => (
+        {[...base, roommates].map((i) => (
           <NavLink key={i.to} to={i.to} className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}>
             <i.icon size={22} strokeWidth={1.75} /><span>{i.label}</span>
             {i.to === "/app/chats" && unread > 0 && <b className="drawer-count">{unread > 9 ? "9+" : unread}</b>}

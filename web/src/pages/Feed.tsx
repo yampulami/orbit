@@ -36,10 +36,11 @@ import { watchTables } from "../lib/people";
 import { refreshOnReturn } from "../lib/privateDb";
 import { ago } from "../lib/dayWords";
 import { gradientFor } from "../lib/look";
+import { loadProfile } from "../lib/profile";
 
 const MAX = 1000;
 /** What each audience is called on the page. "Everyone" is the open one; "Marketplace" is things for sale, not a group of people. */
-const SHOW: Record<string, string> = { All: "Everything", Everyone: "Open to all", Commuters: "Commuters", Residents: "Residents", Roommates: "Roommates", Marketplace: "For sale" };
+const SHOW: Record<string, string> = { Mine: "For you", All: "Everything", Everyone: "Open to all", Commuters: "Commuters", Residents: "Residents", Roommates: "Roommates", Marketplace: "For sale" };
 /** What each audience means, said when you open the list. */
 const WHO: Record<string, string> = {
   Everyone: "Everyone at your university can see it.",
@@ -48,6 +49,13 @@ const WHO: Record<string, string> = {
   Roommates: "Only your roommates see it.",
   Marketplace: "Shows up as something for sale or to give away.",
 };
+/** The posts meant for this student: open ones, things for sale, and the group they belong to. A commuter is not handed dorm notices, and a resident is not handed shuttle delays. */
+const FOR_YOU: Record<string, string[]> = {
+  residence: ["Everyone", "Marketplace", "Residents", "Roommates"],
+  commute: ["Everyone", "Marketplace", "Commuters"],
+  "off-campus": ["Everyone", "Marketplace", "Commuters"],
+};
+type Filter = "All" | "Mine" | Community;
 const audience = (c: string) => (c === "Marketplace" ? "sale" : c === "Everyone" ? "everyone" : c.toLowerCase());
 /** The feed asks for this many posts, so this is also where it says it has stopped. */
 const PAGE = 50;
@@ -141,9 +149,11 @@ export default function Feed() {
     return () => document.removeEventListener("mousedown", away);
   }, [choosing]);
   const [open, setOpen] = useState<string | null>(null);
-  const [filter, setFilter] = useState<"All" | Community>("All");
+  const living = loadProfile(me)?.living;
+  const mineTags = FOR_YOU[living ?? ""] ?? null; // null when we do not know how they live: then there is nothing to tailor to
+  const [filter, setFilter] = useState<Filter>(mineTags ? "Mine" : "All");
   // Writing a post while looking at one audience posts to that audience.
-  const pick = (c: "All" | Community) => { setFilter(c); if (c !== "All") setCommunity(c); };
+  const pick = (c: Filter) => { setFilter(c); if (c !== "All" && c !== "Mine") setCommunity(c); };
   const [calOpen, setCalOpen] = useState(() => { try { return localStorage.getItem("orbit-feed-cal") === "1"; } catch { return false; } });
   const toggleCal = () => setCalOpen((v) => { try { localStorage.setItem("orbit-feed-cal", v ? "0" : "1"); } catch { /* ignore */ } return !v; });
   const [day, setDay] = useState<string | null>(null);
@@ -182,7 +192,7 @@ export default function Feed() {
     const text = att.compose(body).trim(); if (!campus || !text) return;
     setPosting(true);
     await run(async () => { await api.publish({ id: crypto.randomUUID(), campus_key: campus.key, author_id: me, author_name: name, community, body: text }); progress.log("post"); setBody(""); att.clear(); setChoosing(false); await load();
-      setPosted(filter !== "All" && filter !== community ? `Posted for ${audience(community)}. Switch to Everything to see it.` : `Posted for ${audience(community)}. It is at the top of the list below.`);
+      setPosted(filter !== "All" && filter !== "Mine" && filter !== community ? `Posted for ${audience(community)}. Switch to Everything to see it.` : `Posted for ${audience(community)}. It is at the top of the list below.`);
       window.setTimeout(() => setPosted(""), 8000);
     });
     setPosting(false);
@@ -233,8 +243,9 @@ export default function Feed() {
 
   // Reposts are kept on your profile, not repeated in the feed.
   const feed = posts.filter((p) => !p.payload.repostOf);
-  const countFor = (c: "All" | Community) => (c === "All" ? feed.length : feed.filter((p) => p.community === c).length);
-  const shown = feed.filter((p) => filter === "All" || p.community === filter);
+  const isMine = (p: Row) => !mineTags || mineTags.includes(p.community);
+  const countFor = (c: Filter) => (c === "All" ? feed.length : c === "Mine" ? feed.filter(isMine).length : feed.filter((p) => p.community === c).length);
+  const shown = feed.filter((p) => filter === "All" || (filter === "Mine" ? isMine(p) : p.community === filter));
   return (
     <div className="feed-layout">
       <div className="feed-main">
@@ -275,7 +286,7 @@ export default function Feed() {
         <div className="pills">
           <nav className="frow" aria-label="Show posts">
             <span className="frow-l" title={`Counts are for the newest ${PAGE} posts`}>Showing</span>
-            {(["All", ...communities] as const).map((c) => (
+            {([...(mineTags ? ["Mine"] : []), "All", ...communities] as Filter[]).map((c) => (
               <Fragment key={c}>
               {c === "Marketplace" && <span className="sep" aria-hidden="true" />}
               <button type="button" aria-pressed={filter === c} disabled={countFor(c) === 0 && filter !== c} onClick={() => pick(c)}>{SHOW[c]}<small>{countFor(c)}</small></button>
@@ -294,9 +305,9 @@ export default function Feed() {
                 </>
               ) : (
                 <>
-                  <p>Nothing {filter === "Marketplace" ? "for sale" : `for ${audience(filter)}`} yet. Ask where to park, or when the shuttle runs.</p>
+                  <p>{filter === "Mine" ? "Nothing for you yet." : `Nothing ${filter === "Marketplace" ? "for sale" : `for ${audience(filter)}`} yet.`} Ask where to park, or when the shuttle runs.</p>
                   <div className="feed-empty-acts">
-                    <button type="button" className="btn primary" onClick={() => startPost(filter as Community)}>Post {filter === "Marketplace" ? "something for sale" : `for ${audience(filter)}`}</button>
+                    <button type="button" className="btn primary" onClick={() => startPost(filter === "Mine" ? undefined : (filter as Community))}>{filter === "Mine" ? "Write a post" : `Post ${filter === "Marketplace" ? "something for sale" : `for ${audience(filter)}`}`}</button>
                     <button type="button" className="btn" onClick={() => setFilter("All")}>Show everything</button>
                   </div>
                 </>

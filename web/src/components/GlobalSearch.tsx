@@ -23,10 +23,10 @@ const PAGES: { id: string; title: string; sub: string; to: string; Icon: LucideI
   { id: "messages", title: "Messages", sub: "Your conversations", to: "/app/chats", Icon: MessageSquare, words: "chats dm direct" },
   { id: "groups", title: "Groups", sub: "Your groups and hangouts", to: "/app/chats?tab=groups", Icon: Users },
   { id: "plans", title: "Plans", sub: "Classes, reminders and plans", to: "/app/plans", Icon: CalendarDays },
-  { id: "sync", title: "Free time", sub: "Find a time that works for everyone", to: "/app/sync", Icon: CalendarClock, words: "sync schedule calendar find a time" },
+  { id: "sync", title: "Free time", sub: "Find a time that works for everyone", to: "/app/plans?tab=free", Icon: CalendarClock, words: "sync schedule calendar find a time" },
   { id: "campus", title: "Campus", sub: "Clubs and events", to: "/app/campus", Icon: Megaphone },
   { id: "roommates", title: "Roommates", sub: "Chores, groceries and expenses", to: "/app/roommates", Icon: Sofa },
-  { id: "map", title: "Map", sub: "Places around campus", to: "/app/map", Icon: MapPin },
+  { id: "map", title: "Map", sub: "Places around campus", to: "/app/campus?tab=map", Icon: MapPin },
 ];
 /** The four things people look for most, and everything. Pick one and the search looks only there. */
 type Scope = "all" | "posts" | "people" | "campus" | "plans";

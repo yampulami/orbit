@@ -17,20 +17,12 @@ export default function Chats() {
   const waiting = hangouts.filter((h) => isVisible(h, groups) && !h.rsvps[YOU] && new Date(h.when).getTime() > Date.now()).length;
   const go = (t: "messages" | "groups") => setParams(t === "groups" ? { tab: "groups" } : {}, { replace: true, state: undefined });
 
-  // One sentence that says where things stand, like the top of the Feed.
-  const head = tab === "groups"
-    ? waiting > 0 ? `${waiting} plan${waiting === 1 ? "" : "s"} from your groups need${waiting === 1 ? "s" : ""} an answer` : "Your groups"
-    : unread > 0 ? `${unread} new message${unread === 1 ? "" : "s"}`
-    : waiting > 0 ? `${waiting} plan${waiting === 1 ? "" : "s"} from your groups need${waiting === 1 ? "s" : ""} an answer`
-    : "You are all caught up";
-  const pointToGroups = tab === "messages" && unread === 0 && waiting > 0;
+  // One sentence about this page. Plans waiting for an answer are told on Home and Plans, and counted on the Groups tab, not repeated here.
+  const head = tab === "groups" ? "Your groups" : unread > 0 ? `${unread} new message${unread === 1 ? "" : "s"}` : "You are all caught up";
 
   return (
     <div className="chats">
-      <h1 className={"chats-head" + ((tab === "groups" ? waiting > 0 : unread > 0 || waiting > 0) ? "" : " sr")}>
-        {head}
-        {pointToGroups && <> <button type="button" className="chats-link" onClick={() => go("groups")}>Open groups</button></>}
-      </h1>
+      <h1 className={"chats-head" + (tab === "messages" && unread > 0 ? "" : " sr")}>{head}</h1>
       <div className="chats-switch" role="tablist" aria-label="Chats">
         <button type="button" role="tab" aria-selected={tab === "messages"} onClick={() => go("messages")}>
           Messages{unread > 0 && <b role="img" aria-label={`${unread} unread`}>{unread > 9 ? "9+" : unread}</b>}

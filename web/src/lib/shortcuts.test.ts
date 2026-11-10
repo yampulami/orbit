@@ -5,7 +5,7 @@ describe("keyboard shortcuts", () => {
   it("g then a letter goes to a page", () => {
     expect(shortcut("g", false)).toEqual({ kind: "wait" });
     expect(shortcut("m", true)).toEqual({ kind: "go", to: "/app/chats" });
-    expect(shortcut("s", true)).toEqual({ kind: "go", to: "/app/sync" });
+    expect(shortcut("s", true)).toEqual({ kind: "go", to: "/app/plans?tab=free" });
     expect(shortcut("P", true)).toEqual({ kind: "go", to: "/app/plans" });
     expect(shortcut("z", true)).toBeNull();
   });

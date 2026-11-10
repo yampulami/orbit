@@ -26,7 +26,7 @@ function Row({ e, host }: { e: CampusEvent; host: boolean }) {
       </div>
       {e.mineHost
         ? <span className="cs-host">You’re hosting</span>
-        : <button type="button" className="btn" aria-pressed={going} aria-label={`${going ? "You’re in" : "I’m in"} for ${e.title}`} onClick={toggle}>{going ? "You’re in" : "I’m in"}</button>}
+        : <button type="button" className="btn" aria-pressed={going} aria-label={`${going ? "You’re going" : "Going"} to ${e.title}`} onClick={toggle}>{going ? "You’re going" : "Going"}</button>}
     </li>
   );
 }
@@ -47,8 +47,8 @@ export default function CampusSoon({ compact = false }: { compact?: boolean }) {
   return (
     <section className={"cs" + (compact ? " compact" : "")} aria-label="Campus events">
       <header><h2>On campus soon</h2><Link to="/app/campus">{phone && next.length > 1 ? `${next.length - 1} more · All events` : "All events"}</Link></header>
-      {sameHost && <p className="cs-by">Hosted by {hostLine(next[0])}. “I’m in” adds you to the public going count.</p>}
-      {!sameHost && <p className="cs-by">“I’m in” adds you to the public going count.</p>}
+      {sameHost && <p className="cs-by">Hosted by {hostLine(next[0])}. “Going” adds you to the public going count.</p>}
+      {!sameHost && <p className="cs-by">“Going” adds you to the public going count.</p>}
       <ul>{shown.map((e) => <Row key={e.id} e={e} host={!sameHost} />)}</ul>
     </section>
   );

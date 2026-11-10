@@ -75,8 +75,9 @@ export default function NowHeader() {
     const first = confirmed[0];
     head = first ? `Tomorrow: ${first.label} at ${clock(first.start)}` : "Nothing on your schedule tomorrow";
   } else if (confirmed.length === 0) {
-    head = needs.length ? needs.join(" · ") : "Nothing on your schedule today";
-    sub = needs.length ? "Nothing else is confirmed for today." : "Add your classes to see your gaps.";
+    // The plans waiting for an answer are counted once, in the "need your answer" line below, not here as well.
+    head = overdue > 0 ? `${overdue} overdue` : "Nothing on your schedule today";
+    sub = toAnswer > 0 ? "Plans from friends need your answer below." : overdue > 0 ? "Nothing else is confirmed for today." : "Add your classes to see your gaps.";
     prompt = needs.length === 0;
   } else if (inside) {
     head = `${inside.label} until ${clock(inside.end)}`;
@@ -135,8 +136,8 @@ export default function NowHeader() {
 
       <div className="now-acts">
         {alsoFree.length > 0
-          ? <Link className="btn now-main" to="/app/sync" state={{ syncWith: alsoFree.map((p) => p.id) }}>Plan with {first(alsoFree[0])}{alsoFree.length > 1 ? ` +${alsoFree.length - 1}` : ""}</Link>
-          : <Link className="btn now-main" to="/app/sync">Find a time</Link>}
+          ? <Link className="btn now-main" to="/app/plans?tab=free" state={{ syncWith: alsoFree.map((p) => p.id) }}>Plan with {first(alsoFree[0])}{alsoFree.length > 1 ? ` +${alsoFree.length - 1}` : ""}</Link>
+          : <Link className="btn now-main" to="/app/plans?tab=free">Find a time</Link>}
         <button type="button" className="btn quiet" aria-label="Ask the Orbit assistant" onClick={() => window.dispatchEvent(new CustomEvent("orbit-assistant-open"))}>Ask Orbit</button>
       </div>
     </section>

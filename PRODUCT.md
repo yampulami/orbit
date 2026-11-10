@@ -138,3 +138,14 @@ Schedule Sync answers "when can we meet?"; Moments answers "what could we do tog
 - **Feedback:** Not interested, Prefer another time, Do not suggest this kind of thing, Hide suggestions for this group, and a "Show everything again" reset. Choosing what they like (food, study, sports, gaming, creative, club meetups, outdoors, hanging out) and the choices above are kept **on the device**, per person, and nothing about them is sent anywhere.
 - **Not built, on purpose or for later:** push notifications and their daily or weekly limits and quiet hours (so no frequency setting yet); server-side detection jobs and the proposed tables (`opportunity_*`, `proactive_sync_settings`, `circle_availability_permissions`), because detection here runs on the student's own device from data they are already allowed to read, which also means preferences do not follow them between devices; per-circle sharing controls beyond the existing audience settings; learning beyond a small nudge from "interested"; and AI-written plan text.
 
+
+### Navigation, one door per job (2026-11-10)
+
+From the full-app critique (`.impeccable/critique/`): the app had eight equal tabs and told the same things in several places. Now:
+
+- **Four places and You.** The bar is Home, Chats, Plans, Campus, then You (your picture) and a New post button; **More** holds Shortcuts, light/dark, the sidebar choice and Sign out. **Roommates** shows on its own only for students who said they live in residence (`living: "residence"`); everyone else finds it under More. The phone's bottom bar is Home, Chats, Plans, Campus, More.
+- **Free time is inside Plans** as the "Find a time" tab (`/app/plans?tab=free`); **the map is inside Campus** as the "Map" tab next to Events and Clubs (`/app/campus?tab=map`). The old `/app/sync` and `/app/map` addresses redirect, and keep any state a link carried.
+- **The labelled bar** (names beside the icons) is the default from 1360px wide; narrower windows keep the icons-only bar that opens on hover. Either can be changed under More, Sidebar.
+- **Said once.** Plans waiting for an answer are told on Home (one line) and Plans; Chats only counts them on the Groups tab. Campus events use "Going" everywhere; "I'm in / Can't" is only for answering a friend's plan.
+- **Home's feed opens on "For you"** (open posts, for sale, and your own group: residents see Residents and Roommates, commuters see Commuters) with "Everything" one tap away.
+- **Feel.** Pages show an outline while they download instead of a blank screen, the main pages download quietly once the app is idle and when you point at them (`web/src/lib/prefetch.ts`), and pages leave room at the bottom for the assistant orb.

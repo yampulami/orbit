@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import ClubGlyph from "../components/ClubGlyph";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { BadgeCheck, CalendarDays, ChevronDown, Compass, Info, Plus, ShieldCheck, UserRound, Users } from "lucide-react";
 import { isOpen, setDemoRole, useCampusEvents, type Role } from "../lib/campusEvents";
 import { CATEGORIES, orgHue, useCampusOrgs, type Org } from "../lib/campusOrgs";
@@ -24,8 +24,12 @@ import { useIsPhone } from "../lib/phone";
 import RichText from "../components/RichText";
 import VerifiedBadge from "../components/VerifiedBadge";
 
-type Tab = "events" | "clubs";
+// The map is a big download, so it loads only when its tab is opened.
+const CampusMap = lazy(() => import("./CampusMap"));
+
+type Tab = "events" | "clubs" | "map";
 type View = "discover" | "review";
+const asTab = (v: string | null): Tab => (v === "clubs" || v === "map" ? v : "events");
 
 /** Campus: your clubs down a rail on the left, like servers, and Discover beside it: the events and clubs open to everyone on campus. A club is set up first
  *  (a coordinator approves it), and its events are posted from inside the club. Coordinators also get Review on the rail. */
@@ -33,7 +37,10 @@ export default function Campus() {
   const nav = useNavigate();
   const { events, pending, reported, isHost, role, canReview: reviewer, hostLabel, ready } = useCampusEvents();
   const { orgs, mine } = useCampusOrgs();
-  const [tab, setTab] = useState<Tab>("events");
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => asTab(params.get("tab")));
+  // Links from elsewhere (the old map address, a notification) name the tab to open.
+  useEffect(() => { const t = params.get("tab"); if (t) setTab(asTab(t)); }, [params]);
   const [view, setView] = useState<View>("discover");
   const [menu, setMenu] = useState(false);
   const [clubOrder, setClubOrder] = useSavedOrder("orbit-club-rail");
@@ -49,7 +56,7 @@ export default function Campus() {
   const weekEnd = Date.now() + 7 * 24 * 3600_000;
   const thisWeek = events.filter((e) => e.status === "published" && !e.canceled && new Date(e.startsAt).getTime() > Date.now() - 3 * 3600_000 && new Date(e.startsAt).getTime() < weekEnd).length;
   const toJoin = orgs.filter((o) => o.status === "active" && !mine.some((m) => m.id === o.id)).length;
-  const head = tab === "clubs" ? (toJoin === 0 ? "You have joined every club" : `${toJoin} club${toJoin === 1 ? "" : "s"} and circle${toJoin === 1 ? "" : "s"} to join`) : thisWeek === 0 ? "Nothing on this week" : `${thisWeek} event${thisWeek === 1 ? "" : "s"} this week`;
+  const head = tab === "map" ? "The campus map" : tab === "clubs" ? (toJoin === 0 ? "You have joined every club" : `${toJoin} club${toJoin === 1 ? "" : "s"} and circle${toJoin === 1 ? "" : "s"} to join`) : thisWeek === 0 ? "Nothing on this week" : `${thisWeek} event${thisWeek === 1 ? "" : "s"} this week`;
 
   return (
     <div className="page campus">
@@ -62,6 +69,7 @@ export default function Campus() {
             </button>
           )}
           <span className="rail-sep" aria-hidden="true" />
+          <span className="rail-cap">Clubs</span>
           <ArrangeList as="div" axis={phone ? "x" : "y"} ids={railClubs.map((o) => o.id)} onChange={setClubOrder} className="rail-clubs">
             {railClubs.map((o) => (
               <ArrangeItem key={o.id} as="div" id={o.id} className="rail-item">
@@ -105,19 +113,21 @@ export default function Campus() {
             <>
               <header className="campus-head">
                 <h2 className="sr">{head}</h2>
-                <div className="segment campus-seg" role="tablist" aria-label="Events or clubs">
+                <div className="segment campus-seg" role="tablist" aria-label="Events, clubs or map">
                   <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}>Events</button>
                   <button type="button" role="tab" aria-selected={tab === "clubs"} onClick={() => setTab("clubs")}>Clubs</button>
+                  <button type="button" role="tab" aria-selected={tab === "map"} onClick={() => setTab("map")}>Map</button>
                 </div>
               </header>
               {tab === "events" && <EventsView events={events} ready={ready} isHost={isHost} role={role} hostLabel={hostLabel} reviewer={reviewer} />}
               {tab === "clubs" && <ClubsView mine={mine} all={orgs} />}
-              {!reviewer && (
+              {tab === "map" && <Suspense fallback={<div className="skeleton sk-card" aria-busy="true" />}><CampusMap embedded /></Suspense>}
+              {!reviewer && tab !== "map" && (
                 <div className="vs-entry">
                   <button type="button" className="link-btn" onClick={() => setVerifying(true)}><BadgeCheck size={14} aria-hidden="true" /> Run student life at your school? Verify your staff role</button>
                 </div>
               )}
-              {!supabase && (
+              {!supabase && tab !== "map" && (
                 <label className="cevent-demo">Preview as
                   <select value={role ?? "coordinator"} onChange={(e) => setDemoRole(e.target.value as Role)}>
                     <option value="coordinator">Coordinator (approves clubs and events)</option>

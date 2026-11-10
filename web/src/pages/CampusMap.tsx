@@ -15,10 +15,12 @@ const NEEDS = "needs" as const;
 const categoryOptions = (Object.keys(CATEGORY) as PlaceCategory[]).map((c) => ({ value: c, label: CATEGORY[c].label }));
 
 /** The campus map for the signed-in student's own university. Tap Add a place, tap the map, name it, and other students confirm it. */
-export default function CampusMap() {
+export default function CampusMap({ embedded = false }: { embedded?: boolean }) {
   const nav = useNavigate();
   const { status, campus, places, live, open, source, error, partial, reviewed } = useMapPlaces();
   const [cat, setCat] = useState<PlaceCategory | typeof ALL | typeof NEEDS>(ALL);
+  // Four kinds of place show at first; the rest open with "More" (and open by themselves if one of them is picked).
+  const [allCats, setAllCats] = useState(false);
   const [q, setQ] = useState("");
   const [sel, setSel] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -39,6 +41,7 @@ export default function CampusMap() {
   const shown = useMemo(() => places.filter((p) => (cat === ALL || (cat === NEEDS ? needsVote.some((n) => n.id === p.id) : p.category === cat)) && p.name.toLowerCase().includes(q.trim().toLowerCase())), [places, cat, q, needsVote]);
   const picked = places.find((p) => p.id === sel);
   const used = useMemo(() => (Object.keys(CATEGORY) as PlaceCategory[]).filter((c) => places.some((p) => p.category === c)), [places]);
+  const shownCats = allCats || used.indexOf(cat as PlaceCategory) >= 4 ? used : used.slice(0, 4);
 
   // A place that was waiting for confirmations and has just gone live pulses once.
   useEffect(() => {
@@ -101,23 +104,25 @@ export default function CampusMap() {
     else notice.show({ icon: "pin", title: "That place is already on the map", message: "Someone already added it right there. Open it and confirm instead of adding a copy.", actions: [{ label: "Show me", onClick: () => { stopAdding(); setSel(r.existing ?? null); } }] });
   }
 
+  // On its own it is a page; inside Campus it is one of its tabs and sits in the page around it.
+  const shell = embedded ? "mapview-embedded" : "page";
   if (status === "none") {
     return (
-      <div className="page"><h1 className="sr">Campus map</h1>
+      <div className={shell}><h1 className="sr">Campus map</h1>
         <div className="map-empty"><h2>Join your campus first</h2><p>The map shows your own university. Tell us which one you attend on Home and it will appear here.</p><Link to="/app/feed" className="btn primary">Go to Home</Link></div>
       </div>
     );
   }
   if (status === "error") {
     return (
-      <div className="page"><h1 className="sr">Campus map</h1>
+      <div className={shell}><h1 className="sr">Campus map</h1>
         <div className="map-empty"><h2>The map did not load</h2><p>{error}</p><button type="button" className="btn primary" onClick={() => loadMyCampus(true)}>Try again</button></div>
       </div>
     );
   }
   if (!campus) {
     return (
-      <div className="page"><h1 className="sr">Campus map</h1>
+      <div className={shell}><h1 className="sr">Campus map</h1>
         <div className="map-empty" role="status"><h2>Finding your campus</h2><p>Looking up the buildings. This takes a few seconds the first time.</p></div>
       </div>
     );
@@ -128,7 +133,7 @@ export default function CampusMap() {
   const ownProposal = picked?.proposal?.by === YOU;
 
   return (
-    <div className="page mapview">
+    <div className={embedded ? "mapview mapview-embedded" : "page mapview"}>
       <h1 className="sr">Campus map</h1>
       <div className="map-grid">
         <aside className="map-side" aria-label="Places">
@@ -142,7 +147,8 @@ export default function CampusMap() {
           <div className="map-cats" role="group" aria-label="Filter places">
             <button type="button" aria-pressed={cat === ALL} onClick={() => setCat(ALL)}>All</button>
             {needsVote.length > 0 && <button type="button" className="needs" aria-pressed={cat === NEEDS} onClick={() => setCat(NEEDS)}>Needs your vote ({needsVote.length})</button>}
-            {used.map((c) => <button key={c} type="button" aria-pressed={cat === c} onClick={() => setCat(c)}>{CATEGORY[c].label}</button>)}
+            {shownCats.map((c) => <button key={c} type="button" aria-pressed={cat === c} onClick={() => setCat(c)}>{CATEGORY[c].label}</button>)}
+            {shownCats.length < used.length && <button type="button" className="more" aria-label={`Show ${used.length - shownCats.length} more kinds of place`} onClick={() => setAllCats(true)}>More</button>}
           </div>
           <ul className="map-list">
             {shown.map((p: MapPlace) => {

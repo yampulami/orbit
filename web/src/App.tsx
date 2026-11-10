@@ -39,11 +39,9 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Legal = lazy(() => import("./pages/Legal"));
 const Plans = lazy(() => import("./pages/Plans"));
 const Chats = lazy(() => import("./pages/Chats"));
-const Sync = lazy(() => import("./pages/Sync"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Person = lazy(() => import("./pages/Person"));
 const Roommates = lazy(() => import("./pages/Roommates"));
-const CampusMap = lazy(() => import("./pages/CampusMap"));
 const Campus = lazy(() => import("./pages/Campus"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Club = lazy(() => import("./pages/Club"));
@@ -172,13 +170,13 @@ export default function App() {
           <Route path="chats" element={<Chats />} />
           <Route path="messages" element={<Moved to="/app/chats" />} />
           <Route path="groups" element={<Moved to="/app/chats?tab=groups" />} />
-          <Route path="sync" element={<Sync />} />
+          <Route path="sync" element={<Moved to="/app/plans?tab=free" />} />
           <Route path="roommates" element={<Roommates />} />
           <Route path="plans" element={<Plans />} />
           <Route path="campus" element={<Campus />} />
           <Route path="campus/clubs/:id" element={<Club />} />
           <Route path="checkin/:id" element={<CheckIn />} />
-          <Route path="map" element={<CampusMap />} />
+          <Route path="map" element={<Moved to="/app/campus?tab=map" />} />
           <Route path="profile" element={<Profile />} />
           <Route path="people/:id" element={<Person />} />
           <Route path="*" element={<NotFound />} />

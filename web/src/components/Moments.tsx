@@ -141,7 +141,7 @@ export function MomentsBar({ always = false, limit = 3 }: { /** Show it even whe
       {open && (
         <SweepDiv className="mb-body">
           {moments.map((m) => <SweepItem key={m.id}><MomentCard m={m} row /></SweepItem>)}
-          {!always && <SweepItem><Link to="/app/sync" className="link-btn mb-more">All suggestions and settings</Link></SweepItem>}
+          {!always && <SweepItem><Link to="/app/plans?tab=free" className="link-btn mb-more">All suggestions and settings</Link></SweepItem>}
         </SweepDiv>
       )}
     </section>

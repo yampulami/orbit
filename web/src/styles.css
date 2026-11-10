@@ -5697,3 +5697,23 @@ p,li{text-wrap:pretty}
 .req-actions{display:flex;gap:8px;flex-wrap:wrap}
 .req-actions .btn{min-height:44px;border-radius:8px}
 .req-note{margin:0;padding:10px 4px 0;font-size:var(--t-meta)}
+
+/* One door per job: the rail is four places, you, and a More button; the map is a tab inside Campus. */
+.side-more{display:grid;gap:2px;width:100%}
+.side-more .more-btn{opacity:.75}
+.side-more .more-btn:hover,.side-more .more-btn[aria-expanded=true]{opacity:1}
+.navlink .me-av{flex:none}
+.rail-cap{display:block;margin:2px 0 0;text-align:center;font-size:var(--t-micro);font-weight:500;color:var(--ink-soft)}
+.mapview-embedded{width:100%}
+.mapview-embedded .map-grid{height:calc(100vh - 250px);min-height:480px}
+.plans-switch{margin-bottom:12px}
+
+/* The floating assistant orb sits in the bottom corner; this keeps the last of every page clear of it when you scroll to the end. */
+@media (min-width:901px){.main{padding-bottom:112px}}
+
+/* With the bar showing its names the column is narrower: the audience filters wrap onto a second line instead of hiding behind a sideways scroll. */
+@media (min-width:901px){.frow{flex-wrap:wrap;overflow:visible;row-gap:2px}}
+
+/* The agenda's two columns (plans, reminders) stack as soon as their own column is narrow, whatever the window or the bar is doing. */
+.plans-main{container-type:inline-size}
+@container (max-width:640px){.agenda-grid{grid-template-columns:minmax(0,1fr)}}

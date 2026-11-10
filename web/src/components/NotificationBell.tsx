@@ -76,7 +76,7 @@ export default function NotificationBell() {
   }
   if (nudges.places && campusKey) {
     const votes = proposals.filter((p) => p.campusKey === campusKey && statusOf(p) === "open" && p.by !== YOU && p.votes[YOU] === undefined);
-    if (votes.length) rows.push({ id: "places", icon: MapPinCheck, title: `${votes.length} ${votes.length === 1 ? "place needs" : "places need"} your vote`, sub: "Students added them to the map", go: go("/app/map") });
+    if (votes.length) rows.push({ id: "places", icon: MapPinCheck, title: `${votes.length} ${votes.length === 1 ? "place needs" : "places need"} your vote`, sub: "Students added them to the map", go: go("/app/campus?tab=map") });
   }
   // A friend request you have not answered stays under "Needs you" with its Accept and Ignore, even once you have seen it.
   const needs = rows.filter((r) => !r.id.startsWith("n-") || r.request);
