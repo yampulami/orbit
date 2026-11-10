@@ -16,7 +16,7 @@ export default function RichText({ text }: { text: string }): ReactNode {
   // A picture is written into the text on its own line; show it as a picture and the rest as words.
   // Pictures that sit together (up to four) show as one grid; a single picture stays large.
   if (text && hasMedia(text)) return <>{groupPieces(splitMedia(text)).map((g, i) => ("imgs" in g
-    ? chunk(g.imgs).map((c, k) => (c.length === 1 ? <MediaImage key={`${i}-${k}`} path={c[0]} /> : <div key={`${i}-${k}`} className="media-grid" data-n={c.length}>{c.map((path) => <MediaImage key={path} path={path} />)}</div>))
+    ? chunk(g.imgs).map((c, k) => (c.length === 1 ? <MediaImage key={`${i}-${k}`} path={c[0]} /> : <div key={`${i}-${k}`} className="media-grid" data-n={c.length}>{c.map((path) => <MediaImage key={path} path={path} group={c} />)}</div>))
     : <RichText key={i} text={g.text} />))}</>;
   if (!text || !hasEmoji(text)) return <>{text}</>;
   return <>{splitEmoji(text).map((p, i) => ("text" in p ? <span key={i}>{p.text}</span> : <Emoji key={i} e={p.emoji} />))}</>;
