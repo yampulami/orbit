@@ -5721,7 +5721,10 @@ p,li{text-wrap:pretty}
 /* The name pill over a face sizes itself to the name. Inside a list row that breaks long words anywhere, it had shrunk to the width of one letter. */
 .avs-face::after{width:max-content;max-width:min(260px,70vw);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;overflow-wrap:normal;word-break:normal}
 
-/* While the audience list is open, the post box rises above the sticky filter row below it, so the list is never cut off. */
-.composer:has(.audience.choosing){position:relative;z-index:30}
-.audience.choosing{z-index:40}
-.audience.choosing{width:max-content;max-width:min(640px,calc(100vw - 48px))}
+
+/* The audience choices open inside the post box, under the row they belong to, and push the page down. They no longer float over (and hide) what is below. */
+@media (min-width:901px){
+  .aud-wrap:has(.audience.choosing){display:contents}
+  .composer-row:has(.audience.choosing){flex-wrap:wrap;row-gap:10px}
+  .audience.choosing{position:static;order:10;flex:1 1 100%;width:auto;max-width:none;padding:10px 0 2px;border-radius:0;background:none;box-shadow:none;border-top:1px solid var(--line)}
+}
