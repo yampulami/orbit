@@ -29,7 +29,7 @@ export default function ComposeModal({ open, onClose, initialCommunity }: { open
   const name = useDisplayName();
   const drafts = useDrafts();
   const [text, setText] = useState("");
-  const att = useAttachment();
+  const att = useAttachment(4); // up to four photos per post
   const [community, setCommunity] = useState<Community>("Everyone");
   const [campus, setCampus] = useState<Campus | null | undefined>(undefined); // undefined = still checking
   const [view, setView] = useState<"write" | "drafts">("write");

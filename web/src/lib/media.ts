@@ -32,6 +32,22 @@ export function splitMedia(text: string): MediaPiece[] {
   return out;
 }
 
+/** Pictures that sit next to each other in the text are shown together as one block (a grid), not one big picture under another. */
+export const MAX_PHOTOS = 4;
+export type MediaGroup = { text: string } | { imgs: string[] };
+export function groupPieces(pieces: MediaPiece[]): MediaGroup[] {
+  const out: MediaGroup[] = [];
+  for (const p of pieces) {
+    if ("img" in p) {
+      const last = out[out.length - 1];
+      if (last && "imgs" in last) last.imgs.push(p.img); else out.push({ imgs: [p.img] });
+    } else out.push({ text: p.text });
+  }
+  return out;
+}
+/** Split a run of pictures into blocks of at most `size`, so no grid ever holds more than four. */
+export const chunk = <T,>(list: T[], size = MAX_PHOTOS): T[][] => { const out: T[][] = []; for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size)); return out; };
+
 /** Draws the picture smaller: the longest side at most `side`, as a JPEG. Throws if the file is not a picture the browser can read. */
 export async function shrink(file: File, side = 1280, quality = 0.82, square = false): Promise<Blob> {
   const url = URL.createObjectURL(file);

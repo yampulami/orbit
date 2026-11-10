@@ -91,7 +91,7 @@ export default function Feed() {
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const draftKey = `orbit-feed-draft:${me}`;
-  const att = useAttachment();
+  const att = useAttachment(4); // up to four photos per post
   const [body, setBody] = useState(() => { try { return localStorage.getItem(`orbit-feed-draft:${session?.user.id ?? ""}`) ?? ""; } catch { return ""; } });
   // A half-written post survives leaving the page or closing the tab.
   useEffect(() => { try { if (body) localStorage.setItem(draftKey, body); else localStorage.removeItem(draftKey); } catch { /* storage unavailable */ } }, [body, draftKey]);
