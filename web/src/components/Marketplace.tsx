@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
-import { Bookmark, Check, Plus, Search, ShieldAlert, X } from "lucide-react";
+import { Bookmark, Check, ImagePlus, Plus, Search, ShieldAlert, X } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { loadProfile } from "../lib/profile";
 import { feedApi } from "../lib/feedData";
@@ -11,7 +11,7 @@ import {
   CATEGORIES, CONDITIONS, EMPTY_DRAFT, KIND_LABEL, NO_FILTERS, activeCount, filterListings, MAX_ACTIVE, priceLabel, problemWithListing, useListings,
   type Category, type Condition, type Draft, type Filters, type Kind, type Listing,
 } from "../lib/listings";
-import { AttachButton, AttachPreview, useAttachment } from "./Attach";
+import { AttachPreview, useAttachment, type Attachment } from "./Attach";
 import MediaImage from "./MediaImage";
 import { notice } from "../lib/notice";
 
@@ -186,15 +186,14 @@ function NewListing({ active, onClose, onCreate }: { active: number; onClose: ()
           {(["sell", "free", "wanted"] as Kind[]).map((k) => <button key={k} type="button" role="radio" aria-checked={d.kind === k} onClick={() => set({ kind: k })}>{k === "sell" ? "Selling" : k === "free" ? "Giving away" : "Looking for"}</button>)}
         </div>
         <label className="field">Title<input value={d.title} maxLength={80} onChange={(e) => set({ title: e.target.value })} placeholder={d.kind === "wanted" ? "What are you looking for?" : "What is it?"} autoFocus /></label>
+        <PhotoField a={att} />
         {d.kind !== "free" && <label className="field">{d.kind === "wanted" ? "Your budget (optional)" : "Price"}<span className="mk-money"><span aria-hidden="true">$</span><input inputMode="decimal" value={d.price} onChange={(e) => set({ price: e.target.value })} placeholder={d.kind === "wanted" ? "Leave empty if open to offers" : "25"} /></span></label>}
         <div className="mk-two">
           <label className="field">Category<select value={d.category} onChange={(e) => set({ category: e.target.value as Category })}>{CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select></label>
           {d.kind !== "wanted" && <label className="field">Condition<select value={d.condition} onChange={(e) => set({ condition: e.target.value as Condition | "" })}><option value="">Not sure</option>{CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}</select></label>}
         </div>
         <label className="field">Description (optional)<textarea rows={4} maxLength={1000} value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Size, age, where you can meet" /></label>
-        <AttachPreview a={att} />
         <div className="mk-foot">
-          <AttachButton a={att} />
           <span className="muted">{active} of {MAX_ACTIVE} active listings</span>
           <button className="btn primary" disabled={busy || att.busy}>{busy ? "Posting…" : "Post"}</button>
         </div>
@@ -202,5 +201,21 @@ function NewListing({ active, onClose, onCreate }: { active: number; onClose: ()
         <p className="mk-note">Orbit never handles money. Do not list weapons, drugs, alcohol or anything illegal.</p>
       </form>
     </Frame>
+  );
+}
+
+/** Photos for a listing: a plain labelled button, with the pictures shown right under it. Listings with photos get far more attention. */
+function PhotoField({ a }: { a: Attachment }) {
+  return (
+    <div className="field mk-photo-field">
+      <span className="mk-photo-label" id="mk-photos-l">Photos <span className="muted">(optional, up to {a.max})</span></span>
+      <label className={"mk-add" + (a.full ? " off" : "")}>
+        <ImagePlus size={20} aria-hidden="true" />
+        <span>{a.busy ? "Adding…" : a.items.length === 0 ? "Add photos" : a.full ? "That is all four" : `Add more (${a.items.length} of ${a.max})`}</span>
+        <input type="file" accept="image/*" multiple className="sr" aria-labelledby="mk-photos-l" disabled={a.busy || a.full}
+          onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ""; if (f.length) void a.pick(f); }} />
+      </label>
+      <AttachPreview a={a} />
+    </div>
   );
 }
