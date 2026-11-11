@@ -5974,7 +5974,7 @@ p,li{text-wrap:pretty}
 /* ===== Marketplace layout: a rail of filters beside a photo grid (phone: chips above the grid) ===== */
 .mk{container-type:inline-size;display:block}
 .mk-layout{display:grid;grid-template-columns:248px minmax(0,1fr);gap:32px;align-items:start}
-.mk-rail{display:grid;gap:18px;position:sticky;top:12px;max-height:calc(100dvh - 24px);overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+.mk-rail{display:grid;gap:18px;min-width:0}
 .mk-rail .mk-search{min-height:44px}
 .mk-new{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:8px;width:100%}
 .mk-views{display:grid;gap:2px}
@@ -6043,3 +6043,7 @@ p,li{text-wrap:pretty}
 @container (max-width:780px){.mk-new-long{display:none}.mk-new-short{display:inline}}
 
 .mk-page{width:min(1400px,100%)}
+
+/* The rail scrolls with the page, not on its own: a scroll box inside it clipped the selected outlines and showed a second scrollbar. */
+.mk-layout{grid-template-columns:240px minmax(0,1fr);align-items:start}
+.mk-empty-wide{max-width:520px}
