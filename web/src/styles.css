@@ -5898,3 +5898,8 @@ p,li{text-wrap:pretty}
 .media-view-wait{width:min(480px,70vw);height:min(320px,50vh);border-radius:8px}
 .media-view img{touch-action:pan-y}
 @media (max-width:600px){.media-nav{width:44px;height:44px;margin-top:-22px}.media-nav.prev{left:8px}.media-nav.next{right:8px}}
+
+/* Event labels in the day list: a small tag at the end of the row, icon beside the words. The row's own "span" rule was stretching them into a tall grid. */
+.ag-row .ebadge{flex:none;display:inline-flex;align-items:center;gap:5px;width:auto;padding:2px 8px;font-size:var(--t-micro);font-weight:500;line-height:1.4;white-space:nowrap}
+.ag-row .ebadge svg{flex:none}
+@media (max-width:520px){.ag-row .ebadge{max-width:42%;white-space:normal}}
