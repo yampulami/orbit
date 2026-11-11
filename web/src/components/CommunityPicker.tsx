@@ -2,7 +2,8 @@ import { communities, type Community } from "../shared/feed";
 import { communityIcon } from "../lib/communityUi";
 import Picker, { type PickerOption } from "./Picker";
 
-const options: PickerOption<Community>[] = communities.map((c) => {
+// Things for sale are listed in the marketplace (Campus, For sale), not posted to the feed.
+const options: PickerOption<Community>[] = communities.filter((c) => c !== "Marketplace").map((c) => {
   const { Icon, ink } = communityIcon[c];
   return { value: c, label: c, icon: <span style={{ color: ink, display: "inline-flex" }}><Icon size={16} strokeWidth={1.9} aria-hidden="true" /></span> };
 });

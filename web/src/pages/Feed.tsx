@@ -13,8 +13,8 @@ import PlansWaiting from "../components/PlansWaiting";
 import { MomentsBar } from "../components/Moments";
 import { useDisplayName } from "../lib/displayName";
 import { AnimatePresence, motion } from "framer-motion";
-import { Navigate, useSearchParams } from "react-router-dom";
-import { Check, ChevronDown, Heart, MessageCircle, Pencil, Repeat2, Send, Trash2 } from "lucide-react";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
+import { ArrowUpRight, Check, ChevronDown, Heart, MessageCircle, Pencil, Repeat2, Send, Trash2 } from "lucide-react";
 import QuoteCard from "../components/QuoteCard";
 import { useAuth } from "../lib/auth";
 import { feedApi as api, type Row } from "../lib/feedData";
@@ -337,7 +337,7 @@ export default function Feed() {
               {choosing && (
                 <div className="audience choosing" role="radiogroup" aria-label="Post to">
                   {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); composerRef.current?.focus(); }}>{SHOW[c]}{community === c && <Check size={14} aria-hidden="true" />}</button>)}
-                  {communities.includes("Marketplace") && <><span className="sep" aria-hidden="true" /><button type="button" role="radio" aria-checked={community === "Marketplace"} title={WHO.Marketplace} onClick={() => { setCommunity("Marketplace"); setChoosing(false); composerRef.current?.focus(); }}>{SHOW.Marketplace}{community === "Marketplace" && <Check size={14} aria-hidden="true" />}</button></>}
+                  <span className="sep" aria-hidden="true" /><Link className="aud-sell" to="/app/campus?tab=forsale">Selling something? Use the marketplace<ArrowUpRight size={13} aria-hidden="true" /></Link>
                   <small className="aud-who">{WHO[community]}</small>
                 </div>
               )}
@@ -360,7 +360,9 @@ export default function Feed() {
             {([...(mineTags ? ["Mine"] : []), "All", ...communities] as Filter[]).map((c) => (
               <Fragment key={c}>
               {c === "Marketplace" && <span className="sep" aria-hidden="true" />}
-              <button type="button" aria-pressed={filter === c} disabled={countFor(c) === 0 && filter !== c} onClick={() => pick(c)}>{SHOW[c]}<small>{countFor(c)}</small></button>
+              {c === "Marketplace"
+                ? <Link className="frow-link" to="/app/campus?tab=forsale" title="Open the campus marketplace">For sale<ArrowUpRight size={13} aria-hidden="true" /></Link>
+                : <button type="button" aria-pressed={filter === c} disabled={countFor(c) === 0 && filter !== c} onClick={() => pick(c)}>{SHOW[c]}<small>{countFor(c)}</small></button>}
               </Fragment>
             ))}
           </nav>

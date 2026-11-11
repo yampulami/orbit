@@ -5952,3 +5952,9 @@ p,li{text-wrap:pretty}
 .mk-form select,.mk-report select,.mk-form textarea,.mk-form input:not([type=file]),.mk-report textarea{font:inherit}
 .mk-report{display:grid;gap:12px;margin-top:14px}
 @media (max-width:560px){.mk-two{grid-template-columns:1fr}.mk-top{flex-wrap:wrap}.mk-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.mk-price{font-size:1.1rem}}
+
+/* For sale lives in the marketplace now: on Home it is a link out, and the composer points there instead of posting to it. */
+.frow-link{display:inline-flex;align-items:center;gap:4px;min-height:36px;padding:0 10px;border-radius:8px;color:var(--ink);font-size:var(--t-meta);font-weight:500;text-decoration:none;box-shadow:inset 0 0 0 1px var(--line)}
+.frow-link:hover{box-shadow:inset 0 0 0 1px var(--ink-soft)}
+.aud-sell{display:inline-flex;align-items:center;gap:4px;font-size:var(--t-meta);color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px}
+.aud-sell:hover{color:var(--ink)}
