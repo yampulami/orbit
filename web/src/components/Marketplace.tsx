@@ -8,7 +8,7 @@ import { feedApi } from "../lib/feedData";
 import { dmActions } from "../lib/dms";
 import { useMediaUrl } from "../lib/media";
 import {
-  CATEGORIES, CONDITIONS, EMPTY_DRAFT, KIND_LABEL, NO_FILTERS, activeCount, categoryCounts, filterListings, MAX_ACTIVE, priceLabel, problemWithListing, useListings,
+  askAbout, CATEGORIES, CONDITIONS, EMPTY_DRAFT, KIND_LABEL, NO_FILTERS, activeCount, categoryCounts, filterListings, MAX_ACTIVE, priceLabel, problemWithListing, useListings,
   type Category, type Condition, type Draft, type Filters, type Kind, type Listing, type Sort,
 } from "../lib/listings";
 import { AttachPreview, useAttachment, type Attachment } from "./Attach";
@@ -161,7 +161,7 @@ function Detail({ l, onClose, onSave, onStatus, onReport }: { l: Listing; onClos
   const [reason, setReason] = useState<string>("scam");
   const [detail, setDetail] = useState("");
   const [msg, setMsg] = useState("");
-  const message = async () => { setBusy(true); const t = await dmActions.start(l.sellerId); setBusy(false); if (t) { onClose(); nav("/app/messages", { state: { thread: t } }); } else setMsg("Could not open a conversation. Try again."); };
+  const message = async () => { setBusy(true); const t = await dmActions.start(l.sellerId); setBusy(false); if (t) { onClose(); nav("/app/messages", { state: { thread: t, draft: askAbout(l) } }); } else setMsg("Could not open a conversation. Try again."); };
   const sendReport = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true);
     const p = await onReport(l.id, reason, detail); setBusy(false);

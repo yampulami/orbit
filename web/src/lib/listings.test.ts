@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_DRAFT, NO_FILTERS, activeCount, categoryCounts, filterListings, parsePrice, priceLabel, problemWithListing, type Listing } from "./listings";
+import { EMPTY_DRAFT, NO_FILTERS, activeCount, askAbout, categoryCounts, filterListings, parsePrice, priceLabel, problemWithListing, type Listing } from "./listings";
 
 const L = (o: Partial<Listing>): Listing => ({ id: "x", campusKey: "c", sellerId: "s", sellerName: "S", kind: "sell", title: "Thing", description: "", priceCents: 1000, category: "Other", condition: null, photos: [], status: "active", createdAt: "2026-11-01T00:00:00Z", mine: false, saved: false, ...o });
 
@@ -74,5 +74,13 @@ describe("price filter, sort and counts", () => {
   it("counts active listings per category for the kind chosen", () => {
     expect(categoryCounts(list, "all")).toEqual({ Textbooks: 2, Furniture: 2 });
     expect(categoryCounts(list, "free")).toEqual({ Furniture: 1 });
+  });
+});
+
+describe("askAbout", () => {
+  it("names the listing and fits its kind", () => {
+    expect(askAbout({ kind: "sell", title: "Desk fan", priceCents: 800 })).toBe('Hi! Is "Desk fan" ($8) still available? ');
+    expect(askAbout({ kind: "free", title: "Lamp", priceCents: null })).toContain("pick it up");
+    expect(askAbout({ kind: "wanted", title: "Mini fridge", priceCents: null })).toContain("looking for");
   });
 });

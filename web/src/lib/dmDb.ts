@@ -33,7 +33,9 @@ export function buildThreads(raw: RawDms): DmThread[] {
       const incoming = request && c.initiator_id !== raw.me;
       const waiting = request && c.initiator_id === raw.me;
       return { id: c.id, otherId, name: label(otherId), messages, unread, updatedAt: c.updated_at, ...(incoming ? { incoming } : {}), ...(waiting ? { waiting, sent: messages.filter((m) => m.mine).length } : {}) };
-    });
+    })
+    // Someone who opened a chat with you but has not written yet is not a request worth showing.
+    .filter((t) => !(t.incoming && t.messages.length === 0));
 }
 
 const when = (iso: string) => { const n = Date.parse(iso); return Number.isNaN(n) ? 0 : n; };

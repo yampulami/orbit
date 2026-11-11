@@ -27,6 +27,13 @@ export function parsePrice(text: string): number | null {
   return Math.round(parseFloat(t) * 100);
 }
 /** "$25", "$25.50", "Free", or "Open to offers" when a wanted post names no budget. */
+/** The first message a person sends from a listing, ready in the box to send or change. It names the listing so the seller knows which one it is about. */
+export function askAbout(l: Pick<Listing, "kind" | "title" | "priceCents">): string {
+  const price = l.kind === "sell" && l.priceCents ? ` (${priceLabel(l)})` : "";
+  if (l.kind === "wanted") return `Hi! I saw your post looking for "${l.title}". I think I can help. `;
+  if (l.kind === "free") return `Hi! Is "${l.title}" still available? I would love to pick it up. `;
+  return `Hi! Is "${l.title}"${price} still available? `;
+}
 export function priceLabel(l: Pick<Listing, "kind" | "priceCents">): string {
   if (l.kind === "free") return "Free";
   if (l.priceCents === null) return l.kind === "wanted" ? "Open to offers" : "Ask";

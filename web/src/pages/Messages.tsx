@@ -48,12 +48,18 @@ function LiveMessages() {
   const [typingAt, setTypingAt] = useState(0);
   const [, tick] = useState(0);
   // Arriving from someone's profile ("Message") opens that conversation.
-  const asked = (useLocation().state as { thread?: string } | null)?.thread;
+  const arrival = useLocation().state as { thread?: string; draft?: string } | null;
+  const asked = arrival?.thread;
+  const askedDraft = arrival?.draft; // e.g. a question about a listing, ready to send or change
   // Someone who is not your friend wrote to you: it waits under "Message requests" until you accept or delete it.
   const requests = threads.filter((t) => t.incoming);
   const regular = threads.filter((t) => !t.incoming);
   const [inRequests, setInRequests] = useState(false);
-  useEffect(() => { if (asked) { setActive(asked); setPicking(false); setChatOpen(true); setInRequests(!!threads.find((t) => t.id === asked)?.incoming); } }, [asked]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!asked) return;
+    setActive(asked); setPicking(false); setChatOpen(true); setInRequests(!!threads.find((t) => t.id === asked)?.incoming);
+    if (askedDraft) { setText(askedDraft); window.setTimeout(() => dmInput.current?.focus(), 80); }
+  }, [asked, askedDraft]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (inRequests && requests.length === 0) { setInRequests(false); setActive(""); } }, [inRequests, requests.length]);
   const current = threads.find((t) => t.id === active) ?? (picking ? undefined : (inRequests ? requests[0] : regular[0]));
   const shownId = current?.id ?? "";
