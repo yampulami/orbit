@@ -337,7 +337,7 @@ export default function Feed() {
               {choosing && (
                 <div className="audience choosing" role="radiogroup" aria-label="Post to">
                   {communities.filter((c) => c !== "Marketplace").map((c) => <button key={c} type="button" role="radio" aria-checked={community === c} onClick={() => { setCommunity(c); setChoosing(false); composerRef.current?.focus(); }}>{SHOW[c]}{community === c && <Check size={14} aria-hidden="true" />}</button>)}
-                  <span className="sep" aria-hidden="true" /><Link className="aud-sell" to="/app/campus?tab=forsale">Selling something? Use the marketplace<ArrowUpRight size={13} aria-hidden="true" /></Link>
+                  <span className="sep" aria-hidden="true" /><Link className="aud-sell" to="/app/marketplace">Selling something? Use the marketplace<ArrowUpRight size={13} aria-hidden="true" /></Link>
                   <small className="aud-who">{WHO[community]}</small>
                 </div>
               )}
@@ -353,7 +353,7 @@ export default function Feed() {
         <PlansWaiting />
         {phone ? <CampusSoon /> : <div className="cs-narrow"><CampusSoon /></div>}
         {phone && <UpcomingList limit={3} moreTo="/app/plans" hide={["hangout"]} title="On your list" />}
-        <h2 className="feed-h">{campus.name}<span>{feed.length >= PAGE ? `Newest ${PAGE} posts` : "What students are saying"}</span><Link className="feed-sale" to="/app/campus?tab=forsale">Marketplace<ArrowUpRight size={14} aria-hidden="true" /></Link></h2>
+        <h2 className="feed-h">{campus.name}<span>{feed.length >= PAGE ? `Newest ${PAGE} posts` : "What students are saying"}</span><Link className="feed-sale" to="/app/marketplace">Marketplace<ArrowUpRight size={14} aria-hidden="true" /></Link></h2>
         <div className="pills">
           <nav className="frow" aria-label="Show posts">
             <span className="frow-l" title={`Counts are for the newest ${PAGE} posts`}>Showing</span>

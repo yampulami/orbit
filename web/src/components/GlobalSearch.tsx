@@ -3,7 +3,7 @@ import Avatar from "./Avatar";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ease } from "../lib/motion";
 import { useNavigate } from "react-router-dom";
-import { Bell, CalendarClock, ChevronRight, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, UserRound, Users, X, type LucideIcon } from "lucide-react";
+import { Bell, CalendarClock, ChevronRight, CalendarDays, Coffee, ListChecks, MapPin, Megaphone, MessageSquare, Newspaper, NotebookText, Search, Sofa, ShoppingBasket, Store, UserRound, Users, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { feedApi, type Row } from "../lib/feedData";
 import { friendsLive, useFriends } from "../lib/friends";
@@ -25,6 +25,7 @@ const PAGES: { id: string; title: string; sub: string; to: string; Icon: LucideI
   { id: "plans", title: "Plans", sub: "Classes, reminders and plans", to: "/app/plans", Icon: CalendarDays },
   { id: "sync", title: "Free time", sub: "Find a time that works for everyone", to: "/app/plans?tab=free", Icon: CalendarClock, words: "sync schedule calendar find a time" },
   { id: "campus", title: "Campus", sub: "Clubs and events", to: "/app/campus", Icon: Megaphone },
+  { id: "market", title: "Marketplace", sub: "Buy, sell and give away on campus", to: "/app/marketplace", Icon: Store, words: "for sale buy sell free textbooks furniture" },
   { id: "roommates", title: "Roommates", sub: "Chores, groceries and expenses", to: "/app/roommates", Icon: Sofa },
   { id: "map", title: "Map", sub: "Places around campus", to: "/app/campus?tab=map", Icon: MapPin },
 ];
