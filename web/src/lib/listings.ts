@@ -48,18 +48,32 @@ export function problemWithListing(d: Draft): string | null {
   return null;
 }
 
-export type Filters = { kind: Kind | "all"; category: Category | "all"; query: string; savedOnly: boolean; mineOnly: boolean };
-export const NO_FILTERS: Filters = { kind: "all", category: "all", query: "", savedOnly: false, mineOnly: false };
-/** The listings to show: newest first, narrowed by what was asked. Sold listings only show under "Mine". */
+export type Sort = "new" | "low" | "high";
+export type Filters = { kind: Kind | "all"; category: Category | "all"; query: string; savedOnly: boolean; mineOnly: boolean; min: string; max: string; sort: Sort };
+export const NO_FILTERS: Filters = { kind: "all", category: "all", query: "", savedOnly: false, mineOnly: false, min: "", max: "", sort: "new" };
+/** What a listing costs in cents for sorting and the price filter: free is 0, and a listing with no price is unknown (null). */
+export const priceOf = (l: Pick<Listing, "kind" | "priceCents">): number | null => (l.kind === "free" ? 0 : l.priceCents);
+/** The listings to show, narrowed by what was asked and ordered (newest first unless told otherwise). Sold listings only show under "Mine".
+ *  When a price range is set, listings with no price are left out rather than guessed. */
 export function filterListings(list: Listing[], f: Filters): Listing[] {
   const q = f.query.trim().toLowerCase();
+  const lo = parsePrice(f.min), hi = parsePrice(f.max);
+  const newest = (a: Listing, b: Listing) => b.createdAt.localeCompare(a.createdAt);
+  const cost = (l: Listing, empty: number) => priceOf(l) ?? empty;
   return list
     .filter((l) => (f.mineOnly ? l.mine : l.status === "active"))
     .filter((l) => f.kind === "all" || l.kind === f.kind)
     .filter((l) => f.category === "all" || l.category === f.category)
     .filter((l) => !f.savedOnly || l.saved)
     .filter((l) => !q || l.title.toLowerCase().includes(q) || l.description.toLowerCase().includes(q))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    .filter((l) => { if (lo === null && hi === null) return true; const p = priceOf(l); return p !== null && (lo === null || p >= lo) && (hi === null || p <= hi); })
+    .sort((a, b) => (f.sort === "low" ? cost(a, Infinity) - cost(b, Infinity) || newest(a, b) : f.sort === "high" ? cost(b, -1) - cost(a, -1) || newest(a, b) : newest(a, b)));
+}
+/** How many active listings there are in each category, for the list beside the grid. Respects the kind chosen, not the category. */
+export function categoryCounts(list: Listing[], kind: Kind | "all"): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const l of list) if (l.status === "active" && (kind === "all" || l.kind === kind)) out[l.category] = (out[l.category] ?? 0) + 1;
+  return out;
 }
 export const activeCount = (list: Listing[]) => list.filter((l) => l.mine && l.status === "active").length;
 

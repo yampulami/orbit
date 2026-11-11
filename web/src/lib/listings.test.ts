@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_DRAFT, NO_FILTERS, activeCount, filterListings, parsePrice, priceLabel, problemWithListing, type Listing } from "./listings";
+import { EMPTY_DRAFT, NO_FILTERS, activeCount, categoryCounts, filterListings, parsePrice, priceLabel, problemWithListing, type Listing } from "./listings";
 
 const L = (o: Partial<Listing>): Listing => ({ id: "x", campusKey: "c", sellerId: "s", sellerName: "S", kind: "sell", title: "Thing", description: "", priceCents: 1000, category: "Other", condition: null, photos: [], status: "active", createdAt: "2026-11-01T00:00:00Z", mine: false, saved: false, ...o });
 
@@ -52,5 +52,27 @@ describe("filtering", () => {
   it("shows my own, sold ones included, under Mine", () => {
     expect(filterListings(list, { ...NO_FILTERS, mineOnly: true }).map((l) => l.id)).toEqual(["c"]);
     expect(activeCount(list)).toBe(0);
+  });
+});
+
+describe("price filter, sort and counts", () => {
+  const list = [
+    L({ id: "a", title: "A", priceCents: 5000, category: "Textbooks", createdAt: "2026-11-01T00:00:00Z" }),
+    L({ id: "b", title: "B", priceCents: 1000, category: "Textbooks", createdAt: "2026-11-02T00:00:00Z" }),
+    L({ id: "c", title: "C", kind: "free", priceCents: null, category: "Furniture", createdAt: "2026-11-03T00:00:00Z" }),
+    L({ id: "d", title: "D", kind: "wanted", priceCents: null, category: "Furniture", createdAt: "2026-11-04T00:00:00Z" }),
+  ];
+  it("sorts by price, with free first and unknown prices last", () => {
+    expect(filterListings(list, { ...NO_FILTERS, sort: "low" }).map((l) => l.id)).toEqual(["c", "b", "a", "d"]);
+    expect(filterListings(list, { ...NO_FILTERS, sort: "high" }).map((l) => l.id)).toEqual(["a", "b", "c", "d"]);
+  });
+  it("narrows by a price range and leaves out listings with no price", () => {
+    expect(filterListings(list, { ...NO_FILTERS, min: "20" }).map((l) => l.id)).toEqual(["a"]);
+    expect(filterListings(list, { ...NO_FILTERS, max: "20" }).map((l) => l.id)).toEqual(["c", "b"]);
+    expect(filterListings(list, { ...NO_FILTERS, min: "5", max: "100" }).map((l) => l.id)).toEqual(["b", "a"]);
+  });
+  it("counts active listings per category for the kind chosen", () => {
+    expect(categoryCounts(list, "all")).toEqual({ Textbooks: 2, Furniture: 2 });
+    expect(categoryCounts(list, "free")).toEqual({ Furniture: 1 });
   });
 });
