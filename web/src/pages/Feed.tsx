@@ -353,16 +353,13 @@ export default function Feed() {
         <PlansWaiting />
         {phone ? <CampusSoon /> : <div className="cs-narrow"><CampusSoon /></div>}
         {phone && <UpcomingList limit={3} moreTo="/app/plans" hide={["hangout"]} title="On your list" />}
-        <h2 className="feed-h">{campus.name}<span>{feed.length >= PAGE ? `Newest ${PAGE} posts` : "What students are saying"}</span></h2>
+        <h2 className="feed-h">{campus.name}<span>{feed.length >= PAGE ? `Newest ${PAGE} posts` : "What students are saying"}</span><Link className="feed-sale" to="/app/campus?tab=forsale">Marketplace<ArrowUpRight size={14} aria-hidden="true" /></Link></h2>
         <div className="pills">
           <nav className="frow" aria-label="Show posts">
             <span className="frow-l" title={`Counts are for the newest ${PAGE} posts`}>Showing</span>
-            {([...(mineTags ? ["Mine"] : []), "All", ...communities] as Filter[]).map((c) => (
+            {([...(mineTags ? ["Mine"] : []), "All", ...communities.filter((c) => c !== "Marketplace")] as Filter[]).map((c) => (
               <Fragment key={c}>
-              {c === "Marketplace" && <span className="sep" aria-hidden="true" />}
-              {c === "Marketplace"
-                ? <Link className="frow-link" to="/app/campus?tab=forsale" title="Open the campus marketplace">For sale<ArrowUpRight size={13} aria-hidden="true" /></Link>
-                : <button type="button" aria-pressed={filter === c} disabled={countFor(c) === 0 && filter !== c} onClick={() => pick(c)}>{SHOW[c]}<small>{countFor(c)}</small></button>}
+              <button type="button" aria-pressed={filter === c} disabled={countFor(c) === 0 && filter !== c} onClick={() => pick(c)}>{SHOW[c]}<small>{countFor(c)}</small></button>
               </Fragment>
             ))}
           </nav>
