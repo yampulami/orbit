@@ -1,15 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
-import { Bookmark, Check, ImagePlus, Plus, Search, ShieldAlert, X } from "lucide-react";
+import { Bike, Bookmark, BookOpen, Check, Heart, ImagePlus, Laptop, Package, Plus, Search, ShieldAlert, Shirt, Sofa, Store, Ticket, User, UtensilsCrossed, Wrench, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { loadProfile } from "../lib/profile";
 import { feedApi } from "../lib/feedData";
 import { dmActions } from "../lib/dms";
 import { useMediaUrl } from "../lib/media";
 import {
-  CATEGORIES, CONDITIONS, EMPTY_DRAFT, KIND_LABEL, NO_FILTERS, activeCount, filterListings, MAX_ACTIVE, priceLabel, problemWithListing, useListings,
-  type Category, type Condition, type Draft, type Filters, type Kind, type Listing,
+  CATEGORIES, CONDITIONS, EMPTY_DRAFT, KIND_LABEL, NO_FILTERS, activeCount, categoryCounts, filterListings, MAX_ACTIVE, priceLabel, problemWithListing, useListings,
+  type Category, type Condition, type Draft, type Filters, type Kind, type Listing, type Sort,
 } from "../lib/listings";
 import { AttachPreview, useAttachment, type Attachment } from "./Attach";
 import MediaImage from "./MediaImage";
@@ -18,7 +18,10 @@ import { notice } from "../lib/notice";
 const REASONS = [["scam", "Looks like a scam"], ["prohibited", "Not allowed (weapons, drugs, alcohol and similar)"], ["spam", "Spam or not a real listing"], ["unsafe", "Feels unsafe"], ["other", "Something else"]] as const;
 const ago = (iso: string) => { const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000)); return m < 1 ? "just now" : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`; };
 
-/** The marketplace for your campus: things to buy, to take for free, and things students are looking for. Orbit never handles money; the safety note says so. */
+const CATEGORY_ICON: Record<Category, LucideIcon> = { Textbooks: BookOpen, Furniture: Sofa, Electronics: Laptop, Clothing: Shirt, "Dorm and kitchen": UtensilsCrossed, "Bikes and rides": Bike, Tickets: Ticket, Services: Wrench, Other: Package };
+
+/** The marketplace for your campus, laid out like the ones people already know: a rail of ways to narrow things down (kind, category, price) beside a grid of
+ *  photo cards with the price first. On a narrow screen the rail becomes a search box and a row of category chips. Orbit never handles money; the note says so. */
 export default function Marketplace() {
   const { session } = useAuth();
   const me = session?.user.id;
@@ -32,64 +35,106 @@ export default function Marketplace() {
   const [open, setOpen] = useState<Listing | null>(null);
   const [selling, setSelling] = useState(false);
   const shown = filterListings(list, filters);
+  const counts = categoryCounts(list, filters.kind);
   const set = (f: Partial<Filters>) => setFilters((x) => ({ ...x, ...f }));
   const current = open ? list.find((l) => l.id === open.id) ?? null : null;
+  const total = list.filter((l) => l.status === "active").length;
+  const savedCount = list.filter((l) => l.saved && l.status === "active").length;
+  const mineCount = list.filter((l) => l.mine).length;
+  const view = filters.mineOnly ? "mine" : filters.savedOnly ? "saved" : "browse";
+  const go = (v: "browse" | "saved" | "mine") => set({ mineOnly: v === "mine", savedOnly: v === "saved" });
+  const heading = view === "mine" ? "Your listings" : view === "saved" ? "Saved" : filters.category !== "all" ? filters.category : filters.query.trim() ? `Results for \u201c${filters.query.trim()}\u201d` : "Today\u2019s picks";
+  const reset = () => setFilters(NO_FILTERS);
+  const narrowed = filters.kind !== "all" || filters.category !== "all" || !!filters.query.trim() || !!filters.min || !!filters.max;
 
   if (campus === undefined) return <div className="skeleton sk-card" aria-busy="true" />;
   if (campus === null) return <p className="rm-empty">Join your campus first and its marketplace will be here.</p>;
   return (
     <section className="mk" aria-label="Marketplace">
-      <div className="mk-top">
+      <div className="mk-layout">
+      <aside className="mk-rail" aria-label="Narrow the listings">
         <label className="mk-search"><Search size={18} aria-hidden="true" /><span className="sr">Search the marketplace</span>
-          <input value={filters.query} onChange={(e) => set({ query: e.target.value })} placeholder="Search listings" /></label>
-        <button type="button" className="btn primary" onClick={() => setSelling(true)}><Plus size={18} aria-hidden="true" />Sell or ask</button>
-      </div>
-      <div className="mk-filters">
-        <div className="segment" role="group" aria-label="Kind">
-          {(["all", "sell", "free", "wanted"] as const).map((k) => <button key={k} type="button" aria-pressed={!filters.mineOnly && filters.kind === k} onClick={() => set({ kind: k, mineOnly: false })}>{k === "all" ? "All" : KIND_LABEL[k]}</button>)}
+          <input value={filters.query} onChange={(e) => set({ query: e.target.value })} placeholder="Search the marketplace" /></label>
+        <button type="button" className="btn primary mk-new" onClick={() => setSelling(true)}><Plus size={18} aria-hidden="true" /><span className="mk-new-long">Create new listing</span><span className="mk-new-short">Sell</span></button>
+        <nav className="mk-views" aria-label="Browse, saved or yours">
+          <button type="button" aria-current={view === "browse"} onClick={() => go("browse")}><Store size={18} aria-hidden="true" />Browse all<small>{total}</small></button>
+          <button type="button" aria-current={view === "saved"} onClick={() => go("saved")}><Bookmark size={18} aria-hidden="true" />Saved<small>{savedCount}</small></button>
+          <button type="button" aria-current={view === "mine"} onClick={() => go("mine")}><User size={18} aria-hidden="true" />Your listings<small>{mineCount}</small></button>
+        </nav>
+        <div className="mk-group" role="group" aria-label="Kind">
+          <h3>Kind</h3>
+          {(["all", "sell", "free", "wanted"] as const).map((k) => <button key={k} type="button" aria-pressed={filters.kind === k} onClick={() => set({ kind: k })}>{k === "all" ? "Everything" : KIND_LABEL[k]}</button>)}
         </div>
-        <select aria-label="Category" value={filters.category} onChange={(e) => set({ category: e.target.value as Category | "all" })}>
-          <option value="all">All categories</option>
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <button type="button" className="chip-btn" aria-pressed={filters.savedOnly} onClick={() => set({ savedOnly: !filters.savedOnly })}><Bookmark size={14} aria-hidden="true" />Saved</button>
-        <button type="button" className="chip-btn" aria-pressed={filters.mineOnly} onClick={() => set({ mineOnly: !filters.mineOnly })}>Mine</button>
-      </div>
-      <p className="mk-note"><ShieldAlert size={14} aria-hidden="true" /> Orbit never handles money. Meet in a public place on campus, and check what you are buying before you hand anything over.</p>
-      {error && <p className="error" role="alert">{error}</p>}
-      {!ready ? <div className="skeleton sk-card" aria-busy="true" /> : shown.length === 0 ? (
-        <div className="rm-empty">
-          <p>{filters.mineOnly ? "You have not posted anything yet." : filters.savedOnly ? "Nothing saved yet." : filters.query || filters.kind !== "all" || filters.category !== "all" ? "Nothing matches that." : "Nothing here yet."}</p>
-          <button type="button" className="btn primary" onClick={() => setSelling(true)}>Post the first one</button>
+        <div className="mk-group" role="group" aria-label="Category">
+          <h3>Categories</h3>
+          <button type="button" className="mk-cat" aria-pressed={filters.category === "all"} onClick={() => set({ category: "all" })}><Store size={18} aria-hidden="true" /><span>All categories</span></button>
+          {CATEGORIES.map((c) => { const Icon = CATEGORY_ICON[c]; return <button key={c} type="button" className="mk-cat" aria-pressed={filters.category === c} disabled={!counts[c] && filters.category !== c} onClick={() => set({ category: c })}><Icon size={18} aria-hidden="true" /><span>{c}</span><small>{counts[c] ?? 0}</small></button>; })}
         </div>
-      ) : (
-        <ul className="mk-grid">
-          {shown.map((l) => <li key={l.id}><Card l={l} onOpen={() => setOpen(l)} /></li>)}
-        </ul>
-      )}
+        <div className="mk-group" role="group" aria-label="Price">
+          <h3>Price</h3>
+          <div className="mk-range">
+            <label><span className="sr">Lowest price</span><input inputMode="decimal" placeholder="Min" value={filters.min} onChange={(e) => set({ min: e.target.value })} /></label>
+            <span aria-hidden="true">to</span>
+            <label><span className="sr">Highest price</span><input inputMode="decimal" placeholder="Max" value={filters.max} onChange={(e) => set({ max: e.target.value })} /></label>
+          </div>
+        </div>
+        {narrowed && <button type="button" className="link-btn mk-clear" onClick={reset}>Clear filters</button>}
+      </aside>
+
+      <div className="mk-main">
+        <div className="mk-phone" aria-hidden={false}>
+          <div className="mk-chips" role="group" aria-label="Category">
+            <button type="button" aria-pressed={filters.category === "all"} onClick={() => set({ category: "all" })}>All</button>
+            {CATEGORIES.map((c) => <button key={c} type="button" aria-pressed={filters.category === c} onClick={() => set({ category: c })}>{c}</button>)}
+          </div>
+        </div>
+        <header className="mk-bar">
+          <div><h2>{heading}</h2><p className="mk-count">{shown.length} {shown.length === 1 ? "listing" : "listings"} at {campus.name}</p></div>
+          <label className="mk-sort"><span className="sr">Sort by</span>
+            <select value={filters.sort} onChange={(e) => set({ sort: e.target.value as Sort })}>
+              <option value="new">Newest first</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option>
+            </select></label>
+        </header>
+        <p className="mk-note"><ShieldAlert size={14} aria-hidden="true" /> Orbit never handles money. Meet in a public place on campus, and check what you are buying before you hand anything over.</p>
+        {error && <p className="error" role="alert">{error}</p>}
+        {!ready ? <div className="skeleton sk-card" aria-busy="true" /> : shown.length === 0 ? (
+          <div className="rm-empty">
+            <p>{view === "mine" ? "You have not posted anything yet." : view === "saved" ? "Nothing saved yet. Tap the heart on a listing to keep it here." : narrowed ? "Nothing matches that." : "Nothing here yet."}</p>
+            {narrowed ? <button type="button" className="btn" onClick={reset}>Clear filters</button> : <button type="button" className="btn primary" onClick={() => setSelling(true)}>Post the first one</button>}
+          </div>
+        ) : (
+          <ul className="mk-grid">
+            {shown.map((l) => <li key={l.id}><Card l={l} onOpen={() => setOpen(l)} onSave={() => void toggleSave(l.id)} /></li>)}
+          </ul>
+        )}
+      </div>
+      </div>
       {selling && createPortal(<NewListing active={activeCount(list)} onClose={() => setSelling(false)} onCreate={create} />, document.body)}
       {current && createPortal(<Detail l={current} onClose={() => setOpen(null)} onSave={() => void toggleSave(current.id)} onStatus={setStatus} onReport={report} />, document.body)}
     </section>
   );
 }
 
-function Cover({ path, alt }: { path?: string; alt: string }) {
+function Cover({ path, alt, category }: { path?: string; alt: string; category: Category }) {
   const url = useMediaUrl(path ?? null);
-  if (!path) return <span className="mk-cover none" aria-hidden="true" />;
+  if (!path) { const Icon = CATEGORY_ICON[category]; return <span className="mk-cover none" aria-hidden="true"><Icon size={40} strokeWidth={1.4} /></span>; }
   return <span className="mk-cover">{url ? <img src={url} alt={alt} loading="lazy" decoding="async" draggable={false} /> : <span className="skeleton" aria-hidden="true" />}</span>;
 }
 
-function Card({ l, onOpen }: { l: Listing; onOpen: () => void }) {
+/** One listing as a card: a square picture (or its category's icon), the price first, then the title and who and when. The heart saves it without opening it. */
+function Card({ l, onOpen, onSave }: { l: Listing; onOpen: () => void; onSave: () => void }) {
   return (
-    <button type="button" className={"mk-card" + (l.status !== "active" ? " off" : "")} onClick={onOpen} aria-label={`${l.title}, ${priceLabel(l)}${l.status === "sold" ? ", sold" : ""}`}>
-      <Cover path={l.photos[0]} alt="" />
-      <span className="mk-body">
-        <span className="mk-price">{priceLabel(l)}{l.kind === "wanted" && <em>Wanted</em>}{l.status === "sold" && <em>Sold</em>}</span>
-        <strong>{l.title}</strong>
-        <span className="mk-meta">{l.category} · {l.sellerName} · {ago(l.createdAt)}</span>
-      </span>
-      {l.saved && <Bookmark className="mk-saved" size={16} fill="currentColor" aria-label="Saved" />}
-    </button>
+    <div className={"mk-cardwrap" + (l.status !== "active" ? " off" : "")}>
+      <button type="button" className="mk-card" onClick={onOpen} aria-label={`${l.title}, ${priceLabel(l)}${l.status === "sold" ? ", sold" : ""}`}>
+        <Cover path={l.photos[0]} alt="" category={l.category} />
+        <span className="mk-body">
+          <span className="mk-price">{priceLabel(l)}{l.kind === "wanted" && <em>Wanted</em>}{l.status === "sold" && <em>Sold</em>}</span>
+          <strong>{l.title}</strong>
+          <span className="mk-meta">{l.sellerName} · {ago(l.createdAt)}</span>
+        </span>
+      </button>
+      {!l.mine && <button type="button" className="mk-heart" aria-pressed={l.saved} aria-label={l.saved ? "Remove from saved" : "Save this listing"} onClick={onSave}><Heart size={18} fill={l.saved ? "currentColor" : "none"} aria-hidden="true" /></button>}
+    </div>
   );
 }
 
