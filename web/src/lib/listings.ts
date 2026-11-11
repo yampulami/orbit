@@ -123,6 +123,21 @@ export function useListings(me: string | undefined, campusKey: string | undefine
   }, [me, campusKey]);
   useEffect(() => { void load(); }, [load]);
 
+  // Live updates: when anyone on the campus posts, edits or takes down a listing, it shows here without a refresh.
+  // A short wait gathers a burst of changes into one reload. The tab also catches up when it comes back into view.
+  useEffect(() => {
+    if (!supabase || !me || !campusKey) return;
+    const client = supabase;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const soon = () => { clearTimeout(timer); timer = setTimeout(() => { void load(); }, 250); };
+    const ch = client.channel(`listings-${campusKey}-${crypto.randomUUID()}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "campus_listings" }, soon)
+      .subscribe();
+    const visible = () => { if (document.visibilityState === "visible") soon(); };
+    document.addEventListener("visibilitychange", visible);
+    return () => { clearTimeout(timer); document.removeEventListener("visibilitychange", visible); void client.removeChannel(ch); };
+  }, [me, campusKey, load]);
+
   const patch = (id: string, change: Partial<Listing>) => setList((l) => l.map((x) => (x.id === id ? { ...x, ...change } : x)));
 
   return {
