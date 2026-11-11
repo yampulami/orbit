@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Bookmark, Check, Plus, Search, ShieldAlert, X } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { loadProfile } from "../lib/profile";
+import { feedApi } from "../lib/feedData";
 import { dmActions } from "../lib/dms";
 import { useMediaUrl } from "../lib/media";
 import {
@@ -21,8 +22,12 @@ const ago = (iso: string) => { const m = Math.max(0, Math.round((Date.now() - ne
 export default function Marketplace() {
   const { session } = useAuth();
   const me = session?.user.id;
-  const profile = me ? loadProfile(me) : null;
-  const { list, ready, error, create, setStatus, toggleSave, report } = useListings(me, profile?.campusKey, profile?.name ?? "");
+  // The campus comes from the account (the same answer the feed uses), not from this device's saved answers, which a new browser does not have yet.
+  const [campus, setCampus] = useState<{ key: string; name: string } | null | undefined>(undefined);
+  useEffect(() => { let alive = true; void feedApi.campus().then((c) => { if (alive) setCampus(c ?? null); }).catch(() => { if (alive) setCampus(null); }); return () => { alive = false; }; }, [me]);
+  const meta = session?.user.user_metadata as { name?: string } | undefined;
+  const sellerName = (me ? loadProfile(me)?.name : "") || meta?.name || session?.user.email?.split("@")[0] || "";
+  const { list, ready, error, create, setStatus, toggleSave, report } = useListings(me, campus?.key, sellerName);
   const [filters, setFilters] = useState<Filters>(NO_FILTERS);
   const [open, setOpen] = useState<Listing | null>(null);
   const [selling, setSelling] = useState(false);
@@ -30,7 +35,8 @@ export default function Marketplace() {
   const set = (f: Partial<Filters>) => setFilters((x) => ({ ...x, ...f }));
   const current = open ? list.find((l) => l.id === open.id) ?? null : null;
 
-  if (!profile) return <p className="rm-empty">Join your campus first and its marketplace will be here.</p>;
+  if (campus === undefined) return <div className="skeleton sk-card" aria-busy="true" />;
+  if (campus === null) return <p className="rm-empty">Join your campus first and its marketplace will be here.</p>;
   return (
     <section className="mk" aria-label="Marketplace">
       <div className="mk-top">
