@@ -6041,3 +6041,5 @@ p,li{text-wrap:pretty}
 .mk-new-short{display:none}
 .mk-new{white-space:nowrap}
 @container (max-width:780px){.mk-new-long{display:none}.mk-new-short{display:inline}}
+
+.mk-page{width:min(1400px,100%)}

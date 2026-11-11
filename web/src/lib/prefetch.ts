@@ -5,6 +5,7 @@ const pages: Record<string, () => Promise<unknown>> = {
   "/app/plans": () => import("../pages/Plans"),
   "/app/campus": () => import("../pages/Campus"),
   "/app/roommates": () => import("../pages/Roommates"),
+  "/app/marketplace": () => import("../pages/MarketplacePage"),
   "/app/profile": () => import("../pages/Profile"),
 };
 

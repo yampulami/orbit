@@ -3,7 +3,7 @@ import Avatar from "./Avatar";
 import { useDisplayName } from "../lib/displayName";
 import { motion } from "framer-motion";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { Check, Keyboard, LayoutGrid, LogOut, Megaphone, MoreHorizontal, Moon, PanelLeft, Sofa, SquarePen, Sun } from "lucide-react";
+import { Check, Keyboard, LayoutGrid, LogOut, Megaphone, MoreHorizontal, Moon, PanelLeft, Sofa, SquarePen, Store, Sun } from "lucide-react";
 import { HomeIcon, MessagesIcon, PlansIcon } from "./icons";
 import { prefetchIdle, prefetchRoute } from "../lib/prefetch";
 import { supabase } from "../lib/supabase";
@@ -46,6 +46,8 @@ const base = [
 ];
 /** On the bar for everyone: any group of housemates can share a household, in residence or off campus. */
 const roommates = { to: "/app/roommates", label: "Roommates", icon: Sofa };
+/** Things students sell, give away or look for, on its own page: it is a place people come back to, not part of Campus. */
+const market = { to: "/app/marketplace", label: "Marketplace", icon: Store };
 /** The student's own picture is the icon for their profile. */
 function YouIcon({ size = 22 }: { size?: number; strokeWidth?: number }) {
   const { session } = useAuth();
@@ -53,14 +55,14 @@ function YouIcon({ size = 22 }: { size?: number; strokeWidth?: number }) {
   return <Avatar name={name} id={session?.user.id} size={size + 4} className="me-av" />;
 }
 const you = { to: "/app/profile", label: "You", icon: YouIcon };
-const pageName = (path: string) => (path.startsWith("/app/profile") ? "Profile" : [...base, roommates].find((i) => path.startsWith(i.to))?.label);
+const pageName = (path: string) => (path.startsWith("/app/profile") ? "Profile" : [...base, market, roommates].find((i) => path.startsWith(i.to))?.label);
 
 export default function Shell() {
   const loc = useLocation();
   const nav = useNavigate();
   const { session, signOut } = useAuth();
   const dark = useTheme() === "dark";
-  const items = [...base, roommates];
+  const items = [...base, market, roommates];
   const railItems = [...items, you];
   useEffect(() => { prefetchIdle(); }, []); // the other pages download quietly once this one is up, so tapping them is instant
   const main = useRef<HTMLElement>(null);
@@ -250,7 +252,7 @@ export default function Shell() {
       <div className={"drawer-scrim" + (drawer ? " open" : "")} aria-hidden="true" onClick={() => setDrawer(false)} />
       <nav className={"drawer" + (drawer ? " open" : "")} aria-label="Menu" aria-hidden={!drawer} inert={!drawer}>
         <div className="drawer-head"><span className="logo"><Orb variant="violet" size={34} /><span>Orbit</span></span></div>
-        {[...base, roommates].map((i) => (
+        {[...base, market, roommates].map((i) => (
           <NavLink key={i.to} to={i.to} className={({ isActive }) => "drawer-link" + (isActive ? " active" : "")}>
             <i.icon size={22} strokeWidth={1.75} /><span>{i.label}</span>
             {i.to === "/app/chats" && unread > 0 && <b className="drawer-count">{unread > 9 ? "9+" : unread}</b>}

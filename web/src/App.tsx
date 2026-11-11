@@ -42,6 +42,7 @@ const Chats = lazy(() => import("./pages/Chats"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Person = lazy(() => import("./pages/Person"));
 const Roommates = lazy(() => import("./pages/Roommates"));
+const MarketplacePage = lazy(() => import("./pages/MarketplacePage"));
 const Campus = lazy(() => import("./pages/Campus"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Club = lazy(() => import("./pages/Club"));
@@ -172,6 +173,7 @@ export default function App() {
           <Route path="groups" element={<Moved to="/app/chats?tab=groups" />} />
           <Route path="sync" element={<Moved to="/app/plans?tab=free" />} />
           <Route path="roommates" element={<Roommates />} />
+          <Route path="marketplace" element={<MarketplacePage />} />
           <Route path="plans" element={<Plans />} />
           <Route path="campus" element={<Campus />} />
           <Route path="campus/clubs/:id" element={<Club />} />
