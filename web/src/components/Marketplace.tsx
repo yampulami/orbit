@@ -8,7 +8,7 @@ import { feedApi } from "../lib/feedData";
 import { dmActions } from "../lib/dms";
 import { useMediaUrl } from "../lib/media";
 import {
-  askAbout, CATEGORIES, CONDITIONS, EMPTY_DRAFT, KIND_LABEL, NO_FILTERS, activeCount, categoryCounts, filterListings, MAX_ACTIVE, priceLabel, problemWithListing, useListings,
+  askAbout, CATEGORIES, parsePrice, CONDITIONS, EMPTY_DRAFT, KIND_LABEL, NO_FILTERS, activeCount, categoryCounts, filterListings, MAX_ACTIVE, priceLabel, problemWithListing, useListings,
   type Category, type Condition, type Draft, type Filters, type Kind, type Listing, type Sort,
 } from "../lib/listings";
 import { AttachPreview, useAttachment, type Attachment } from "./Attach";
@@ -138,7 +138,7 @@ function Card({ l, onOpen, onSave }: { l: Listing; onOpen: () => void; onSave: (
   );
 }
 
-function Frame({ label, onClose, children }: { label: string; onClose: () => void; children: React.ReactNode }) {
+function Frame({ label, onClose, children, wide }: { label: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", esc);
@@ -146,7 +146,7 @@ function Frame({ label, onClose, children }: { label: string; onClose: () => voi
   }, [onClose]);
   return (
     <div className="modal-back" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal mk-modal" role="dialog" aria-modal="true" aria-label={label}>
+      <div className={"modal mk-modal" + (wide ? " wide" : "")} role="dialog" aria-modal="true" aria-label={label}>
         <div className="modal-top"><button type="button" className="round-btn" aria-label="Close" onClick={onClose} autoFocus><X size={20} aria-hidden="true" /></button></div>
         {children}
       </div>
@@ -174,10 +174,17 @@ function Detail({ l, onClose, onSave, onStatus, onReport }: { l: Listing; onClos
       <div className="mk-head">
         <p className="mk-price big">{priceLabel(l)}<em>{KIND_LABEL[l.kind]}</em>{l.status === "sold" && <em>Sold</em>}</p>
         <h2>{l.title}</h2>
-        <p className="mk-meta">{l.category}{l.condition ? ` · ${l.condition}` : ""} · {ago(l.createdAt)}</p>
       </div>
       {l.description && <p className="mk-desc">{l.description}</p>}
-      <p className="mk-seller">{l.kind === "wanted" ? "Asked by" : "Sold by"} {l.mine ? "you" : <Link to={`/app/people/${l.sellerId}`} onClick={onClose}>{l.sellerName}</Link>}</p>
+      <dl className="mk-facts">
+        <div><dt>Category</dt><dd>{l.category}</dd></div>
+        {l.condition && <div><dt>Condition</dt><dd>{l.condition}</dd></div>}
+        <div><dt>Posted</dt><dd>{ago(l.createdAt)}</dd></div>
+      </dl>
+      <div className="mk-who">
+        <b aria-hidden="true">{(l.sellerName || "?").slice(0, 1).toUpperCase()}</b>
+        <span>{l.kind === "wanted" ? "Asked by" : l.kind === "free" ? "Given by" : "Sold by"}{l.mine ? <strong>You</strong> : <Link to={`/app/people/${l.sellerId}`} onClick={onClose}>{l.sellerName}</Link>}</span>
+      </div>
       {msg && <p className="error" role="alert">{msg}</p>}
       {reporting ? (
         <form className="mk-report" onSubmit={sendReport}>
@@ -223,44 +230,90 @@ function NewListing({ active, onClose, onCreate }: { active: number; onClose: ()
     onClose();
   };
   const close = () => { att.drop(); onClose(); };
+  const Icon = CATEGORY_ICON[d.category];
+  const money = d.kind === "free" ? null : parsePrice(d.price);
   return (
-    <Frame label="New listing" onClose={close}>
+    <Frame label="New listing" onClose={close} wide>
       <form className="mk-form" onSubmit={submit}>
-        <h2>Sell, give away or ask</h2>
-        <div className="segment" role="radiogroup" aria-label="What are you doing?">
-          {(["sell", "free", "wanted"] as Kind[]).map((k) => <button key={k} type="button" role="radio" aria-checked={d.kind === k} onClick={() => set({ kind: k })}>{k === "sell" ? "Selling" : k === "free" ? "Giving away" : "Looking for"}</button>)}
+        <div className="mk-fields">
+          <header className="mk-formhead">
+            <h2>New listing</h2>
+            <p className="muted">Tell people what it is. A clear photo and a fair price get the fastest replies.</p>
+          </header>
+          <div className="mk-seg" role="radiogroup" aria-label="What are you doing?">
+            {(["sell", "free", "wanted"] as Kind[]).map((k) => <button key={k} type="button" role="radio" aria-checked={d.kind === k} onClick={() => set({ kind: k })}>{k === "sell" ? "Selling" : k === "free" ? "Giving away" : "Looking for"}</button>)}
+          </div>
+          <PhotoField a={att} />
+          <label className="field">Title<input value={d.title} maxLength={80} onChange={(e) => set({ title: e.target.value })} placeholder={d.kind === "wanted" ? "What are you looking for?" : "What is it?"} autoFocus /></label>
+          {d.kind !== "free" && <label className="field">{d.kind === "wanted" ? "Your budget (optional)" : "Price"}<span className="mk-money"><span aria-hidden="true">$</span><input inputMode="decimal" value={d.price} onChange={(e) => set({ price: e.target.value })} placeholder={d.kind === "wanted" ? "Leave empty if open to offers" : "25"} /></span></label>}
+          <div className="field" role="radiogroup" aria-label="Category">
+            <span className="mk-label">Category</span>
+            <div className="mk-chipgrid">
+              {CATEGORIES.map((c) => { const I = CATEGORY_ICON[c]; return <button key={c} type="button" role="radio" aria-checked={d.category === c} onClick={() => set({ category: c })}><I size={16} aria-hidden="true" />{c}</button>; })}
+            </div>
+          </div>
+          {d.kind !== "wanted" && (
+            <div className="field" role="radiogroup" aria-label="Condition">
+              <span className="mk-label">Condition <span className="muted">(optional)</span></span>
+              <div className="mk-seg tight">
+                {CONDITIONS.map((c) => <button key={c} type="button" role="radio" aria-checked={d.condition === c} onClick={() => set({ condition: d.condition === c ? "" : c })}>{c}</button>)}
+              </div>
+            </div>
+          )}
+          <label className="field"><span>Description <span className="muted">(optional)</span></span>
+            <textarea rows={3} maxLength={1000} value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Size, age, where you can meet" />
+            <small className="mk-count-in">{d.description.length} / 1000</small>
+          </label>
         </div>
-        <label className="field">Title<input value={d.title} maxLength={80} onChange={(e) => set({ title: e.target.value })} placeholder={d.kind === "wanted" ? "What are you looking for?" : "What is it?"} autoFocus /></label>
-        <PhotoField a={att} />
-        {d.kind !== "free" && <label className="field">{d.kind === "wanted" ? "Your budget (optional)" : "Price"}<span className="mk-money"><span aria-hidden="true">$</span><input inputMode="decimal" value={d.price} onChange={(e) => set({ price: e.target.value })} placeholder={d.kind === "wanted" ? "Leave empty if open to offers" : "25"} /></span></label>}
-        <div className="mk-two">
-          <label className="field">Category<select value={d.category} onChange={(e) => set({ category: e.target.value as Category })}>{CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}</select></label>
-          {d.kind !== "wanted" && <label className="field">Condition<select value={d.condition} onChange={(e) => set({ condition: e.target.value as Condition | "" })}><option value="">Not sure</option>{CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}</select></label>}
-        </div>
-        <label className="field">Description (optional)<textarea rows={4} maxLength={1000} value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Size, age, where you can meet" /></label>
+
+        <aside className="mk-preview" aria-label="How your listing will look">
+          <span className="mk-label">How it will look</span>
+          <div className="mk-card static">
+            {att.items[0] ? <span className="mk-cover"><img src={att.items[0].preview} alt="" /></span> : <span className="mk-cover none"><Icon size={40} strokeWidth={1.4} aria-hidden="true" /></span>}
+            <span className="mk-body">
+              <span className="mk-price">{d.kind === "sell" && money === null ? "Price" : priceLabel({ kind: d.kind, priceCents: money })}{d.kind === "wanted" && <em>Wanted</em>}</span>
+              <strong>{d.title.trim() || "Your title"}</strong>
+              <span className="mk-meta">You · just now</span>
+            </span>
+          </div>
+          <p className="mk-note"><ShieldAlert size={14} aria-hidden="true" /> Orbit never handles money. Do not list weapons, drugs, alcohol or anything illegal.</p>
+        </aside>
+
         <div className="mk-foot">
           <span className="muted">{active} of {MAX_ACTIVE} active listings</span>
-          <button className="btn primary" disabled={busy || att.busy}>{busy ? "Posting…" : "Post"}</button>
+          {error && <p className="error" role="alert">{error}</p>}
+          <button className="btn primary" disabled={busy || att.busy}>{busy ? "Posting…" : "Post listing"}</button>
         </div>
-        {error && <p className="error" role="alert">{error}</p>}
-        <p className="mk-note">Orbit never handles money. Do not list weapons, drugs, alcohol or anything illegal.</p>
       </form>
     </Frame>
   );
 }
 
-/** Photos for a listing: a plain labelled button, with the pictures shown right under it. Listings with photos get far more attention. */
+/** Photos for a listing: four square slots, the first one is the cover. Listings with photos get far more attention. */
 function PhotoField({ a }: { a: Attachment }) {
+  const empties = Math.max(0, a.max - a.items.length - (a.full ? 0 : 1));
   return (
     <div className="field mk-photo-field">
-      <span className="mk-photo-label" id="mk-photos-l">Photos <span className="muted">(optional, up to {a.max})</span></span>
-      <label className={"mk-add" + (a.full ? " off" : "")}>
-        <ImagePlus size={20} aria-hidden="true" />
-        <span>{a.busy ? "Adding…" : a.items.length === 0 ? "Add photos" : a.full ? "That is all four" : `Add more (${a.items.length} of ${a.max})`}</span>
-        <input type="file" accept="image/*" multiple className="sr" aria-labelledby="mk-photos-l" disabled={a.busy || a.full}
-          onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ""; if (f.length) void a.pick(f); }} />
-      </label>
-      <AttachPreview a={a} />
+      <span className="mk-label" id="mk-photos-l">Photos <span className="muted">(optional, up to {a.max})</span></span>
+      <div className="mk-slots">
+        {a.items.map((it, n) => (
+          <span className="mk-slot" key={it.path}>
+            <img src={it.preview} alt={`Photo ${n + 1}`} />
+            {n === 0 && <em>Cover</em>}
+            <button type="button" className="attach-x" aria-label={`Remove photo ${n + 1}`} onClick={() => a.remove(it.path)}><X size={14} aria-hidden="true" /></button>
+          </span>
+        ))}
+        {!a.full && (
+          <label className="mk-slot add">
+            <ImagePlus size={22} aria-hidden="true" />
+            <span>{a.busy ? "Adding…" : a.items.length === 0 ? "Add photos" : "Add more"}</span>
+            <input type="file" accept="image/*" multiple className="sr" aria-labelledby="mk-photos-l" disabled={a.busy}
+              onChange={(e) => { const f = [...(e.target.files ?? [])]; e.target.value = ""; if (f.length) void a.pick(f); }} />
+          </label>
+        )}
+        {Array.from({ length: empties }, (_, n) => <span className="mk-slot blank" key={n} aria-hidden="true" />)}
+      </div>
+      {a.error && <span className="error" role="alert">{a.error}</span>}
     </div>
   );
 }
