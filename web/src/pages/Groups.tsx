@@ -5,7 +5,7 @@ import { AttachButton, AttachPreview, useAttachment } from "../components/Attach
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CalendarPlus, Clock, Copy, KeyRound, MoreHorizontal, Plus, Send, UserPlus, Users } from "lucide-react";
+import { ArrowLeft, CalendarPlus, ChevronUp, Clock, Copy, KeyRound, MoreHorizontal, Plus, Send, UserPlus, Users } from "lucide-react";
 import ConfirmButton from "../components/ConfirmButton";
 import GroupSync from "../components/GroupSync";
 import { GroupMoment } from "../components/Moments";
@@ -26,6 +26,9 @@ import { useMapPlaces } from "../lib/mapPlaces";
 import { enter, slide } from "../lib/motion";
 
 export default function Groups() {
+  // the row of group actions can be folded away to give the chat room; the choice is remembered on this device
+  const [barOpen, setBarOpen] = useState(() => { try { return localStorage.getItem("orbit-group-bar") !== "closed"; } catch { return true; } });
+  const toggleBar = () => setBarOpen((v) => { try { localStorage.setItem("orbit-group-bar", v ? "closed" : "open"); } catch { /* it still folds */ } return !v; });
   const { groups, hangouts } = useHang();
   const status = useHangStatus();
   const loc = useLocation();
@@ -188,6 +191,9 @@ export default function Groups() {
           <div className="convo card">
             <div className="convo-head">
               <div><h2><span className="thread-mark big" aria-hidden="true"><ClubGlyph icon={group.icon} name={group.name} /></span>{group.name}</h2><div className="convo-people"><AvatarStack people={group.members.filter((m) => m !== YOU).map((m) => ({ name: m, id: friendIds.get(m) }))} max={5} size={30} expandable /><span className="muted">{group.members.length} {group.members.length === 1 ? "person" : "people"}</span></div></div>
+              <button type="button" className="convo-fold" aria-expanded={barOpen} aria-label={barOpen ? "Hide group actions" : "Show group actions"} title={barOpen ? "Hide actions" : "Show actions"} onClick={toggleBar}><ChevronUp size={18} aria-hidden="true" className={barOpen ? "" : "flip"} /></button>
+            </div>
+            {barOpen && (
               <div className="convo-actions">
                 <button type="button" className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setSyncing(false); setIconing(false); setError(""); }} aria-expanded={adding}><UserPlus size={16} aria-hidden="true" />{hangLive ? "Add people" : "Add friends"}</button>
                 <button type="button" className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setSyncing(false); setError(""); }} aria-expanded={planning}><CalendarPlus size={16} aria-hidden="true" />Plan a hangout</button>
@@ -202,7 +208,7 @@ export default function Groups() {
                   </div>
                 </details>
               </div>
-            </div>
+            )}
             {iconing && (
               <div className="plan-form">
                 <h3>Group icon</h3>

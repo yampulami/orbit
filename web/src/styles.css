@@ -6119,3 +6119,15 @@ p,li{text-wrap:pretty}
 /* the floor under his feet: marks that slide past at the speed of his walk, fading out toward both ends so it has no edges */
 .arrival-floor{position:absolute;left:0;right:0;bottom:12px;height:3px;border-radius:2px;background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--ink) 40%,transparent) 0 26px,transparent 26px 72px);-webkit-mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent);mask-image:linear-gradient(90deg,transparent,#000 22%,#000 78%,transparent)}
 .arrival-orb-solo{position:static;margin:0}
+
+/* group chat header: name and people on one quiet row, the actions on a row of their own that folds away */
+.chats .convo-head{align-items:center;flex-wrap:nowrap}
+.chats .convo-head h2{font-size:var(--t-h3,1.15rem)}
+.convo-fold{flex:none;display:inline-grid;place-items:center;width:36px;height:36px;border:0;border-radius:8px;background:none;color:var(--ink-soft);cursor:pointer}
+.convo-fold:hover{background:var(--panel);color:var(--ink)}
+.convo-fold .flip{transform:rotate(180deg)}
+.chats .convo-actions{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.chats .convo-actions .btn{min-height:38px;border:0;background:var(--panel);font-weight:500}
+.chats .convo-actions .btn:hover{background:color-mix(in srgb,var(--ink) 10%,var(--panel))}
+.chats .convo-more summary{width:38px;height:38px;min-height:38px;border:0;background:var(--panel)}
+@media (prefers-reduced-motion:no-preference){.convo-fold .flip,.convo-fold svg{transition:transform .2s}}
