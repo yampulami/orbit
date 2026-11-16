@@ -5,7 +5,7 @@ import { AttachButton, AttachPreview, useAttachment } from "../components/Attach
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Copy, KeyRound, Plus, Send, Users } from "lucide-react";
+import { ArrowLeft, CalendarPlus, Clock, Copy, KeyRound, MoreHorizontal, Plus, Send, UserPlus, Users } from "lucide-react";
 import ConfirmButton from "../components/ConfirmButton";
 import GroupSync from "../components/GroupSync";
 import { GroupMoment } from "../components/Moments";
@@ -189,13 +189,13 @@ export default function Groups() {
             <div className="convo-head">
               <div><h2><span className="thread-mark big" aria-hidden="true"><ClubGlyph icon={group.icon} name={group.name} /></span>{group.name}</h2><div className="convo-people"><AvatarStack people={group.members.filter((m) => m !== YOU).map((m) => ({ name: m, id: friendIds.get(m) }))} max={5} size={30} expandable /><span className="muted">{group.members.length} {group.members.length === 1 ? "person" : "people"}</span></div></div>
               <div className="convo-actions">
-                <button className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setSyncing(false); setError(""); }} aria-expanded={planning}>Plan a hangout</button>
-                <button type="button" className="link-btn convo-link" onClick={() => { setSyncing((v) => !v); setAdding(false); setPlanning(false); setError(""); }} aria-expanded={syncing}>Find a time when everyone is free</button>
+                <button type="button" className="btn" onClick={() => { setAdding((v) => !v); setPlanning(false); setSyncing(false); setIconing(false); setError(""); }} aria-expanded={adding}><UserPlus size={16} aria-hidden="true" />{hangLive ? "Add people" : "Add friends"}</button>
+                <button type="button" className="btn" onClick={() => { setPlanning((v) => !v); setAdding(false); setSyncing(false); setError(""); }} aria-expanded={planning}><CalendarPlus size={16} aria-hidden="true" />Plan a hangout</button>
+                <button type="button" className="btn" onClick={() => { setSyncing((v) => !v); setAdding(false); setPlanning(false); setError(""); }} aria-expanded={syncing}><Clock size={16} aria-hidden="true" />Find a free time</button>
                 <details className="convo-more">
-                  <summary>More</summary>
-                  <div>
-                    <button type="button" className="link-btn convo-link" aria-expanded={iconing} onClick={() => setIconing((v) => !v)}>Group icon</button>
-                    <button type="button" className="link-btn convo-link" onClick={() => { setAdding((v) => !v); setPlanning(false); setSyncing(false); setError(""); }} aria-expanded={adding}>{hangLive ? "Add people" : "Add friends"}</button>
+                  <summary aria-label="More options"><MoreHorizontal size={20} aria-hidden="true" /></summary>
+                  <div className="convo-menu">
+                    <button type="button" className="link-btn convo-link" aria-expanded={iconing} onClick={(e) => { setIconing((v) => !v); e.currentTarget.closest("details")?.removeAttribute("open"); }}>Group icon</button>
                     {group.mine
                       ? <ConfirmButton label="Delete group" question={`Delete ${group.name} for everyone? Its chat, hangouts and invite link go too.`} confirm="Delete" onConfirm={() => { void hangActions.deleteGroup(group.id); setPaneOpen(false); }} />
                       : <ConfirmButton label="Leave group" question={`Leave ${group.name}? It leaves your list. The others keep it.`} confirm="Leave" onConfirm={() => { void hangActions.leaveGroup(group.id); setPaneOpen(false); }} />}
@@ -217,7 +217,7 @@ export default function Groups() {
             )}
             {adding && hangLive && (
               <div className="plan-form invite">
-                <h3>Add a friend</h3>
+                <h3>Add people to {group.name}</h3>
                 <GroupAddFriend groupId={group.id} groupName={group.name} memberNames={group.members} />
                 <details className="invite-more">
                   <summary>Invite with a link instead</summary>
