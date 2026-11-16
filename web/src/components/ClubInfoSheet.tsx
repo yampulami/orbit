@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { BadgeCheck, Check, Pause, Play, ShieldCheck, UserRound, Users, X } from "lucide-react";
 import IconChooser from "./IconChooser";
 import { orgActions, orgHue, type Org } from "../lib/campusOrgs";
@@ -37,7 +38,8 @@ export default function ClubInfoSheet({ org, reviewer, canRoles, seesApplication
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  // drawn at the top level of the page: inside the club page it would be held within that page's own scrolling box instead of floating over the window
+  return createPortal(
     <div className="modal-back" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal cinfo" role="dialog" aria-modal="true" aria-label={`About ${org.name}`}>
         <header className="cinfo-head">
@@ -69,6 +71,7 @@ export default function ClubInfoSheet({ org, reviewer, canRoles, seesApplication
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
