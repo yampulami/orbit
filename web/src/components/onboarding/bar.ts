@@ -308,9 +308,16 @@ export class BarWalker {
     this.p.need(spot.y);
     a.look = null;
     if (!(await this.jump(spot, alive))) return;
-    a.scaleGoal = BIG;
     a.pos.x = spot.x; a.pos.y = spot.y;
-    await this.wait(380, alive);
+    // he does not just swell: he springs into the air (a somersault, a spin or a jump) and grows while he is up there, so he lands already big
+    await this.wait(240, alive);
+    const trick = this.pick([["flip", 3], ["hop", 2], ["backflip", 1.4], ["spin", 1.2]], "");
+    const grow = window.setTimeout(() => { if (alive()) a.scaleGoal = BIG; }, 420);
+    await a.play(trick, { face: 0 });
+    window.clearTimeout(grow);
+    if (!alive()) return;
+    a.scaleGoal = BIG; // in case the move was cut short
+    await this.wait(240, alive);
     if (greet && alive()) await a.play("wave", { face: 0 });
     while (alive()) {
       await this.wait(rnd(1800, 5200), alive);
