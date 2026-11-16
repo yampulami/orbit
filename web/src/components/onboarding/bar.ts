@@ -38,6 +38,7 @@ type Mode = "bar" | "perch" | "finale";
 
 export class BarWalker {
   private run = 0;
+  private lastArrive = 0;
   private at = 0;
   private step = 0;
   private lastStep = false;
@@ -181,14 +182,15 @@ export class BarWalker {
   }
 
   /** Get to `toX` along the bar, in one of several ways picked at random, a bit at a time for the ways that jump. */
-  private async travel(toX: number, y: number, alive: () => boolean, only?: string): Promise<boolean> {
+  private async travel(toX: number, y: number, alive: () => boolean, only?: string, hurry = false): Promise<boolean> {
     const a = this.actor;
     for (let guard = 0; guard < 14 && alive(); guard++) {
       const dx = toX - a.pos.x, dist = Math.abs(dx);
       if (dist < 6) return true;
-      const mode = only ?? this.pickMode();
+      // when you are moving through the pages quickly he is behind: no flips or lazy strolls, only the quick ways, and he dashes
+      const mode = hurry ? (dist > 90 && Math.random() < 0.4 ? "leap" : Math.random() < 0.8 ? "run" : "hop") : only ?? this.pickMode();
       if (mode === "walk" || mode === "run") {
-        const ok = await a.walkTo(toX, y, { straight: true, pace: mode === "run" ? "scurry" : Math.random() < 0.5 ? "brisk" : "amble" });
+        const ok = await a.walkTo(toX, y, { straight: true, pace: hurry ? "dash" : mode === "run" ? "scurry" : Math.random() < 0.5 ? "brisk" : "amble" });
         if (!ok || !alive()) return false;
         continue;
       }
@@ -202,7 +204,7 @@ export class BarWalker {
       // a jump of some kind, each carrying him a stretch through the air. It faces the way he is going, or the viewer, at random; a flip can be forwards
       // or backwards from either.
       const clip = mode === "leap" ? "hop" : mode;
-      const reach = mode === "hop" ? rnd(70, 150) : mode === "leap" ? rnd(130, 220) : mode === "spin" ? rnd(80, 150) : rnd(100, 190);
+      const reach = (mode === "hop" ? rnd(70, 150) : mode === "leap" ? rnd(130, 220) : mode === "spin" ? rnd(80, 150) : rnd(100, 190)) * (hurry ? 1.5 : 1);
       const tx = a.pos.x + Math.sign(dx) * Math.min(dist, reach);
       const win = clip === "hop" ? { from: 0.2, until: 0.7 } : clip === "spin" ? { from: 0.17, until: 0.7 } : { from: 0.22, until: 0.76 };
       const face = mode === "leap" || Math.random() < 0.6 ? Math.sign(dx) * (Math.PI / 2) : 0; // along the bar, or to the viewer
@@ -225,6 +227,10 @@ export class BarWalker {
     a.look = null; a.scaleGoal = SMALL;
     const firstTime = !this.started;
     this.started = true;
+    // behind? (the last step began only a moment ago, or he is still on his way, or it is a long way)
+    const now0 = performance.now();
+    const behind = !firstTime && (now0 - this.lastArrive < 4500 || a.moving || Math.abs(g.xs[i] - a.pos.x) > 1.6 * (g.xs.length > 1 ? g.xs[1] - g.xs[0] : 120));
+    this.lastArrive = now0;
     if (firstTime) { this.p.need(null); a.lockY = g.y; a.teleport(-40, g.y); }
     // back up to the bar if he was down on a card
     if (Math.abs(a.pos.y - g.y) > 6) {
@@ -232,10 +238,10 @@ export class BarWalker {
     }
     a.lockY = g.y;
     this.p.need(null);
-    if (!(await this.travel(g.xs[i] + (firstTime ? 0 : rnd(-8, 8)), g.y, alive, firstTime ? "walk" : undefined))) return;
+    if (!(await this.travel(g.xs[i] + (firstTime ? 0 : rnd(-8, 8)), g.y, alive, firstTime ? "walk" : undefined, behind))) return;
     this.at = i;
     if (o.last && this.p.finaleSpot()) { void this.finale(o.greet !== false); return; }
-    if (o.greet !== false) {
+    if (o.greet !== false && !behind) {
       if (firstTime) await a.play("wave");
       else await a.play(this.pick());
       if (!alive()) return;

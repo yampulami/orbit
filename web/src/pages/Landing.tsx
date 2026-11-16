@@ -39,7 +39,6 @@ function FindTheHour() {
   const label = runStart >= 0 ? `${HOURS[runStart]}–${(Number(HOURS[runEnd]) % 12) + 1} pm` : "";
   return (
     <section className="land-find" aria-label="How Orbit finds a time">
-      <p className="land-find-note">Everyone shares when they are free. Orbit shows the hours that line up.</p>
       <div className="land-find-card" role="img" aria-label={`Three people's free hours. Everyone is free ${label}.`}>
         <div className="land-find-head"><span />{HOURS.map((h) => <b key={h}>{h}</b>)}</div>
         {PEOPLE.map((p) => (

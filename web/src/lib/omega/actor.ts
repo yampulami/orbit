@@ -21,8 +21,8 @@ const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 const pick = <T,>(l: readonly T[]): T => l[Math.floor(Math.random() * l.length)];
 const smooth = (a: number, b: number, x: number) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
-export type Pace = "stalk" | "amble" | "brisk" | "scurry";
-const PACE: Record<Pace, [number, number]> = { stalk: [0.14, 0.2], amble: [0.2, 0.33], brisk: [0.34, 0.46], scurry: [0.5, 0.7] };
+export type Pace = "stalk" | "amble" | "brisk" | "scurry" | "dash";
+const PACE: Record<Pace, [number, number]> = { stalk: [0.14, 0.2], amble: [0.2, 0.33], brisk: [0.34, 0.46], scurry: [0.5, 0.7], dash: [0.95, 1.15] };
 export type Pt = { x: number; y: number };
 /** A piece of the page that can hide him: its box on the screen, and its depth (the screen height of its bottom edge). */
 export type Occluder = { l: number; t: number; r: number; b: number; depth: number };
@@ -428,11 +428,12 @@ export class Actor {
         if (this.nextHes <= 0 && dist > 0.5 && this.job.cruise < 0.6) { this.hes = rnd(0.25, 0.6); this.nextHes = rnd(2.5, 5.5); }
         const n = this.noise;
         let vdes = this.job.cruise * this.job.paceMul[0] * (1 + 0.16 * Math.sin(this.t * 1.3 + n[0]) + 0.1 * Math.sin(this.t * 2.9 + n[1]) + 0.05 * Math.sin(this.t * 6.3 + n[2]));
-        vdes = clamp(vdes, 0.15, 0.72);
+        const dashing = this.job.cruise > 0.8;
+        vdes = clamp(vdes, 0.15, dashing ? 1.2 : 0.72);
         if (this.hes > 0) vdes = Math.max(vdes * 0.5, 0.15); // a hesitation is a slower step, not a stop
         vdes *= clamp(1 - Math.abs(err) / 1.5, 0.35, 1);
-        if (!tg.through || this.job.pts.length === 1) vdes = Math.min(vdes, Math.max(Math.sqrt(2 * 1.6 * Math.max(dist - 0.02, 0)), 0));
-        const acc = vdes > this.v ? rnd(1.2, 1.8) : 2.2;
+        if (!tg.through || this.job.pts.length === 1) vdes = Math.min(vdes, Math.max(Math.sqrt(2 * (dashing ? 3 : 1.6) * Math.max(dist - 0.02, 0)), 0));
+        const acc = vdes > this.v ? (dashing ? rnd(2.6, 3.2) : rnd(1.2, 1.8)) : dashing ? 3.4 : 2.2;
         this.v += clamp(vdes - this.v, -acc * dt, acc * dt);
         const s = this.scaleAt(this.pos.y), st = this.v * dt;
         this.pos.x = clamp(this.pos.x + Math.sin(this.psi) * st * K * s, 10, this.vw() - 10);
@@ -474,7 +475,7 @@ export class Actor {
     const wm = this.meta.get("walk")!, sm = this.meta.get("skitter")!;
     const vv = this.forcedV ?? this.vs;
     this.actions.get("walk")!.timeScale = clamp(vv / wm.speed, 0.5, 1.7);
-    this.actions.get("skitter")!.timeScale = clamp(vv / sm.speed, 0.6, 1.5);
+    this.actions.get("skitter")!.timeScale = clamp(vv / sm.speed, 0.6, 2.2);
     m.update(dt);
     // the face follows the clip that is most in charge
     let best = "idle", bw = -1;

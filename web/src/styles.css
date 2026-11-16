@@ -6084,7 +6084,7 @@ p,li{text-wrap:pretty}
 .land-find-row span{font-size:var(--t-meta);color:var(--ink-soft)}
 .land-find-row i{height:26px;border-radius:6px;background:color-mix(in srgb,var(--ink) 7%,var(--bg))}
 .land-find-row i[data-free]{background:color-mix(in srgb,var(--accent) 38%,var(--bg))}
-.land-find-row i[data-all]{background:var(--accent);box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--accent)}
+.land-find-row i[data-all]{background:var(--accent)}
 .land-find-answer{margin:6px 0 0;text-align:center;font-size:var(--t-meta);color:var(--ink-soft)}
 .land-find-answer strong{color:var(--ink)}
 
