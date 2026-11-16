@@ -6125,3 +6125,16 @@ p,li{text-wrap:pretty}
 .club-bar h1{display:flex;align-items:center;gap:8px;-webkit-line-clamp:unset}
 .club-bar-name{min-width:0}
 .club-bar h1 .verified,.club-bar h1>svg,.club-bar h1>span:not(.club-bar-name){flex:none;margin-left:0;vertical-align:baseline}
+
+/* club About sheet: the name once, "About" as a quiet label, the sheet scrolls inside itself, facts line up */
+.modal-back:has(.cinfo){padding-top:6vh}
+.modal.cinfo{max-height:min(86vh,760px);overflow-y:auto;padding:14px 24px 24px;overscroll-behavior:contain}
+.cinfo-title{margin:10px 0 6px;font-size:1.75rem;line-height:1.15}
+.cinfo .about-view{gap:10px;margin-top:6px}
+.cinfo .about-head h2{margin:0;font-family:var(--font);font-size:var(--t-meta);font-weight:600;color:var(--ink-soft);letter-spacing:0}
+.cinfo .about-text{font-size:var(--t-read);color:var(--ink)}
+.cinfo .about-facts{margin-top:8px}
+.cinfo .about-facts div{align-items:baseline;gap:20px;padding:14px 0}
+.cinfo .about-facts dt{width:96px}
+.cinfo .about-facts dd{font-weight:500;color:var(--ink)}
+.cinfo .about-facts div:last-child{border-bottom:1px solid var(--line)}
