@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { arrival, useArrival } from "../lib/arrival";
 import { hangLive, useHangStatus } from "../lib/hangouts";
 import Orb from "./Orb";
+import ArrivalWalker from "./ArrivalWalker";
 
-const MIN_MS = 3200;   // long enough to enjoy the animation and read the lines, short enough not to drag
-/** The lines change as it goes, so a longer wait still feels like something is happening. It stops on the last one if loading takes longer. */
-const LINES = ["Loading your Orbit", "Finding your campus", "Setting things up", "Almost there"];
-const LINE_MS = 1000;
-const MAX_MS = 9000;   // never trap anyone behind it if something takes too long
+/** It stays up for somewhere between 5 and 10 seconds (picked each time), long enough to watch Omega walk and read the lines. */
+const MIN_FROM = 5000, MIN_TO = 10000;
+/** The lines change as it goes, so a long wait still feels like something is happening. It stops on the last one if loading takes longer. */
+const LINES = ["Loading your Orbit", "Finding your campus", "Setting things up", "Walking your feed over", "Tidying up", "Almost there"];
+const LINE_MS = 1500;
+const MAX_MS = 14000;  // never trap anyone behind it if something takes too long
 
 /** Shown right after onboarding: the page turns violet, a small Orbit mark circles, and "Your Orbit is loading" appears. When the app is ready it
  *  fades away into it. The violet circle that grew from the "Take me in" button hands over to this without a gap. */
@@ -18,7 +20,9 @@ export default function ArrivalScreen() {
   const reduce = useReducedMotion();
   const [waited, setWaited] = useState(false);
   const [out, setOut] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [line, setLine] = useState(0);
+  const minMs = useRef(MIN_FROM);
 
   useEffect(() => {
     if (!active) { setLine(0); return; }
@@ -28,15 +32,17 @@ export default function ArrivalScreen() {
   }, [active, reduce]);
 
   useEffect(() => {
-    if (!active) { setWaited(false); return; }
-    const min = setTimeout(() => setWaited(true), reduce ? 500 : MIN_MS);
+    if (!active) { setWaited(false); setLeaving(false); return; }
+    minMs.current = MIN_FROM + Math.random() * (MIN_TO - MIN_FROM);
+    const min = setTimeout(() => setWaited(true), reduce ? 500 : minMs.current);
     const max = setTimeout(() => setOut(true), MAX_MS);
     return () => { clearTimeout(min); clearTimeout(max); };
   }, [active, reduce]);
 
   // With a database, groups and plans load as the app opens; wait for them so the first thing you see is filled in.
   const loaded = shellReady && (!hangLive || hang === "ready" || hang === "error");
-  useEffect(() => { if (active && waited && loaded) setOut(true); }, [active, waited, loaded]);
+  // when everything is ready Omega says goodbye (see ArrivalWalker); the screen starts fading while he is in the air, and `onFade` below is what sets `out`
+  useEffect(() => { if (active && waited && loaded) setLeaving(true); }, [active, waited, loaded]);
 
   const ease = [0.16, 1, 0.3, 1] as const;
   return (
@@ -45,23 +51,7 @@ export default function ArrivalScreen() {
         <motion.div key="arrival" className="arrival" role="status" aria-live="polite"
           initial={{ opacity: reduce ? 0 : 1 }} animate={{ opacity: 1, transition: { duration: 0.3 } }} exit={{ opacity: 0, transition: { duration: reduce ? 0.2 : 0.7, ease } }}>
           <motion.div className="arrival-mark" initial={reduce ? false : { opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={reduce ? undefined : { scale: 1.35, opacity: 0 }} transition={{ duration: 0.7, ease, delay: 0.1 }}>
-            <svg viewBox="0 0 240 240" width="190" height="190" aria-hidden="true">
-              <circle cx="120" cy="120" r="54" fill="none" stroke="#fff" strokeOpacity="0.42" strokeWidth="2" />
-              <circle cx="120" cy="120" r="80" fill="none" stroke="#fff" strokeOpacity="0.26" strokeWidth="2" />
-              <circle cx="120" cy="120" r="106" fill="none" stroke="#fff" strokeOpacity="0.14" strokeWidth="2" />
-              {/* the campus at the centre, breathing gently */}
-              {/* one dot on each ring, starting in different places, at different speeds; the middle one goes the other way. Fixed bright colours so they show on violet in light and dark mode. */}
-              <motion.g style={{ transformOrigin: "120px 120px" }} animate={reduce ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, ease: "linear", duration: 2.2 }}>
-                <circle cx="120" cy="66" r="9" fill="#ffb8d9" />
-              </motion.g>
-              <motion.g style={{ transformOrigin: "120px 120px" }} animate={reduce ? undefined : { rotate: -360 }} transition={{ repeat: Infinity, ease: "linear", duration: 3.6 }}>
-                <circle cx="120" cy="200" r="7" fill="#ffe6a3" />
-              </motion.g>
-              <motion.g style={{ transformOrigin: "120px 120px" }} animate={reduce ? undefined : { rotate: 360 }} transition={{ repeat: Infinity, ease: "linear", duration: 5.4 }}>
-                <circle cx="14" cy="120" r="5.5" fill="#a9ecd0" />
-              </motion.g>
-            </svg>
-            <Orb size={56} variant="light" mood="loading" className="arrival-orb" poke={false} />
+            <ArrivalWalker leaving={leaving} onFade={() => setOut(true)} onLanded={() => arrival.landed()} fallback={<Orb size={56} variant="light" mood="loading" className="arrival-orb arrival-orb-solo" poke={false} />} />
           </motion.div>
           <div className="arrival-text-wrap" aria-hidden="true">
             <AnimatePresence mode="wait">

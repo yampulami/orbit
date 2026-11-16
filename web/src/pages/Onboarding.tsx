@@ -1,20 +1,23 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Building2, Bus, Check, Home, Sofa } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Moon, Monitor, Sun } from "lucide-react";
 import CampusSearch from "../components/CampusSearch";
-import SetupPreview from "../components/SetupPreview";
+import Stage, { useOmega, type Avail, type PageId } from "../components/onboarding/Stage";
+import { burst } from "../components/onboarding/burst";
 import { useAuth } from "../lib/auth";
 import { demoAuth, isGuestEmail } from "../lib/demoAuth";
 import { arrival } from "../lib/arrival";
+import { loadSnapshot, snapshotLine } from "../lib/campusSnapshot";
 import { checkUsername, normalizeUsername, suggestUsername, usernameIsFree } from "../lib/username";
 import { feedApi } from "../lib/feedData";
 import { resetCampus } from "../lib/campus";
+import { deviceAlertsOn, deviceSupported, enableDeviceAlerts } from "../lib/deviceAlerts";
 import { pushProfile, saveProfile, type Living, type Profile, type Tenure } from "../lib/profile";
 import { progress } from "../lib/progress";
 import { supabase } from "../lib/supabase";
-import { useThemePref } from "../lib/theme";
+import { setThemePref, useThemePref, type ThemePref } from "../lib/theme";
 import { campusKey, validCampus } from "../shared/campus";
-import type { University } from "../lib/universities";
+import { type University } from "../lib/universities";
 
 const TENURES: { id: Tenure; label: string }[] = [
   { id: "first-semester", label: "My first semester" },
@@ -24,38 +27,59 @@ const TENURES: { id: Tenure; label: string }[] = [
   { id: "fourth-plus", label: "Fourth year or longer" },
   { id: "graduate", label: "Graduate student" },
 ];
-const LIVING: { id: Living; label: string; hint: string; icon: typeof Home }[] = [
-  { id: "residence", label: "On campus", hint: "In a residence hall", icon: Building2 },
-  { id: "commute", label: "I commute", hint: "Car, bus or train", icon: Bus },
-  { id: "off-campus", label: "Off campus", hint: "With roommates", icon: Sofa },
-  { id: "other", label: "Somewhere else", hint: "Home, or it is complicated", icon: Home },
+const LIVING: { id: Living; label: string; hint: string; pic: string; alt: string }[] = [
+  { id: "residence", label: "On campus", hint: "In a residence hall", pic: "home-residence", alt: "Omega waving beside a residence hall, with a backpack" },
+  { id: "commute", label: "I commute", hint: "Car, bus or train", pic: "home-commute", alt: "Omega riding in a small open car" },
+  { id: "off-campus", label: "Off campus", hint: "With roommates", pic: "home-offcampus", alt: "Omega beside a house with moving boxes" },
+  { id: "other", label: "Somewhere else", hint: "Home, or it is complicated", pic: "home-other", alt: "Omega standing on a map next to a pin" },
 ];
 const INTERESTS = ["Events", "Meeting people", "Finding roommates", "Buying and selling", "Study groups", "Campus help"];
+const NUDGES: { key: "hangouts" | "reminders" | "places"; title: string; hint: string }[] = [
+  { key: "hangouts", title: "Hangouts", hint: "When friends want to meet up" },
+  { key: "reminders", title: "Reminders", hint: "Things you asked to be reminded about" },
+  { key: "places", title: "Places", hint: "Good spots that are open near you" },
+];
+const LOOKS: { id: ThemePref; label: string; icon: typeof Sun }[] = [
+  { id: "light", label: "Light", icon: Sun },
+  { id: "dark", label: "Dark", icon: Moon },
+  { id: "system", label: "Match my device", icon: Monitor },
+];
+const TITLES: Record<PageId, [string, string]> = {
+  campus: ["Which campus is yours?", "Your feed, events and map are just for your university. Start typing its name."],
+  you: ["What should we call you?", "This is what other students on your campus will see."],
+  life: ["A little about your life on campus", "It helps us show you the right things, and it is never shown to anyone else."],
+  interests: ["What are you here for?", "Pick any that fit, or skip this one. You can change everything else later in Profile."],
+  alerts: ["Want a nudge now and then?", "Orbit only speaks up about things you care about. You can change this any time in Profile."],
+  look: ["How should Orbit look?", "Pick one. You can switch whenever you like, from the menu."],
+  done: ["", ""],
+};
 
-type Step = "campus" | "you" | "life" | "interests";
-const STEPS: Step[] = ["campus", "you", "life", "interests"];
+const STEPS: PageId[] = ["campus", "you", "life", "interests", "alerts", "look", "done"];
+const first = (n: string) => n.trim().split(" ")[0] ?? "";
+type Nudges = { hangouts: boolean; reminders: boolean; places: boolean };
 
-/** First-time setup: four short screens between signing in and the app. Your university first (everything in the app is limited to it), then your name
- *  and username, then how long you have been there and where you live, then what you are here for (optional). Everything else that used to be asked here
- *  (streaks, alerts, theme, bio and hobbies) starts at a sensible default and lives in Profile. Nothing animates except a quick fade between screens. */
+/** First-time setup, seven short pages. The progress bar at the top has Omega on it: a tiny figure who walks to each step as you reach it (see
+ *  components/onboarding/bar.ts). Everything the old four screens asked for is still asked; the alerts and look pages used to be defaults that lived in Profile. */
 export default function Onboarding() {
   const { session, demo, signOut, refresh } = useAuth();
   const nav = useNavigate();
-  const look = useThemePref();
+  const lookPref = useThemePref();
   const [i, setI] = useState(0);
   const [uni, setUni] = useState<University | null>(null);
   const [name, setName] = useState("");
-  // The username picked at sign up (kept with the account) is the starting point; guests and older accounts get one suggested from their name.
   const chosenAtSignUp = (session?.user.user_metadata as { username?: string } | undefined)?.username ?? "";
   const [username, setUsername] = useState(chosenAtSignUp);
   const [userEdited, setUserEdited] = useState(!!chosenAtSignUp);
   const [tenure, setTenure] = useState<Tenure | "">("");
   const [living, setLiving] = useState<Living | null>(null);
   const [interests, setInterests] = useState<string[]>([]);
+  const [nudges, setNudges] = useState<Nudges>({ hangouts: true, reminders: true, places: true });
+  const [device, setDevice] = useState(deviceAlertsOn());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  // Say whether the username is free as it is typed (the same check the sign up form uses), so a taken one is never carried to the end.
-  const [availability, setAvailability] = useState<"idle" | "bad" | "checking" | "free" | "taken" | "unknown">("idle");
+  const [availability, setAvailability] = useState<Avail>("idle");
+  const [snap, setSnap] = useState<string | null>(null);
+
   useEffect(() => {
     if (!supabase) return;
     if (!username) { setAvailability("idle"); return; }
@@ -65,10 +89,25 @@ export default function Onboarding() {
     const t = setTimeout(() => { void usernameIsFree(username).then((free) => { if (current) setAvailability(free === null ? "unknown" : free ? "free" : "taken"); }); }, 350);
     return () => { current = false; clearTimeout(t); };
   }, [username]);
-  useEffect(() => { if (supabase && !userEdited) setUsername(suggestUsername(name.trim().split(" ")[0] ?? "")); }, [name, userEdited]);
+  useEffect(() => { if (supabase && !userEdited) setUsername(suggestUsername(first(name))); }, [name, userEdited]);
+  useEffect(() => {
+    if (!uni) { setSnap(null); return; }
+    let current = true;
+    void loadSnapshot(campusKey(uni.name)).then((s) => { if (current) setSnap(snapshotLine(s)); });
+    return () => { current = false; };
+  }, [uni]);
+
+  // one burst of confetti when you get to the end: the one big moment
+  useEffect(() => {
+    if (STEPS[i] !== "done") return;
+    const t = window.setTimeout(() => {
+      const w = window.innerWidth, c = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#ff7a45", all = [c, c, "#ffffff"];
+      [0.28, 0.5, 0.72].forEach((f, n) => window.setTimeout(() => burst(w * f, window.innerHeight * 0.34, all, 26, 1.6), n * 160));
+    }, 450);
+    return () => window.clearTimeout(t);
+  }, [i]);
 
   const meta = session?.user.user_metadata as { name?: string } | undefined;
-  // A name to start from, unless this is a guest: they type their own.
   useEffect(() => {
     const email = session?.user.email;
     if (isGuestEmail(email) || !email || meta?.name === "Guest") return;
@@ -79,11 +118,14 @@ export default function Onboarding() {
 
   const step = STEPS[i];
   const last = i === STEPS.length - 1;
-  const can: Record<Step, boolean> = {
+  const can: Record<PageId, boolean> = {
     campus: !!uni && validCampus(uni.name),
     you: name.trim().length >= 1 && (!supabase || (!checkUsername(username) && availability !== "checking" && availability !== "taken")),
     life: !!tenure && !!living,
     interests: true,
+    alerts: true,
+    look: true,
+    done: !!uni && !!tenure && !!living,
   };
   const go = (n: number) => { setI(n); setError(""); };
 
@@ -95,7 +137,7 @@ export default function Onboarding() {
       const key = campusKey(uni.name);
       const profile: Profile = {
         name: name.trim(), username: supabase ? normalizeUsername(username) : undefined, campusName: uni.name.trim(), campusKey: key, campusDomain: uni.domain || undefined,
-        tenure, living, interests, streaks: false, nudges: { hangouts: true, reminders: true, places: true }, look, doneAt: new Date().toISOString(),
+        tenure, living, interests, streaks: false, nudges, look: lookPref, doneAt: new Date().toISOString(),
       };
       await feedApi.join({ name: profile.campusName, key }, session!.user.id);
       if (supabase) await supabase.auth.updateUser({ data: { name: profile.name } }); else demoAuth.setName(session!.user.id, profile.name);
@@ -114,90 +156,180 @@ export default function Onboarding() {
     }
   }
   const next = () => { if (!can[step] || saving) return; if (last) void finish(); else go(i + 1); };
-  const toggleInterest = (t: string) => setInterests((l) => (l.includes(t) ? l.filter((x) => x !== t) : [...l, t]));
 
-  const title: Record<Step, string> = { campus: "Which campus is yours?", you: "What should we call you?", life: "A little about your life on campus", interests: "What are you here for?" };
-  const sub: Record<Step, string> = {
-    campus: "Your feed, events and map are just for your university. Start typing its name.",
-    you: "This is what other students on your campus will see.",
-    life: "It helps us show you the right things, and it is never shown to anyone else.",
-    interests: "Pick any that fit, or skip this one. You can change everything else later in Profile.",
-  };
+  const [title, sub] = step === "done" ? [`You're in, ${first(name) || "friend"}.`, `${uni?.name ?? "Your campus"} is set up the way you said.`] : TITLES[step];
 
-  const body: Record<Step, ReactNode> = {
-    campus: <CampusSearch value={uni} onPick={setUni} autoFocus />,
-    you: (
-      <>
-        <label className="field"><span className="onb-label">First name</span><input className="onb-input" value={name} maxLength={40} autoFocus autoComplete="given-name" onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder="Your first name" /></label>
-        {supabase && (
-          <label className="field onb-username"><span className="onb-label">Username</span>
-            <span className="onb-at"><span aria-hidden="true">@</span><input className="onb-input" value={username} maxLength={20} autoCapitalize="none" autoCorrect="off" spellCheck={false} aria-describedby="onb-username-help" onChange={(e) => { setUserEdited(true); setUsername(normalizeUsername(e.target.value).replace(/[^a-z0-9_]/g, "")); }} onKeyDown={(e) => { if (e.key === "Enter") next(); }} placeholder="username" /></span>
-            <small id="onb-username-help" className={availability === "bad" || availability === "taken" ? "error" : availability === "free" ? "ok" : "muted"} role={availability === "taken" || availability === "bad" ? "alert" : undefined}>
-              {availability === "bad" ? checkUsername(username) : availability === "checking" ? "Checking…" : availability === "free" ? `@${normalizeUsername(username)} is available` : availability === "taken" ? "That username is taken. Try another." : availability === "unknown" ? "We could not check that just now. You can carry on." : "Friends find you and add you to groups with this. Letters, numbers and underscores."}
-            </small>
-          </label>
-        )}
-      </>
-    ),
-    life: (
-      <>
-        <label className="field"><span className="onb-label">How long have you been on campus?</span>
-          <select className="onb-input" value={tenure} onChange={(e) => setTenure(e.target.value as Tenure)}>
-            <option value="" disabled>Choose one</option>
-            {TENURES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
-          </select>
-        </label>
-        <div className="field">
-          <span className="onb-label" id="onb-live">Where do you live?</span>
-          <div className="onb-choices two" role="radiogroup" aria-labelledby="onb-live">
+  return (
+    <Stage index={i} count={STEPS.length} page={step}>
+      <div className="ob-sticky">
+      <header className="ob-top">
+        <Link to="/" className="logo" aria-label="Orbit"><i />Orbit</Link>
+        <p className="ob-steps" aria-label={`Step ${i + 1} of ${STEPS.length}`}>Step {i + 1} of {STEPS.length}</p>
+        <button type="button" className="onb-out" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}>Sign out</button>
+      </header>
+      <div className={"ob-bar" + (saving ? " saving" : "")} aria-hidden="true">{STEPS.map((s, n) => <span key={s} style={{ "--i": n } as CSSProperties} className={n < i ? "done" : n === i ? "cur" : ""} />)}</div>
+      </div>
+      <Signals step={step} ok={can[step]} taken={availability === "taken"} />
+      <div className={"ob-main" + (step === "life" ? " wide" : "")} key={step}>
+        <div className="ob-head"><h1>{title}</h1><p>{sub}</p></div>
+        <Pages step={step} next={next}
+          st={{ uni, setUni, snap, name, setName, username, setUsername, setUserEdited, availability, tenure, setTenure, living, setLiving, interests, setInterests, nudges, setNudges, device, setDevice, lookPref, error }} />
+        <Actions i={i} last={last} can={can[step]} saving={saving} back={() => go(i - 1)} next={next} />
+      </div>
+      {demo && <p className="onb-demo">Demo mode: your answers are saved on this device.</p>}
+    </Stage>
+  );
+}
+
+type St = {
+  uni: University | null; setUni: (u: University | null) => void; snap: string | null;
+  name: string; setName: (v: string) => void; username: string; setUsername: (v: string) => void; setUserEdited: (v: boolean) => void; availability: Avail;
+  tenure: Tenure | ""; setTenure: (t: Tenure) => void; living: Living | null; setLiving: (l: Living) => void;
+  interests: string[]; setInterests: (f: (l: string[]) => string[]) => void;
+  nudges: Nudges; setNudges: (f: (n: Nudges) => Nudges) => void;
+  device: boolean; setDevice: (v: boolean) => void; lookPref: ThemePref; error: string;
+};
+
+/** Tells Omega when the answer on this page becomes good (he smiles) and when the username is taken (he shakes his head). Renders nothing. */
+function Signals({ step, ok, taken }: { step: PageId; ok: boolean; taken: boolean }) {
+  const { emit } = useOmega();
+  const was = useRef<{ step: PageId; ok: boolean }>({ step, ok });
+  useEffect(() => {
+    const prev = was.current;
+    was.current = { step, ok };
+    if (prev.step === step && !prev.ok && ok && step !== "done" && ["campus", "you", "life"].includes(step)) emit("valid");
+  }, [step, ok, emit]);
+  useEffect(() => { if (taken) emit("rejected"); }, [taken, emit]);
+  return null;
+}
+
+function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={"ob-card " + className}>{children}</div>;
+}
+
+function Actions({ i, last, can, saving, back, next }: { i: number; last: boolean; can: boolean; saving: boolean; back: () => void; next: () => void }) {
+  const { emit } = useOmega();
+  return (
+    <div className="ob-act">
+      {i > 0 && <button type="button" className="ob-back" onClick={back} aria-label="Back" disabled={saving}><ArrowLeft size={18} aria-hidden="true" /></button>}
+      <button type="button" className="btn primary ob-next" disabled={!can || saving} onClick={() => { if (last) emit("finish"); next(); }}>
+        <span>{saving ? "Setting up…" : last ? "Take me in" : "Continue"}</span><ArrowRight size={18} aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
+
+function Pages({ step, st, next }: { step: PageId; st: St; next: () => void }) {
+  const { emit } = useOmega();
+  const key = (e: React.KeyboardEvent) => { if (e.key === "Enter") next(); };
+  const nudgeCount = Object.values(st.nudges).filter(Boolean).length;
+
+  switch (step) {
+    case "campus":
+      return (
+        <Card>
+          <span className="ob-label">Your university</span>
+          <CampusSearch value={st.uni} onPick={(u) => { st.setUni(u); if (u) { emit("choose"); window.setTimeout(() => document.querySelector<HTMLElement>(".ob-next")?.focus(), 90); /* so Enter again goes on */ } }} autoFocus />
+          {st.uni && st.snap && <p className="ob-note ok">{st.snap}</p>}
+        </Card>
+      );
+    case "you":
+      return (
+        <>
+          <Card>
+            <label className="ob-label" htmlFor="ob-name">First name</label>
+            <input id="ob-name" className="ob-input" value={st.name} maxLength={40} autoFocus autoComplete="given-name" onChange={(e) => st.setName(e.target.value)} onKeyDown={key} placeholder="Your first name" />
+          </Card>
+          {supabase && (
+            <Card>
+              <label className="ob-label" htmlFor="ob-user">Username</label>
+              <span className="ob-at"><span aria-hidden="true">@</span>
+                <input id="ob-user" value={st.username} maxLength={20} autoCapitalize="none" autoCorrect="off" spellCheck={false} aria-describedby="ob-user-help"
+                  onChange={(e) => { st.setUserEdited(true); st.setUsername(normalizeUsername(e.target.value).replace(/[^a-z0-9_]/g, "")); }} onKeyDown={key} placeholder="username" />
+              </span>
+              <p id="ob-user-help" className={"ob-note " + (st.availability === "bad" || st.availability === "taken" ? "error" : st.availability === "free" ? "ok" : "")} role={st.availability === "taken" || st.availability === "bad" ? "alert" : undefined}>
+                {st.availability === "bad" ? checkUsername(st.username) : st.availability === "checking" ? "Checking…" : st.availability === "free" ? `@${normalizeUsername(st.username)} is available` : st.availability === "taken" ? "That username is taken. Try another." : st.availability === "unknown" ? "We could not check that just now. You can carry on." : "Friends find you and add you to groups with this. Letters, numbers and underscores."}
+              </p>
+            </Card>
+          )}
+        </>
+      );
+    case "life":
+      return (
+        <>
+          <Card>
+            <span className="ob-label" id="ob-tenure">How long have you been on campus?</span>
+            <div className="ob-opts" role="radiogroup" aria-labelledby="ob-tenure">
+              {TENURES.map((t) => (
+                <button key={t.id} type="button" role="radio" aria-checked={st.tenure === t.id} className="ob-opt" onClick={() => { st.setTenure(t.id); emit("choose"); }}>
+                  <Check size={14} className="ob-tick" aria-hidden="true" />{t.label}
+                </button>
+              ))}
+            </div>
+          </Card>
+          <div className="ob-homes" role="radiogroup" aria-label="Where do you live?">
             {LIVING.map((l) => (
-              <button key={l.id} type="button" role="radio" aria-checked={living === l.id} className="onb-choice" onClick={() => setLiving(l.id)}>
-                <span className="onb-choice-ico"><l.icon size={20} aria-hidden="true" /></span>
-                <span className="onb-choice-text"><strong>{l.label}</strong><em>{l.hint}</em></span>
-                <span className="onb-check" aria-hidden="true">{living === l.id && <Check size={16} strokeWidth={3} />}</span>
+              <button key={l.id} type="button" role="radio" aria-checked={st.living === l.id} className="ob-card ob-home" onClick={() => { st.setLiving(l.id); emit("choose"); }}>
+                <img className="pic" src={`/cards/${l.pic}.webp`} alt="" width={1015} height={667} loading="lazy" decoding="async" /><strong>{l.label}</strong><em>{l.hint}</em>
               </button>
             ))}
           </div>
-        </div>
-      </>
-    ),
-    interests: (
-      <div className="onb-chips" role="group" aria-label="What you are here for">
-        {INTERESTS.map((t) => {
-          const on = interests.includes(t);
-          return <button key={t} type="button" aria-pressed={on} onClick={() => toggleInterest(t)}>{on && <Check size={14} aria-hidden="true" />}{t}</button>;
-        })}
-      </div>
-    ),
-  };
-
-  return (
-    <main className="onb calm">
-      <header className="onb-top">
-        <Link to="/" className="logo" aria-label="Orbit"><i />Orbit</Link>
-        <p className="onb-steps" aria-label={`Step ${i + 1} of ${STEPS.length}`}>Step {i + 1} of {STEPS.length}</p>
-        <button type="button" className="onb-out" onClick={async () => { await signOut(); nav("/login", { replace: true }); }}>Sign out</button>
-      </header>
-      <div className="onb-bar" aria-hidden="true">{STEPS.map((s, n) => <span key={s} className={n <= i ? "on" : ""} />)}</div>
-      <div className="onb-stage two">
-        <div className="onb-panel">
-          <div key={step} className="onb-step onb-fade">
-            <h1>{title[step]}</h1>
-            <p className="onb-sub">{sub[step]}</p>
-            <div className="onb-body">{body[step]}</div>
-            {error && <p className="error" role="alert">{error}</p>}
-            <div className="onb-actions">
-              {i > 0 && <button type="button" className="onb-back" onClick={() => go(i - 1)} aria-label="Back" disabled={saving}><ArrowLeft size={18} aria-hidden="true" /></button>}
-              <button type="button" className="btn primary onb-next" disabled={!can[step] || saving} onClick={next}>
-                <span>{saving ? "Setting up…" : last ? (interests.length === 0 ? "Skip and take me in" : "Take me in") : "Continue"}</span>
-                <ArrowRight size={18} aria-hidden="true" />
-              </button>
-            </div>
+        </>
+      );
+    case "interests":
+      return (
+        <Card>
+          <div className="ob-opts">
+            {INTERESTS.map((t) => {
+              const on = st.interests.includes(t);
+              return (
+                <button key={t} type="button" aria-pressed={on} className="ob-opt" onClick={() => { st.setInterests((l) => (on ? l.filter((x) => x !== t) : [...l, t])); emit("toggle"); }}>
+                  {on && <Check size={14} aria-hidden="true" />}{t}
+                </button>
+              );
+            })}
           </div>
+        </Card>
+      );
+    case "alerts":
+      return (
+        <Card>
+          {NUDGES.map((n) => (
+            <button key={n.key} type="button" className="ob-switch" aria-pressed={st.nudges[n.key]} onClick={() => { const on = !st.nudges[n.key]; st.setNudges((v) => ({ ...v, [n.key]: on })); emit("toggle"); }}>
+              <span><strong>{n.title}</strong><em>{n.hint}</em></span><i aria-hidden="true" />
+            </button>
+          ))}
+          {deviceSupported() && (
+            <button type="button" className="btn ob-device" disabled={st.device}
+              onClick={async () => { const p = await enableDeviceAlerts(); st.setDevice(p === "granted"); if (p === "granted") emit("device"); }}>
+              {st.device ? "Device alerts are on" : "Allow alerts on this device"}
+            </button>
+          )}
+        </Card>
+      );
+    case "look":
+      return (
+        <div className="ob-looks" role="radiogroup" aria-label="Appearance">
+          {LOOKS.map((l) => (
+            <button key={l.id} type="button" role="radio" aria-checked={st.lookPref === l.id} className="ob-card ob-theme" onClick={() => { setThemePref(l.id); emit("theme", { dark: l.id === "dark" || (l.id === "system" && matchMedia("(prefers-color-scheme: dark)").matches) }); }}>
+              <span className="swatch" style={{ background: l.id === "light" ? "#f1f2ee" : l.id === "dark" ? "#131513" : "linear-gradient(90deg,#f1f2ee 50%,#131513 50%)", color: l.id === "light" ? "#131513" : "#f1f2ee" }}><l.icon size={22} aria-hidden="true" /></span>
+              <strong>{l.label}</strong>
+            </button>
+          ))}
         </div>
-        <SetupPreview step={step} uni={uni} name={name} username={supabase ? normalizeUsername(username) : ""} tenure={tenure} living={living} interests={interests} />
-      </div>
-      {demo && <p className="onb-demo">Demo mode: your answers are saved on this device.</p>}
-    </main>
-  );
+      );
+    case "done":
+      return (
+        <Card>
+          <dl className="ob-sum">
+            <div><dt>Campus</dt><dd>{st.uni?.name ?? "—"}</dd></div>
+            <div><dt>Name</dt><dd>{first(st.name) || "—"}</dd></div>
+            {supabase && <div><dt>Username</dt><dd>@{normalizeUsername(st.username)}</dd></div>}
+            <div><dt>Home</dt><dd>{LIVING.find((l) => l.id === st.living)?.label ?? "—"}</dd></div>
+            <div><dt>Nudges</dt><dd>{nudgeCount === 0 ? "None" : `${nudgeCount} of 3 on`}</dd></div>
+          </dl>
+          {st.error && <p className="ob-note error" role="alert">{st.error}</p>}
+        </Card>
+      );
+  }
 }

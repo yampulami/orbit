@@ -25,6 +25,32 @@ function useFooterLook() {
   return look;
 }
 
+/** A picture of the one idea in the headline: three evenings, and the hour they all have free. */
+const HOURS = ["12", "1", "2", "3", "4", "5", "6", "7"];
+const PEOPLE: { who: string; free: boolean[] }[] = [
+  { who: "You", free: [false, false, true, true, true, true, false, true] },
+  { who: "Sam", free: [true, false, false, true, true, true, true, false] },
+  { who: "Priya", free: [false, true, false, false, true, true, false, false] },
+];
+function FindTheHour() {
+  const all = HOURS.map((_, h) => PEOPLE.every((p) => p.free[h]));
+  const runStart = all.indexOf(true);
+  const runEnd = all.lastIndexOf(true);
+  const label = runStart >= 0 ? `${HOURS[runStart]}–${(Number(HOURS[runEnd]) % 12) + 1} pm` : "";
+  return (
+    <section className="land-find" aria-label="How Orbit finds a time">
+      <p className="land-find-note">Everyone shares when they are free. Orbit shows the hours that line up.</p>
+      <div className="land-find-card" role="img" aria-label={`Three people's free hours. Everyone is free ${label}.`}>
+        <div className="land-find-head"><span />{HOURS.map((h) => <b key={h}>{h}</b>)}</div>
+        {PEOPLE.map((p) => (
+          <div className="land-find-row" key={p.who}><span>{p.who}</span>{p.free.map((f, h) => <i key={h} data-free={f || undefined} data-all={all[h] || undefined} />)}</div>
+        ))}
+        {runStart >= 0 && <p className="land-find-answer">Everyone is free <strong>{label}</strong></p>}
+      </div>
+    </section>
+  );
+}
+
 export default function Landing() {
   const { session, signInGuest } = useAuth();
   const nav = useNavigate();
@@ -43,21 +69,15 @@ export default function Landing() {
           <span className="logo"><Orb variant="violet" />Orbit</span>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <ThemeToggleButton />
-            {session ? (
-              <Link className="btn primary" to="/app">Open app</Link>
-            ) : (
-              <>
-                <Link className="btn" to="/login">Sign in</Link>
-              </>
-            )}
+            {!session && <Link className="btn" to="/login">Sign in</Link>}
           </div>
         </nav>
 
         <header className="land-hero">
           <LandingOrbs />
-          <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>Campus life, in one place.</motion.h1>
+          <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>Find the hour you’re both free.</motion.h1>
           <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            Feed, chats and plans for your campus.
+            One place for your campus: the feed, chats, plans, a map and a marketplace. Orbit finds a time that works for everyone in the group.
           </motion.p>
           <motion.div className="row" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
             <Link className="btn primary" data-cta to={session ? "/app" : "/signup"}>{session ? "Open app" : "Create your account"}</Link>
@@ -66,6 +86,7 @@ export default function Landing() {
           {problem && <p className="muted" role="alert">{problem}</p>}
         </header>
 
+        <FindTheHour />
       </div>
       {look && (
         <HalftoneWordmark

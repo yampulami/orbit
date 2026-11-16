@@ -12,7 +12,7 @@ import { enter, slide } from "../lib/motion";
 import BadgeToast from "./BadgeToast";
 import UndoToast from "./UndoToast";
 import NoticeHost from "./NoticeHost";
-import { arrival } from "../lib/arrival";
+import { arrival, useArrival } from "../lib/arrival";
 import NotificationBell from "./NotificationBell";
 import Orb from "./Orb";
 import Assistant from "./Assistant";
@@ -73,6 +73,9 @@ export default function Shell() {
   // The logo orb perks up for a few seconds when something new lands in the bell.
   const bellCount = useNotifs().filter((n) => n.unread).length;
   const prevBell = useRef(bellCount);
+  // After setup, the logo's ball is not there until Omega has rolled up into its place (see ArrivalScreen); then it pops in.
+  const arr = useArrival();
+  const logoHold = arr.active ? (arr.landed ? "orb-shown" : "orb-hold") : "";
   const [excited, setLogoMood] = useState<OrbMood>("idle");
   // Late at night the logo orb gets drowsy; tapping it wakes it for a while.
   const [night, setNight] = useState(() => isNight(new Date()));
@@ -160,7 +163,7 @@ export default function Shell() {
       <a className="skip" href="#main">Skip to content</a>
       <aside className="side" aria-label="Main">
         <div className="side-top">
-          <NavLink to="/app/feed" className="logo logo-toggle" aria-label="Orbit, home"><Orb variant="light" size={32} mood={logoMood} onPoke={wake} /><span className="navtext">Orbit</span></NavLink>
+          <NavLink to="/app/feed" className="logo logo-toggle" aria-label="Orbit, home"><Orb variant="light" size={32} mood={logoMood} onPoke={wake} className={logoHold} /><span className="navtext">Orbit</span></NavLink>
         </div>
         <nav className="navgroup" aria-label="Primary">
           {railItems.map((i) => {
@@ -221,7 +224,7 @@ export default function Shell() {
       </aside>
       <div className="content">
         <div className="topline">
-          <button type="button" className="logo logo-mobile" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><Orb variant="violet" size={34} mood={logoMood} onPoke={wake} /></button>
+          <button type="button" className="logo logo-mobile" aria-label="Open menu" aria-expanded={drawer} onClick={() => setDrawer(true)}><Orb variant="violet" size={34} mood={logoMood} onPoke={wake} className={logoHold} /></button>
           <span className="top-title" aria-hidden="true">{pageTitle}</span>
           <GlobalSearch />
           <NotificationBell />
