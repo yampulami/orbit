@@ -6101,17 +6101,6 @@ p,li{text-wrap:pretty}
 .mk-rail>*,.mk-phone{min-width:0}
 
 /* landing: the "find the hour" picture */
-.land-find{display:grid;justify-items:center;gap:16px;margin:8px auto 72px;max-width:560px;padding:0 4px}
-.land-find-note{margin:0;text-align:center;color:var(--ink-soft);font-size:var(--t-read)}
-.land-find-card{width:100%;box-sizing:border-box;padding:18px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line);display:grid;gap:8px}
-.land-find-head,.land-find-row{display:grid;grid-template-columns:56px repeat(8,1fr);gap:6px;align-items:center}
-.land-find-head b{font-size:var(--t-micro);font-weight:500;color:var(--ink-soft);text-align:center}
-.land-find-row span{font-size:var(--t-meta);color:var(--ink-soft)}
-.land-find-row i{height:26px;border-radius:6px;background:color-mix(in srgb,var(--ink) 7%,var(--bg))}
-.land-find-row i[data-free]{background:color-mix(in srgb,var(--accent) 38%,var(--bg))}
-.land-find-row i[data-all]{background:var(--accent)}
-.land-find-answer{margin:6px 0 0;text-align:center;font-size:var(--t-meta);color:var(--ink-soft)}
-.land-find-answer strong{color:var(--ink)}
 
 /* the arrival screen: Omega walking across it. A plain page behind him, so he stands out (an orange robot on an orange page disappeared). */
 .arrival{background:var(--bg);color:var(--ink)}

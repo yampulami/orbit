@@ -25,31 +25,6 @@ function useFooterLook() {
   return look;
 }
 
-/** A picture of the one idea in the headline: three evenings, and the hour they all have free. */
-const HOURS = ["12", "1", "2", "3", "4", "5", "6", "7"];
-const PEOPLE: { who: string; free: boolean[] }[] = [
-  { who: "You", free: [false, false, true, true, true, true, false, true] },
-  { who: "Sam", free: [true, false, false, true, true, true, true, false] },
-  { who: "Priya", free: [false, true, false, false, true, true, false, false] },
-];
-function FindTheHour() {
-  const all = HOURS.map((_, h) => PEOPLE.every((p) => p.free[h]));
-  const runStart = all.indexOf(true);
-  const runEnd = all.lastIndexOf(true);
-  const label = runStart >= 0 ? `${HOURS[runStart]}–${(Number(HOURS[runEnd]) % 12) + 1} pm` : "";
-  return (
-    <section className="land-find" aria-label="How Orbit finds a time">
-      <div className="land-find-card" role="img" aria-label={`Three people's free hours. Everyone is free ${label}.`}>
-        <div className="land-find-head"><span />{HOURS.map((h) => <b key={h}>{h}</b>)}</div>
-        {PEOPLE.map((p) => (
-          <div className="land-find-row" key={p.who}><span>{p.who}</span>{p.free.map((f, h) => <i key={h} data-free={f || undefined} data-all={all[h] || undefined} />)}</div>
-        ))}
-        {runStart >= 0 && <p className="land-find-answer">Everyone is free <strong>{label}</strong></p>}
-      </div>
-    </section>
-  );
-}
-
 export default function Landing() {
   const { session, signInGuest } = useAuth();
   const nav = useNavigate();
@@ -85,7 +60,6 @@ export default function Landing() {
           {problem && <p className="muted" role="alert">{problem}</p>}
         </header>
 
-        <FindTheHour />
       </div>
       {look && (
         <HalftoneWordmark
