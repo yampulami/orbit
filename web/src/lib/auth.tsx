@@ -5,8 +5,21 @@ import { siteUrl } from "./siteUrl";
 import { clearCaches } from "./localCache";
 import { demoAuth, demoSession, isGuestEmail } from "./demoAuth";
 import { looksLikeEmail } from "./username";
+import { clearAttempts, countAttempt, limitLeft, waitMessage } from "./attemptLimit";
 
 const NOT_RIGHT = "That username, email or password is not right.";
+const MIN = 60_000;
+
+/** A server refusal because of too many requests (Supabase Auth's own limits answer 429) gets a plain message; anything else keeps its text. */
+export function authProblem(error: { status?: number; code?: string; message: string }): string {
+  if (error.status === 429 || /rate.?limit|too many/i.test(`${error.code ?? ""} ${error.message}`)) return "Too many tries from here. Please wait a few minutes and try again.";
+  return error.message;
+}
+
+async function emailSignIn(email: string, password: string): Promise<string | null> {
+  const { error } = await supabase!.auth.signInWithPassword({ email, password });
+  return error ? authProblem(error) : null;
+}
 
 /** Sign in by username through the server function (it looks the email up privately; the app never sees it). Resolves to a message, or null on success. */
 async function signInWithUsername(identifier: string, password: string): Promise<string | null> {
@@ -15,6 +28,7 @@ async function signInWithUsername(identifier: string, password: string): Promise
     let body: { error?: string; message?: string; code?: string } = {};
     try { body = await (error as unknown as { context?: Response }).context?.json() ?? {}; } catch { /* no body */ }
     if (body.code === "NOT_FOUND" || /not found/i.test(body.message ?? "")) return "Signing in with a username is not switched on yet. Use your email for now.";
+    if ((error as unknown as { context?: Response }).context?.status === 429) return body.error || "Too many tries from here. Please wait a few minutes and try again.";
     if (body.error) return body.error;
     // No answer from our function at all (not deployed yet, or no connection): say so, rather than claiming the password was wrong.
     if ((error as { name?: string }).name !== "FunctionsHttpError") return "We could not reach the sign in service. Use your email, or try again in a moment.";
@@ -62,8 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = useCallback(async (email: string, password: string, username?: string) => {
     if (supabase) {
+      const left = limitLeft("signup", 5, 10 * MIN);
+      if (left) return waitMessage(left);
+      countAttempt("signup", 10 * MIN);
       const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${siteUrl()}/login`, data: username ? { username } : undefined } });
-      return error ? error.message : null;
+      return error ? authProblem(error) : null;
     }
     const r = await demoAuth.signUp(email, password);
     if (r.ok) setSession(r.session);
@@ -73,9 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (identifier: string, password: string) => {
     const email = identifier.trim();
     if (supabase) {
-      if (!looksLikeEmail(email)) return signInWithUsername(email, password);
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      return error ? error.message : null;
+      // wrong passwords are counted per account name: six in ten minutes and it waits, however many times the button is pressed
+      const name = "signin:" + email.toLowerCase();
+      const left = limitLeft(name, 6, 10 * MIN);
+      if (left) return waitMessage(left);
+      const problem = looksLikeEmail(email) ? await emailSignIn(email, password) : await signInWithUsername(email, password);
+      if (problem) countAttempt(name, 10 * MIN); else clearAttempts(name);
+      return problem;
     }
     const r = await demoAuth.signIn(email, password);
     if (r.ok) setSession(r.session);
@@ -84,6 +105,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInGuest = useCallback(async () => {
     if (supabase) {
+      const left = limitLeft("guest", 4, 10 * MIN);
+      if (left) return waitMessage(left);
+      countAttempt("guest", 10 * MIN);
       const { error } = await supabase.auth.signInAnonymously();
       return error ? "Guest sign-in is not turned on for this project. In Supabase, open Authentication, then Sign In / Providers, and enable Anonymous sign-ins." : null;
     }

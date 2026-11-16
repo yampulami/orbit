@@ -1,4 +1,7 @@
 import { supabase } from "./supabase";
+import { clearAttempts, countAttempt, limitLeft, waitMessage } from "./attemptLimit";
+
+const TEN = 10 * 60_000;
 
 /** Forgot password: an email with a short code, then the code plus a new password. Needs a database; in demo mode there is no email to send. */
 export const resetAvailable = !!supabase;
@@ -24,6 +27,11 @@ export function timedOutButSent(error: { status?: number; code?: string; message
  *  Resolves to a message to show if it could not be sent, or null. */
 export async function sendResetCode(email: string): Promise<string | null> {
   if (!supabase) return "Resetting a password needs an account on the server.";
+  // a few codes per address, and a few addresses per browser, every ten minutes
+  const who = "reset-send:" + email.trim().toLowerCase();
+  const left = Math.max(limitLeft(who, 3, TEN), limitLeft("reset-send", 6, TEN));
+  if (left) return waitMessage(left);
+  countAttempt(who, TEN); countAttempt("reset-send", TEN);
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
   if (!error) return null;
   if (timedOutButSent(error)) return null;
@@ -34,8 +42,13 @@ export async function sendResetCode(email: string): Promise<string | null> {
 /** Check the code and set the new password. On success the person is signed in. Resolves to a message to show, or null. */
 export async function resetWithCode(email: string, code: string, password: string): Promise<string | null> {
   if (!supabase) return "Resetting a password needs an account on the server.";
+  // five wrong codes and it waits: the code is a short number, so guessing it has to be slow
+  const who = "reset-code:" + email.trim().toLowerCase();
+  const left = limitLeft(who, 5, TEN);
+  if (left) return waitMessage(left);
   const verified = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "recovery" });
-  if (verified.error || !verified.data.session) return "That code is not right, or it has expired. Ask for a new one.";
+  if (verified.error || !verified.data.session) { countAttempt(who, TEN); return "That code is not right, or it has expired. Ask for a new one."; }
+  clearAttempts(who);
   return savePassword(password);
 }
 

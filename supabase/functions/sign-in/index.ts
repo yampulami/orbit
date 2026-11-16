@@ -30,6 +30,16 @@ Deno.serve(async (req) => {
 
   const admin = createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false, autoRefreshToken: false } });
 
+  // Rate limits, checked before any lookup so a guesser learns nothing and the database is not hammered: 20 tries / 10 min from one address,
+  // and 8 / 15 min against one account name (so a botnet cannot guess one student's password either). The limit hits when the function is in
+  // use; if the counter itself is unavailable the request goes on (Supabase Auth's own limits still apply).
+  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+  const tooMany = () => reply({ error: "Too many tries. Please wait a few minutes and try again." }, 429);
+  const byIp = await admin.rpc("rate_limit_hit", { p_key: "signin-ip:" + ip, p_max: 20, p_window_seconds: 600 });
+  if (byIp.data === false) return tooMany();
+  const byName = await admin.rpc("rate_limit_hit", { p_key: "signin-name:" + identifier.toLowerCase().replace(/^@+/, ""), p_max: 8, p_window_seconds: 900 });
+  if (byName.data === false) return tooMany();
+
   let email: string | null = identifier.includes("@") ? identifier.toLowerCase() : null;
   if (!email) {
     const username = identifier.replace(/^@+/, "").toLowerCase();
