@@ -34,6 +34,15 @@
         "rule": "design-system-font",
         "value": "sfmono-regular",
         "createdAt": "2026-11-05T04:55:27.077Z"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "web/src/components/onboarding/onboarding.css"
+        ],
+        "createdAt": "2026-11-13T05:15:00.172Z",
+        "reason": "false positive: .ob-slab::before and .ob-act::before are a neutral ink-tinted ledge across the whole top edge of a slab (the surface Omega stands on), not an accent border on one side; decided by the assistant from the CSS, not user confirmed"
       }
     ]
   }

@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
-import { EMPTY_DRAFT, NO_FILTERS, activeCount, askAbout, categoryCounts, filterListings, parsePrice, priceLabel, problemWithListing, type Listing } from "./listings";
+import { describe, expect, it, vi } from "vitest";
+import { EMPTY_DRAFT, NO_FILTERS, activeCount, askAbout, categoryCounts, filterListings, forgetDraft, keepDraft, loadDraft, parsePrice, priceLabel, problemWithListing, type Listing } from "./listings";
 
-const L = (o: Partial<Listing>): Listing => ({ id: "x", campusKey: "c", sellerId: "s", sellerName: "S", kind: "sell", title: "Thing", description: "", priceCents: 1000, category: "Other", condition: null, photos: [], status: "active", createdAt: "2026-11-01T00:00:00Z", mine: false, saved: false, ...o });
+const L = (o: Partial<Listing>): Listing => ({ id: "x", campusKey: "c", sellerId: "s", sellerName: "S", kind: "sell", title: "Thing", description: "", priceCents: 1000, category: "Other", condition: null, photos: [], status: "active", createdAt: "2026-11-01T00:00:00Z", mine: false, saved: false, pickup: "", ...o });
 
 describe("prices", () => {
   it("reads what people type", () => {
@@ -82,5 +82,33 @@ describe("askAbout", () => {
     expect(askAbout({ kind: "sell", title: "Desk fan", priceCents: 800 })).toBe('Hi! Is "Desk fan" ($8) still available? ');
     expect(askAbout({ kind: "free", title: "Lamp", priceCents: null })).toContain("pick it up");
     expect(askAbout({ kind: "wanted", title: "Mini fridge", priceCents: null })).toContain("looking for");
+  });
+});
+
+describe("meeting place", () => {
+  it("is optional but kept short", () => {
+    expect(problemWithListing({ ...EMPTY_DRAFT, title: "Lamp", kind: "free", pickup: "" })).toBeNull();
+    expect(problemWithListing({ ...EMPTY_DRAFT, title: "Lamp", kind: "free", pickup: "x".repeat(61) })).toMatch(/meeting place/);
+  });
+});
+
+describe("drafts", () => {
+  const store = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => { m.set(k, v); }, removeItem: (k: string) => { m.delete(k); } }; };
+  it("keeps what was typed, per person, without photos", () => {
+    vi.stubGlobal("localStorage", store());
+    expect(keepDraft("a", { ...EMPTY_DRAFT, title: "Desk fan", photos: ["p/1.jpg"] })).toBe(true);
+    expect(loadDraft("a")).toMatchObject({ title: "Desk fan", photos: [] });
+    expect(loadDraft("b")).toBeNull();
+    vi.unstubAllGlobals();
+  });
+  it("forgets an empty draft, and one that was posted", () => {
+    vi.stubGlobal("localStorage", store());
+    keepDraft("a", { ...EMPTY_DRAFT, title: "Desk fan" });
+    expect(keepDraft("a", EMPTY_DRAFT)).toBe(false);
+    expect(loadDraft("a")).toBeNull();
+    keepDraft("a", { ...EMPTY_DRAFT, title: "Desk fan" });
+    forgetDraft("a");
+    expect(loadDraft("a")).toBeNull();
+    vi.unstubAllGlobals();
   });
 });

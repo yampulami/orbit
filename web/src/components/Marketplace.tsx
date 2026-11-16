@@ -1,14 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
-import { Bike, Bookmark, BookOpen, Check, Heart, ImagePlus, Laptop, Package, Plus, Search, ShieldAlert, Shirt, Sofa, Store, Ticket, User, UtensilsCrossed, Wrench, X, type LucideIcon } from "lucide-react";
+import { Bike, BookOpen, Check, Heart, ImagePlus, Laptop, MapPin, Package, Plus, Search, ShieldAlert, Shirt, Sofa, Store, Ticket, User, UtensilsCrossed, Wrench, X, type LucideIcon } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { loadProfile } from "../lib/profile";
-import { feedApi } from "../lib/feedData";
+import { feedApi, isDemo } from "../lib/feedData";
 import { dmActions } from "../lib/dms";
 import { useMediaUrl } from "../lib/media";
 import {
-  askAbout, CATEGORIES, parsePrice, CONDITIONS, EMPTY_DRAFT, KIND_LABEL, NO_FILTERS, activeCount, categoryCounts, filterListings, MAX_ACTIVE, priceLabel, problemWithListing, useListings,
+  askAbout, CATEGORIES, parsePrice, CONDITIONS, EMPTY_DRAFT, KIND_LABEL, NO_FILTERS, activeCount, categoryCounts, filterListings, forgetDraft, keepDraft, loadDraft, MAX_ACTIVE, MAX_PICKUP, priceLabel, problemWithListing, useListings,
   type Category, type Condition, type Draft, type Filters, type Kind, type Listing, type Sort,
 } from "../lib/listings";
 import { AttachPreview, useAttachment, type Attachment } from "./Attach";
@@ -58,7 +58,7 @@ export default function Marketplace() {
         <button type="button" className="btn primary mk-new" onClick={() => setSelling(true)}><Plus size={18} aria-hidden="true" /><span className="mk-new-long">Create new listing</span><span className="mk-new-short">Sell</span></button>
         <nav className="mk-views" aria-label="Browse, saved or yours">
           <button type="button" aria-current={view === "browse"} onClick={() => go("browse")}><Store size={18} aria-hidden="true" />Browse all<small>{total}</small></button>
-          <button type="button" aria-current={view === "saved"} onClick={() => go("saved")}><Bookmark size={18} aria-hidden="true" />Saved<small>{savedCount}</small></button>
+          <button type="button" aria-current={view === "saved"} onClick={() => go("saved")}><Heart size={18} aria-hidden="true" />Saved<small>{savedCount}</small></button>
           <button type="button" aria-current={view === "mine"} onClick={() => go("mine")}><User size={18} aria-hidden="true" />Your listings<small>{mineCount}</small></button>
         </nav>
         <div className="mk-group" role="group" aria-label="Kind">
@@ -109,7 +109,7 @@ export default function Marketplace() {
         )}
       </div>
       </div>
-      {selling && createPortal(<NewListing active={activeCount(list)} onClose={() => setSelling(false)} onCreate={create} />, document.body)}
+      {selling && createPortal(<NewListing me={me} active={activeCount(list)} onClose={() => setSelling(false)} onCreate={create} />, document.body)}
       {current && createPortal(<Detail l={current} onClose={() => setOpen(null)} onSave={() => void toggleSave(current.id)} onStatus={setStatus} onReport={report} />, document.body)}
     </section>
   );
@@ -130,15 +130,19 @@ function Card({ l, onOpen, onSave }: { l: Listing; onOpen: () => void; onSave: (
         <span className="mk-body">
           <span className="mk-price">{priceLabel(l)}{l.kind === "wanted" && <em>Wanted</em>}{l.status === "sold" && <em>Sold</em>}</span>
           <strong>{l.title}</strong>
-          <span className="mk-meta">{l.sellerName} · {ago(l.createdAt)}</span>
+          <span className="mk-meta">{l.sellerName} · {ago(l.createdAt)}{l.sample && <span className="mk-sample">Sample</span>}</span>
         </span>
       </button>
-      {!l.mine && <button type="button" className="mk-heart" aria-pressed={l.saved} aria-label={l.saved ? "Remove from saved" : "Save this listing"} onClick={onSave}><Heart size={18} fill={l.saved ? "currentColor" : "none"} aria-hidden="true" /></button>}
+      {!l.mine && <button type="button" className="mk-heart" aria-pressed={l.saved} aria-label={l.saved ? `Remove ${l.title} from saved` : `Save ${l.title}`} onClick={onSave}><Heart size={18} fill={l.saved ? "currentColor" : "none"} aria-hidden="true" /></button>}
     </div>
   );
 }
 
 function Frame({ label, onClose, children, wide }: { label: string; onClose: () => void; children: React.ReactNode; wide?: boolean }) {
+  // When it closes, keyboard focus goes back to whatever opened it (the card, or the new listing button), not to the top of the page.
+  // Read while rendering, before the close button's autoFocus takes focus.
+  const [back] = useState(() => (document.activeElement instanceof HTMLElement ? document.activeElement : null));
+  useEffect(() => () => { if (back?.isConnected) back.focus({ preventScroll: true }); }, [back]);
   useEffect(() => {
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", esc);
@@ -161,13 +165,30 @@ function Detail({ l, onClose, onSave, onStatus, onReport }: { l: Listing; onClos
   const [reason, setReason] = useState<string>("scam");
   const [detail, setDetail] = useState("");
   const [msg, setMsg] = useState("");
-  const message = async () => { setBusy(true); const t = await dmActions.start(l.sellerId); setBusy(false); if (t) { onClose(); nav("/app/messages", { state: { thread: t, draft: askAbout(l) } }); } else setMsg("Could not open a conversation. Try again."); };
+  const [info, setInfo] = useState("");
+  const message = async () => {
+    // A sample listing has nobody behind it. Say what would happen instead of failing.
+    if (l.sample || isDemo) { setMsg(""); setInfo("This is a sample listing, so there is no one to message. On a real campus this opens a chat with the seller, with a first message about this listing ready to send."); return; }
+    setBusy(true); const t = await dmActions.start(l.sellerId); setBusy(false);
+    if (t) { onClose(); nav("/app/messages", { state: { thread: t, draft: askAbout(l) } }); } else setMsg("Could not open a conversation. Check your connection and try again.");
+  };
   const sendReport = async (e: FormEvent) => {
     e.preventDefault(); setBusy(true);
     const p = await onReport(l.id, reason, detail); setBusy(false);
-    if (p) setMsg(p); else { setReporting(false); notice.show({ icon: "alert", title: "Report sent", message: "Thank you. Whoever looks after Orbit will read it.", ms: 4000 }); }
+    if (p) { setMsg(p); return; }
+    setReporting(false);
+    if (isDemo) notice.show({ icon: "alert", title: "Not sent: this is the demo", message: "Reports go nowhere here. On a real campus, whoever looks after Orbit reads every one.", ms: 5000 });
+    else notice.show({ icon: "alert", title: "Report sent", message: "Thank you. Whoever looks after Orbit will read it.", ms: 4000 });
   };
-  const change = async (s: "active" | "sold" | "removed") => { setBusy(true); const p = await onStatus(l.id, s); setBusy(false); if (p) setMsg(p); else if (s === "removed") onClose(); };
+  const change = async (s: "active" | "sold" | "removed") => {
+    setBusy(true); const p = await onStatus(l.id, s); setBusy(false);
+    if (p) { setMsg(p); return; }
+    if (s !== "removed") return;
+    onClose();
+    // Taking a listing down is one tap, so it is one tap to bring it back.
+    const id = l.id, title = l.title;
+    notice.show({ icon: "pin", title: "Taken down", message: `\u201c${title}\u201d is off the marketplace.`, ms: 7000, actions: [{ label: "Undo", onClick: () => { void onStatus(id, "active").then((e) => { if (e) notice.show({ icon: "alert", title: "Could not put it back", message: e }); }); } }] });
+  };
   return (
     <Frame label={l.title} onClose={onClose}>
       {l.photos.length > 0 && <div className="mk-photos" data-n={l.photos.length}>{l.photos.map((p) => <MediaImage key={p} path={p} group={l.photos} />)}</div>}
@@ -179,13 +200,25 @@ function Detail({ l, onClose, onSave, onStatus, onReport }: { l: Listing; onClos
       <dl className="mk-facts">
         <div><dt>Category</dt><dd>{l.category}</dd></div>
         {l.condition && <div><dt>Condition</dt><dd>{l.condition}</dd></div>}
+        {l.pickup && <div><dt>Meet at</dt><dd>{l.pickup}</dd></div>}
         <div><dt>Posted</dt><dd>{ago(l.createdAt)}</dd></div>
       </dl>
       <div className="mk-who">
         <b aria-hidden="true">{(l.sellerName || "?").slice(0, 1).toUpperCase()}</b>
-        <span>{l.kind === "wanted" ? "Asked by" : l.kind === "free" ? "Given by" : "Sold by"}{l.mine ? <strong>You</strong> : <Link to={`/app/people/${l.sellerId}`} onClick={onClose}>{l.sellerName}</Link>}</span>
+        <span>{l.kind === "wanted" ? "Asked by" : l.kind === "free" ? "Given by" : "Sold by"}{l.mine ? <strong>You</strong> : l.sample ? <strong>{l.sellerName}<span className="mk-sample">Sample</span></strong> : <Link to={`/app/people/${l.sellerId}`} onClick={onClose}>{l.sellerName}</Link>}</span>
       </div>
+      {!l.mine && l.status === "active" && !reporting && (
+        <div className="mk-safe">
+          <h3><ShieldAlert size={16} aria-hidden="true" />Before you meet</h3>
+          <ul>
+            <li>Meet somewhere public on campus, in daylight if you can.</li>
+            <li>Look at it before any money changes hands. Orbit never handles payments, so never pay ahead.</li>
+            <li>Orbit does not check that people are students yet. Trust what you see in person.</li>
+          </ul>
+        </div>
+      )}
       {msg && <p className="error" role="alert">{msg}</p>}
+      {info && <p className="mk-info" role="status">{info}</p>}
       {reporting ? (
         <form className="mk-report" onSubmit={sendReport}>
           <label className="field">What is wrong with it?
@@ -202,7 +235,7 @@ function Detail({ l, onClose, onSave, onStatus, onReport }: { l: Listing; onClos
       ) : (
         <div className="mk-actions">
           <button type="button" className="btn primary" disabled={busy || l.status !== "active"} onClick={() => void message()}>{l.kind === "wanted" ? "I have this" : l.kind === "free" ? "Ask for it" : "Message seller"}</button>
-          <button type="button" className="btn" aria-pressed={l.saved} onClick={onSave}><Bookmark size={18} fill={l.saved ? "currentColor" : "none"} aria-hidden="true" />{l.saved ? "Saved" : "Save"}</button>
+          <button type="button" className="btn" aria-pressed={l.saved} onClick={onSave}><Heart size={18} fill={l.saved ? "currentColor" : "none"} aria-hidden="true" />{l.saved ? "Saved" : "Save"}</button>
           <button type="button" className="link-btn" onClick={() => setReporting(true)}>Report</button>
         </div>
       )}
@@ -210,12 +243,17 @@ function Detail({ l, onClose, onSave, onStatus, onReport }: { l: Listing; onClos
   );
 }
 
-function NewListing({ active, onClose, onCreate }: { active: number; onClose: () => void; onCreate: (d: Draft) => Promise<string | null> }) {
-  const [d, setD] = useState<Draft>(EMPTY_DRAFT);
+function NewListing({ me, active, onClose, onCreate }: { me: string | undefined; active: number; onClose: () => void; onCreate: (d: Draft) => Promise<string | null> }) {
+  const [resumed] = useState(() => loadDraft(me));
+  const [d, setD] = useState<Draft>(resumed ?? EMPTY_DRAFT);
+  const [fresh, setFresh] = useState(!resumed);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const att = useAttachment(4);
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }));
+  // Kept as it is typed, so nothing is lost if the tab closes too.
+  useEffect(() => { keepDraft(me, d); }, [me, d]);
+  const startOver = () => { forgetDraft(me); setD(EMPTY_DRAFT); setFresh(true); };
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const draft = { ...d, photos: att.items.map((i) => i.path) };
@@ -226,10 +264,16 @@ function NewListing({ active, onClose, onCreate }: { active: number; onClose: ()
     setBusy(false);
     if (p) { setError(p); return; }
     att.clear();
+    forgetDraft(me);
     notice.show({ icon: "pin", title: "Posted", message: "It is on your campus marketplace now.", ms: 3500 });
     onClose();
   };
-  const close = () => { att.drop(); onClose(); };
+  const close = () => {
+    const photos = att.items.length;
+    att.drop();
+    if (keepDraft(me, d)) notice.show({ icon: "pin", title: "Draft kept", message: `Your listing is saved on this device for when you come back.${photos ? " Photos are not kept." : ""}`, ms: 4000 });
+    onClose();
+  };
   const Icon = CATEGORY_ICON[d.category];
   const money = d.kind === "free" ? null : parsePrice(d.price);
   return (
@@ -238,14 +282,19 @@ function NewListing({ active, onClose, onCreate }: { active: number; onClose: ()
         <div className="mk-fields">
           <header className="mk-formhead">
             <h2>New listing</h2>
-            <p className="muted">Tell people what it is. A clear photo and a fair price get the fastest replies.</p>
+            {fresh ? <p className="muted">Tell people what it is. A clear photo and a fair price get the fastest replies.</p>
+              : <p className="mk-resume">Picking up your draft from earlier. <button type="button" className="link-btn" onClick={startOver}>Start over</button></p>}
           </header>
           <div className="mk-seg" role="radiogroup" aria-label="What are you doing?">
             {(["sell", "free", "wanted"] as Kind[]).map((k) => <button key={k} type="button" role="radio" aria-checked={d.kind === k} onClick={() => set({ kind: k })}>{k === "sell" ? "Selling" : k === "free" ? "Giving away" : "Looking for"}</button>)}
           </div>
           <PhotoField a={att} />
-          <label className="field">Title<input value={d.title} maxLength={80} onChange={(e) => set({ title: e.target.value })} placeholder={d.kind === "wanted" ? "What are you looking for?" : "What is it?"} autoFocus /></label>
-          {d.kind !== "free" && <label className="field">{d.kind === "wanted" ? "Your budget (optional)" : "Price"}<span className="mk-money"><span aria-hidden="true">$</span><input inputMode="decimal" value={d.price} onChange={(e) => set({ price: e.target.value })} placeholder={d.kind === "wanted" ? "Leave empty if open to offers" : "25"} /></span></label>}
+          <label className="field">Title<input value={d.title} maxLength={80} onChange={(e) => set({ title: e.target.value })} placeholder={d.kind === "wanted" ? "What are you looking for?" : "What is it?"} autoFocus />
+            {d.title.length >= 60 && <small className="mk-count-in">{d.title.length} / 80</small>}</label>
+          {d.kind !== "free" && <label className="field">{d.kind === "wanted" ? "Your budget (optional)" : "Price"}<span className="mk-money"><span aria-hidden="true">$</span><input inputMode="decimal" value={d.price} onChange={(e) => set({ price: e.target.value })} placeholder={d.kind === "wanted" ? "Leave empty if open to offers" : "0.00"} /></span></label>}
+          <label className="field"><span>Where to meet <span className="muted">(optional)</span></span>
+            <span className="mk-money"><MapPin size={16} aria-hidden="true" /><input value={d.pickup} maxLength={MAX_PICKUP} onChange={(e) => set({ pickup: e.target.value })} placeholder="A public spot, like the student center" /></span>
+          </label>
           <div className="field" role="radiogroup" aria-label="Category">
             <span className="mk-label">Category</span>
             <div className="mk-chipgrid">
@@ -261,7 +310,7 @@ function NewListing({ active, onClose, onCreate }: { active: number; onClose: ()
             </div>
           )}
           <label className="field"><span>Description <span className="muted">(optional)</span></span>
-            <textarea rows={3} maxLength={1000} value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Size, age, where you can meet" />
+            <textarea rows={3} maxLength={1000} value={d.description} onChange={(e) => set({ description: e.target.value })} placeholder="Size, age, anything worth knowing" />
             <small className="mk-count-in">{d.description.length} / 1000</small>
           </label>
         </div>

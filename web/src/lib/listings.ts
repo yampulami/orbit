@@ -15,10 +15,30 @@ export const MAX_ACTIVE = 12;
 export type Listing = {
   id: string; campusKey: string; sellerId: string; sellerName: string; kind: Kind; title: string; description: string;
   priceCents: number | null; category: Category; condition: Condition | null; photos: string[]; status: Status; createdAt: string; soldAt?: string; mine: boolean; saved: boolean;
+  /** Where to meet, as the seller wrote it ("Student center lobby"). Empty when they did not say. */
+  pickup: string;
+  /** A made-up listing that ships with the demo. There is no real person behind it to message. */
+  sample?: boolean;
 };
-type Row = { id: string; campus_key: string; seller_id: string; seller_name: string; kind: Kind; title: string; description: string; price_cents: number | null; category: Category; condition: Condition | null; photos: string[]; status: Status; created_at: string; sold_at: string | null };
-export type Draft = { kind: Kind; title: string; description: string; price: string; category: Category; condition: Condition | ""; photos: string[] };
-export const EMPTY_DRAFT: Draft = { kind: "sell", title: "", description: "", price: "", category: "Other", condition: "", photos: [] };
+type Row = { id: string; campus_key: string; seller_id: string; seller_name: string; kind: Kind; title: string; description: string; price_cents: number | null; category: Category; condition: Condition | null; photos: string[]; status: Status; created_at: string; sold_at: string | null; pickup?: string };
+export type Draft = { kind: Kind; title: string; description: string; price: string; category: Category; condition: Condition | ""; pickup: string; photos: string[] };
+export const EMPTY_DRAFT: Draft = { kind: "sell", title: "", description: "", price: "", category: "Other", condition: "", pickup: "", photos: [] };
+export const MAX_PICKUP = 60;
+
+/** An unposted listing is kept on this device, per person, so closing the popup by accident loses nothing. Photos are not kept:
+ *  they are uploaded as they are picked, and closing the popup deletes them again. */
+const draftKey = (me: string) => `orbit-listing-draft-v1:${me}`;
+const hasWords = (d: Draft) => !!(d.title.trim() || d.description.trim() || d.price.trim() || d.pickup.trim());
+export function loadDraft(me: string | undefined): Draft | null {
+  if (!me) return null;
+  try { const s = localStorage.getItem(draftKey(me)); if (!s) return null; const d = { ...EMPTY_DRAFT, ...(JSON.parse(s) as Partial<Draft>), photos: [] }; return hasWords(d) ? d : null; } catch { return null; }
+}
+/** Keeps the draft, or forgets it once there is nothing in it. Says whether anything was kept. */
+export function keepDraft(me: string | undefined, d: Draft): boolean {
+  if (!me) return false;
+  try { if (!hasWords(d)) { localStorage.removeItem(draftKey(me)); return false; } localStorage.setItem(draftKey(me), JSON.stringify({ ...d, photos: [] })); return true; } catch { return false; }
+}
+export const forgetDraft = (me: string | undefined) => { if (me) try { localStorage.removeItem(draftKey(me)); } catch { /* ignore */ } };
 
 /** Dollars typed by a person ("25", "$25.50") to whole cents, or null when blank or not a price. */
 export function parsePrice(text: string): number | null {
@@ -46,6 +66,7 @@ export function problemWithListing(d: Draft): string | null {
   if (t.length < 2) return "Give it a title.";
   if (t.length > 80) return "Keep the title under 80 characters.";
   if (d.description.length > 1000) return "Keep the description under 1000 characters.";
+  if (d.pickup.trim().length > MAX_PICKUP) return `Keep the meeting place under ${MAX_PICKUP} characters.`;
   if (d.kind === "sell") {
     const p = parsePrice(d.price);
     if (p === null) return "Enter a price, like 25 or 12.50. Choose Free if it costs nothing.";
@@ -86,7 +107,7 @@ export const activeCount = (list: Listing[]) => list.filter((l) => l.mine && l.s
 
 const toListing = (r: Row, me: string, saved: Set<string>): Listing => ({
   id: r.id, campusKey: r.campus_key, sellerId: r.seller_id, sellerName: r.seller_name, kind: r.kind, title: r.title, description: r.description, priceCents: r.price_cents,
-  category: r.category, condition: r.condition, photos: r.photos ?? [], status: r.status, createdAt: r.created_at, soldAt: r.sold_at ?? undefined, mine: r.seller_id === me, saved: saved.has(r.id),
+  category: r.category, condition: r.condition, photos: r.photos ?? [], status: r.status, createdAt: r.created_at, soldAt: r.sold_at ?? undefined, mine: r.seller_id === me, saved: saved.has(r.id), pickup: r.pickup ?? "",
 });
 
 /* ---------- Demo mode ---------- */
@@ -94,8 +115,8 @@ const DKEY = "orbit-demo-listings-v1";
 const SKEY = "orbit-demo-listing-saves-v1";
 const ago = (h: number) => new Date(Date.now() - h * 3600000).toISOString();
 const seed = (campusKey: string): Row[] => [
-  { id: "l1", campus_key: campusKey, seller_id: "u-priya", seller_name: "Priya", kind: "sell", title: "Calculus II textbook, 8th edition", description: "A few highlighted pages, no torn corners. Pickup near the student center.", price_cents: 2500, category: "Textbooks", condition: "Good", photos: [], status: "active", created_at: ago(5), sold_at: null },
-  { id: "l2", campus_key: campusKey, seller_id: "u-alex", seller_name: "Alex", kind: "sell", title: "Mini fridge", description: "Works great, three years old. Fits under a loft bed.", price_cents: 6000, category: "Dorm and kitchen", condition: "Good", photos: [], status: "active", created_at: ago(9), sold_at: null },
+  { id: "l1", campus_key: campusKey, seller_id: "u-priya", seller_name: "Priya", kind: "sell", title: "Calculus II textbook, 8th edition", description: "A few highlighted pages, no torn corners.", price_cents: 2500, category: "Textbooks", condition: "Good", photos: [], status: "active", created_at: ago(5), sold_at: null, pickup: "Student center, main entrance" },
+  { id: "l2", campus_key: campusKey, seller_id: "u-alex", seller_name: "Alex", kind: "sell", title: "Mini fridge", description: "Works great, three years old. Fits under a loft bed.", price_cents: 6000, category: "Dorm and kitchen", condition: "Good", photos: [], status: "active", created_at: ago(9), sold_at: null, pickup: "Library steps" },
   { id: "l3", campus_key: campusKey, seller_id: "u-skyler", seller_name: "Skyler", kind: "free", title: "Desk lamp and a small bookshelf", description: "Moving out. Come get them this week.", price_cents: null, category: "Furniture", condition: "Fair", photos: [], status: "active", created_at: ago(30), sold_at: null },
   { id: "l4", campus_key: campusKey, seller_id: "u-kai", seller_name: "Kai", kind: "sell", title: "21 speed bike with lock", description: "New tires. Great for getting across campus.", price_cents: 8500, category: "Bikes and rides", condition: "Like new", photos: [], status: "active", created_at: ago(52), sold_at: null },
   { id: "l5", campus_key: campusKey, seller_id: "u-noor", seller_name: "Noor", kind: "wanted", title: "Looking for a used scientific calculator", description: "TI-84 or similar, for the semester.", price_cents: 4000, category: "Electronics", condition: null, photos: [], status: "active", created_at: ago(70), sold_at: null },
@@ -108,7 +129,10 @@ const demoWrite = (rows: Row[]) => { try { localStorage.setItem(DKEY, JSON.strin
 const demoSaved = (): Set<string> => { try { return new Set(JSON.parse(localStorage.getItem(SKEY) ?? "[]") as string[]); } catch { return new Set(); } };
 const demoSaveWrite = (s: Set<string>) => { try { localStorage.setItem(SKEY, JSON.stringify([...s])); } catch { /* ignore */ } };
 
-const COLS = "id,campus_key,seller_id,seller_name,kind,title,description,price_cents,category,condition,photos,status,created_at,sold_at";
+// Every column, so the meeting place shows once its migration (20261113120000_listing_pickup.sql) is applied, and nothing breaks before it is.
+const COLS = "*";
+/** Demo listings that ship with the app, not ones this person made. */
+const isSample = (r: Row, me: string) => r.seller_id !== me && r.seller_id.startsWith("u-");
 
 /** Everything the marketplace page needs, and the actions that change it. Changes show at once and the real list is fetched again after. */
 export function useListings(me: string | undefined, campusKey: string | undefined, sellerName: string) {
@@ -118,7 +142,7 @@ export function useListings(me: string | undefined, campusKey: string | undefine
 
   const load = useCallback(async () => {
     if (!me || !campusKey) return;
-    if (!supabase) { const s = demoSaved(); setList(demoRows(campusKey).map((r) => toListing(r, me, s))); setReady(true); return; }
+    if (!supabase) { const s = demoSaved(); setList(demoRows(campusKey).map((r) => ({ ...toListing(r, me, s), sample: isSample(r, me) }))); setReady(true); return; }
     const [rows, saves] = await Promise.all([
       supabase.from("campus_listings").select(COLS).order("created_at", { ascending: false }).limit(200),
       supabase.from("campus_listing_saves").select("listing_id").eq("user_id", me),
@@ -157,8 +181,15 @@ export function useListings(me: string | undefined, campusKey: string | undefine
         id: crypto.randomUUID(), campus_key: campusKey, seller_id: me, seller_name: sellerName || "Student", kind: d.kind, title: d.title.trim(), description: d.description.trim(),
         price_cents: d.kind === "free" ? null : parsePrice(d.price), category: d.category, condition: d.kind === "wanted" || !d.condition ? null : d.condition, photos: d.photos.slice(0, 4), status: "active", created_at: new Date().toISOString(), sold_at: null,
       };
+      const pickup = d.pickup.trim().slice(0, MAX_PICKUP);
+      if (pickup) row.pickup = pickup;
       if (!supabase) { demoWrite([row, ...demoRows(campusKey)]); await load(); return null; }
-      const { error: e } = await supabase.from("campus_listings").insert(row);
+      let { error: e } = await supabase.from("campus_listings").insert(row);
+      // Before the meeting-place column exists, keep the place by adding it to the description instead of dropping it.
+      if (e && pickup && /pickup/i.test(e.message)) {
+        const { pickup: _, ...rest } = row;
+        ({ error: e } = await supabase.from("campus_listings").insert({ ...rest, description: `${rest.description}${rest.description ? "\n\n" : ""}Meet at: ${pickup}`.slice(0, 1000) }));
+      }
       if (e) return /12 active/.test(e.message) ? e.message : "Could not post that. Try again.";
       await load(); return null;
     },
