@@ -9,7 +9,7 @@ import { applyChange, buildSpace, loadHousehold, watchHousehold } from "./roomma
 
 /** One shared household: chores, groceries, expenses and notes. */
 export type Points = 1 | 2 | 3 | 5;
-export type Task = { id: string; title: string; assignee: string; points: Points; done: boolean; createdAt: string; doneAt?: string; /** Optional due date, "YYYY-MM-DD". */ due?: string };
+export type Task = { id: string; title: string; assignee: string; points: Points; done: boolean; createdAt: string; doneAt?: string; /** Optional due date, "YYYY-MM-DD". */ due?: string; /** Who made the chore (a name, "You" for the signed-in student). Only they can rename, reassign or delete it. Missing on old demo chores: those count as yours. */ createdBy?: string };
 export type Grocery = { id: string; name: string; category: string; bought: boolean };
 export type Expense = { id: string; item: string; cents: number; paidBy: string; split: string[]; at: string };
 export type Note = { id: string; title: string; body: string };
@@ -246,7 +246,7 @@ export const roomActions = {
   addTask(title: string, assignee: string | "auto", points: Points, due?: string) {
     const s = state.space; if (!s) return;
     const who = assignee === "auto" ? autoAssignee(s.members, s.tasks) : assignee;
-    const task: Task = { id: uid(), title, assignee: who, points, done: false, createdAt: now(), due: due || undefined };
+    const task: Task = { id: uid(), title, assignee: who, points, done: false, createdAt: now(), due: due || undefined, createdBy: YOU };
     patch((sp) => ({ ...sp, tasks: [task, ...sp.tasks] }));
     sync("Adding that chore", () => table("household_tasks").insert({ id: task.id, group_id: gid(), title, assignee: userOf(who), points, due_on: task.due ?? null }), { table: "household_tasks", id: task.id, op: "upsert" });
     say(`New chore: ${title}, assigned to ${who === YOU ? "me" : who} (${points} pt${points === 1 ? "" : "s"})${due ? `, due ${due}` : ""}`);

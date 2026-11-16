@@ -4,7 +4,7 @@ import Picker from "../../components/Picker";
 import { YOU } from "../../lib/hangouts";
 import { POINTS, removeWithUndo, roomActions, type Points, type Space } from "../../lib/roommates";
 import { fromYmd, ymd } from "../../lib/reminders";
-import { memberOptions } from "./Avatar";
+import { Avatar, memberOptions } from "./Avatar";
 import { ArrangeItem, ArrangeList } from "../../components/Arrange";
 import { applyOrder, mergeOrder, useSavedOrder } from "../../lib/order";
 
@@ -29,16 +29,19 @@ export default function Tasks({ space }: { space: Space }) {
   const [due, setDue] = useState("");
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [kept, setKept] = useState<string[]>([]); // chores just ticked off: they stay in view, crossed out, until you change the view
   const [editing, setEditing] = useState("");
   const [draft, setDraft] = useState("");
 
+  /** Only whoever made a chore can rename, reassign or delete it (anyone in the home can tick it off). Chores from before this was kept count as yours. */
+  const isMine = (t: { createdBy?: string }) => !t.createdBy || t.createdBy === YOU;
   const people = memberOptions(space.members);
   const today = ymd(new Date());
   const assignOptions = [{ value: "auto", label: "Auto-assign", icon: <span className="mini auto" aria-hidden="true"><Wand2 size={13} /></span> }, ...people];
 
   const shown = space.tasks.filter((t) => {
-    if (filter === "open" && t.done) return false;
-    if (filter === "mine" && (t.done || t.assignee !== YOU)) return false;
+    if (filter === "open" && t.done && !kept.includes(t.id)) return false;
+    if (filter === "mine" && (t.assignee !== YOU || (t.done && !kept.includes(t.id)))) return false;
     if (filter === "done" && !t.done) return false;
     return !q.trim() || t.title.toLowerCase().includes(q.trim().toLowerCase());
   });
@@ -78,7 +81,7 @@ export default function Tasks({ space }: { space: Space }) {
 
       <div className="rm-bar">
         <div className="segment" role="radiogroup" aria-label="Show chores">
-          {FILTERS.map((f) => <button key={f.value} type="button" role="radio" aria-checked={filter === f.value} onClick={() => setFilter(f.value)}>{f.label}</button>)}
+          {FILTERS.map((f) => <button key={f.value} type="button" role="radio" aria-checked={filter === f.value} onClick={() => { setFilter(f.value); setKept([]); }}>{f.label}</button>)}
         </div>
         <label className="rm-search"><Search size={16} aria-hidden="true" /><span className="sr">Search chores</span><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search" /></label>
       </div>
@@ -89,19 +92,23 @@ export default function Tasks({ space }: { space: Space }) {
         <ArrangeList ids={ordered.map((t) => t.id)} onChange={(ids) => setOrder(mergeOrder(order, ids))} className="rm-list">
           {ordered.map((t) => (
             <ArrangeItem key={t.id} id={t.id} handle label={t.title} className={"rm-row" + (t.done ? " done" : "")}>
-              <button type="button" className="check" role="checkbox" aria-checked={t.done} aria-label={`${t.done ? "Reopen" : "Complete"} ${t.title}`} onClick={() => roomActions.setTaskDone(t.id, !t.done)}><Check size={16} strokeWidth={2.4} aria-hidden="true" /></button>
+              <button type="button" className="check" role="checkbox" aria-checked={t.done} aria-label={`${t.done ? "Reopen" : "Complete"} ${t.title}`} onClick={() => { roomActions.setTaskDone(t.id, !t.done); setKept((k) => (t.done ? k.filter((x) => x !== t.id) : [...k, t.id])); }}><Check size={16} strokeWidth={2.4} aria-hidden="true" /></button>
               <div className="rm-main">
-                {editing === t.id ? (
+                {editing === t.id && isMine(t) ? (
                   <input className="rm-edit-input" autoFocus aria-label={`Rename ${t.title}`} value={draft} maxLength={80} onChange={(e) => setDraft(e.target.value)}
                     onBlur={() => { roomActions.rename(t.id, draft); setEditing(""); }}
                     onKeyDown={(e) => { if (e.key === "Enter") { roomActions.rename(t.id, draft); setEditing(""); } else if (e.key === "Escape") setEditing(""); e.stopPropagation(); }} />
                 ) : (
-                  <strong><button type="button" className="rm-edit" title="Click to rename" onClick={() => { setDraft(t.title); setEditing(t.id); }}>{t.title}</button></strong>
+                  <strong>{isMine(t)
+                    ? <button type="button" className="rm-edit" title="Click to rename" onClick={() => { setDraft(t.title); setEditing(t.id); }}>{t.title}</button>
+                    : t.title}</strong>
                 )}
                 <span className="rm-sub">{t.points} point{t.points === 1 ? "" : "s"}{t.done ? ` · done ${ago(t.doneAt)}` : ""}{!t.done && t.due ? <> · <span className={t.due < today ? "late" : ""}>{t.due < today ? "was due " : "due "}{fromYmd(t.due).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</span></> : null}</span>
               </div>
-              <Picker compact value={t.assignee} options={people} onChange={(v) => roomActions.reassign(t.id, v)} label={`Assigned to, ${t.title}`} />
-              <button type="button" className="ghost-btn" aria-label={`Delete ${t.title}`} onClick={() => removeWithUndo("tasks", t.id, `“${t.title}”`)}><Trash2 size={16} aria-hidden="true" /></button>
+              {isMine(t)
+                ? <Picker compact value={t.assignee} options={people} onChange={(v) => roomActions.reassign(t.id, v)} label={`Assigned to, ${t.title}`} />
+                : <span className="rm-assignee" title={t.createdBy && t.createdBy !== "Someone" ? `Added by ${t.createdBy}` : undefined}><Avatar name={t.assignee} members={space.members} size={24} />{t.assignee}</span>}
+              {isMine(t) && <button type="button" className="ghost-btn" aria-label={`Delete ${t.title}`} onClick={() => removeWithUndo("tasks", t.id, `“${t.title}”`)}><Trash2 size={16} aria-hidden="true" /></button>}
             </ArrangeItem>
           ))}
         </ArrangeList>

@@ -4,7 +4,7 @@ import { loadNames, makeLabeler, watchTables, type ChangeEvent } from "./people"
 
 /** A household in the database. The rows become the same `Space` the roommate screens already use (people shown by display name, "You" for the
  *  signed-in student); `ids` remembers which name is which person so changes can be saved against the right user. */
-export type RawTask = { id: string; title: string; assignee: string | null; points: number; done: boolean; done_at: string | null; due_on: string | null; created_at: string };
+export type RawTask = { id: string; title: string; assignee: string | null; points: number; done: boolean; done_at: string | null; due_on: string | null; created_at: string; created_by?: string | null };
 export type RawGrocery = { id: string; name: string; category: string; bought: boolean };
 export type RawExpense = { id: string; item: string; cents: number; paid_by: string | null; split: string[]; created_at: string };
 export type RawNote = { id: string; title: string; body: string };
@@ -22,6 +22,7 @@ const POINTS = new Set([1, 2, 3, 5]);
 const taskOf = (t: RawTask, nameOf: (id: string | null) => string): Task => ({
   id: t.id, title: t.title, assignee: nameOf(t.assignee), points: (POINTS.has(t.points) ? t.points : 2) as Points, done: t.done,
   createdAt: t.created_at, doneAt: t.done_at ?? undefined, due: t.due_on ?? undefined,
+  createdBy: t.created_by ? nameOf(t.created_by) : undefined,
 });
 const groceryOf = (g: RawGrocery): Grocery => ({ id: g.id, name: g.name, category: g.category, bought: g.bought });
 const expenseOf = (e: RawExpense, nameOf: (id: string | null) => string, label: (id: string) => string): Expense => ({ id: e.id, item: e.item, cents: e.cents, paidBy: nameOf(e.paid_by), split: e.split.map(label), at: e.created_at });
@@ -95,7 +96,7 @@ export async function loadHousehold(me: string): Promise<RawHousehold | null> {
   const [group, mem, tasks, groceries, expenses, notes, pay] = await Promise.all([
     sb.from("campus_groups").select("id,name").eq("id", gid).limit(1),
     sb.from("campus_group_memberships").select("user_id").eq("group_id", gid),
-    sb.from("household_tasks").select("id,title,assignee,points,done,done_at,due_on,created_at").eq("group_id", gid).order("created_at", { ascending: false }).limit(500),
+    sb.from("household_tasks").select("id,title,assignee,points,done,done_at,due_on,created_at,created_by").eq("group_id", gid).order("created_at", { ascending: false }).limit(500),
     sb.from("household_groceries").select("id,name,category,bought").eq("group_id", gid).order("created_at", { ascending: true }).limit(500),
     sb.from("household_expenses").select("id,item,cents,paid_by,split,created_at").eq("group_id", gid).order("created_at", { ascending: false }).limit(500),
     sb.from("household_notes").select("id,title,body").eq("group_id", gid).order("created_at", { ascending: false }).limit(200),
@@ -109,7 +110,7 @@ export async function loadHousehold(me: string): Promise<RawHousehold | null> {
   const t = (tasks.data ?? []) as RawTask[], e = (expenses.data ?? []) as RawExpense[];
   // Payments came later than the rest. If the table is not there yet, the household still loads, just without them.
   const p = pay.error ? [] : ((pay.data ?? []) as RawPayment[]);
-  const names = await loadNames([...members, ...t.map((x) => x.assignee), ...e.map((x) => x.paid_by), ...e.flatMap((x) => x.split), ...p.flatMap((x) => [x.from_user, x.to_user])].filter((x): x is string => !!x));
+  const names = await loadNames([...members, ...t.map((x) => x.assignee), ...t.map((x) => x.created_by ?? null), ...e.map((x) => x.paid_by), ...e.flatMap((x) => x.split), ...p.flatMap((x) => [x.from_user, x.to_user])].filter((x): x is string => !!x));
   return { me, groupId: g.id, name: g.name, members, tasks: t, groceries: (groceries.data ?? []) as RawGrocery[], expenses: e, notes: (notes.data ?? []) as RawNote[], payments: p, names };
 }
 

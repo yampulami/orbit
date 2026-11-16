@@ -6138,3 +6138,5 @@ p,li{text-wrap:pretty}
 .cinfo .about-facts dt{width:96px}
 .cinfo .about-facts dd{font-weight:500;color:var(--ink)}
 .cinfo .about-facts div:last-child{border-bottom:1px solid var(--line)}
+
+.rm-assignee{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;color:var(--ink-soft);font-size:var(--t-meta);white-space:nowrap}
