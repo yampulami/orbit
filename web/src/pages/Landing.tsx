@@ -79,7 +79,7 @@ export default function Landing() {
             One place for your campus: the feed, chats, plans, a map and a marketplace. Orbit finds a time that works for everyone in the group.
           </motion.p>
           <motion.div className="row" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-            <Link className="btn primary" data-cta to={session ? "/app" : "/signup"}>{session ? "Open app" : "Create your account"}</Link>
+            <Link className="btn primary" data-cta to={session ? "/app" : "/onboarding"}>{session ? "Open app" : "Get started"}</Link>
             {!session && <button type="button" className="land-demo" disabled={busy} onClick={() => void tryDemo()}>{busy ? "Opening…" : "Try the demo"}</button>}
           </motion.div>
           {problem && <p className="muted" role="alert">{problem}</p>}

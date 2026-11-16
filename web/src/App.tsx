@@ -133,8 +133,13 @@ function InApp({ children }: { children: ReactNode }) {
 
 /** Onboarding is only for people who have not finished it. */
 function OnboardingGate() {
-  const { session } = useAuth();
-  const { state: done } = useOnboarded(session?.user.id);
+  const { session, loading } = useAuth();
+  if (loading) return <div className="ol-page"><OrbLoader label="Connecting" state="connecting" look="stack" /></div>;
+  // No account yet: setup comes first, and making the account is its second to last page. With one, finished people go straight to the app.
+  return session ? <OnboardedCheck userId={session.user.id} /> : <Onboarding />;
+}
+function OnboardedCheck({ userId }: { userId: string }) {
+  const { state: done } = useOnboarded(userId);
   if (done === "checking") return <div className="ol-page"><OrbLoader label="Setting things up" state="weaving" look="stack" /></div>;
   return done === "yes" ? <Navigate to="/app" replace /> : <Onboarding />;
 }
@@ -158,13 +163,13 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<AuthPage mode="login" />} />
-        <Route path="/signup" element={<AuthPage mode="signup" />} />
+        <Route path="/signup" element={<Navigate to="/onboarding" replace />} />
         <Route path="/forgot" element={<ForgotPassword />} />
         <Route path="/auth/confirm" element={<ConfirmEmail />} />
         <Route path="/terms" element={<Legal kind="terms" />} />
         <Route path="/privacy" element={<Legal kind="privacy" />} />
         <Route path="/join/:code" element={<JoinLink />} />
-        <Route path="/onboarding" element={<Protected><OnboardingGate /></Protected>} />
+        <Route path="/onboarding" element={<OnboardingGate />} />
         <Route path="/app" element={<Protected><InApp><Shell /></InApp></Protected>}>
           <Route index element={<Navigate to="feed" replace />} />
           <Route path="feed" element={<Feed />} />

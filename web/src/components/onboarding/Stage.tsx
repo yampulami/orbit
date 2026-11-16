@@ -4,7 +4,7 @@ import { useTheme } from "../../lib/theme";
 import { BarWalker, type BarGeom, type Places } from "./bar";
 import "./onboarding.css";
 
-export type PageId = "campus" | "you" | "life" | "interests" | "alerts" | "look" | "done";
+export type PageId = "campus" | "you" | "life" | "interests" | "alerts" | "look" | "account" | "done";
 export type Avail = "idle" | "bad" | "checking" | "free" | "taken" | "unknown";
 
 /** The setup page and Omega. He is made when setup opens and lives there until it closes. The form below does not know about him except that it can tell him
