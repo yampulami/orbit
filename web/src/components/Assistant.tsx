@@ -9,7 +9,7 @@ import { hangActions, isVisible, useHang } from "../lib/hangouts";
 import { useFriends } from "../lib/friends";
 import { searchPeople } from "../lib/peopleSearch";
 import { dmActions } from "../lib/dms";
-import { converse, performAction, type AiEnv, type AiTurn, type ModelMsg, type Pending } from "../lib/assistantAi";
+import { converse, pendingExpired, performAction, type AiEnv, type AiTurn, type ModelMsg, type Pending } from "../lib/assistantAi";
 import { AiProblem, askModel } from "../lib/assistantModel";
 import { useClasses } from "../lib/classes";
 import { reminderActions, useReminders } from "../lib/reminders";
@@ -73,6 +73,7 @@ export default function Assistant() {
   const [thinking, setThinking] = useState(false);
   const timers = useRef<number[]>([]);
   const lastReply = useRef<(Reply & { pending?: Pending }) | null>(null);
+  const deciding = useRef(new Set<string>());
   const { groups, hangouts } = useHang();
   const { friends } = useFriends();
   const [step, setStep] = useState("");
@@ -235,10 +236,18 @@ export default function Assistant() {
     const chat = history.chats.find((c) => c.id === activeId);
     const msg = chat?.messages.find((m) => m.id === msgId);
     if (!chat || !msg?.pending || msg.pending.state !== "pending") return;
-    if (!yes) { history.patch(chat.id, msgId, { pending: { ...msg.pending, state: "cancelled" } }); return; }
-    const out = await performAction(aiEnv(), msg.pending);
-    history.patch(chat.id, msgId, { pending: { ...msg.pending, state: out.ok ? "done" : "failed", note: out.note } });
-    if (out.go) history.patch(chat.id, msgId, { go: out.go, goLabel: out.goLabel });
+    // A double click must not do it twice: the first answer claims the card at once (a ref, since the screen has not updated yet), the second finds it taken.
+    if (deciding.current.has(msg.pending.id)) return;
+    deciding.current.add(msg.pending.id);
+    try {
+      if (!yes) { history.patch(chat.id, msgId, { pending: { ...msg.pending, state: "cancelled" } }); return; }
+      // What the card would do may have changed since it was prepared (someone left the group, the time passed): after a while, ask again instead.
+      if (pendingExpired(msg.pending)) { history.patch(chat.id, msgId, { pending: { ...msg.pending, state: "expired", note: "This was prepared a while ago. Ask me again and I will check it is still right." } }); return; }
+      history.patch(chat.id, msgId, { pending: { ...msg.pending, state: "working" } });
+      const out = await performAction(aiEnv(), msg.pending);
+      history.patch(chat.id, msgId, { pending: { ...msg.pending, state: out.ok ? "done" : "failed", note: out.note } });
+      if (out.go) history.patch(chat.id, msgId, { go: out.go, goLabel: out.goLabel });
+    } finally { deciding.current.delete(msg.pending.id); }
   };
   /** Everything the AI may look at, and the changes it may ask to make (each one is confirmed first). */
   function aiEnv(): AiEnv {

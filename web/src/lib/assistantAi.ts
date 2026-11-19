@@ -40,7 +40,12 @@ export type AiEnv = {
 };
 
 /** A change the assistant wants to make, shown to the student to confirm. */
-export type Pending = { id: string; tool: string; summary: string; args: Record<string, unknown>; state: "pending" | "done" | "cancelled" | "failed"; note?: string };
+export type Pending = { id: string; tool: string; summary: string; args: Record<string, unknown>; state: "pending" | "working" | "done" | "cancelled" | "failed" | "expired"; note?: string; /** After this the card can no longer be confirmed: what it would do may have changed since it was prepared. */ expiresAt?: string };
+
+/** How long a confirm card stays good. */
+export const PENDING_MINUTES = 15;
+/** Pure: is this card past its time? Cards from before expiry was kept never expire. */
+export const pendingExpired = (p: { expiresAt?: string }, now = Date.now()) => !!p.expiresAt && Date.parse(p.expiresAt) < now;
 export type AiTurn = { text: string; go?: string; goLabel?: string; pending?: Pending };
 
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
@@ -325,7 +330,7 @@ export async function converse(opts: { history: ModelMsg[]; env: AiEnv; model: (
       if (isWrite(name)) {
         const prepared = prepareAction(env, name, args);
         if ("error" in prepared) { msgs.push({ role: "tool", tool_call_id: c.id, content: prepared.error }); continue; }
-        return { text: (reply.content ?? "").trim() || "Here is what I will do. Confirm it and I will go ahead.", go, goLabel, pending: { id: crypto.randomUUID(), tool: name, summary: prepared.summary, args: prepared.args, state: "pending" } };
+        return { text: (reply.content ?? "").trim() || "Here is what I will do. Confirm it and I will go ahead.", go, goLabel, pending: { id: crypto.randomUUID(), tool: name, summary: prepared.summary, args: prepared.args, state: "pending", expiresAt: new Date(Date.now() + PENDING_MINUTES * 60000).toISOString() } };
       }
       onStep?.(LABELS[name] ?? "Working on it");
       const out = await read(env, name, args).catch(() => ({ result: "That lookup failed." } as Out));

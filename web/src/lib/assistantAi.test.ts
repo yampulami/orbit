@@ -197,3 +197,14 @@ describe("what lines up", () => {
     expect(seen).toMatch(/switched off/);
   });
 });
+
+describe("confirm cards", () => {
+  it("expire after their time, and cards from before expiry was kept never do", async () => {
+    const { pendingExpired, PENDING_MINUTES } = await import("./assistantAi");
+    const now = Date.parse("2026-11-19T12:00:00Z");
+    expect(pendingExpired({ expiresAt: new Date(now + 60_000).toISOString() }, now)).toBe(false);
+    expect(pendingExpired({ expiresAt: new Date(now - 60_000).toISOString() }, now)).toBe(true);
+    expect(pendingExpired({}, now)).toBe(false);
+    expect(PENDING_MINUTES).toBeGreaterThan(0);
+  });
+});

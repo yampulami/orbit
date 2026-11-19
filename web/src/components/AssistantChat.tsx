@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import AiModelPicker from "./AiModelPicker";
 import { ArrowRight, ArrowUp, Menu, Plus, Trash2, X } from "lucide-react";
 import { groupChats, NEW_TITLE, type Chat, type Msg } from "../lib/assistantChats";
 import Orb from "./Orb";
@@ -126,6 +127,7 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, step
         <header className="ac-head">
           <button type="button" className="ac-icon ac-menu" aria-label="Show chat history" onClick={() => setDrawer(true)}><Menu size={18} aria-hidden="true" /></button>
           <span className="ac-head-t">{active && active.title !== NEW_TITLE ? active.title : "Orbit assistant"}</span>
+          <AiModelPicker />
           <button type="button" className="ac-icon" aria-label="New chat" title="New chat" onClick={onNew}><Plus size={18} aria-hidden="true" /></button>
           <button type="button" className="ac-icon" aria-label="Close the assistant" title="Close" onClick={onClose}><X size={18} aria-hidden="true" /></button>
         </header>
@@ -153,7 +155,7 @@ export default function AssistantChat({ chats, activeId, freshId, thinking, step
                         {m.pending.state === "pending" ? (
                           <div className="ac-confirm-row"><button type="button" className="btn sm primary" onClick={() => onDecide(m.id, true)}>Confirm</button><button type="button" className="btn sm" onClick={() => onDecide(m.id, false)}>Cancel</button></div>
                         ) : (
-                          <span className="ac-confirm-state">{m.pending.state === "done" ? "✓ " : m.pending.state === "cancelled" ? "Cancelled" : "Could not do that. "}{m.pending.note ?? ""}</span>
+                          <span className="ac-confirm-state">{m.pending.state === "done" ? "✓ " : m.pending.state === "cancelled" ? "Cancelled" : m.pending.state === "working" ? "Working on it… " : m.pending.state === "expired" ? "Expired. " : "Could not do that. "}{m.pending.note ?? ""}</span>
                         )}
                       </div>
                     )}

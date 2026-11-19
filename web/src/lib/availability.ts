@@ -113,8 +113,13 @@ async function fetchFriendFree(friends: { id: string; name: string }[]): Promise
   const sharers = new Set((s.data as string[] | null) ?? []);
   let rows: { user_id: string; weekday: number; start_min: number; end_min: number }[] = [];
   if (sharers.size) {
-    const b = await supabase.from("busy_blocks").select("user_id,weekday,start_min,end_min").in("user_id", [...sharers]).limit(2000);
-    rows = (b.data ?? []) as typeof rows;
+    // Friends read through friend_busy_blocks (it re-checks each person and limits how often you may ask). Before that function exists, read the table as before.
+    const via = await supabase.rpc("friend_busy_blocks", { ids: [...sharers] });
+    if (!via.error) rows = (via.data ?? []) as typeof rows;
+    else if (/function|does not exist|schema cache/i.test(via.error.message)) {
+      const b = await supabase.from("busy_blocks").select("user_id,weekday,start_min,end_min").in("user_id", [...sharers]).limit(2000);
+      rows = (b.data ?? []) as typeof rows;
+    } else return { sharing: [], notSharing: friends.map((f) => f.name) }; // too many lookups, or a hiccup: show nobody rather than something wrong
   }
   return {
     sharing: friends.filter((f) => sharers.has(f.id)).map((f) => ({ id: f.id, name: f.name, blocks: rows.filter((r) => r.user_id === f.id).map((r) => ({ d: r.weekday, s: r.start_min, e: r.end_min })) })),

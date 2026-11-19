@@ -6140,3 +6140,10 @@ p,li{text-wrap:pretty}
 .cinfo .about-facts div:last-child{border-bottom:1px solid var(--line)}
 
 .rm-assignee{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;color:var(--ink-soft);font-size:var(--t-meta);white-space:nowrap}
+
+/* assistant: model picker in the chat header */
+.ac-model{display:flex;align-items:center;gap:8px;min-width:0}
+.ac-model select{max-width:210px;min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:var(--t-meta);text-overflow:ellipsis}
+.ac-model select:hover{border-color:var(--ink-soft)}
+.ac-model-note{font-size:var(--t-micro);color:var(--ink-soft);max-width:200px}
+@media (max-width:640px){.ac-model-note{display:none}.ac-model select{max-width:130px}}
