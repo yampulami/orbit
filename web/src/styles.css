@@ -6147,3 +6147,15 @@ p,li{text-wrap:pretty}
 .ac-model select:hover{border-color:var(--ink-soft)}
 .ac-model-note{font-size:var(--t-micro);color:var(--ink-soft);max-width:200px}
 @media (max-width:640px){.ac-model-note{display:none}.ac-model select{max-width:130px}}
+
+/* step-by-step flows (club application, event form): the bar has Omega's head popping up from the segment you are on; the fields are plain boxes */
+.cv-progress.cv-peeking{position:relative;margin-top:30px;align-self:end}
+.cv-peek{position:absolute;bottom:100%;overflow:hidden;pointer-events:none;transition:none}
+.cv .cv-progress i{display:block;height:6px;min-height:0;padding:0;border-radius:3px}
+.cv-top{align-items:flex-end}
+.cv-progress i.now{background:var(--accent)}
+.cv .cv-input,.cv textarea.cv-text{font-size:var(--t-row);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-bottom-width:1px;border-radius:8px;padding:14px 16px;outline:0;box-shadow:none}
+.cv .cv-input:focus,.cv .cv-input:focus-visible,.cv textarea.cv-text:focus,.cv textarea.cv-text:focus-visible{outline:0;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.cv-step{min-height:0;gap:8px}
+.cv-body{margin-top:14px}
+.cv-foot{margin-top:18px}

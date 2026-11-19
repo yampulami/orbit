@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
+import PeekProgress from "./PeekProgress";
 
 /** One question at a time, asked by the orb: the way Orbit collects something that would otherwise be a form. Each step has a question, one thing to answer,
  *  a gentle check, and a way back. A review step lists the answers (tap one to change it) before anything is sent. */
@@ -69,9 +70,7 @@ export default function Converse<S>({ title, steps, initial, summary, note, subm
     <section className="cv" aria-label={title}>
       <header className="cv-top">
         <span className="cv-n" aria-hidden="true">{reviewing ? "Review" : `${i + 1} of ${total}`}</span>
-        <div className="cv-progress" role="progressbar" aria-label={`${title}, step ${i + 1} of ${total}`} aria-valuemin={1} aria-valuemax={total} aria-valuenow={i + 1}>
-          {Array.from({ length: total }, (_, n) => <i key={n} className={n < i ? "done" : n === i ? "now" : ""} />)}
-        </div>
+        <PeekProgress count={total} index={i} label={`${title}, step ${i + 1} of ${total}`} />
         <button type="button" className="cv-x" aria-label="Cancel" onClick={onCancel}><X size={18} aria-hidden="true" /></button>
       </header>
 
