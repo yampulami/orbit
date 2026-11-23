@@ -2,6 +2,7 @@
 import Dropdown from "./Dropdown";
 import { useNavigate } from "react-router-dom";
 import { MoreHorizontal, Search, UserPlus, X } from "lucide-react";
+import PersonLink from "./PersonLink";
 import PersonName from "./PersonName";
 import Avatar from "./Avatar";
 import RolesPanel from "./RolesPanel";
@@ -50,8 +51,8 @@ export default function ClubMembers({ org, here, canRoles, canMembers, reviewer,
     return (
       <li key={p.id} className="cp-item">
         <div className="cp-row">
-          <span className="cm-avw" aria-hidden="true"><Avatar name={p.name} id={p.id} size={32} />{on && <i className="cm-on" />}</span>
-          <span className="cp-who"><span className="cm-name"><PersonName id={p.id} fallback={p.name} />{p.self && <span className="cp-you"> (you)</span>}</span>
+          <span className="cm-avw"><PersonLink id={p.id} className="cf-avlink" decorative><Avatar name={p.name} id={p.id} size={32} /></PersonLink>{on && <i className="cm-on" aria-hidden="true" />}</span>
+          <span className="cp-who"><span className="cm-name"><PersonLink id={p.id} className="who-link"><PersonName id={p.id} fallback={p.name} /></PersonLink>{p.self && <span className="cp-you"> (you)</span>}</span>
             <span className="cp-sub">{rankLabel(p.rank, p.roleName)}{on ? " · online" : ""}</span></span>
           {any && <button type="button" className="cp-more" aria-label={`Actions for ${p.name}`} aria-expanded={expanded} onClick={() => { setOpen(expanded ? "" : p.id); setAsking(null); setError(""); }}><MoreHorizontal size={18} aria-hidden="true" /></button>}
         </div>
@@ -172,8 +173,8 @@ function AddPeople({ org, people, giveable, canMembers, me, onDone }: { org: Org
           const already = inClub.has(h.id);
           return (
             <li key={h.id} className="cp-hit">
-              <Avatar name={h.name} id={h.id} size={32} />
-              <span className="cp-who"><span className="cm-name">{h.name}</span><span className="cp-sub">{h.username ? `@${h.username}` : "Student"}</span></span>
+              <PersonLink id={h.id} className="cf-avlink" decorative><Avatar name={h.name} id={h.id} size={32} /></PersonLink>
+              <span className="cp-who"><span className="cm-name"><PersonLink id={h.id} className="who-link">{h.name}</PersonLink></span><span className="cp-sub">{h.username ? `@${h.username}` : "Student"}</span></span>
               {already ? <span className="cp-sub">In the club</span> : <button type="button" className="btn sm" disabled={busy !== "" || (!choice && !canMembers)} onClick={() => void add(h)}>{busy === h.id ? "Adding…" : "Add"}</button>}
             </li>
           );

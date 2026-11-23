@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { usePerson } from "../lib/directory";
 import Avatar from "../components/Avatar";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Check, MessageSquare, UserCheck, UserPlus, X } from "lucide-react";
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
@@ -51,6 +51,7 @@ export default function Person() {
 
   async function act(job: () => Promise<boolean | void>) { setBusy(true); try { await job(); } finally { setBusy(false); } }
 
+  if (me && id === me) return <Navigate to="/app/profile" replace />;
   if (profile === undefined) return <div className="page"><div className="skeleton sk-card" aria-busy="true" aria-label="Loading profile" /></div>;
   if (profile === null) {
     return (

@@ -15,7 +15,7 @@ export type RawVote = { post_id: string; user_id: string; option_id: string };
 
 export type Post = {
   id: string; authorId: string; author: string; kind: PostKind; title: string; body: string; pinned: boolean; at: string; mine: boolean;
-  comments: { id: string; author: string; body: string; at: string; mine: boolean }[];
+  comments: { id: string; authorId: string; author: string; body: string; at: string; mine: boolean }[];
   /** For a poll: each choice with its votes, how many voted, and the choice I picked. */
   options?: { id: string; label: string; votes: number; mine: boolean }[]; total?: number; myVote?: string;
 };
@@ -27,7 +27,7 @@ export function buildFeed(posts: RawPost[], comments: RawComment[], options: Raw
     .map((p): Post => {
       const base: Post = {
         id: p.id, authorId: p.author_id, author: who(p.author_id), kind: p.kind, title: p.title, body: p.body, pinned: p.pinned, at: p.created_at, mine: p.author_id === me,
-        comments: comments.filter((c) => c.post_id === p.id).sort((a, b) => a.created_at.localeCompare(b.created_at)).map((c) => ({ id: c.id, author: who(c.author_id), body: c.body, at: c.created_at, mine: c.author_id === me })),
+        comments: comments.filter((c) => c.post_id === p.id).sort((a, b) => a.created_at.localeCompare(b.created_at)).map((c) => ({ id: c.id, authorId: c.author_id, author: who(c.author_id), body: c.body, at: c.created_at, mine: c.author_id === me })),
       };
       if (p.kind !== "poll") return base;
       const opts = options.filter((o) => o.post_id === p.id).sort((a, b) => a.position - b.position).map((o) => {

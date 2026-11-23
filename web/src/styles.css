@@ -6335,3 +6335,9 @@ p,li{text-wrap:pretty}
 .club-bar-name{display:block;-webkit-line-clamp:unset;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .club-bar .join-row{flex:none;flex-wrap:nowrap;white-space:nowrap;gap:8px}
 .club-bar .join-row .link-btn{min-height:0;padding:4px 6px;font-size:var(--t-meta);font-weight:500;color:var(--ink-soft)}
+
+/* a shown picture opens that person's profile (yours opens your own) */
+.cf-avlink{display:inline-flex;flex:none;border-radius:50%}
+.cf-avlink:hover .av,.cf-avlink:focus-visible .av{outline:2px solid var(--accent);outline-offset:1px}
+.who-link{color:inherit;text-decoration:none}
+.who-link:hover strong,.who-link:hover{text-decoration:underline;text-underline-offset:3px}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import Avatar from "./Avatar";
 import { Link } from "react-router-dom";
 import { gradientFor } from "../lib/look";
+import { useAuth } from "../lib/auth";
 
 export type StackPerson = { name: string; /** Their profile id, when they have one: the face then opens their profile. */ id?: string };
 
@@ -12,6 +13,7 @@ export default function AvatarStack({ names = [], people, max = 4, size = 28, on
   /** Tapping the +N bubble opens the whole row, and a dash closes it again. */ expandable?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const myId = useAuth().session?.user.id;
   const list: StackPerson[] = (people ?? names.map((name) => ({ name }))).filter((p) => p.name);
   const shown = expandable && open ? list : list.slice(0, max);
   const more = list.length - shown.length;
@@ -28,7 +30,7 @@ export default function AvatarStack({ names = [], people, max = 4, size = 28, on
           </>
         );
         return p.id
-          ? <Link key={p.name + i} to={`/app/people/${p.id}`} className={cls + " avs-link"} data-name={p.name} style={style} aria-label={`${p.name}, open profile`}>{inner}</Link>
+          ? <Link key={p.name + i} to={p.id === myId ? "/app/profile" : `/app/people/${p.id}`} className={cls + " avs-link"} data-name={p.name} style={style} aria-label={`${p.name}, open profile`}>{inner}</Link>
           : <i key={p.name + i} className={cls} data-name={p.name} style={style}>{inner}</i>;
       })}
       {expandable && list.length > max
