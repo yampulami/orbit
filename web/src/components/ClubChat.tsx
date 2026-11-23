@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { AttachButton, AttachPreview, useAttachment } from "./Attach";
 import { Hash, Lock, Megaphone, MessageSquare, Plus, Send, Trash2, X } from "lucide-react";
+import { undo } from "../lib/undo";
 import type { Org } from "../lib/campusOrgs";
 import type { useClubChat } from "../lib/clubChat";
 import type { Pod } from "../lib/clubPods";
@@ -43,6 +44,12 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
   const [teamOnly, setTeamOnly] = useState(false);
   const [error, setError] = useState("");
   const [sure, setSure] = useState(false);
+  // a deleted message leaves the list at once and is really deleted a few seconds later, so it can be taken back
+  const [gone, setGone] = useState<string[]>([]);
+  const removeMessage = (id: string) => {
+    setGone((g) => [...g, id]);
+    undo.show("Message deleted", { onUndo: () => setGone((g) => g.filter((x) => x !== id)), commit: async () => { const err = await chat.actions.deleteMessage(id); if (err) throw new Error(err); } }); // if it fails, the message comes back
+  };
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const msgs = active ? chat.messagesIn(active.id) : [];
@@ -107,7 +114,7 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
             </header>
             <div className="cc-msgs" ref={scroller} role="log" aria-live="polite" aria-label={`Messages in ${active.name}`}>
               {msgs.length === 0 && <EmptyState icon={active.announceOnly ? Megaphone : MessageSquare} title={active.announceOnly ? "No announcements yet" : `Start #${active.name}`}>{active.announceOnly ? (canAnnounce ? "Post news for the whole club here." : "News from the officers shows up here.") : `Say hello. Everyone in the ${active.teamOnly ? "team" : "club"} can see this channel.`}</EmptyState>}
-              {msgs.map((m) => {
+              {msgs.filter((m) => !gone.includes(m.id)).map((m) => {
                 const day = dayOf(m.at);
                 const at = new Date(m.at).getTime();
                 const showDay = day !== lastDay;
@@ -123,7 +130,7 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
                         {!joined && <p className="cc-meta"><strong>{m.author}</strong>{title && <span className="cf-title-chip">{title}</span>}<span className="muted">{clock(m.at)}</span></p>}
                         <p className="cc-text"><RichText text={m.body} /></p>
                       </div>
-                      {(m.mine || canModerate) && <button type="button" className="link-btn cc-del" aria-label="Delete message" onClick={() => void chat.actions.deleteMessage(m.id)}><X size={13} aria-hidden="true" /></button>}
+                      {(m.mine || canModerate) && <button type="button" className="link-btn cc-del" aria-label="Delete message" onClick={() => removeMessage(m.id)}><X size={13} aria-hidden="true" /></button>}
                     </div>
                   </div>
                 );

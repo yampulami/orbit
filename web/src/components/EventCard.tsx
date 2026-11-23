@@ -124,7 +124,7 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
                   <summary aria-label={`More about ${e.title}`} title="More"><MoreHorizontal size={18} aria-hidden="true" /></summary>
                   <div className="ev-menu-list" role="menu">
                     {!e.mineHost && <button type="button" role="menuitem" onClick={(x) => { x.currentTarget.closest("details")?.removeAttribute("open"); setReporting(true); setWhy(""); }}><Flag size={14} aria-hidden="true" /> Report</button>}
-                    {reviewer && !e.mineHost && <button type="button" role="menuitem" onClick={(x) => { x.currentTarget.closest("details")?.removeAttribute("open"); void eventActions.setRemoved(e.id, true); notice.show({ icon: "calendar", title: "Event removed", message: "It is hidden from students.", ms: 3500 }); }}>Remove</button>}
+                    {reviewer && !e.mineHost && <button type="button" role="menuitem" onClick={(x) => { x.currentTarget.closest("details")?.removeAttribute("open"); void eventActions.setRemoved(e.id, true); notice.show({ icon: "calendar", title: "Event removed", message: "It is hidden from students.", ms: 8000, actions: [{ label: "Undo", onClick: () => void eventActions.setRemoved(e.id, false) }] }); }}>Remove</button>}
                     {e.mineHost && <button type="button" role="menuitem" onClick={(x) => { x.currentTarget.closest("details")?.removeAttribute("open"); setSure(true); }}>Cancel event</button>}
                   </div>
                 </details>

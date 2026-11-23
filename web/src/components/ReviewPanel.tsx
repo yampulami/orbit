@@ -26,7 +26,7 @@ export default function ReviewPanel() {
         <section className="htools-block" aria-label="Events waiting for approval">
           <h3><Clock size={15} aria-hidden="true" /> Events waiting for approval <span className="rem-count">{pending.length}</span></h3>
           <ul>
-            {pending.map((e) => (
+            {pending.map((e, n) => (
               <li key={e.id}>
                 <div className="htools-main">
                   <strong><RichText text={e.title} /></strong>
@@ -40,7 +40,7 @@ export default function ReviewPanel() {
                   </form>
                 ) : (
                   <div className="htools-row">
-                    <button type="button" className="btn primary" onClick={() => { void eventActions.approve(e.id); notice.show({ icon: "calendar", title: "Event approved", message: "It now shows to everyone on campus.", ms: 3500 }); }}><Check size={15} aria-hidden="true" /> Approve</button>
+                    <button type="button" className={"btn" + (n === 0 ? " primary" : "")} onClick={() => { void eventActions.approve(e.id); notice.show({ icon: "calendar", title: "Event approved", message: "It now shows to everyone on campus.", ms: 3500 }); }}><Check size={15} aria-hidden="true" /> Approve</button>
                     <button type="button" className="btn" onClick={() => { setDeclining(`e-${e.id}`); setReason(""); }}>Decline</button>
                   </div>
                 )}
@@ -58,7 +58,7 @@ export default function ReviewPanel() {
               <li key={event.id}>
                 <div className="htools-main"><strong><RichText text={event.title} /></strong><span className="muted">{event.host}</span>{reasons.length > 0 && <span className="htools-why">“{reasons.slice(0, 2).join("”, “")}”</span>}</div>
                 <div className="htools-row">
-                  <button type="button" className="btn danger" onClick={() => { void eventActions.setRemoved(event.id, true); notice.show({ icon: "calendar", title: "Event removed", message: "It is hidden from students. You can bring it back from the Events list.", ms: 4000 }); }}>Remove event</button>
+                  <button type="button" className="btn danger" onClick={() => { void eventActions.setRemoved(event.id, true); notice.show({ icon: "calendar", title: "Event removed", message: "It is hidden from students.", ms: 8000, actions: [{ label: "Undo", onClick: () => void eventActions.setRemoved(event.id, false) }] }); }}>Remove event</button>
                   <button type="button" className="btn" onClick={() => void eventActions.dismissReports(event.id)}>It is fine</button>
                 </div>
               </li>
@@ -85,7 +85,7 @@ export default function ReviewPanel() {
                 {o.kind === "student" && o.status === "active" && (
                   <button type="button" className="btn" onClick={() => void orgActions.setTrusted(o.id, !o.trusted)}><ShieldCheck size={14} aria-hidden="true" /> {o.trusted ? "Stop trusting" : "Trust this club"}</button>
                 )}
-                {o.status === "active" && <button type="button" className="btn" onClick={() => void orgActions.setPaused(o.id, true)}><Pause size={14} aria-hidden="true" /> Pause</button>}
+                {o.status === "active" && <button type="button" className="btn" onClick={() => { void orgActions.setPaused(o.id, true); notice.show({ icon: "calendar", title: `${o.name} paused`, message: "It cannot post new events until you resume it.", ms: 8000, actions: [{ label: "Undo", onClick: () => void orgActions.setPaused(o.id, false) }] }); }}><Pause size={14} aria-hidden="true" /> Pause</button>}
                 {o.status === "paused" && <button type="button" className="btn" onClick={() => void orgActions.setPaused(o.id, false)}><Play size={14} aria-hidden="true" /> Resume</button>}
               </div>
             </li>

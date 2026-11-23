@@ -14,11 +14,12 @@ export default function ClubDashboard({ org, events, board, reviewer, go }: { or
   const waiting = events.filter((e) => e.orgId === org.id && e.status === "pending" && !e.canceled);
   const overdue = board.tasks.filter((t) => isOverdue(t, now));
   const open = board.tasks.filter((t) => t.status !== "done");
-  const soon = events.filter((e) => e.status === "published" && !e.canceled && isOpen(e, now)).slice(0, 3);
+  // this club's events: the ones it hosts and the ones it said yes to co-hosting
+  const soon = events.filter((e) => (e.orgId === org.id || e.cohosts.some((c) => c.orgId === org.id && c.status === "accepted")) && e.status === "published" && !e.canceled && isOpen(e, now)).slice(0, 3);
   const items = [
     ...(canMembers && org.requests.length > 0 ? [{ key: "req", icon: UserPlus, text: `${org.requests.length} ${org.requests.length === 1 ? "person is" : "people are"} waiting to join`, action: "Answer", onClick: () => go("people") }] : []),
     ...(waiting.length > 0 ? [{ key: "ev", icon: CalendarDays, text: `${waiting.length} ${waiting.length === 1 ? "event is" : "events are"} waiting for a coordinator`, action: "See events", onClick: () => go("events") }] : []),
-    ...(overdue.length > 0 ? [{ key: "late", icon: ClipboardList, text: `${overdue.length} ${overdue.length === 1 ? "task is" : "tasks are"} overdue`, action: "", onClick: undefined }] : []),
+    ...(overdue.length > 0 ? [{ key: "late", icon: ClipboardList, text: `${overdue.length} ${overdue.length === 1 ? "task is" : "tasks are"} overdue`, action: "See tasks", onClick: () => document.getElementById("club-tasks")?.scrollIntoView({ behavior: "smooth", block: "start" }) }] : []),
   ];
 
   return (
@@ -34,10 +35,10 @@ export default function ClubDashboard({ org, events, board, reviewer, go }: { or
         </div>
         <div className="dash-soon">
           <h2>Coming up</h2>
-          {soon.length === 0 ? <p className="muted">No events scheduled.</p> : <ul>{soon.map((e) => <li key={e.id}><strong><RichText text={e.title} /></strong><span className="muted">{eventWhen(e)}</span></li>)}</ul>}
+          {soon.length === 0 ? <p className="muted">Nothing scheduled for this club yet.</p> : <ul>{soon.map((e) => <li key={e.id}><strong><RichText text={e.title} /></strong><span className="muted">{eventWhen(e)}</span></li>)}</ul>}
         </div>
       </div>
-      <TaskBoard org={org} board={board} />
+      <div id="club-tasks"><TaskBoard org={org} board={board} /></div>
     </section>
   );
 }

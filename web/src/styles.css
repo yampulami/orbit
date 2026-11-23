@@ -6277,3 +6277,7 @@ p,li{text-wrap:pretty}
 }
 
 .cv-ask:focus,.cv-ask:focus-visible{outline:0}
+
+/* Review: an application's facts sit on the card itself (no card inside a card); only the first Approve in a list is the accent button */
+.app-card .app-details{background:none;border-radius:0;padding:0;border-top:1px solid var(--line)}
+.review .htools-row .btn:not(.primary):not(.danger){background:none;border:1px solid var(--line)}
