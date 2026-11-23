@@ -37,8 +37,10 @@ export default function Campus() {
   const nav = useNavigate();
   const { events, pending, reported, isHost, role, canReview: reviewer, hostLabel, ready } = useCampusEvents();
   const { orgs, mine } = useCampusOrgs();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const [tab, setTab] = useState<Tab>(() => asTab(params.get("tab")));
+  // the tab lives in the address too, so Back from a club returns to the tab you left
+  const pickTab = (t: Tab) => { setTab(t); setParams({ tab: t }, { replace: true }); };
   // Links from elsewhere (the old map address, a notification) name the tab to open.
   useEffect(() => { const t = params.get("tab"); if (t === "forsale") nav("/app/marketplace", { replace: true }); else if (t) setTab(asTab(t)); }, [params, nav]);
   const [view, setView] = useState<View>("discover");
@@ -114,9 +116,9 @@ export default function Campus() {
               <header className="campus-head">
                 <h2 className="sr">{head}</h2>
                 <div className="segment campus-seg" role="tablist" aria-label="Events, clubs or map">
-                  <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => setTab("events")}>Events</button>
-                  <button type="button" role="tab" aria-selected={tab === "clubs"} onClick={() => setTab("clubs")}>Clubs</button>
-                  <button type="button" role="tab" aria-selected={tab === "map"} onClick={() => setTab("map")}>Map</button>
+                  <button type="button" role="tab" aria-selected={tab === "events"} onClick={() => pickTab("events")}>Events</button>
+                  <button type="button" role="tab" aria-selected={tab === "clubs"} onClick={() => pickTab("clubs")}>Clubs</button>
+                  <button type="button" role="tab" aria-selected={tab === "map"} onClick={() => pickTab("map")}>Map</button>
                 </div>
               </header>
               {tab === "events" && <EventsView events={events} ready={ready} isHost={isHost} role={role} hostLabel={hostLabel} reviewer={reviewer} />}
