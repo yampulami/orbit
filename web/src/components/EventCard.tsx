@@ -17,6 +17,12 @@ export const eventWhen = (e: Pick<CampusEvent, "startsAt" | "endsAt">) => {
   return `${day} · ${t(s)}${e.endsAt ? ` to ${t(new Date(e.endsAt))}` : ""}`;
 };
 
+/** Just the hours ("4:00 PM to 5:00 PM"): the date is already in the stub beside the card. */
+export const eventTimes = (e: Pick<CampusEvent, "startsAt" | "endsAt">) => {
+  const t = (d: Date) => d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return `${t(new Date(e.startsAt))}${e.endsAt ? ` to ${t(new Date(e.endsAt))}` : ""}`;
+};
+
 /** The label that says what kind of event this is, so nobody mistakes it for a private hangout. */
 export function EventBadge({ e }: { e: Pick<CampusEvent, "kind" | "status"> }) {
   if (e.status === "pending") return <span className="ebadge wait"><Clock size={12} aria-hidden="true" /> Waiting for approval</span>;
@@ -72,7 +78,7 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
         </div>
         <strong className="ev-title"><RichText text={e.title} /></strong>
         <span className="ev-host">by {hostedBy(e)}{live && (e.kind === "official" || !!e.orgId) && <VerifiedBadge label={e.kind === "official" ? "Verified: official campus office" : "Verified: club approved by a coordinator"} />}</span>
-        <p className="ev-meta">{eventWhen(e)}{e.place && <><span aria-hidden="true"> · </span><MapPin size={12} aria-hidden="true" /> {e.place}</>}</p>
+        <p className="ev-meta"><span className="sr">{new Date(e.startsAt).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}, </span>{eventTimes(e)}{e.place && <><span aria-hidden="true"> · </span><MapPin size={12} aria-hidden="true" /> {e.place}</>}</p>
         {e.cohosts.some((c) => c.status === "pending") && e.mineHost && (
           <p className="ev-cohost-note muted">{e.cohosts.filter((c) => c.status === "pending").map((c) => c.name).join(", ")} {e.cohosts.filter((c) => c.status === "pending").length === 1 ? "has" : "have"} been asked to co-host.
             {" "}{e.cohosts.filter((c) => c.status === "pending").map((c) => <button key={c.orgId} type="button" className="link-btn" aria-label={`Withdraw the invitation to ${c.name}`} onClick={() => void eventActions.removeCohost(e.id, c.orgId)}>Withdraw {c.name}</button>)}</p>

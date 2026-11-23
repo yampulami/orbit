@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { eventActions, useCampusEvents } from "../lib/campusEvents";
 import { orgActions, useCampusOrgs } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
+import { undo } from "../lib/undo";
 import RichText from "./RichText";
 import { eventWhen } from "./EventCard";
 import ApplicationsBoard from "./ApplicationsBoard";
@@ -16,6 +17,7 @@ export default function ReviewPanel() {
   const { orgs } = useCampusOrgs();
   const [declining, setDeclining] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+  const [held, setHeld] = useState<string[]>([]); // approved a moment ago: still takeable back
 
   return (
     <div className="review" role="region" aria-label="Review">
@@ -24,9 +26,9 @@ export default function ReviewPanel() {
 
       {pending.length > 0 && (
         <section className="htools-block" aria-label="Events waiting for approval">
-          <h3><Clock size={15} aria-hidden="true" /> Events waiting for approval <span className="rem-count">{pending.length}</span></h3>
+          <h3 role="heading" aria-level={2}><Clock size={15} aria-hidden="true" /> Events waiting for approval <span className="rem-count">{pending.length}</span></h3>
           <ul>
-            {pending.map((e, n) => (
+            {pending.filter((e) => !held.includes(e.id)).map((e, n) => (
               <li key={e.id}>
                 <div className="htools-main">
                   <strong><RichText text={e.title} /></strong>
@@ -40,7 +42,7 @@ export default function ReviewPanel() {
                   </form>
                 ) : (
                   <div className="htools-row">
-                    <button type="button" className={"btn" + (n === 0 ? " primary" : "")} onClick={() => { void eventActions.approve(e.id); notice.show({ icon: "calendar", title: "Event approved", message: "It now shows to everyone on campus.", ms: 3500 }); }}><Check size={15} aria-hidden="true" /> Approve</button>
+                    <button type="button" className={"btn" + (n === 0 ? " primary" : "")} onClick={() => { setHeld((h) => [...h, e.id]); undo.show(`${e.title} approved. It goes live in a moment.`, { ms: 8000, onUndo: () => setHeld((h) => h.filter((x) => x !== e.id)), commit: async () => { const err = await eventActions.approve(e.id); setHeld((h) => h.filter((x) => x !== e.id)); if (err) throw new Error(err); } }); }}><Check size={15} aria-hidden="true" /> Approve</button>
                     <button type="button" className="btn" onClick={() => { setDeclining(`e-${e.id}`); setReason(""); }}>Decline</button>
                   </div>
                 )}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Inbox } from "lucide-react";
 import { Link } from "react-router-dom";
 import { orgActions, useCampusOrgs, type Org } from "../lib/campusOrgs";
-import { notice } from "../lib/notice";
+import { undo } from "../lib/undo";
 import ApplicationDetails from "./ApplicationDetails";
 import RichText from "./RichText";
 
@@ -19,11 +19,12 @@ export default function ApplicationsBoard() {
   const { orgs } = useCampusOrgs();
   const [view, setView] = useState<View>("pending");
   const [declining, setDeclining] = useState<string | null>(null);
+  const [held, setHeld] = useState<string[]>([]); // approved a moment ago: still takeable back
   const [reason, setReason] = useState("");
   const [, tick] = useState(0);
   const seen = useRef<Set<string> | null>(null);
   const count = (v: View) => orgs.filter((o) => inView(o, v)).length;
-  const sorted = orgs.filter((o) => inView(o, view)).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  const sorted = orgs.filter((o) => inView(o, view) && !held.includes(o.id)).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 
   // Applications that arrive while this is open are highlighted for a moment.
   const fresh = new Set<string>();
@@ -47,7 +48,7 @@ export default function ApplicationsBoard() {
         </form>
       ) : (
         <div className="htools-row">
-          <button type="button" className="btn primary" onClick={() => { void orgActions.approve(o.id); notice.show({ icon: "calendar", title: `${o.name} approved`, message: "The student who applied has been told. Its officers can post events now.", ms: 4500 }); }}><Check size={15} aria-hidden="true" /> Approve</button>
+          <button type="button" className="btn primary" onClick={() => { setHeld((h) => [...h, o.id]); undo.show(`${o.name} approved. The student is told in a moment.`, { ms: 8000, onUndo: () => setHeld((h) => h.filter((x) => x !== o.id)), commit: async () => { const err = await orgActions.approve(o.id); setHeld((h) => h.filter((x) => x !== o.id)); if (err) throw new Error(err); } }); }}><Check size={15} aria-hidden="true" /> Approve</button>
           <button type="button" className="btn" onClick={() => { setDeclining(o.id); setReason(""); }}>Decline</button>
         </div>
       ))}
@@ -57,7 +58,7 @@ export default function ApplicationsBoard() {
   return (
     <section className="apps" aria-label="Club applications">
       <div className="apps-head">
-        <h3><Inbox size={15} aria-hidden="true" /> Club applications</h3>
+        <h3 role="heading" aria-level={2}><Inbox size={15} aria-hidden="true" /> Club applications</h3>
         <span className="live-pill" title="This list updates as applications come in"><span className="live-dot" aria-hidden="true" /> Live</span>
       </div>
       <div className="segment" role="tablist" aria-label="Application status">

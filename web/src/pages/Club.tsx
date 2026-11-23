@@ -148,7 +148,7 @@ export default function Club() {
             <li><button type="button" className="chan" aria-current={cur === "feed" ? "page" : undefined} onClick={() => pick("feed")}><Megaphone size={16} aria-hidden="true" /><span>Feed</span></button></li>
             {!circle && <li><button type="button" className="chan" aria-current={cur === "events" ? "page" : undefined} onClick={() => pick("events")}><CalendarDays size={16} aria-hidden="true" /><span>Events</span>{upcoming.length > 0 && <span className="rem-count">{upcoming.length}</span>}</button></li>}
           </ul>
-          {chatChans.some((c) => !c.podId) && <h3 className="chan-label">Channels</h3>}
+          {chatChans.some((c) => !c.podId) && <h2 className="chan-label">Channels</h2>}
           <ArrangeList ids={applyOrder(chatChans.filter((c) => !c.podId), chanOrder).map((c) => c.id)} onChange={setChanOrder}>
             {applyOrder(chatChans.filter((c) => !c.podId), chanOrder).map((c) => (
               <ArrangeItem key={c.id} id={c.id} handle label={`#${c.name}`} className="chan-row"><button type="button" className="chan" aria-current={cur === "chat" && activeChan?.id === c.id ? "page" : undefined} onClick={() => openChan(c.id)}>
@@ -159,7 +159,7 @@ export default function Club() {
           <ul>
             {canChannels && inside && <li><button type="button" className="chan add" onClick={() => { setMaking(true); pick("chat"); }}><Plus size={15} aria-hidden="true" /><span>New channel</span></button></li>}
           </ul>
-          {chatChans.some((c) => c.podId) && <h3 className="chan-label">Pod chats</h3>}
+          {chatChans.some((c) => c.podId) && <h2 className="chan-label">Pod chats</h2>}
           <ul>
             {chatChans.filter((c) => c.podId).map((c) => (
               <li key={c.id}><button type="button" className="chan" aria-current={cur === "chat" && activeChan?.id === c.id ? "page" : undefined} onClick={() => openChan(c.id)}>
@@ -167,7 +167,7 @@ export default function Club() {
               </button></li>
             ))}
           </ul>
-          <h3 className="chan-label">Club</h3>
+          <h2 className="chan-label">Club</h2>
           <ul>
             {org.status === "active" && <li><button type="button" className="chan" aria-current={cur === "pods" ? "page" : undefined} onClick={() => pick("pods")}><Orbit size={16} aria-hidden="true" /><span>Pods</span></button></li>}
             {org.mine && org.status === "active" && <li><button type="button" className="chan" aria-current={cur === "dashboard" ? "page" : undefined} onClick={() => pick("dashboard")}><ClipboardList size={16} aria-hidden="true" /><span>Manage</span>{overdue && <span className="rem-count" role="img" aria-label="Overdue tasks" title="Some tasks are overdue">!</span>}</button></li>}
@@ -185,8 +185,7 @@ export default function Club() {
 
           {cur === "events" && !circle && (
             <section className="club-section" aria-label="Events">
-              <header className="chan-head"><h2><CalendarDays size={16} aria-hidden="true" /> events</h2><p className="muted">{EVENTS_NOTE}</p></header>
-              {canPost && waits && !posting && <p className="muted">New events from this club wait for a coordinator before everyone sees them.</p>}
+              <header className="chan-head"><h2><CalendarDays size={16} aria-hidden="true" /> Events</h2><p className="muted">{EVENTS_NOTE}{canPost && waits && !posting ? " New ones wait for a coordinator before everyone sees them." : ""}</p></header>
               {posting && canPost && <EventForm org={org} onDone={() => setPosting(false)} />}
               {!posting && <CohostInvites orgId={org.id} />}
               {!(posting && canPost) && (upcoming.length === 0

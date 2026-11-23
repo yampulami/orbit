@@ -8,7 +8,7 @@ const Field = ({ label, children }: { label: string; children: ReactNode }) => <
 
 type S = { name: string; purpose: string; category: string; accent: number | null; advisorName: string; advisorEmail: string; meeting: string; size: string; firstEvent: string; contact: string; office: string; line: string; icon: string };
 const start: S = { name: "", purpose: "", category: "", accent: null, advisorName: "", advisorEmail: "", meeting: "", size: "", firstEvent: "", contact: "", office: "", line: "", icon: "" };
-const nameStep = (what: string): Step<S> => ({ id: "name", ask: `What should we call ${what}?`, hint: "The name people will see.", check: (s) => (s.name.trim().length < 2 ? "Give it a name, at least 2 letters." : null),
+const nameStep = (what: string, hint = "The name people will see."): Step<S> => ({ id: "name", ask: `What should we call ${what}?`, hint, check: (s) => (s.name.trim().length < 2 ? "Give it a name, at least 2 letters." : null),
   render: (s, set, go) => <CvInput label="Name" value={s.name} onChange={(v) => set({ name: v })} go={go} maxLength={80} placeholder="Chess Club" /> });
 
 /** Starting a club, an office or a circle, one question at a time. Students apply (a coordinator reads the answers); coordinators set one up directly; a circle just starts. */
@@ -38,7 +38,7 @@ export default function ClubApplication({ reviewer, mode = "club", onSent, onCan
           iconStep,
         ]
       : [
-          nameStep("your club"),
+          nameStep("your club", "The name people will see. You will also need a faculty or staff adviser."),
           { id: "purpose", ask: "What is it for, and who is it for?", hint: "A couple of sentences for the coordinator who decides.", check: (s) => (s.purpose.trim().length < 30 ? "Tell the coordinator a little more, a couple of sentences." : null),
             render: (s, set, go) => <CvText label="Purpose" value={s.purpose} onChange={(v) => set({ purpose: v })} go={go} maxLength={600} placeholder="We play casual games, run beginner lessons and hold a spring tournament. Everyone is welcome." /> },
           categoryStep,
@@ -55,8 +55,8 @@ export default function ClubApplication({ reviewer, mode = "club", onSent, onCan
             render: (s, set, go) => (
               <div className="cv-pair">
                 <Field label="Meeting time and place"><CvInput label="Meeting time and place" value={s.meeting} onChange={(v) => set({ meeting: v })} maxLength={160} placeholder="Thursdays at 6 PM, Student Center room 204" /></Field>
-                <Field label="Expected members"><CvInput label="Expected members" autoFocus={false} inputMode="numeric" value={s.size} onChange={(v) => set({ size: v.replace(/\D/g, "").slice(0, 5) })} placeholder="About 25 people" maxLength={5} /></Field>
-                <Field label="A first event you would hold"><CvInput label="First event" autoFocus={false} value={s.firstEvent} onChange={(v) => set({ firstEvent: v })} go={go} placeholder="An open tournament in week 3" maxLength={300} /></Field>
+                <Field label="Expected members (optional)"><CvInput label="Expected members" autoFocus={false} inputMode="numeric" value={s.size} onChange={(v) => set({ size: v.replace(/\D/g, "").slice(0, 5) })} placeholder="About 25 people" maxLength={5} /></Field>
+                <Field label="A first event you would hold (optional)"><CvInput label="First event" autoFocus={false} value={s.firstEvent} onChange={(v) => set({ firstEvent: v })} go={go} placeholder="An open tournament in week 3" maxLength={300} /></Field>
               </div>) },
         ];
 
@@ -80,6 +80,6 @@ export default function ClubApplication({ reviewer, mode = "club", onSent, onCan
 
   return (
     <Converse<S> title={circle ? "Start a student circle" : reviewer ? "Set up a club or office" : "Apply to start a club"} steps={steps} initial={start} summary={summary} submitLabel={circle ? "Start circle" : reviewer ? "Create" : "Send application"}
-      note="A coordinator reads this and decides. You will get a notification either way. Tap an answer to change it." onSubmit={submit} onCancel={onCancel} />
+      note="A coordinator reads this and decides. You will get a notification either way. Use Change to edit an answer." onSubmit={submit} onCancel={onCancel} />
   );
 }

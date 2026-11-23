@@ -99,7 +99,7 @@ export default function Converse<S>({ title, steps, initial, summary, note, subm
           {reviewing ? (
             <>
               <h2 className="cv-ask" tabIndex={-1}>Look good?</h2>
-              <p className="cv-hint">{note ?? "Check your answers. Tap one to change it."}</p>
+              <p className="cv-hint">{note ?? "Check your answers. Use Change to edit one."}</p>
               <dl className="cv-review">
                 {summary!(s).filter(([, v]) => v).map(([label, value, id]) => (
                   <div key={label}><dt>{label}</dt><dd>{value}</dd><button type="button" className="link-btn" aria-label={`Change ${label}`} onClick={() => jump(id)}>Change</button></div>

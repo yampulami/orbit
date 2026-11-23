@@ -2054,7 +2054,7 @@ textarea,input,.post p.body,.bubble,.comment,.about-bio{font-family:inherit}
 .apps-head{display:flex;align-items:center;justify-content:space-between}
 .apps-head h3{display:flex;align-items:center;gap:6px;font-size:.95rem}
 .live-pill{display:inline-flex;align-items:center;gap:6px;font-size:.76rem;font-weight:600;color:var(--ink-soft)}
-.live-dot{width:8px;height:8px;border-radius:50%;background:#3ab76b;animation:livepulse 2s ease-in-out infinite}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#3ab76b;animation:livepulse 2s ease-in-out 3}
 @keyframes livepulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
 .app-list{list-style:none;margin:0;padding:0;display:grid;gap:12px}
 .app-card{display:grid;gap:10px;padding:14px;border-radius:20px;background:var(--surface);border:1px solid var(--line)}
@@ -6163,7 +6163,7 @@ p,li{text-wrap:pretty}
 /* the flat Omega head on the step bar: it sits behind the bar and rises out of it */
 .cv-peek svg{display:block;transform:translateY(100%)}
 .cv-peek[data-up] svg{transform:none}
-@media (prefers-reduced-motion:no-preference){.cv-peek svg{transition:transform .34s cubic-bezier(.34,1.5,.64,1)}.cv-peek:not([data-up]) svg{transition-duration:.2s;transition-timing-function:ease-in}}
+@media (prefers-reduced-motion:no-preference){.cv-peek svg{transition:transform .34s cubic-bezier(.16,1,.3,1)}.cv-peek:not([data-up]) svg{transition-duration:.2s;transition-timing-function:ease-in}}
 
 /* club setup: "Make it yours" (a preview, colours, suggested icons, all icons) and the step footer */
 .club-look{display:grid;gap:22px}
@@ -6281,3 +6281,27 @@ p,li{text-wrap:pretty}
 /* Review: an application's facts sit on the card itself (no card inside a card); only the first Approve in a list is the accent button */
 .app-card .app-details{background:none;border-radius:0;padding:0;border-top:1px solid var(--line)}
 .review .htools-row .btn:not(.primary):not(.danger){background:none;border:1px solid var(--line)}
+
+/* ---- Campus refinement (second critique) ---- */
+/* layout: one steady column for the step flows; the featured event lines up with the rest; the board uses what room it has; facts read in two columns */
+.cv{width:min(100%,560px)}
+.cevents .club-next .ev.featured,.cevents .club-next .ev{padding-left:0;padding-right:0}
+.tb-cols{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.dash-attn li{justify-content:flex-start;gap:10px}
+.dash-attn li .link-btn{margin-left:6px}
+.cc-text,.cc-body{max-width:72ch}
+.app-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px}
+.app-details div{grid-template-columns:96px minmax(0,1fr)}
+.app-details div:first-child{grid-column:1/-1}
+@media (max-width:900px){.app-details{grid-template-columns:minmax(0,1fr)}}
+/* typeset: body weight in lists, tabular numerals, a legible sidebar label */
+.club-chans .chan{font-weight:500}
+.club-chans .chan[aria-current=page]{font-weight:600}
+.chan-label{font-size:var(--t-micro);font-weight:600}
+.ev-stub b,.rem-count,.ev-people b{font-variant-numeric:tabular-nums}
+/* colorize: one accent. the date stub is ink; the selected tab's count reads as the tab's own ink; placeholders can be read */
+.ev-stub b{color:var(--ink)}
+.ev-stub .ev-mon,.ev-stub .ev-dow{color:var(--ink-soft)}
+.apps .segment [role=tab][aria-selected=true] .rem-count{color:inherit;background:transparent;opacity:.85}
+.cv-input::placeholder{opacity:.7}
+.chan-label.chan-label{margin-top:16px}

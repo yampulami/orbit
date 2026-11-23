@@ -243,7 +243,7 @@ function ClubRow({ o }: { o: Org }) {
         </span>
         <span className="club-meta">
           {o.status === "active"
-            ? <><span className={"act " + act.level} title={act.line || undefined}><i aria-hidden="true" />{act.label}</span><span className="club-count"><AvatarStack names={[...o.members.map((m) => m.name), ...o.clubMembers.map((m) => m.name)].filter((n, i, l) => l.indexOf(n) === i)} max={3} size={22} />{people} {people === 1 ? "person" : "people"}</span></>
+            ? <>{(people > 0 || !!soon) && <span className={"act " + act.level} title={act.line || undefined}><i aria-hidden="true" />{act.label}</span>}<span className="club-count"><AvatarStack names={[...o.members.map((m) => m.name), ...o.clubMembers.map((m) => m.name)].filter((n, i, l) => l.indexOf(n) === i)} max={3} size={22} />{people} {people === 1 ? "person" : "people"}</span></>
             : <span className={"ebadge " + (o.status === "paused" ? "no" : "wait")}>{o.status === "pending" ? "Waiting for approval" : o.status === "paused" ? "Paused" : "Not approved"}</span>}
         </span>
       </Link>
@@ -290,7 +290,11 @@ function ClubsView({ mine, all }: { mine: Org[]; all: Org[] }) {
         </div>
       )}
       {others.length === 0 && everyone.length > 0 && <p className="rows-empty">Nothing matches. Try a different word or category.</p>}
-      {everyone.length === 0 && <p className="rows-empty">{mine.length ? "You have joined every club and circle here. Tap + on the left to start a new one." : "Nothing here yet. Tap + on the left to start the first club or circle."}</p>}
+      {everyone.length === 0 && (
+        <EmptyState title={mine.length ? "You have joined every club here" : "No clubs yet"}>
+          {mine.length ? "Use the + on the left to start a new club or circle." : "Use the + on the left to start the first club or circle."}
+        </EmptyState>
+      )}
     </section>
   );
 }

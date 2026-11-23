@@ -17,7 +17,7 @@ export default function ClubDashboard({ org, events, board, reviewer, go }: { or
   // this club's events: the ones it hosts and the ones it said yes to co-hosting
   const soon = events.filter((e) => (e.orgId === org.id || e.cohosts.some((c) => c.orgId === org.id && c.status === "accepted")) && e.status === "published" && !e.canceled && isOpen(e, now)).slice(0, 3);
   const items = [
-    ...(canMembers && org.requests.length > 0 ? [{ key: "req", icon: UserPlus, text: `${org.requests.length} ${org.requests.length === 1 ? "person is" : "people are"} waiting to join`, action: "Answer", onClick: () => go("people") }] : []),
+    ...(canMembers && org.requests.length > 0 ? [{ key: "req", icon: UserPlus, text: `${org.requests.length} ${org.requests.length === 1 ? "person is" : "people are"} waiting to join`, action: "Review request", onClick: () => go("people") }] : []),
     ...(waiting.length > 0 ? [{ key: "ev", icon: CalendarDays, text: `${waiting.length} ${waiting.length === 1 ? "event is" : "events are"} waiting for a coordinator`, action: "See events", onClick: () => go("events") }] : []),
     ...(overdue.length > 0 ? [{ key: "late", icon: ClipboardList, text: `${overdue.length} ${overdue.length === 1 ? "task is" : "tasks are"} overdue`, action: "See tasks", onClick: () => document.getElementById("club-tasks")?.scrollIntoView({ behavior: "smooth", block: "start" }) }] : []),
   ];
