@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BadgeCheck, Check, Clock, Flag, Pause, Play, ShieldCheck, UserRound } from "lucide-react";
+import { BadgeCheck, Check, Clock, Flag, Pause, Play, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
 import { eventActions, useCampusEvents } from "../lib/campusEvents";
 import { orgActions, useCampusOrgs } from "../lib/campusOrgs";
@@ -79,7 +79,7 @@ export default function ReviewPanel() {
                 <div className="htools-title">
                   <Link to={`/app/campus/clubs/${o.id}`}><strong><RichText text={o.name} /></strong></Link>
                   <span className={"ebadge " + (o.kind === "official" ? "official" : "student")}>{o.kind === "official" ? <><BadgeCheck size={12} aria-hidden="true" /> Official</> : <><UserRound size={12} aria-hidden="true" /> Student club</>}</span>
-                  {o.status !== "active" && <span className={"ebadge " + (o.status === "paused" ? "no" : "wait")}>{o.status === "paused" ? "Paused" : o.status === "pending" ? "Waiting" : "Declined"}</span>}
+                  {o.status !== "active" && <span className={"ebadge " + (o.status === "paused" || o.status === "removed" ? "no" : "wait")}>{o.status === "paused" ? "Paused" : o.status === "removed" ? "Removed" : o.status === "pending" ? "Waiting" : "Declined"}</span>}
                 </div>
                 <span className="htools-members">{o.members.length} {o.members.length === 1 ? "officer" : "officers"}{o.kind === "student" ? (o.trusted ? " · events go live without review" : " · each new event waits for review") : " · events go live at once"}</span>
               </div>
@@ -89,6 +89,10 @@ export default function ReviewPanel() {
                 )}
                 {o.status === "active" && <button type="button" className="btn" onClick={() => { void orgActions.setPaused(o.id, true); notice.show({ icon: "calendar", title: `${o.name} paused`, message: "It cannot post new events until you resume it.", ms: 8000, actions: [{ label: "Undo", onClick: () => void orgActions.setPaused(o.id, false) }] }); }}><Pause size={14} aria-hidden="true" /> Pause</button>}
                 {o.status === "paused" && <button type="button" className="btn" onClick={() => void orgActions.setPaused(o.id, false)}><Play size={14} aria-hidden="true" /> Resume</button>}
+                {(o.status === "active" || o.status === "paused") && (
+                  <button type="button" className="btn danger" onClick={() => { void orgActions.setRemoved(o.id, true); notice.show({ icon: "calendar", title: `${o.name} removed`, message: `It is hidden from students, with its upcoming events. Nothing is deleted.`, ms: 8000, actions: [{ label: "Undo", onClick: () => void orgActions.setRemoved(o.id, false) }] }); }}><Trash2 size={14} aria-hidden="true" /> {o.kind === "circle" ? "Remove circle" : "Remove club"}</button>
+                )}
+                {o.status === "removed" && <button type="button" className="btn" onClick={() => void orgActions.setRemoved(o.id, false)}><Play size={14} aria-hidden="true" /> Restore</button>}
               </div>
             </li>
           ))}

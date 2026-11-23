@@ -149,6 +149,7 @@ export default function Club() {
 
       {org.status === "pending" && <p className="cevent-note" role="status">A coordinator needs to approve this club before it can post events. You can add officers while you wait.</p>}
       {org.status === "rejected" && <p className="cevent-note" role="status">Not approved{org.note ? `: ${org.note}` : "."}</p>}
+      {org.status === "removed" && <p className="cevent-note" role="status">This club was removed. Only coordinators can see it. Restore it from Review, under Clubs and offices.</p>}
       {org.status === "paused" && <p className="cevent-note" role="status">A coordinator paused this club. It cannot post new events for now.</p>}
 
       <div className="club-shell" data-members={people ? "" : undefined} data-chans={chans ? "" : undefined} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>

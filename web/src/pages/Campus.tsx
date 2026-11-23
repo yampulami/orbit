@@ -47,7 +47,7 @@ export default function Campus() {
   const [menu, setMenu] = useState(false);
   const [clubOrder, setClubOrder] = useSavedOrder("orbit-club-rail");
   const phone = useIsPhone();
-  const railClubs = applyOrder(mine, clubOrder);
+  const railClubs = applyOrder(mine.filter((o) => o.status !== "removed"), clubOrder);
   const [creating, setCreating] = useState<"club" | "circle" | null>(null);
   const [verifying, setVerifying] = useState(false);
   const waitingOrgs = orgs.filter((o) => o.status === "pending");

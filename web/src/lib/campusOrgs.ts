@@ -11,7 +11,7 @@ import { permsOf, rankOf, type Perm, type RawRole, type Role } from "./clubRoles
  *  post events as the organization and they go live at once. "official" organizations are staff-run offices; "student" ones are clubs. */
 /** "circle" is a Student Circle: quick and unofficial, no approval, no verified badge, and it does not post campus events. */
 export type OrgKind = "official" | "student" | "circle";
-export type OrgStatus = "pending" | "active" | "paused" | "rejected";
+export type OrgStatus = "pending" | "active" | "paused" | "rejected" | "removed";
 /** What a student fills in to ask for a club. A coordinator reads all of it before deciding. */
 export type Application = { purpose: string; category: string; advisorName: string; advisorEmail: string; meeting: string; expectedMembers: number | null; firstEvent: string; contact: string };
 export const CATEGORIES = ["Academic", "Arts and culture", "Sports and fitness", "Service and volunteering", "Faith and belief", "Career and professional", "Gaming and hobbies", "Other"];
@@ -51,7 +51,7 @@ export type Org = {
 
 /** Pure: rows in, what the screen shows. Active ones first, then by name. */
 export function buildOrgs(orgs: RawOrg[], members: RawMember[], me: string, names: Record<string, string> = {}, club: RawClubMember[] = [], roles: RawRole[] = []): Org[] {
-  const rank: Record<OrgStatus, number> = { active: 0, pending: 1, paused: 2, rejected: 3 };
+  const rank: Record<OrgStatus, number> = { active: 0, pending: 1, paused: 2, rejected: 3, removed: 4 };
   return [...orgs]
     .map((o) => {
       const ms = members.filter((m) => m.org_id === o.id);
@@ -245,6 +245,15 @@ export const orgActions = {
   async approve(id: string) { return decide(id, "active"); },
   async decline(id: string, note: string) { return decide(id, "rejected", note.trim().slice(0, 200) || undefined); },
   async setPaused(id: string, paused: boolean) { return decide(id, paused ? "paused" : "active"); },
+  /** A coordinator takes a club or circle down (hidden from everyone but reviewers, its upcoming events with it) or brings it back. Nothing is deleted. */
+  async setRemoved(id: string, removed: boolean): Promise<string | null> {
+    const before = state;
+    set({ ...state, orgs: state.orgs.map((o) => (o.id === id ? { ...o, status: removed ? "removed" : "active" } : o)) });
+    if (!live) return null;
+    const { error } = await supabase!.rpc("set_org_removed", { org: id, removed });
+    if (error) { set(before); return fail("That did not save", error.message); }
+    return null;
+  },
   /** The president edits the club page: the line under the name, the About text, the category and when and where it meets. */
   async updateProfile(id: string, d: { description: string; about: string; category: string; meeting: string }): Promise<string | null> {
     const row = { description: d.description.trim().slice(0, 300), about: d.about.trim().slice(0, 1500), category: d.category, meeting: d.meeting.trim().slice(0, 160) };
