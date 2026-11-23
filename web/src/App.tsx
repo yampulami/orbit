@@ -37,6 +37,7 @@ const Landing = lazy(() => import("./pages/Landing"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Legal = lazy(() => import("./pages/Legal"));
+const EmailOff = lazy(() => import("./pages/EmailOff"));
 const Plans = lazy(() => import("./pages/Plans"));
 const Chats = lazy(() => import("./pages/Chats"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -168,6 +169,7 @@ export default function App() {
         <Route path="/auth/confirm" element={<ConfirmEmail />} />
         <Route path="/terms" element={<Legal kind="terms" />} />
         <Route path="/privacy" element={<Legal kind="privacy" />} />
+        <Route path="/email-off" element={<EmailOff />} />
         <Route path="/join/:code" element={<JoinLink />} />
         <Route path="/onboarding" element={<OnboardingGate />} />
         <Route path="/app" element={<Protected><InApp><Shell /></InApp></Protected>}>
