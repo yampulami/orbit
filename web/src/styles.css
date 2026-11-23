@@ -6159,3 +6159,8 @@ p,li{text-wrap:pretty}
 .cv-step{min-height:0;gap:8px}
 .cv-body{margin-top:14px}
 .cv-foot{margin-top:18px}
+
+/* the flat Omega head on the step bar: it sits behind the bar and rises out of it */
+.cv-peek svg{display:block;transform:translateY(100%)}
+.cv-peek[data-up] svg{transform:none}
+@media (prefers-reduced-motion:no-preference){.cv-peek svg{transition:transform .34s cubic-bezier(.34,1.5,.64,1)}.cv-peek:not([data-up]) svg{transition-duration:.2s;transition-timing-function:ease-in}}
