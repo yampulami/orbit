@@ -164,6 +164,9 @@ function Explainer() {
 function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { events: ReturnType<typeof useCampusEvents>["events"]; ready: boolean; isHost: boolean; role: Role | null; hostLabel: string | null; reviewer: boolean }) {
   const [form, setForm] = useState(false);
   const [all, setAll] = useState(false);
+  // a one-line-per-event view, for scanning a busy week; the choice is kept on this device
+  const [dense, setDense] = useState(() => { try { return localStorage.getItem("orbit-events-dense") === "1"; } catch { return false; } });
+  const toggleDense = () => setDense((d) => { try { localStorage.setItem("orbit-events-dense", d ? "0" : "1"); } catch { /* it still switches */ } return !d; });
   const [when, setWhen] = useState<"all" | "today" | "week" | "going" | "official">("all");
   const now = new Date();
   const live = events.filter((e) => isOpen(e, now) && e.status === "published");
@@ -191,7 +194,7 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
   if (form && isHost) return <section className="cevents" aria-label="New event"><EventForm hostLabel={hostLabel} role={role} onDone={() => setForm(false)} /></section>;
 
   return (
-    <section className="cevents" aria-label="Campus events">
+    <section className="cevents" aria-label="Campus events" data-dense={dense ? "" : undefined}>
       <CohostInvites />
 
       <div className="ev-top">
@@ -200,7 +203,10 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
           {filters.map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={when === f.id} disabled={f.id !== "all" && f.count === 0} onClick={() => { setWhen(f.id); setAll(false); }}>{f.label}{f.id !== "all" && <span className="chip-n">{f.count}</span>}</button>)}
         </div>
       ) : <span />}
-      {isHost && <button type="button" className="btn sm primary ev-post" onClick={() => setForm(true)}>Post an event</button>}
+      <div className="ev-tools">
+        {ready && everything.length > 3 && <button type="button" className="chip-btn ev-dense" aria-pressed={dense} onClick={toggleDense} title="One line per event">Compact</button>}
+        {isHost && <button type="button" className="btn sm primary ev-post" onClick={() => setForm(true)}>Post an event</button>}
+      </div>
       </div>
 
       {!ready ? (

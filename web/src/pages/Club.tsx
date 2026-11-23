@@ -58,6 +58,8 @@ export default function Club() {
   const feed = useClubFeed(org?.id ?? "", !!org && (org.status === "active" || org.mine || reviewer));
   const pods = useClubPods(org?.id ?? "", inside);
   const [chatFocus, setChatFocus] = useState("");
+  // groups in the sidebar can be folded away; the choice is kept on this device
+  const [folded, setFolded] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem("orbit-club-folds") ?? "[]") as string[]; } catch { return []; } });
   const tasks = useClubTasks(org?.id ?? "", inside);
   const chat = useClubChat(org?.id ?? "", inside);
   const here = useClubPresence(org?.id ?? "", session?.user.id, !!org && org.status === "active");
@@ -100,6 +102,12 @@ export default function Club() {
   const activeChan = chatChans.find((c) => c.id === chanId) ?? chatChans[0];
   const canChannels = org.owner || org.myPerms.includes("channels");
   const label = cur === "chat" ? `# ${activeChan?.name ?? "chat"}` : cur === "events" ? "Events" : cur === "pods" ? "Pods" : cur === "dashboard" ? "Manage" : "Feed";
+  const toggleFold = (id: string) => setFolded((f) => { const n = f.includes(id) ? f.filter((x) => x !== id) : [...f, id]; try { localStorage.setItem("orbit-club-folds", JSON.stringify(n)); } catch { /* it still folds */ } return n; });
+  /** A folded group stays open while the page you are on is inside it. */
+  const showGroup = (id: string, hasActive: boolean) => !folded.includes(id) || hasActive;
+  const foldLabel = (id: string, text: string) => (
+    <h2 className="chan-label"><button type="button" className="chan-fold" aria-expanded={!folded.includes(id)} onClick={() => toggleFold(id)}>{text}<ChevronDown size={12} aria-hidden="true" /></button></h2>
+  );
   const openChan = (id: string) => { setChanId(id); pick("chat"); };
 
   // On a phone, swipe right for the channels and left for the members.
@@ -148,7 +156,8 @@ export default function Club() {
             <li><button type="button" className="chan" aria-current={cur === "feed" ? "page" : undefined} onClick={() => pick("feed")}><Megaphone size={16} aria-hidden="true" /><span>Feed</span></button></li>
             {!circle && <li><button type="button" className="chan" aria-current={cur === "events" ? "page" : undefined} onClick={() => pick("events")}><CalendarDays size={16} aria-hidden="true" /><span>Events</span>{upcoming.length > 0 && <span className="rem-count">{upcoming.length}</span>}</button></li>}
           </ul>
-          {chatChans.some((c) => !c.podId) && <h2 className="chan-label">Channels</h2>}
+          {chatChans.some((c) => !c.podId) && foldLabel("channels", "Channels")}
+          {showGroup("channels", cur === "chat" && chatChans.some((c) => !c.podId && c.id === activeChan?.id)) && (<>
           <ArrangeList ids={applyOrder(chatChans.filter((c) => !c.podId), chanOrder).map((c) => c.id)} onChange={setChanOrder}>
             {applyOrder(chatChans.filter((c) => !c.podId), chanOrder).map((c) => (
               <ArrangeItem key={c.id} id={c.id} handle label={`#${c.name}`} className="chan-row"><button type="button" className="chan" aria-current={cur === "chat" && activeChan?.id === c.id ? "page" : undefined} onClick={() => openChan(c.id)}>
@@ -159,19 +168,22 @@ export default function Club() {
           <ul>
             {canChannels && inside && <li><button type="button" className="chan add" onClick={() => { setMaking(true); pick("chat"); }}><Plus size={15} aria-hidden="true" /><span>New channel</span></button></li>}
           </ul>
-          {chatChans.some((c) => c.podId) && <h2 className="chan-label">Pod chats</h2>}
+          </>)}
+          {chatChans.some((c) => c.podId) && foldLabel("pods", "Pod chats")}
+          {showGroup("pods", cur === "chat" && chatChans.some((c) => c.podId && c.id === activeChan?.id)) && (
           <ul>
             {chatChans.filter((c) => c.podId).map((c) => (
               <li key={c.id}><button type="button" className="chan" aria-current={cur === "chat" && activeChan?.id === c.id ? "page" : undefined} onClick={() => openChan(c.id)}>
                 <Hash size={15} aria-hidden="true" /><span>{c.name}</span>{c.unread > 0 && !(cur === "chat" && activeChan?.id === c.id) && <span className="rem-count">{c.unread > 9 ? "9+" : c.unread}</span>}
               </button></li>
             ))}
-          </ul>
-          <h2 className="chan-label">Club</h2>
+          </ul>)}
+          {foldLabel("club", "Club")}
+          {showGroup("club", cur === "pods" || cur === "dashboard") && (
           <ul>
             {org.status === "active" && <li><button type="button" className="chan" aria-current={cur === "pods" ? "page" : undefined} onClick={() => pick("pods")}><Orbit size={16} aria-hidden="true" /><span>Pods</span></button></li>}
             {org.mine && org.status === "active" && <li><button type="button" className="chan" aria-current={cur === "dashboard" ? "page" : undefined} onClick={() => pick("dashboard")}><ClipboardList size={16} aria-hidden="true" /><span>Manage</span>{overdue && <span className="rem-count" role="img" aria-label="Overdue tasks" title="Some tasks are overdue">!</span>}</button></li>}
-          </ul>
+          </ul>)}
         </nav>
         <button type="button" className="club-scrim" aria-label="Close panels" tabIndex={-1} onClick={() => { setChans(false); setPeople(false); }} />
 
