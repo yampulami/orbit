@@ -6244,3 +6244,25 @@ p,li{text-wrap:pretty}
   .club-bar .club-post{order:8}
   .club-bar .gm{order:9;margin-left:auto}
 }
+
+/* Manage board: a task card reads as title, due date, a compact assignee, and one quiet button */
+.tb-card{gap:8px}
+.tb-assign{width:auto;flex:none;max-width:100%}
+.tb-assign button,.tb-assign [role=combobox]{min-height:32px;padding:0 10px;font-size:var(--t-meta);border:0;background:var(--panel);border-radius:8px}
+.tb-actions{justify-content:space-between}
+.tb-actions .tb-next{border:0;background:var(--panel);font-weight:600;color:var(--ink)}
+.tb-actions .tb-next:hover{background:color-mix(in srgb,var(--ink) 10%,var(--panel))}
+.tb-card .tb-actions .link-btn{color:var(--ink-soft)}
+.tb-card .tb-actions .link-btn:hover{color:var(--ink)}
+
+/* Review: the heading is the size of the other page titles; an application reads as a two-column list; Approve is the accent button */
+.campus-main .campus-title{font-size:var(--t-h1,1.5rem);margin:0 0 4px}
+.app-details{gap:0;padding:4px 14px}
+.app-details div{grid-template-columns:120px minmax(0,1fr);gap:16px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line)}
+.app-details div:first-child{border-top:0}
+.app-details dt{text-transform:none;letter-spacing:0;font-size:var(--t-meta);font-weight:500}
+@media (max-width:560px){.app-details div{grid-template-columns:1fr;gap:2px}}
+.app-card .btn.primary,.rv-card .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .app-card .btn.primary,[data-theme=dark] .rv-card .btn.primary{color:#1a1210}
+.campus-main .btn.primary,.club-shell .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .campus-main .btn.primary,[data-theme=dark] .club-shell .btn.primary{color:#1a1210}

@@ -104,7 +104,7 @@ export default function ClubMembers({ org, here, canRoles, canMembers, reviewer,
 
       {showRoles && (
         <div className="cp-tabs" role="tablist" aria-label="People or roles">
-          <button type="button" role="tab" aria-selected={tab === "people"} onClick={() => setTab("people")}>People</button>
+          <button type="button" role="tab" aria-selected={tab === "people"} onClick={() => setTab("people")}>Members</button>
           <button type="button" role="tab" aria-selected={tab === "roles"} onClick={() => setTab("roles")}>Roles{org.roles.length > 0 ? ` · ${org.roles.length}` : ""}</button>
         </div>
       )}
