@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import ClubGlyph from "../components/ClubGlyph";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, CalendarSync, ChevronDown, Clock, ClipboardList, Hash, Info, Lock, Megaphone, Orbit, Plus, Users, X } from "lucide-react";
 import { isOpen, useCampusEvents } from "../lib/campusEvents";
 import { canHostEvents, eventsNeedApproval, orgHue, useCampusOrgs } from "../lib/campusOrgs";
@@ -40,6 +40,7 @@ const EVENTS_NOTE = "Every event this club posts shows up here, with RSVP and ch
  *  colour tints the header and the active channel; the (i) button opens everything about it. On a phone the two side panels are drawers (swipe, or tap). */
 export default function Club() {
   const { id } = useParams();
+  const goBack = useNavigate();
   const { session } = useAuth();
   const { orgs, ready } = useCampusOrgs();
   const { events, canReview: reviewer } = useCampusEvents();
@@ -124,7 +125,7 @@ export default function Club() {
   return (
     <div className="page club-page club-wide" style={{ ["--h" as string]: orgHue(org) }}>
       <header className="club-bar">
-        <Link className="club-back" to="/app/campus" aria-label="Back to Campus"><ArrowLeft size={18} aria-hidden="true" /></Link>
+        <Link className="club-back" to="/app/campus?tab=clubs" aria-label="Back to Clubs" onClick={(e) => { /* go back the way you came (the Clubs list, or wherever you opened this club from); a direct visit goes to Clubs */ if ((window.history.state?.idx ?? 0) > 0) { e.preventDefault(); goBack(-1); } }}><ArrowLeft size={18} aria-hidden="true" /></Link>
         <span className="club-planet sm" aria-hidden="true"><ClubGlyph icon={org.icon} name={org.name} /></span>
         <div className="club-bar-text">
           <h1><span className="club-bar-name" title={org.name}><RichText text={org.name} /></span>{org.status === "active" && !circle && <VerifiedBadge label={org.kind === "official" ? "Verified: official campus office" : "Verified: approved by a coordinator"} />}</h1>
