@@ -192,14 +192,16 @@ function EventsView({ events, ready, isHost, role, hostLabel, reviewer }: { even
 
   return (
     <section className="cevents" aria-label="Campus events">
-      {isHost && <div className="toolbar"><button type="button" className="btn sm primary" onClick={() => setForm(true)}>Post an event</button></div>}
       <CohostInvites />
 
-      {ready && everything.length > 0 && (
+      <div className="ev-top">
+      {ready && everything.length > 0 ? (
         <div className="chip-row" role="group" aria-label="Which events">
           {filters.map((f) => <button key={f.id} type="button" className="chip-btn" aria-pressed={when === f.id} disabled={f.id !== "all" && f.count === 0} onClick={() => { setWhen(f.id); setAll(false); }}>{f.label}{f.id !== "all" && <span className="chip-n">{f.count}</span>}</button>)}
         </div>
-      )}
+      ) : <span />}
+      {isHost && <button type="button" className="btn sm primary ev-post" onClick={() => setForm(true)}>Post an event</button>}
+      </div>
 
       {!ready ? (
         <div aria-busy="true" aria-label="Loading campus events"><div className="skeleton sk-tile" /></div>
@@ -264,7 +266,7 @@ function ClubsView({ mine, all }: { mine: Org[]; all: Org[] }) {
   return (
     <section className="clubs" aria-label="Clubs">
       {mine.length > 0 && <p className="club-in">You are in {mine.slice(0, 3).map((o, i) => <span key={o.id}>{i > 0 && ", "}<Link to={`/app/campus/clubs/${o.id}`}>{o.name}</Link></span>)}{mine.length > 3 ? ` and ${mine.length - 3} more` : ""}.</p>}
-      {everyone.length > 0 && (
+      {everyone.length >= 5 && (
         <div className="club-find">
           <label className="club-search"><Search size={16} aria-hidden="true" /><input value={q} maxLength={40} placeholder="Find a club or circle" aria-label="Find a club or circle" onChange={(e) => setQ(e.target.value)} /></label>
           {cats.length > 1 && (

@@ -128,11 +128,10 @@ export default function Club() {
           </span>
         </div>
         <JoinButton org={org} />
+        {canPost && <button type="button" className="btn sm primary club-post" onClick={() => { setView("events"); setPosting(true); }}><Plus size={15} aria-hidden="true" /> Post event</button>}
         <GradientMenu
           label="Club actions" captions
           items={[
-            ...(canPost ? [{ key: "post", label: "Post event", icon: Plus, tone: "orange" as const, onClick: () => { setView("events"); setPosting(true); } }] : []),
-            ...(org.owner && org.status === "active" && !circle ? [{ key: "import", label: "Import events", icon: CalendarSync, tone: "green" as const, on: importing, onClick: () => setImporting(true) }] : []),
             { key: "about", label: "About", icon: Info, tone: "blue" as const, on: info, onClick: () => setInfo(true) },
             { key: "people", label: "People", icon: Users, tone: "purple" as const, on: people, badge: requests > 0 ? String(requests) : undefined, onClick: () => setPeople((v) => !v) },
           ]}
@@ -171,7 +170,7 @@ export default function Club() {
           <h3 className="chan-label">Club</h3>
           <ul>
             {org.status === "active" && <li><button type="button" className="chan" aria-current={cur === "pods" ? "page" : undefined} onClick={() => pick("pods")}><Orbit size={16} aria-hidden="true" /><span>Pods</span></button></li>}
-            {org.mine && org.status === "active" && <li><button type="button" className="chan" aria-current={cur === "dashboard" ? "page" : undefined} onClick={() => pick("dashboard")}><ClipboardList size={16} aria-hidden="true" /><span>Manage</span>{overdue && <span className="rem-count" aria-label="Overdue tasks">!</span>}</button></li>}
+            {org.mine && org.status === "active" && <li><button type="button" className="chan" aria-current={cur === "dashboard" ? "page" : undefined} onClick={() => pick("dashboard")}><ClipboardList size={16} aria-hidden="true" /><span>Manage</span>{overdue && <span className="rem-count" role="img" aria-label="Overdue tasks" title="Some tasks are overdue">!</span>}</button></li>}
           </ul>
         </nav>
         <button type="button" className="club-scrim" aria-label="Close panels" tabIndex={-1} onClick={() => { setChans(false); setPeople(false); }} />
@@ -201,7 +200,7 @@ export default function Club() {
                   </>
                 ))}
               {canPost && <ClubTimes orgId={org.id} />}
-              {canPost && !posting && <button type="button" className="chan-compose" onClick={() => setPosting(true)}><Plus size={16} aria-hidden="true" /> Post an event to #events</button>}
+              {org.owner && org.status === "active" && !circle && !posting && <button type="button" className="link-btn club-import" onClick={() => setImporting(true)}><CalendarSync size={14} aria-hidden="true" /> Import events from your club's web page</button>}
               {gone.length > 0 && !(posting && canPost) && (
                 <div className="ev-past">
                   <button type="button" className="link-btn" aria-expanded={past} onClick={() => setPast((v) => !v)}>{past ? "Hide" : "Show"} past and declined events ({gone.length})</button>

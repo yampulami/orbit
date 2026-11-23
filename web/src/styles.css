@@ -6188,3 +6188,59 @@ p,li{text-wrap:pretty}
 .look-all>summary{cursor:pointer;list-style:none;min-height:44px;display:inline-flex;align-items:center;color:var(--ink-soft);font-size:var(--t-meta);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .look-all>summary::-webkit-details-marker{display:none}
 .look-all[open]>summary{color:var(--ink)}
+
+/* Campus > Events: filters and the host's button share one row; invitations are one tight row; an event's rare actions fold into a menu */
+.ev-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ev-top .chip-row{margin:0}
+.ev-post{flex:none}
+.cohost-invites li{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.cohost-invites .htools-main{display:grid;gap:2px;min-width:0;flex:1 1 280px}
+.cohost-invites .htools-row{display:flex;gap:8px}
+.ev-menu{position:relative}
+.ev-menu>summary{list-style:none;cursor:pointer;display:grid;place-items:center;width:44px;height:44px;border-radius:8px;color:var(--ink-soft)}
+.ev-menu>summary::-webkit-details-marker{display:none}
+.ev-menu>summary:hover,.ev-menu[open]>summary{background:var(--panel);color:var(--ink)}
+.ev-menu-list{position:absolute;right:0;bottom:calc(100% + 2px);z-index:30;display:grid;min-width:170px;padding:6px;border-radius:12px;background:var(--surface);box-shadow:0 0 0 1px var(--line),0 12px 28px -12px rgba(0,0,0,.5)}
+.ev-menu-list button{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 10px;border:0;border-radius:8px;background:none;color:var(--ink);font:inherit;font-size:var(--t-meta);text-align:left;cursor:pointer}
+.ev-menu-list button:hover{background:var(--panel)}
+.ev-more{margin-left:auto;display:inline-flex;align-items:center;gap:8px}
+.ev-actions .link-btn{color:var(--ink-soft)}
+.ev-actions .link-btn:hover{color:var(--ink)}
+
+/* the step-by-step flow sits in the middle of the Campus page; steps with several answers name each one */
+.campus-main .cv{margin:0 auto;padding-top:20px}
+.cv-field{display:grid;gap:6px}
+.cv-label{font-size:var(--t-meta);font-weight:600;color:var(--ink-soft)}
+
+/* inside a club: the officer's action is a button; the menu next to it is just About and People */
+.club-bar .club-post{flex:none;min-height:44px;gap:6px}
+.club-import{color:var(--ink-soft)}
+.my-tasks .btn{border:0;background:var(--panel);font-weight:600}
+.my-tasks .btn:hover{background:color-mix(in srgb,var(--ink) 10%,var(--panel))}
+.club-bar .btn.club-post{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .club-bar .btn.club-post{color:#1a1210}
+.club-shell .link-btn.club-import{color:var(--ink-soft)}
+.club-shell .link-btn.club-import:hover{color:var(--ink)}
+.cohost-invites .btn.primary,.club-page .cohost-invites .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .cohost-invites .btn.primary,[data-theme=dark] .club-page .cohost-invites .btn.primary{color:#1a1210}
+/* inside a club, only the main action is orange: text links are quiet until hovered */
+.club-shell .link-btn{color:var(--ink-soft)}
+.club-shell .link-btn:hover{color:var(--ink)}
+/* map: while the buildings load, the place where the map will be holds its shape */
+.map-loading{display:grid;gap:12px}
+.map-skel{height:min(52vh,420px);border-radius:12px}
+.map-loading p{margin:0;font-size:var(--t-meta)}
+@media (max-width:700px){
+  .ev-top{flex-wrap:wrap}
+  .ev-top .chip-row{flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .ev-top .chip-row::-webkit-scrollbar{display:none}
+  .ev-top .chip-row .chip-btn{flex:none}
+  .ev-post{width:100%}
+}
+/* phone: the club's name gets its own row, the actions sit on the row below it */
+@media (max-width:700px){
+  .club-bar{flex-wrap:wrap;row-gap:10px}
+  .club-bar .club-bar-text{flex:1 1 calc(100% - 120px);min-width:0}
+  .club-bar .club-post{order:8}
+  .club-bar .gm{order:9;margin-left:auto}
+}

@@ -123,7 +123,10 @@ export default function CampusMap({ embedded = false }: { embedded?: boolean }) 
   if (!campus) {
     return (
       <div className={shell}><h1 className="sr">Campus map</h1>
-        <div className="map-empty" role="status"><h2>Finding your campus</h2><p>Looking up the buildings. This takes a few seconds the first time.</p></div>
+        <div className="map-loading" role="status" aria-live="polite">
+          <div className="skeleton map-skel" aria-hidden="true" />
+          <p><b>Finding your campus.</b> <span className="muted">Looking up the buildings. This takes a few seconds the first time.</span></p>
+        </div>
       </div>
     );
   }

@@ -1,6 +1,10 @@
 import { CATEGORIES, EMPTY_APP, orgActions, problemWithOrg, type Application, type OrgKind } from "../lib/campusOrgs";
 import ClubLook from "./ClubLook";
 import Converse, { CvChips, CvInput, CvText, type Step } from "./Converse";
+import type { ReactNode } from "react";
+
+/** A field with its name written above it, for steps that ask for more than one thing (a placeholder is not a label). */
+const Field = ({ label, children }: { label: string; children: ReactNode }) => <div className="cv-field"><span className="cv-label">{label}</span>{children}</div>;
 
 type S = { name: string; purpose: string; category: string; accent: number | null; advisorName: string; advisorEmail: string; meeting: string; size: string; firstEvent: string; contact: string; office: string; line: string; icon: string };
 const start: S = { name: "", purpose: "", category: "", accent: null, advisorName: "", advisorEmail: "", meeting: "", size: "", firstEvent: "", contact: "", office: "", line: "", icon: "" };
@@ -39,28 +43,26 @@ export default function ClubApplication({ reviewer, mode = "club", onSent, onCan
             render: (s, set, go) => <CvText label="Purpose" value={s.purpose} onChange={(v) => set({ purpose: v })} go={go} maxLength={600} placeholder="We play casual games, run beginner lessons and hold a spring tournament. Everyone is welcome." /> },
           categoryStep,
           iconStep,
-          { id: "adviser", ask: "Who is your faculty or staff adviser?", hint: "Every club needs one. Their name and email.",
-            check: (s) => (s.advisorName.trim().length < 2 || !/^\S+@\S+\.\S+$/.test(s.advisorEmail.trim()) ? "Add the adviser's name and a valid email." : null),
+          { id: "people", ask: "Who is behind it?", hint: "Every club needs a faculty or staff adviser. Add how the coordinator can reach you too.",
+            check: (s) => (s.advisorName.trim().length < 2 || !/^\S+@\S+\.\S+$/.test(s.advisorEmail.trim()) ? "Add the adviser's name and a valid email." : s.contact.trim().length < 3 ? "Add a way to reach you." : null),
+            render: (s, set) => (
+              <div className="cv-pair">
+                <Field label="Adviser name"><CvInput label="Adviser name" value={s.advisorName} onChange={(v) => set({ advisorName: v })} placeholder="Dr. Rivera" maxLength={80} /></Field>
+                <Field label="Adviser email"><CvInput label="Adviser email" type="email" inputMode="email" autoFocus={false} value={s.advisorEmail} onChange={(v) => set({ advisorEmail: v })} placeholder="rivera@university.edu" maxLength={120} /></Field>
+                <Field label="Your email or phone"><CvInput label="Contact" autoFocus={false} value={s.contact} onChange={(v) => set({ contact: v })} placeholder="you@university.edu" maxLength={120} /></Field>
+              </div>) },
+          { id: "meeting", ask: "When and where will you meet?", hint: "It can change later. The last two are optional.", check: (s) => (s.meeting.trim().length < 3 ? "Say where and when the club meets." : null),
             render: (s, set, go) => (
               <div className="cv-pair">
-                <CvInput label="Adviser name" value={s.advisorName} onChange={(v) => set({ advisorName: v })} placeholder="Dr. Rivera" maxLength={80} />
-                <CvInput label="Adviser email" type="email" inputMode="email" autoFocus={false} value={s.advisorEmail} onChange={(v) => set({ advisorEmail: v })} go={go} placeholder="rivera@university.edu" maxLength={120} />
+                <Field label="Meeting time and place"><CvInput label="Meeting time and place" value={s.meeting} onChange={(v) => set({ meeting: v })} maxLength={160} placeholder="Thursdays at 6 PM, Student Center room 204" /></Field>
+                <Field label="Expected members"><CvInput label="Expected members" autoFocus={false} inputMode="numeric" value={s.size} onChange={(v) => set({ size: v.replace(/\D/g, "").slice(0, 5) })} placeholder="About 25 people" maxLength={5} /></Field>
+                <Field label="A first event you would hold"><CvInput label="First event" autoFocus={false} value={s.firstEvent} onChange={(v) => set({ firstEvent: v })} go={go} placeholder="An open tournament in week 3" maxLength={300} /></Field>
               </div>) },
-          { id: "meeting", ask: "When and where will you meet?", hint: "It can change later.", check: (s) => (s.meeting.trim().length < 3 ? "Say where and when the club meets." : null),
-            render: (s, set, go) => <CvInput label="Meeting time and place" value={s.meeting} onChange={(v) => set({ meeting: v })} go={go} maxLength={160} placeholder="Thursdays at 6 PM, Student Center room 204" /> },
-          { id: "more", ask: "Anything else the coordinator should know?", hint: "How many people you expect, and a first event you would hold. Both optional.", optional: true, empty: (s) => !s.size.trim() && !s.firstEvent.trim(),
-            render: (s, set, go) => (
-              <div className="cv-pair">
-                <CvInput label="Expected members" inputMode="numeric" value={s.size} onChange={(v) => set({ size: v.replace(/\D/g, "").slice(0, 5) })} placeholder="About 25 people" maxLength={5} />
-                <CvInput label="First event" autoFocus={false} value={s.firstEvent} onChange={(v) => set({ firstEvent: v })} go={go} placeholder="An open tournament in week 3" maxLength={300} />
-              </div>) },
-          { id: "contact", ask: "How can the coordinator reach you?", hint: "An email or a phone number.", check: (s) => (s.contact.trim().length < 3 ? "Add a way to reach you." : null),
-            render: (s, set, go) => <CvInput label="Contact" value={s.contact} onChange={(v) => set({ contact: v })} go={go} maxLength={120} placeholder="you@university.edu" /> },
         ];
 
   const summary = circle || reviewer ? undefined : (s: S): [string, string, string][] => [
-    ["Name", s.name, "name"], ["Purpose", s.purpose, "purpose"], ["Category", s.category, "category"], ["Look", s.icon || s.accent !== null ? "Chosen" : "", "icon"], ["Adviser", s.advisorName ? `${s.advisorName}, ${s.advisorEmail}` : "", "adviser"],
-    ["Meets", s.meeting, "meeting"], ["Expected size", s.size ? `${s.size} people` : "", "more"], ["First event", s.firstEvent, "more"], ["Contact", s.contact, "contact"],
+    ["Name", s.name, "name"], ["Purpose", s.purpose, "purpose"], ["Category", s.category, "category"], ["Look", s.icon || s.accent !== null ? "Chosen" : "", "icon"], ["Adviser", s.advisorName ? `${s.advisorName}, ${s.advisorEmail}` : "", "people"],
+    ["Meets", s.meeting, "meeting"], ["Expected size", s.size ? `${s.size} people` : "", "meeting"], ["First event", s.firstEvent, "meeting"], ["Contact", s.contact, "people"],
   ];
 
   async function submit(s: S): Promise<string | null> {

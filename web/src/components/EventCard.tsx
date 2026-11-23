@@ -1,6 +1,6 @@
 import { useState } from "react";
 import GradientMenu from "./GradientMenu";
-import { BadgeCheck, Check, Clock, Flag, Gamepad2, Hammer, MapPin, Mic, PartyPopper, QrCode, Star, Store, Trophy, UserRound, Users, Utensils, X } from "lucide-react";
+import { BadgeCheck, Check, Clock, Flag, Gamepad2, Hammer, MapPin, MoreHorizontal, Mic, PartyPopper, QrCode, Star, Store, Trophy, UserRound, Users, Utensils, X } from "lucide-react";
 import { eventActions, hostedBy, type CampusEvent } from "../lib/campusEvents";
 import { countdown, eventFlavor, hueFor, type FlavorKey } from "../lib/look";
 import { notice } from "../lib/notice";
@@ -110,16 +110,25 @@ export default function EventCard({ e, reviewer, featured = false }: { e: Campus
               : <button type="button" className="btn" onClick={() => setCi(true)}><QrCode size={14} aria-hidden="true" /> Check in</button>)}
             {e.manage && !e.canceled && <button type="button" className="link-btn" aria-expanded={runCi} onClick={() => setRunCi((v) => !v)}>{checkinOpen(e, new Date()) ? "Check-in" : "Attendance"}</button>}
             <span className="ev-more">
-              {!e.mineHost && !e.canceled && (reporting
-                ? <form className="cevent-report" onSubmit={async (ev) => { ev.preventDefault(); await eventActions.report(e.id, why); setReporting(false); setWhy(""); notice.show({ icon: "pin", title: "Thanks for telling us", message: "A coordinator will take a look.", ms: 4000 }); }}>
+              {!e.mineHost && !e.canceled && reporting && (
+                <form className="cevent-report" onSubmit={async (ev) => { ev.preventDefault(); await eventActions.report(e.id, why); setReporting(false); setWhy(""); notice.show({ icon: "pin", title: "Thanks for telling us", message: "A coordinator will take a look.", ms: 4000 }); }}>
                     <input aria-label="What is wrong? (optional)" autoFocus value={why} maxLength={200} placeholder="What is wrong? (optional)" onChange={(x) => setWhy(x.target.value)} />
                     <button className="btn">Report</button><button type="button" className="btn" onClick={() => setReporting(false)}>Back</button>
                   </form>
-                : <button type="button" className="link-btn report-btn" onClick={() => { setReporting(true); setWhy(""); }}><Flag size={12} aria-hidden="true" /> Report</button>)}
-              {reviewer && !e.mineHost && <button type="button" className="link-btn report-btn" onClick={() => { void eventActions.setRemoved(e.id, true); notice.show({ icon: "calendar", title: "Event removed", message: "It is hidden from students.", ms: 3500 }); }}>Remove</button>}
-              {e.mineHost && !e.canceled && (sure
-                ? <span className="cevent-sure"><button type="button" className="btn danger" onClick={() => { void eventActions.cancel(e.id); setSure(false); notice.show({ icon: "calendar", title: "Event cancelled", message: "People who said going or interested have been told.", ms: 4000 }); }}>Yes, cancel it</button><button type="button" className="btn" onClick={() => setSure(false)}>Keep it</button></span>
-                : <button type="button" className="btn" onClick={() => setSure(true)}>Cancel event</button>)}
+              )}
+              {e.mineHost && !e.canceled && sure && (
+                <span className="cevent-sure"><button type="button" className="btn danger" onClick={() => { void eventActions.cancel(e.id); setSure(false); notice.show({ icon: "calendar", title: "Event cancelled", message: "People who said going or interested have been told.", ms: 4000 }); }}>Yes, cancel it</button><button type="button" className="btn" onClick={() => setSure(false)}>Keep it</button></span>
+              )}
+              {!reporting && !sure && !e.canceled && (
+                <details className="ev-menu">
+                  <summary aria-label={`More about ${e.title}`} title="More"><MoreHorizontal size={18} aria-hidden="true" /></summary>
+                  <div className="ev-menu-list" role="menu">
+                    {!e.mineHost && <button type="button" role="menuitem" onClick={(x) => { x.currentTarget.closest("details")?.removeAttribute("open"); setReporting(true); setWhy(""); }}><Flag size={14} aria-hidden="true" /> Report</button>}
+                    {reviewer && !e.mineHost && <button type="button" role="menuitem" onClick={(x) => { x.currentTarget.closest("details")?.removeAttribute("open"); void eventActions.setRemoved(e.id, true); notice.show({ icon: "calendar", title: "Event removed", message: "It is hidden from students.", ms: 3500 }); }}>Remove</button>}
+                    {e.mineHost && <button type="button" role="menuitem" onClick={(x) => { x.currentTarget.closest("details")?.removeAttribute("open"); setSure(true); }}>Cancel event</button>}
+                  </div>
+                </details>
+              )}
             </span>
           </div>
         )}
