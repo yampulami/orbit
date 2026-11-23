@@ -1,6 +1,6 @@
 import ClubGlyph from "./ClubGlyph";
 import IconChooser from "./IconChooser";
-import { CLUB_HUES } from "../lib/clubIcons";
+import { CLUB_HUES, hueName } from "../lib/clubIcons";
 
 /** "Make it yours" for a new club: what it will look like (the tile and name, in the colour chosen), a colour, and an icon (ones that suit the name first).
  *  Choosing something tells Omega on the step bar to glance down at it. */
@@ -18,7 +18,7 @@ export default function ClubLook({ name, category, icon, accent, onIcon, onAccen
         <p className="look-h">Colour</p>
         <div className="look-colours" role="radiogroup" aria-label="Colour">
           {CLUB_HUES.map((h) => (
-            <button key={h} type="button" role="radio" aria-checked={accent === h} aria-label={`Colour ${h}`} className="look-sw" style={{ ["--h" as string]: h }}
+            <button key={h} type="button" role="radio" aria-checked={accent === h} aria-label={hueName(h)} title={hueName(h)} className="look-sw" style={{ ["--h" as string]: h }}
               onClick={() => { onAccent(accent === h ? null : h); glance(); }} />
           ))}
         </div>

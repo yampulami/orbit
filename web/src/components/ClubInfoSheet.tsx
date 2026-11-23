@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { BadgeCheck, Check, Pause, Play, ShieldCheck, UserRound, Users, X } from "lucide-react";
 import IconChooser from "./IconChooser";
-import { CLUB_HUES } from "../lib/clubIcons";
+import { CLUB_HUES, hueName } from "../lib/clubIcons";
 import { orgActions, orgHue, type Org } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
 import ClubAbout from "./ClubAbout";
@@ -20,7 +20,7 @@ function LookPicker({ org }: { org: Org }) {
       <h3 className="about-sub">Colour and icon</h3>
       <div className="look-row" role="radiogroup" aria-label="Colour">
         {HUES.map((h) => (
-          <button key={h} type="button" role="radio" aria-checked={hue === h} aria-label={`Colour ${h}`} className="look-sw" style={{ ["--h" as string]: h }} onClick={() => void orgActions.updateLook(org.id, { accent: h, icon: org.icon })} />
+          <button key={h} type="button" role="radio" aria-checked={hue === h} aria-label={hueName(h)} title={hueName(h)} className="look-sw" style={{ ["--h" as string]: h }} onClick={() => void orgActions.updateLook(org.id, { accent: h, icon: org.icon })} />
         ))}
       </div>
       <IconChooser value={org.icon} name={org.name} onChange={(icon) => void orgActions.updateLook(org.id, { accent: org.accent ?? null, icon }).then((m) => { if (m) notice.show({ icon: "alert", title: "Could not save the icon", message: m }); })} />
@@ -66,7 +66,7 @@ export default function ClubInfoSheet({ org, reviewer, canRoles, seesApplication
                 <button type="button" className="btn" onClick={() => setDeclining(true)}>Decline</button>
               </>
             ))}
-            {org.status === "active" && org.kind === "student" && <button type="button" className="btn" aria-pressed={org.trusted} onClick={() => void orgActions.setTrusted(org.id, !org.trusted)}><ShieldCheck size={14} aria-hidden="true" /> {org.trusted ? "Stop trusting" : "Trust this club"}</button>}
+            {org.status === "active" && org.kind === "student" && <button type="button" className="btn" onClick={() => void orgActions.setTrusted(org.id, !org.trusted)}><ShieldCheck size={14} aria-hidden="true" /> {org.trusted ? "Stop trusting" : "Trust this club"}</button>}
             {org.status === "active" && <button type="button" className="btn" onClick={() => void orgActions.setPaused(org.id, true)}><Pause size={14} aria-hidden="true" /> Pause</button>}
             {org.status === "paused" && <button type="button" className="btn" onClick={() => void orgActions.setPaused(org.id, false)}><Play size={14} aria-hidden="true" /> Resume</button>}
           </div>

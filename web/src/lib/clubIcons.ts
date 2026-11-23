@@ -85,3 +85,7 @@ export function suggestIcons(name: string, category: string, max = 8): ClubIconR
   if (g) iconsIn(g).forEach(add);
   return out;
 }
+
+/** What to call each club colour out loud (a screen reader, a tooltip). */
+const HUE_NAMES: Record<number, string> = { 12: "Red", 28: "Orange", 45: "Gold", 95: "Green", 150: "Mint", 185: "Teal", 210: "Blue", 340: "Pink" };
+export const hueName = (h: number) => HUE_NAMES[h] ?? "Colour";

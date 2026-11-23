@@ -83,7 +83,7 @@ export default function ReviewPanel() {
               </div>
               <div className="htools-row">
                 {o.kind === "student" && o.status === "active" && (
-                  <button type="button" className="btn" aria-pressed={o.trusted} onClick={() => void orgActions.setTrusted(o.id, !o.trusted)}><ShieldCheck size={14} aria-hidden="true" /> {o.trusted ? "Stop trusting" : "Trust this club"}</button>
+                  <button type="button" className="btn" onClick={() => void orgActions.setTrusted(o.id, !o.trusted)}><ShieldCheck size={14} aria-hidden="true" /> {o.trusted ? "Stop trusting" : "Trust this club"}</button>
                 )}
                 {o.status === "active" && <button type="button" className="btn" onClick={() => void orgActions.setPaused(o.id, true)}><Pause size={14} aria-hidden="true" /> Pause</button>}
                 {o.status === "paused" && <button type="button" className="btn" onClick={() => void orgActions.setPaused(o.id, false)}><Play size={14} aria-hidden="true" /> Resume</button>}

@@ -45,3 +45,11 @@ describe("suggested icons", () => {
     expect(suggestIcons("Zzzz", "")).toEqual([]);
   });
 });
+
+describe("colour names", () => {
+  it("names every club colour, so a swatch is not read out as a number", async () => {
+    const { CLUB_HUES, hueName } = await import("./clubIcons");
+    for (const h of CLUB_HUES) expect(hueName(h)).not.toBe("Colour");
+    expect(new Set(CLUB_HUES.map(hueName)).size).toBe(CLUB_HUES.length);
+  });
+});

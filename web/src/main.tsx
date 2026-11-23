@@ -9,8 +9,10 @@ import "@fontsource-variable/hanken-grotesk";
 import "@fontsource-variable/bricolage-grotesque";
 import "./styles.css";
 import { startHaptics } from "./lib/haptics";
+import { startRovingTabs } from "./lib/rovingTabs";
 
 startHaptics();
+startRovingTabs();
 
 // A new deploy renames the built files. A tab opened before it can fail to load a screen: reload once to pick up the new build.
 window.addEventListener("vite:preloadError", () => {

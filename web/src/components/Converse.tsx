@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import PeekProgress from "./PeekProgress";
@@ -42,6 +42,7 @@ export default function Converse<S>({ title, steps, initial, summary, note, subm
   const reviewing = !!summary && i === steps.length;
   const step = steps[i];
   const lastQuestion = !summary && i === steps.length - 1;
+  const root = useRef<HTMLElement>(null);
   const stateRef = useRef(s);
   stateRef.current = s;
   const set = (p: Partial<S>) => { setS((x) => ({ ...x, ...p })); setError(""); };
@@ -65,9 +66,27 @@ export default function Converse<S>({ title, steps, initial, summary, note, subm
   const back = () => { setError(""); setDir(-1); setI((n) => Math.max(0, n - 1)); };
   const jump = (id: string) => { const at = steps.findIndex((x) => x.id === id); if (at >= 0) { setError(""); setDir(-1); setI(at); } };
 
+  // A new question: if nothing in it took the cursor (a field does that itself), the question is read out, so a screen reader hears where it is.
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      const el = root.current;
+      if (!el) return;
+      if (el.querySelector(".cv-body")?.contains(document.activeElement)) return; // a field already has the cursor
+      el.querySelector<HTMLElement>(".cv-ask")?.focus({ preventScroll: true });
+    }, 320);
+    return () => window.clearTimeout(t);
+  }, [i]);
+  // The message is tied to the answers it is about, so it is read with the field and the field is marked as the problem.
+  useEffect(() => {
+    root.current?.querySelectorAll<HTMLElement>(".cv-body input, .cv-body textarea").forEach((f) => {
+      if (error) { f.setAttribute("aria-describedby", "cv-error"); f.setAttribute("aria-invalid", "true"); }
+      else { f.removeAttribute("aria-describedby"); f.removeAttribute("aria-invalid"); }
+    });
+  }, [error, i]);
+
   const skippable = !!step && !!step.optional && !!step.empty?.(s);
   return (
-    <section className="cv" aria-label={title}>
+    <section className="cv" aria-label={title} ref={root}>
       <header className="cv-top">
         <span className="cv-n" aria-hidden="true">{reviewing ? "Review" : `${i + 1} of ${total}`}</span>
         <PeekProgress count={total} index={i} label={`${title}, step ${i + 1} of ${total}`} />
@@ -79,7 +98,7 @@ export default function Converse<S>({ title, steps, initial, summary, note, subm
           initial={reduce ? { opacity: 0 } : { opacity: 0, x: dir * 28 }} animate={{ opacity: 1, x: 0 }} exit={reduce ? { opacity: 0 } : { opacity: 0, x: dir * -28 }} transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}>
           {reviewing ? (
             <>
-              <h2 className="cv-ask">Look good?</h2>
+              <h2 className="cv-ask" tabIndex={-1}>Look good?</h2>
               <p className="cv-hint">{note ?? "Check your answers. Tap one to change it."}</p>
               <dl className="cv-review">
                 {summary!(s).filter(([, v]) => v).map(([label, value, id]) => (
@@ -89,12 +108,12 @@ export default function Converse<S>({ title, steps, initial, summary, note, subm
             </>
           ) : (
             <>
-              <h2 className="cv-ask">{step.ask}</h2>
+              <h2 className="cv-ask" tabIndex={-1}>{step.ask}</h2>
               {step.hint && <p className="cv-hint">{step.hint}</p>}
               <div className="cv-body">{step.render(s, set, go)}</div>
             </>
           )}
-          {error && <p className="error cv-error" role="alert">{error}</p>}
+          {error && <p className="error cv-error" id="cv-error" role="alert">{error}</p>}
         </motion.div>
       </AnimatePresence>
 

@@ -6266,3 +6266,14 @@ p,li{text-wrap:pretty}
 [data-theme=dark] .app-card .btn.primary,[data-theme=dark] .rv-card .btn.primary{color:#1a1210}
 .campus-main .btn.primary,.club-shell .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 [data-theme=dark] .campus-main .btn.primary,[data-theme=dark] .club-shell .btn.primary{color:#1a1210}
+
+/* phone fixes from the Campus critique: the People drawer is solid, the Events page cannot be wider than the screen, the chat Send button stays inside */
+.campus-main,.cevents,.clubs{grid-template-columns:minmax(0,1fr)}
+.cevents>*,.campus-main>*{min-width:0;max-width:100%}
+@media (max-width:700px){
+  .cmem-panel{background:var(--surface);border-left:1px solid var(--line);padding:calc(14px + env(safe-area-inset-top)) 16px calc(88px + env(safe-area-inset-bottom)) 16px;box-shadow:-18px 0 40px -20px rgba(0,0,0,.6)}
+  .cc-compose{min-width:0}
+  .cc-compose .btn{width:44px;min-width:44px;padding:0;justify-content:center}
+}
+
+.cv-ask:focus,.cv-ask:focus-visible{outline:0}
