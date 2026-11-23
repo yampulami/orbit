@@ -6344,3 +6344,11 @@ p,li{text-wrap:pretty}
 
 /* the email choices sit under their master switch */
 .notif-sub{display:grid;gap:0;margin:0 0 4px 16px;padding-left:12px;border-left:1px solid var(--line)}
+
+/* Join state in the club header: a single quiet button; on hover or focus it says what pressing it does */
+.join-state{position:relative;display:inline-grid;min-width:132px;justify-items:center;background:none;border:1px solid var(--line);color:var(--ink-soft)}
+.join-state .js-now,.join-state .js-act{display:inline-flex;align-items:center;gap:6px;grid-area:1/1}
+.join-state .js-act{opacity:0;color:var(--ink)}
+.join-state:hover .js-now,.join-state:focus-visible .js-now{opacity:0}
+.join-state:hover .js-act,.join-state:focus-visible .js-act{opacity:1}
+.join-state:hover{border-color:var(--ink-soft)}

@@ -3,6 +3,7 @@ import { Check, Clock, UserPlus, X } from "lucide-react";
 import { orgActions, type Org } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
 import JoinSheet from "./JoinSheet";
+import { undo } from "../lib/undo";
 
 const ago = (iso: string) => {
   const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -12,9 +13,12 @@ const ago = (iso: string) => {
 /** For someone who is not an officer: ask to join, see that the request is waiting, or leave. */
 export function JoinButton({ org }: { org: Org }) {
   const [asking, setAsking] = useState(false);
+  const [left, setLeft] = useState(false); // taken back a moment ago: still undoable, so the header already shows the club as not joined
   if (org.status !== "active" || org.myJoin === "officer") return null;
-  if (org.myJoin === "member") return <div className="join-row"><span className="ebadge student"><Check size={12} aria-hidden="true" /> You are in this club</span><button type="button" className="link-btn" onClick={() => void orgActions.leaveClub(org.id)}>Leave</button></div>;
-  if (org.myJoin === "pending") return <div className="join-row"><span className="ebadge wait"><Clock size={12} aria-hidden="true" /> Waiting for an officer to answer</span><button type="button" className="link-btn" onClick={() => void orgActions.leaveClub(org.id)}>Take back</button></div>;
+  // One quiet button per state. It says where you stand; on hover it says what pressing it does. Pressing it can be undone for a few seconds.
+  const leave = (what: string) => { setLeft(true); undo.show(what, { ms: 8000, onUndo: () => setLeft(false), commit: async () => { await orgActions.leaveClub(org.id); setLeft(false); } }); };
+  if (org.myJoin === "member" && !left) return <div className="join-row"><button type="button" className="btn sm join-state" aria-label="You are in this club. Activate to leave." onClick={() => leave(`You left ${org.name}`)}><span className="js-now"><Check size={14} aria-hidden="true" /> Member</span><span className="js-act" aria-hidden="true"><X size={14} /> Leave club</span></button></div>;
+  if (org.myJoin === "pending" && !left) return <div className="join-row"><button type="button" className="btn sm join-state" aria-label="Your request is waiting for an officer. Activate to cancel it." onClick={() => leave("Request cancelled")}><span className="js-now"><Clock size={14} aria-hidden="true" /> Requested</span><span className="js-act" aria-hidden="true"><X size={14} /> Cancel request</span></button></div>;
   if (org.kind === "circle") {
     return <div className="join-row"><button type="button" className="btn sm primary" onClick={async () => { const r = await orgActions.requestJoin(org.id, ""); if (!r) notice.show({ icon: "calendar", title: `You joined ${org.name}`, message: "It is a casual circle, so you are in right away.", ms: 3500 }); }}><UserPlus size={16} aria-hidden="true" /> Join circle</button></div>;
   }
