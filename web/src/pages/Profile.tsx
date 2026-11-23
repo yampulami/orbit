@@ -242,7 +242,7 @@ export default function Profile() {
       <section className="notif-card" aria-label="Notifications">
         <div>
           <h2>Notifications</h2>
-          <p className="muted">The bell in the top bar collects what needs you. Choose what it includes.</p>
+          <p className="muted">The bell in the top bar collects what needs you. Choose what it includes. If something sits unread for a while, one email gathers it.</p>
         </div>
         {([["hangouts", "Hangouts waiting for your answer"], ["reminders", "Reminders when they are due"], ["places", "Places on the map waiting for a vote"]] as const).map(([k, label]) => (
           <div className="notif-row" key={k}>
@@ -250,6 +250,10 @@ export default function Profile() {
             <button type="button" role="switch" aria-checked={nudges[k]} aria-labelledby={`n-${k}`} className="switch" onClick={() => uid && setNudge(uid, k, !nudges[k])}><span /></button>
           </div>
         ))}
+        <div className="notif-row">
+          <span id="n-email">Email me what I missed</span>
+          <button type="button" role="switch" aria-checked={nudges.email !== false} aria-labelledby="n-email" className="switch" onClick={() => uid && setNudge(uid, "email", nudges.email === false)}><span /></button>
+        </div>
         <div className="notif-row">
           <span id="n-device">Alert me on this device</span>
           <button type="button" role="switch" aria-checked={device.on} aria-labelledby="n-device" className="switch" onClick={toggleDevice} disabled={!device.supported}><span /></button>
