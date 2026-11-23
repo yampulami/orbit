@@ -3,12 +3,13 @@ import { useEffect, useRef, useState } from "react";
 /** The progress bar of a step-by-step flow, with Omega in it like a whack-a-mole: the segment you are on has his head and eyes poking up over it. Press next and he
  *  ducks down, pops up out of the next segment. He is a flat drawing (the same shapes and colours as his reference sheet: orange shell, black visor, ice-blue eyes),
  *  not the 3D model: at this size the glossy model turned into a black disc, and a flat head sits properly among the flat bars. Head only, and he holds still. */
-const W = 64, H = 40;
+/** The head is as wide as the segment it comes out of (never wider, so it cannot hang over the ends), up to this size. */
+const MAX_W = 64;
 const reduced = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-function Head() {
+function Head({ w }: { w: number }) {
   return (
-    <svg viewBox="0 0 64 64" width={W} height={64} aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 64 64" width={w} height={w} aria-hidden="true" focusable="false">
       <defs><clipPath id="omega-shell"><circle cx="32" cy="38" r="30" /></clipPath></defs>
       {/* the shell */}
       <circle cx="32" cy="38" r="30" fill="#F76F1C" />
@@ -33,14 +34,17 @@ export default function PeekProgress({ count, index, label }: { count: number; i
   const at = useRef(index);
   const calm = useRef(reduced());
   const [x, setX] = useState<number | null>(null);
+  const [w, setW] = useState(MAX_W);
   const [up, setUp] = useState(false);
   const [glance, setGlance] = useState(false);
 
   const centreOf = (n: number) => { const s = seg.current[n]; return s ? s.offsetLeft + s.offsetWidth / 2 : null; };
+  const fit = () => { const s = seg.current[at.current]; if (s) setW(Math.max(24, Math.min(MAX_W, Math.floor(s.offsetWidth)))); };
 
   // the first pop up
   useEffect(() => {
     const c = centreOf(at.current); if (c !== null) setX(c);
+    fit();
     const t = window.setTimeout(() => setUp(true), calm.current ? 0 : 280);
     return () => window.clearTimeout(t);
   }, []);
@@ -66,7 +70,8 @@ export default function PeekProgress({ count, index, label }: { count: number; i
 
   // keep him under the right segment when the window changes size
   useEffect(() => {
-    const on = () => { const c = centreOf(at.current); if (c !== null) setX(c); };
+    const on = () => { const c = centreOf(at.current); if (c !== null) setX(c); fit(); };
+    on();
     window.addEventListener("resize", on);
     return () => window.removeEventListener("resize", on);
   }, [count]);
@@ -74,7 +79,7 @@ export default function PeekProgress({ count, index, label }: { count: number; i
   return (
     <div className="cv-progress cv-peeking" role="progressbar" aria-label={label} aria-valuemin={1} aria-valuemax={count} aria-valuenow={index + 1}>
       {Array.from({ length: count }, (_, n) => <i key={n} ref={(e) => { seg.current[n] = e; }} className={n < index ? "done" : n === index ? "now" : ""} />)}
-      <div className="cv-peek" data-up={up ? "" : undefined} data-glance={glance ? "" : undefined} aria-hidden="true" style={{ width: W, height: H, left: x === null ? -999 : x - W / 2 }}><Head /></div>
+      <div className="cv-peek" data-up={up ? "" : undefined} data-glance={glance ? "" : undefined} aria-hidden="true" style={{ width: w, height: Math.round(w * 0.625), left: x === null ? -999 : x - w / 2 }}><Head w={w} /></div>
     </div>
   );
 }
