@@ -17,6 +17,8 @@ const DAILY_COOLDOWN_HOURS = 22; // ... or once a day for students who chose tha
 const REMIND_AHEAD_HOURS = 24; // event reminders go out once an event is this close
 const REMIND_MIN_MINUTES = 30; // ... and are skipped when it is almost starting
 const MAX_PEOPLE = 100; // per run
+const DAILY_CAP = 60; // emails per UTC day, to stay well inside the free Resend plan (100 a day)
+let budget = 0; // emails still allowed today; set at the start of each run
 const MAX_LINES = 8;
 const NEVER = "1970-01-01T00:00:00Z"; // "handled, no email" mark: older than any cooldown window
 
@@ -89,6 +91,19 @@ async function sendEmail(to: string, user: string, subject: string, intro: strin
 
 const emailOf = async (user: string) => (await db.auth.admin.getUserById(user)).data.user?.email;
 
+/** How many emails went out since midnight UTC: each email stamps its rows with one shared time, so count distinct (student, time) pairs. */
+async function sentToday(now: number): Promise<number> {
+  const day = new Date(now); day.setUTCHours(0, 0, 0, 0);
+  const since = day.toISOString();
+  const [a, b] = await Promise.all([
+    db.from("notifications").select("recipient_id,emailed_at").gte("emailed_at", since).limit(5000),
+    db.from("email_event_reminders").select("user_id,sent_at").gte("sent_at", since).limit(5000),
+  ]);
+  if (a.error) throw new Error(a.error.message);
+  if (b.error) throw new Error(b.error.message);
+  return new Set([...(a.data ?? []).map((r) => `n${r.recipient_id}${r.emailed_at}`), ...(b.data ?? []).map((r) => `e${r.user_id}${r.sent_at}`)]).size;
+}
+
 /** What has sat unread in the bell: one email per student, only for the kinds they want, no more often than their chosen rhythm. */
 async function unreadEmails(now: number): Promise<number> {
   const rows = await db.from("notifications").select("id,recipient_id,actor_id,kind,body,post_id")
@@ -125,6 +140,7 @@ async function unreadEmails(now: number): Promise<number> {
     const skipped = mine.filter((r) => !wanted.includes(r));
     if (skipped.length) await db.from("notifications").update({ emailed_at: NEVER }).in("id", skipped.map((r) => r.id));
     if (!wanted.length) continue;
+    if (budget <= 0) break; // out of emails for today: the rest wait for tomorrow (they are still unread, up to 48 hours)
     if ((p.emailDaily ? lastIds : shortIds).has(user)) continue;
     const to = await emailOf(user);
     if (!to) continue;
@@ -134,7 +150,7 @@ async function unreadEmails(now: number): Promise<number> {
     const intro = n === 1 ? "You have something new:" : `You have ${n} new things:`;
     if (await sendEmail(to, user, subject, intro, shown, n - shown.length)) {
       await db.from("notifications").update({ emailed_at: new Date().toISOString() }).in("id", wanted.map((r) => r.id));
-      emailed++;
+      emailed++; budget--;
     }
   }
   return emailed;
@@ -177,6 +193,7 @@ async function eventReminders(now: number): Promise<number> {
       await db.from("email_event_reminders").upsert(mine.map((e) => ({ event_id: e.id, user_id: user })));
       continue;
     }
+    if (budget <= 0) break;
     const to = await emailOf(user);
     if (!to) continue;
     const lines: Item[] = mine.map((e) => {
@@ -186,7 +203,7 @@ async function eventReminders(now: number): Promise<number> {
     const subject = mine.length === 1 ? `Coming up: ${mine[0].title}`.slice(0, 90) : `${mine.length} events you are going to are coming up`;
     if (await sendEmail(to, user, subject, mine.length === 1 ? "An event you are going to is coming up:" : "Events you are going to are coming up:", lines, 0)) {
       await db.from("email_event_reminders").upsert(mine.map((e) => ({ event_id: e.id, user_id: user })));
-      count++;
+      count++; budget--;
     }
   }
   return count;
@@ -206,6 +223,8 @@ Deno.serve(async (req) => {
   if (!env("RESEND_API_KEY")) return new Response("Email is not set up", { status: 503 });
   try {
     const now = Date.now();
+    budget = DAILY_CAP - (await sentToday(now));
+    if (budget <= 0) return Response.json({ emailed: 0, reminders: 0, note: "daily cap reached" });
     const emailed = await unreadEmails(now);
     const reminders = await eventReminders(now);
     return Response.json({ emailed, reminders });
