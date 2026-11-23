@@ -55,8 +55,11 @@ describe("notifications", () => {
   it("words each kind with the person's name", () => {
     expect(describeNotif(n({}), "Maya").title).toBe("Maya replied to your comment");
     expect(describeNotif(n({ kind: "friend_request", body: "sent you a friend request" }), "Leo")).toMatchObject({ title: "Leo wants to be your friend", to: `/app/people/${MAYA}` });
-    expect(describeNotif(n({ kind: "message", body: "Lunch?" }), "Maya")).toMatchObject({ title: "Maya sent you a message", sub: "Lunch?", to: "/app/messages" });
+    expect(describeNotif(n({ kind: "message", body: "Lunch?" }), "Maya")).toMatchObject({ title: "Maya sent you a message", sub: "Lunch?", to: "/app/chats" });
     expect(describeNotif(n({ kind: "group_add", body: "added you to Study squad" }), "Maya")).toMatchObject({ title: "Maya added you to Study squad", to: "/app/groups" });
+  });
+  it("opens the conversation that generated the notification", () => {
+    expect(describeNotif(n({ kind: "message", conversation_id: "yami-thread" }), "Yami").to).toBe("/app/chats?thread=yami-thread");
   });
   it("sorts newest first and marks unread ones", () => {
     const list = buildNotifs([n({ id: 1, created_at: "2026-10-22T09:00:00Z", read_at: "2026-10-22T09:30:00Z" }), n({ id: 2, created_at: "2026-10-22T11:00:00Z" })], ME, { [MAYA]: "Maya" });

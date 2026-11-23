@@ -107,16 +107,16 @@ export const dmActions = {
     set({ ...state });
   },
   /** Send a message. It shows at once and is saved in the background; if saving fails you are told and the real list comes back. */
-  send(threadId: string, text: string) {
+  async send(threadId: string, text: string): Promise<string | null> {
     const body = text.trim().slice(0, 2000);
-    if (!body || !who) return;
+    if (!body || !who) return "A signed-in account and a message are required.";
     const cur = state.threads.find((t) => t.id === threadId);
-    if (cur?.incoming) return; // answer the request first
-    if (cur?.waiting && (cur.sent ?? 0) >= REQUEST_LIMIT) { notice.show({ icon: "alert", title: "Waiting for a reply", message: "You can send more once they reply or accept." }); return; }
+    if (cur?.incoming) return "Accept the message request first."; // answer the request first
+    if (cur?.waiting && (cur.sent ?? 0) >= REQUEST_LIMIT) { notice.show({ icon: "alert", title: "Waiting for a reply", message: "You can send more once they reply or accept." }); return "Wait for them to reply or accept."; }
     const me = who, id = crypto.randomUUID(), at = new Date().toISOString();
     haptic("send");
     set({ ...state, threads: addSent(state.threads, threadId, { id, text: body, at }) }); // shows now, and the conversation moves to the top
-    dbRun("Sending that message", () => supabase!.from("direct_messages").insert({ id, conversation_id: threadId, sender_id: me, body }), () => void reload(), () => {
+    return dbRun("Sending that message", () => supabase!.from("direct_messages").insert({ id, conversation_id: threadId, sender_id: me, body }), () => void reload(), () => {
       const note = { table: "direct_messages", id, op: "upsert" } as const;
       sendNudge(threadId, note);
       const other = state.threads.find((t) => t.id === threadId)?.otherId;

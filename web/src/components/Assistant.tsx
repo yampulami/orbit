@@ -221,9 +221,15 @@ export default function Assistant() {
     let id = activeId;
     if (!id || !history.chats.some((c) => c.id === id)) { id = history.start(); setActiveId(id); }
     history.add(id, makeMsg("user", text));
-    setThinking(true);
     const chatId = id;
     const before = history.chats.find((c) => c.id === chatId)?.messages ?? [];
+    const last = before[before.length - 1];
+    const decision = text.trim().toLowerCase().replace(/[.!]$/, "");
+    if (last?.pending?.state === "pending" && ["yes", "confirm", "no", "cancel"].includes(decision)) {
+      void decide(last.id, decision === "yes" || decision === "confirm");
+      return;
+    }
+    setThinking(true);
     void think(before, text).then((r) => {
       const m = makeMsg("assistant", r.text, { ...(r.go ? { go: r.go, goLabel: r.goLabel } : {}), ...(r.pending ? { pending: r.pending } : {}) });
       history.add(chatId, m);
@@ -302,7 +308,7 @@ export default function Assistant() {
         void makeGroupAndInvite({ name, friends: chosen.map((f) => ({ id: f.id, name: f.name })) });
       },
       createEvent: async (d) => (await eventActions.create({ ...d, orgKind: d.orgKind as never })).error,
-      sendMessage: async (pid, text) => { const t = await dmActions.start(pid); if (!t) return "Could not open that chat."; dmActions.send(t, text); return null; },
+      sendMessage: async (pid, text) => { const t = await dmActions.start(pid); if (!t) return "Could not open that chat."; return dmActions.send(t, text); },
     };
   }
   const newChat = () => { setActiveId(null); setFreshId(null); setThinking(false); };

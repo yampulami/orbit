@@ -8,7 +8,7 @@ export type Notif = { id: number; kind: string; actorId: string | null; actor: s
 /** Pure: what a notification says and where tapping it goes. The database writes the wording after the person's name ("replied to your comment"). */
 export function describe(n: RawNotif, actor: string): Pick<Notif, "title" | "sub" | "to"> {
   switch (n.kind) {
-    case "message": return { title: `${actor} sent you a message`, sub: n.body || undefined, to: "/app/messages" };
+    case "message": return { title: `${actor} sent you a message`, sub: n.body || undefined, to: n.conversation_id ? "/app/chats?thread=" + encodeURIComponent(n.conversation_id) : "/app/chats" };
     case "friend_request": return { title: `${actor} wants to be your friend`, to: n.actor_id ? `/app/people/${n.actor_id}` : "/app/groups" };
     case "friend_accept": return { title: `${actor} accepted your friend request`, to: n.actor_id ? `/app/people/${n.actor_id}` : "/app/groups" };
     case "group_add": return { title: `${actor} ${n.body || "added you to a group"}`, to: "/app/groups" };

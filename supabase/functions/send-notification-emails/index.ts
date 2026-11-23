@@ -22,7 +22,7 @@ let budget = 0; // emails still allowed today; set at the start of each run
 const MAX_LINES = 8;
 const NEVER = "1970-01-01T00:00:00Z"; // "handled, no email" mark: older than any cooldown window
 
-type Row = { id: number; recipient_id: string; actor_id: string | null; kind: string; body: string; post_id: string | null };
+type Row = { id: number; recipient_id: string; actor_id: string | null; kind: string; body: string; post_id: string | null; conversation_id: string | null };
 type Item = { text: string; url: string };
 type Prefs = { email?: boolean; emailMessages?: boolean; emailSocial?: boolean; emailCampus?: boolean; emailEvents?: boolean; emailDaily?: boolean };
 
@@ -39,7 +39,7 @@ function item(r: Row, who: Map<string, string>): Item {
   const body = r.body.trim();
   const text = !name || /^(approved|not approved|paused|you were)/i.test(body) ? body || "Something new in Orbit" : `${name} ${body}`.trim();
   let path = "/app";
-  if (r.kind === "message") path = "/app/chats";
+  if (r.kind === "message") path = r.conversation_id ? "/app/chats?thread=" + encodeURIComponent(r.conversation_id) : "/app/chats";
   else if (r.kind === "group_add") path = "/app/chats?tab=groups";
   else if (r.kind === "friend_request" || r.kind === "friend_accept") path = r.actor_id ? `/app/people/${r.actor_id}` : "/app/chats";
   else if (r.kind === "event" || r.kind === "hangout" || r.kind === "place") path = "/app/campus";
@@ -106,7 +106,7 @@ async function sentToday(now: number): Promise<number> {
 
 /** What has sat unread in the bell: one email per student, only for the kinds they want, no more often than their chosen rhythm. */
 async function unreadEmails(now: number): Promise<number> {
-  const rows = await db.from("notifications").select("id,recipient_id,actor_id,kind,body,post_id")
+  const rows = await db.from("notifications").select("id,recipient_id,actor_id,kind,body,post_id,conversation_id")
     .is("emailed_at", null).is("read_at", null)
     .lte("created_at", new Date(now - QUIET_MINUTES * 60_000).toISOString())
     .gte("created_at", new Date(now - LOOKBACK_HOURS * 3600_000).toISOString())

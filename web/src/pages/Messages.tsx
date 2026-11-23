@@ -27,18 +27,21 @@ const seedThreads: Record<string, Msg[]> = {
 };
 
 export default function Messages() {
-  return dmLive ? <LiveMessages /> : <SampleMessages />;
+  const location = useLocation();
+  const arrival = location.state as { thread?: string; draft?: string } | null;
+  const thread = new URLSearchParams(location.search).get("thread") || arrival?.thread;
+  return dmLive ? <LiveMessages key={thread ? location.key : "inbox"} thread={thread} draft={arrival?.draft} /> : <SampleMessages />;
 }
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 /** Direct messages with students on your campus. New messages show up on their own, without refreshing. */
-function LiveMessages() {
+function LiveMessages({ thread, draft }: { thread?: string; draft?: string }) {
   const { threads, people, status } = useDms();
   const phone = useIsPhone();
-  const [chatOpen, setChatOpen] = useState(false); // phone: false shows the list of chats, true shows one chat full screen
-  const [active, setActive] = useState<string>("");
-  const [text, setText] = useState("");
+  const [chatOpen, setChatOpen] = useState(!!thread); // phone: false shows the list of chats, true shows one chat full screen
+  const [active, setActive] = useState(thread ?? "");
+  const [text, setText] = useState(draft ?? "");
   const att = useAttachment();
   const [picking, setPicking] = useState(false);
   const [q, setQ] = useState("");
@@ -47,21 +50,17 @@ function LiveMessages() {
   const { session } = useAuth();
   const [typingAt, setTypingAt] = useState(0);
   const [, tick] = useState(0);
-  // Arriving from someone's profile ("Message") opens that conversation.
-  const arrival = useLocation().state as { thread?: string; draft?: string } | null;
-  const asked = arrival?.thread;
-  const askedDraft = arrival?.draft; // e.g. a question about a listing, ready to send or change
   // Someone who is not your friend wrote to you: it waits under "Message requests" until you accept or delete it.
   const requests = threads.filter((t) => t.incoming);
   const regular = threads.filter((t) => !t.incoming);
   const [inRequests, setInRequests] = useState(false);
+  const selected = threads.find((t) => t.id === active);
   useEffect(() => {
-    if (!asked) return;
-    setActive(asked); setPicking(false); setChatOpen(true); setInRequests(!!threads.find((t) => t.id === asked)?.incoming);
-    if (askedDraft) { setText(askedDraft); window.setTimeout(() => dmInput.current?.focus(), 80); }
-  }, [asked, askedDraft]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (thread && active === thread && selected) setInRequests(!!selected.incoming);
+  }, [thread, active, selected?.incoming, selected?.id]);
+  useEffect(() => { if (draft) dmInput.current?.focus(); }, [draft, selected?.id]);
   useEffect(() => { if (inRequests && requests.length === 0) { setInRequests(false); setActive(""); } }, [inRequests, requests.length]);
-  const current = threads.find((t) => t.id === active) ?? (picking ? undefined : (inRequests ? requests[0] : regular[0]));
+  const current = selected ?? (picking || (thread && active === thread) ? undefined : (inRequests ? requests[0] : regular[0]));
   const shownId = current?.id ?? "";
   const inChat = !phone || chatOpen || picking;
   useChatOpenClass(phone && inChat);
@@ -206,6 +205,8 @@ function LiveMessages() {
           ) : (
             status === "loading" ? (
               <div className="dm-empty" aria-busy="true" aria-label="Loading your messages"><div className="skeleton sk-line" /><div className="skeleton sk-line short" /><div className="skeleton sk-tile" /></div>
+            ) : thread && active === thread && status !== "error" ? (
+              <p className="dm-empty-note">This conversation is no longer available.</p>
             ) : (
               <div className="dm-empty-note">
                 <p><strong>{status === "error" ? "Messages did not load." : "No messages yet."}</strong> {status === "error" ? "Check your connection, then try again." : "Start a conversation with someone on your campus."}</p>

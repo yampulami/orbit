@@ -314,9 +314,34 @@ export async function performAction(env: AiEnv, p: Pending): Promise<{ ok: boole
 
 const LABELS: Record<string, string> = { my_moments: "Checking what lines up", find_free_time: "Comparing free time", my_reminders: "Checking your reminders", my_clubs: "Looking at your clubs", notifications: "Reading your notifications", recent_posts: "Reading the feed", event_details: "Looking at that event", search_events: "Checking events", search_clubs: "Looking at clubs", find_people: "Finding people", my_schedule: "Checking your schedule", my_groups: "Looking at your groups", inbox_summary: "Checking your inbox", open_page: "Getting that ready" };
 
+function actionCard(tool: string, prepared: { summary: string; args: Record<string, unknown> }): Pending {
+  return { ...prepared, id: crypto.randomUUID(), tool, state: "pending", expiresAt: new Date(Date.now() + PENDING_MINUTES * 60000).toISOString() };
+}
+
+/** A fully specified text can be drafted even when the AI service is unavailable. */
+async function directMessageDraft(env: AiEnv, input: string): Promise<AiTurn | undefined> {
+  const command = input.trim().replace(/^(?:can|could|would) you\s+/i, "").replace(/^please\s+/i, "");
+  const match = /^(?:send\s+(.+?)\s+(?:a\s+)?(?:text|message)(?:\s+of)?\s+saying\s+|(?:text|message)\s+(.+?)(?:\s+saying\s+|:\s*))([\s\S]+)$/i.exec(command);
+  if (!match) return;
+  const recipient = (match[1] || match[2]).trim().toLowerCase();
+  const message = match[3].trim().replace(/^(?:"([\s\S]*)"|“([\s\S]*)”)$/, (_, plain, curly) => plain ?? curly);
+  const people = new Map([...env.friends, ...await env.findPeople(recipient)].map((p) => [p.id, p]));
+  const matches = [...people.values()].filter((p) => p.username?.toLowerCase() === recipient.replace(/^@/, "") || p.name.toLowerCase() === recipient);
+  if (matches.length !== 1) return { text: "Please repeat the message request with the recipient’s exact @username so I can select the right person." };
+  const [person] = matches;
+  const prepared = prepareAction(env, "send_message", { person_id: person.id, person_name: person.name, text: message });
+  if ("error" in prepared) return { text: prepared.error };
+  return { text: "Send this message? Choose Confirm or reply yes.", pending: actionCard("send_message", prepared) };
+}
+
 export async function converse(opts: { history: ModelMsg[]; env: AiEnv; model: (messages: ModelMsg[]) => Promise<ModelMsg>; onStep?: (label: string) => void }): Promise<AiTurn> {
   const { env, model, onStep } = opts;
   const msgs: ModelMsg[] = [...opts.history];
+  const latest = msgs[msgs.length - 1];
+  if (latest?.role === "user") {
+    const draft = await directMessageDraft(env, latest.content ?? "");
+    if (draft) return draft;
+  }
   let go: string | undefined, goLabel: string | undefined;
   for (let round = 0; round < 5; round++) {
     const reply = await model(msgs);
@@ -330,7 +355,7 @@ export async function converse(opts: { history: ModelMsg[]; env: AiEnv; model: (
       if (isWrite(name)) {
         const prepared = prepareAction(env, name, args);
         if ("error" in prepared) { msgs.push({ role: "tool", tool_call_id: c.id, content: prepared.error }); continue; }
-        return { text: (reply.content ?? "").trim() || "Here is what I will do. Confirm it and I will go ahead.", go, goLabel, pending: { id: crypto.randomUUID(), tool: name, summary: prepared.summary, args: prepared.args, state: "pending", expiresAt: new Date(Date.now() + PENDING_MINUTES * 60000).toISOString() } };
+        return { text: (reply.content ?? "").trim() || "Here is what I will do. Confirm it and I will go ahead.", go, goLabel, pending: actionCard(name, prepared) };
       }
       onStep?.(LABELS[name] ?? "Working on it");
       const out = await read(env, name, args).catch(() => ({ result: "That lookup failed." } as Out));

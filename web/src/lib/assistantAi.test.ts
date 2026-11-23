@@ -35,6 +35,27 @@ const say = (content: string): ModelMsg => ({ role: "assistant", content });
 const use = (...calls: ToolCall[]): ModelMsg => ({ role: "assistant", content: null, tool_calls: calls });
 const user = (content: string): ModelMsg => ({ role: "user", content });
 
+describe("direct message drafts", () => {
+  const history = [user("can you send yami text of saying good morning")];
+  const yami = { id: "yami-id", name: "YAMI", username: "yami" };
+  it("prepares the requested recipient and text without calling a model or sending early", async () => {
+    const e = env({ findPeople: async () => [yami] });
+    const model = vi.fn();
+    const turn = await converse({ history, env: e, model });
+    expect(model).not.toHaveBeenCalled();
+    expect(e.sendMessage).not.toHaveBeenCalled();
+    expect(turn.pending?.args).toEqual({ personId: yami.id, name: "YAMI", text: "good morning" });
+    await performAction(e, turn.pending!);
+    expect(e.sendMessage).toHaveBeenCalledWith(yami.id, "good morning");
+  });
+  it("asks for a username when the name matches two people", async () => {
+    const e = env({ findPeople: async () => [yami, { ...yami, id: "other", username: "another" }] });
+    const turn = await converse({ history, env: e, model: vi.fn() });
+    expect(turn.pending).toBeUndefined();
+    expect(turn.text).toContain("@username");
+  });
+});
+
 describe("reading tools", () => {
   it("looks events up and feeds them back to the model before answering", async () => {
     const seen: ModelMsg[][] = [];

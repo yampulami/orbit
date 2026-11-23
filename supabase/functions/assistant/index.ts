@@ -9,7 +9,7 @@
 //   OPENROUTER_API_KEY  OpenRouter (free ":free" models, and paid ones)
 // Optional:
 //   AI_MODELS      a JSON array that replaces the list of models below, since services rename and retire models:
-//                  [{"id":"fast","label":"Fast","provider":"groq","model":"llama-3.1-8b-instant","note":"quick answers","paid":false}]
+//                  [{"id":"fast","label":"Fast","provider":"groq","model":"openai/gpt-oss-20b","note":"quick answers","paid":false}]
 //   AI_ALLOW_PAID  set to 1 to let students pick models marked "paid": true (they cost money per use). Off by default.
 //   AI_DEFAULT     the id of the model used when the student has not picked one.
 //
@@ -43,7 +43,7 @@ if (env("AI_BASE_URL")) PROVIDERS.groq.base = env("AI_BASE_URL").replace(/\/$/, 
 type ModelDef = { id: string; label: string; provider: string; model: string; note?: string; paid?: boolean };
 const DEFAULT_MODELS: ModelDef[] = [
   { id: "groq-llama-70b", label: "Llama 3.3 70B (Groq)", provider: "groq", model: env("AI_MODEL") || "llama-3.3-70b-versatile", note: "Best all-rounder" },
-  { id: "groq-llama-8b", label: "Llama 3.1 8B (Groq)", provider: "groq", model: "llama-3.1-8b-instant", note: "Fastest, simpler answers" },
+  { id: "groq-gpt-oss-20b", label: "GPT-OSS 20B (Groq)", provider: "groq", model: "openai/gpt-oss-20b", note: "Fast, supports Orbit actions" },
   { id: "cerebras-gpt-oss", label: "GPT-OSS 120B (Cerebras)", provider: "cerebras", model: "gpt-oss-120b", note: "Strong reasoning, very fast" },
   { id: "openrouter-free", label: "Llama 3.3 70B (OpenRouter, free)", provider: "openrouter", model: "meta-llama/llama-3.3-70b-instruct:free", note: "Free, limited per day" },
 ];
