@@ -254,6 +254,20 @@ export default function Profile() {
           <span id="n-email">Email me what I missed</span>
           <button type="button" role="switch" aria-checked={nudges.email !== false} aria-labelledby="n-email" className="switch" onClick={() => uid && setNudge(uid, "email", nudges.email === false)}><span /></button>
         </div>
+        {nudges.email !== false && (
+          <div className="notif-sub" role="group" aria-label="What to email">
+            {([["emailMessages", "Messages and group adds"], ["emailSocial", "Likes, comments, replies and friends"], ["emailCampus", "Campus and club news"], ["emailEvents", "Reminders for events I am going to"]] as const).map(([k, label]) => (
+              <div className="notif-row" key={k}>
+                <span id={`n-${k}`}>{label}</span>
+                <button type="button" role="switch" aria-checked={nudges[k] !== false} aria-labelledby={`n-${k}`} className="switch" onClick={() => uid && setNudge(uid, k, nudges[k] === false)}><span /></button>
+              </div>
+            ))}
+            <div className="notif-row">
+              <span id="n-emailDaily">One email a day at most</span>
+              <button type="button" role="switch" aria-checked={nudges.emailDaily === true} aria-labelledby="n-emailDaily" className="switch" onClick={() => uid && setNudge(uid, "emailDaily", nudges.emailDaily !== true)}><span /></button>
+            </div>
+          </div>
+        )}
         <div className="notif-row">
           <span id="n-device">Alert me on this device</span>
           <button type="button" role="switch" aria-checked={device.on} aria-labelledby="n-device" className="switch" onClick={toggleDevice} disabled={!device.supported}><span /></button>

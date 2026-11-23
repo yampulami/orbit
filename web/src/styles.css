@@ -6341,3 +6341,6 @@ p,li{text-wrap:pretty}
 .cf-avlink:hover .av,.cf-avlink:focus-visible .av{outline:2px solid var(--accent);outline-offset:1px}
 .who-link{color:inherit;text-decoration:none}
 .who-link:hover strong,.who-link:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* the email choices sit under their master switch */
+.notif-sub{display:grid;gap:0;margin:0 0 4px 16px;padding-left:12px;border-left:1px solid var(--line)}

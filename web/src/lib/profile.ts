@@ -17,7 +17,7 @@ export type Profile = {
   living: Living;
   interests: string[];
   streaks: boolean;
-  nudges: { hangouts: boolean; reminders: boolean; places: boolean; email?: boolean };
+  nudges: { hangouts: boolean; reminders: boolean; places: boolean; email?: boolean; emailMessages?: boolean; emailSocial?: boolean; emailCampus?: boolean; emailEvents?: boolean; emailDaily?: boolean };
   look: Look;
   doneAt: string;
 };
