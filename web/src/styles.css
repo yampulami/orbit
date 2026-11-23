@@ -6327,3 +6327,11 @@ p,li{text-wrap:pretty}
 /* sheets taller than the window scroll inside themselves, so the buttons stay reachable */
 .sheet-back{overflow-y:auto}
 .sheet{max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain}
+
+/* club header: the name keeps one line and the actions line up with it; the join state is a quiet pill and a small link */
+.club-bar{align-items:center}
+.club-bar-text{flex:1 1 0;min-width:0}
+.club-bar h1{flex-wrap:nowrap;min-width:0}
+.club-bar-name{display:block;-webkit-line-clamp:unset;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.club-bar .join-row{flex:none;flex-wrap:nowrap;white-space:nowrap;gap:8px}
+.club-bar .join-row .link-btn{min-height:0;padding:4px 6px;font-size:var(--t-meta);font-weight:500;color:var(--ink-soft)}
