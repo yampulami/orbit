@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { BadgeCheck, Check, Pause, Play, ShieldCheck, UserRound, Users, X } from "lucide-react";
 import IconChooser from "./IconChooser";
+import { CLUB_HUES } from "../lib/clubIcons";
 import { orgActions, orgHue, type Org } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
 import ClubAbout from "./ClubAbout";
@@ -9,7 +10,7 @@ import ApplicationDetails from "./ApplicationDetails";
 import RichText from "./RichText";
 
 /** Everything about the club that used to sit on its front: what it is, when it meets, the president's editing, roles, the application and the coordinator's controls. */
-const HUES = [12, 28, 45, 95, 150, 185, 210, 340];
+const HUES = CLUB_HUES;
 
 /** The president picks the club's colour and icon. They tint its rail icon, header and highlights for everyone. */
 function LookPicker({ org }: { org: Org }) {

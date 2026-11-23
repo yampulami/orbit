@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CLUB_ICONS, CLUB_ICON_GROUPS, cleanClubIcon, iconCode, isLibraryIcon, libraryIcon, searchIcons } from "./clubIcons";
+import { CLUB_ICONS, CLUB_ICON_GROUPS, cleanClubIcon, iconCode, isLibraryIcon, libraryIcon, searchIcons, suggestIcons } from "./clubIcons";
 
 describe("club icon library", () => {
   it("has icons in every group, each with a short unique id that fits the database column", () => {
@@ -23,5 +23,25 @@ describe("club icon library", () => {
   it("finds icons by name or group", () => {
     expect(searchIcons("chess").length + searchIcons("games").length).toBeGreaterThan(0);
     expect(searchIcons("")).toEqual([]);
+  });
+});
+
+describe("suggested icons", () => {
+  const labels = (name: string, category = "") => suggestIcons(name, category).map((r) => r.label.toLowerCase());
+  it("puts icons that go with the name first", () => {
+    expect(labels("Photography Club")[0]).toBe("camera");
+    expect(labels("Chess Club")).toContain("chess");
+    expect(labels("Robotics Club")).toContain("robot");
+    expect(labels("Martial Arts Club")).toEqual(expect.arrayContaining(["boxing glove"]));
+  });
+  it("fills the rest from the category's group, without repeats, up to the limit", () => {
+    const out = suggestIcons("Photography Club", "Arts and culture", 8);
+    expect(out.length).toBe(8);
+    expect(new Set(out.map((r) => r.id)).size).toBe(8);
+    expect(out.slice(2).every((r) => r.group === "Arts and culture")).toBe(true);
+  });
+  it("still offers something for an unknown name with a category, and nothing with neither", () => {
+    expect(suggestIcons("Zzzz", "Academic").length).toBeGreaterThan(0);
+    expect(suggestIcons("Zzzz", "")).toEqual([]);
   });
 });

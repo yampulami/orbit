@@ -99,9 +99,12 @@ export default function Converse<S>({ title, steps, initial, summary, note, subm
       </AnimatePresence>
 
       <footer className="cv-foot">
-        {i > 0 ? <button type="button" className="link-btn" onClick={back}><ArrowLeft size={14} aria-hidden="true" /> Back</button> : <span />}
-        <button type="button" className={"btn sm" + (skippable && !lastQuestion && !reviewing ? "" : " primary")} disabled={busy} onClick={go}>
-          {busy ? "Sending…" : reviewing || lastQuestion ? <>{submitLabel} <Check size={15} aria-hidden="true" /></> : skippable ? "Skip" : <>Continue <ArrowRight size={15} aria-hidden="true" /></>}
+        <div className="cv-foot-l">
+          {i > 0 ? <button type="button" className="link-btn" onClick={back}><ArrowLeft size={14} aria-hidden="true" /> Back</button> : <span />}
+          {skippable && !lastQuestion && !reviewing && <button type="button" className="link-btn cv-skip" onClick={go}>Skip this</button>}
+        </div>
+        <button type="button" className="btn sm primary" disabled={busy} onClick={go}>
+          {busy ? "Sending…" : reviewing || lastQuestion ? <>{submitLabel} <Check size={15} aria-hidden="true" /></> : <>Continue <ArrowRight size={15} aria-hidden="true" /></>}
         </button>
       </footer>
     </section>

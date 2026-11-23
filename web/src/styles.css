@@ -6164,3 +6164,27 @@ p,li{text-wrap:pretty}
 .cv-peek svg{display:block;transform:translateY(100%)}
 .cv-peek[data-up] svg{transform:none}
 @media (prefers-reduced-motion:no-preference){.cv-peek svg{transition:transform .34s cubic-bezier(.34,1.5,.64,1)}.cv-peek:not([data-up]) svg{transition-duration:.2s;transition-timing-function:ease-in}}
+
+/* club setup: "Make it yours" (a preview, colours, suggested icons, all icons) and the step footer */
+.club-look{display:grid;gap:22px}
+.look-h{margin:0 0 8px;font-size:var(--t-meta);font-weight:600;color:var(--ink-soft)}
+.look-preview{--tint:hsl(var(--h) 70% 93%);--tint-ink:hsl(var(--h) 45% 30%);display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+[data-theme=dark] .look-preview{--tint:hsl(var(--h) 32% 22%);--tint-ink:hsl(var(--h) 70% 86%)}
+.look-tile{display:grid;place-items:center;flex:none;width:52px;height:52px;border-radius:12px;background:var(--tint);color:var(--tint-ink);font-family:var(--display);font-weight:700;font-size:1.3rem}
+.look-tile .club-glyph{width:56%;height:56%}
+.look-pname{min-width:0}
+.look-pname strong{display:block;font-size:var(--t-row);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.look-pname em{font-style:normal;color:var(--ink-soft);font-size:var(--t-meta)}
+.look-colours{display:flex;gap:10px;flex-wrap:wrap}
+.icon-chooser{gap:18px}
+.icon-chooser .look-search{max-width:none;width:100%}
+.look-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:8px}
+.icon-chooser .look-groups{flex-wrap:wrap;overflow:visible;gap:2px 18px}
+.cv-foot-l{display:flex;align-items:center;gap:18px}
+.cv-skip{color:var(--ink-soft)}
+.cv-peek .omega-eyes{transition:transform .22s ease}
+.cv-peek[data-glance] .omega-eyes{transform:translateY(2.6px)}
+.look-all{display:grid;gap:12px}
+.look-all>summary{cursor:pointer;list-style:none;min-height:44px;display:inline-flex;align-items:center;color:var(--ink-soft);font-size:var(--t-meta);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.look-all>summary::-webkit-details-marker{display:none}
+.look-all[open]>summary{color:var(--ink)}

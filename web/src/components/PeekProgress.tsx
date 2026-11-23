@@ -20,8 +20,10 @@ function Head() {
       {/* the cap on top */}
       <ellipse cx="32" cy="15" rx="12.5" ry="8" fill="#F76F1C" stroke="#C44208" strokeWidth="1.4" />
       {/* the eyes */}
-      <path d="M18.5 33 Q24 32 28.5 37.5" fill="none" stroke="#A1C3E0" strokeWidth="3" strokeLinecap="round" />
-      <path d="M45.5 33 Q40 32 35.5 37.5" fill="none" stroke="#A1C3E0" strokeWidth="3" strokeLinecap="round" />
+      <g className="omega-eyes">
+        <path d="M18.5 33 Q24 32 28.5 37.5" fill="none" stroke="#A1C3E0" strokeWidth="3" strokeLinecap="round" />
+        <path d="M45.5 33 Q40 32 35.5 37.5" fill="none" stroke="#A1C3E0" strokeWidth="3" strokeLinecap="round" />
+      </g>
     </svg>
   );
 }
@@ -32,6 +34,7 @@ export default function PeekProgress({ count, index, label }: { count: number; i
   const calm = useRef(reduced());
   const [x, setX] = useState<number | null>(null);
   const [up, setUp] = useState(false);
+  const [glance, setGlance] = useState(false);
 
   const centreOf = (n: number) => { const s = seg.current[n]; return s ? s.offsetLeft + s.offsetWidth / 2 : null; };
 
@@ -53,6 +56,14 @@ export default function PeekProgress({ count, index, label }: { count: number; i
     return () => { window.clearTimeout(t1); window.clearTimeout(t2); };
   }, [index]);
 
+  // something was picked below (a colour, an icon): his eyes drop to it for a moment
+  useEffect(() => {
+    let t = 0;
+    const on = () => { setGlance(true); window.clearTimeout(t); t = window.setTimeout(() => setGlance(false), 1100); };
+    window.addEventListener("cv:picked", on);
+    return () => { window.removeEventListener("cv:picked", on); window.clearTimeout(t); };
+  }, []);
+
   // keep him under the right segment when the window changes size
   useEffect(() => {
     const on = () => { const c = centreOf(at.current); if (c !== null) setX(c); };
@@ -63,7 +74,7 @@ export default function PeekProgress({ count, index, label }: { count: number; i
   return (
     <div className="cv-progress cv-peeking" role="progressbar" aria-label={label} aria-valuemin={1} aria-valuemax={count} aria-valuenow={index + 1}>
       {Array.from({ length: count }, (_, n) => <i key={n} ref={(e) => { seg.current[n] = e; }} className={n < index ? "done" : n === index ? "now" : ""} />)}
-      <div className="cv-peek" data-up={up ? "" : undefined} aria-hidden="true" style={{ width: W, height: H, left: x === null ? -999 : x - W / 2 }}><Head /></div>
+      <div className="cv-peek" data-up={up ? "" : undefined} data-glance={glance ? "" : undefined} aria-hidden="true" style={{ width: W, height: H, left: x === null ? -999 : x - W / 2 }}><Head /></div>
     </div>
   );
 }
