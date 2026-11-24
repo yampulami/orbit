@@ -1,8 +1,9 @@
 // A personal email for an account, so a student keeps Orbit after the school deletes their school address.
 //
-//   start    (signed in)  { email }              sends a 6 digit code to that address
+//   start    (signed in)  { email, password }    sends a 6 digit code to that address (the password shows it is the owner, not someone at an open laptop)
 //   confirm  (signed in)  { code }               the address is now a verified second email for the account
-//   remove   (signed in)  {}                     forgets it
+//   remove   (signed in)  { password }           forgets it
+//   promote  (signed in)  { password }           the personal address becomes the account main email (for after the school address is gone)
 //   reset-start  (public) { email }              if that is a verified second email, sends a password reset code to it. Always answers the same.
 //   reset-finish (public) { email, code, password }   checks the code, sets the new password, returns a session
 //
@@ -45,6 +46,25 @@ async function mail(to: string, subject: string, line: string, code: string) {
   return res.ok;
 }
 
+/** Adding, removing or promoting an address needs the current password, so a session left open on someone else's screen cannot take the account. */
+async function passwordOk(user: { id: string; email?: string }, password: string): Promise<"yes" | "no" | "limit"> {
+  if (!user.email || !password || password.length > 200) return "no";
+  if (!(await allowed("bk-pw:" + user.id, 8, 900))) return "limit";
+  const anon = createClient(env("SUPABASE_URL"), env("SUPABASE_ANON_KEY"), { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await anon.auth.signInWithPassword({ email: user.email, password });
+  return !error && data.session ? "yes" : "no";
+}
+
+/** A plain heads-up to an address when something about the account emails changed. */
+async function heading(to: string | undefined, subject: string, text: string) {
+  if (!to) return;
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env("RESEND_API_KEY")}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: FROM, to, subject, text: `${text}\n\nIf this was not you, sign in to Orbit and change your password at once.` }),
+  }).catch(() => undefined);
+}
+
 async function userFrom(req: Request) {
   const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (!token) return null;
@@ -64,9 +84,15 @@ Deno.serve(async (req) => {
 
   try {
     // ---- signed in ----
-    if (action === "start" || action === "confirm" || action === "remove") {
+    if (action === "start" || action === "confirm" || action === "remove" || action === "promote") {
       const user = await userFrom(req);
       if (!user) return reply({ error: "Sign in first." }, 401);
+
+      if (action === "start" || action === "remove" || action === "promote") {
+        const pw = await passwordOk(user, String(b.password ?? ""));
+        if (pw === "limit") return reply({ error: "Too many tries. Please wait a few minutes." }, 429);
+        if (pw === "no") return reply({ error: "That password is not right." }, 401);
+      }
 
       if (action === "start") {
         const email = String(b.email ?? "").trim().toLowerCase();
@@ -94,10 +120,26 @@ Deno.serve(async (req) => {
         const saved = await admin.from("private_contacts").upsert({ user_id: user.id, backup_email: row.data.email, verified_at: new Date().toISOString() });
         if (saved.error) return reply({ error: "That address cannot be used. Try another." }, 400);
         await admin.from("email_codes").delete().eq("user_id", user.id).eq("purpose", "verify");
+        await heading(user.email, "A personal email was added to your Orbit account", `The address ${row.data.email} was added to your Orbit account. It can now sign in and reset the password.`);
         return reply({ ok: true, email: row.data.email });
       }
 
+      if (action === "promote") {
+        const c = await admin.from("private_contacts").select("backup_email").eq("user_id", user.id).maybeSingle();
+        if (!c.data) return reply({ error: "Add and confirm a personal email first." }, 400);
+        const oldEmail = user.email;
+        const done = await admin.auth.admin.updateUserById(user.id, { email: c.data.backup_email, email_confirm: true });
+        if (done.error) return reply({ error: "We could not switch your email. Try again." }, 400);
+        await admin.from("private_contacts").delete().eq("user_id", user.id);
+        await heading(oldEmail, "Your Orbit account now uses a personal email", `Your Orbit account now signs in with ${c.data.backup_email}. This address no longer works for it.`);
+        await heading(c.data.backup_email, "Your Orbit account now uses this email", "This is now the main email for your Orbit account. Sign in with it and your password.");
+        return reply({ ok: true, email: c.data.backup_email });
+      }
+
+      const gone = await admin.from("private_contacts").select("backup_email").eq("user_id", user.id).maybeSingle();
       await admin.from("private_contacts").delete().eq("user_id", user.id);
+      await heading(user.email, "The personal email was removed from your Orbit account", `${gone.data?.backup_email ?? "Your personal email"} was removed from your Orbit account.`);
+      await heading(gone.data?.backup_email, "This email was removed from an Orbit account", "It no longer signs in to Orbit or resets its password.");
       return reply({ ok: true });
     }
 

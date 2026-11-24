@@ -20,8 +20,8 @@ async function call(body: Record<string, unknown>, fallback: string): Promise<{ 
 }
 
 /** Sends a six digit code to the address. Resolves to a message to show, or null. */
-export async function sendBackupCode(email: string): Promise<string | null> {
-  return (await call({ action: "start", email: email.trim() }, "We could not send that. Try again in a moment.")).problem;
+export async function sendBackupCode(email: string, password: string): Promise<string | null> {
+  return (await call({ action: "start", email: email.trim(), password }, "We could not send that. Try again in a moment.")).problem;
 }
 
 /** Checks the code; the address becomes a verified second email for the account. Resolves to a message to show, or null. */
@@ -29,8 +29,13 @@ export async function confirmBackupCode(code: string): Promise<string | null> {
   return (await call({ action: "confirm", code: code.trim() }, "That code did not work. Try again.")).problem;
 }
 
-export async function removeBackupEmail(): Promise<string | null> {
-  return (await call({ action: "remove" }, "We could not remove it. Try again.")).problem;
+export async function removeBackupEmail(password: string): Promise<string | null> {
+  return (await call({ action: "remove", password }, "We could not remove it. Try again.")).problem;
+}
+
+/** After the school address is gone: the personal email becomes the account's main one. Resolves to a message to show, or null. */
+export async function promoteBackupEmail(password: string): Promise<string | null> {
+  return (await call({ action: "promote", password }, "We could not switch your email. Try again.")).problem;
 }
 
 /** The signed-in person's verified personal email, if they added one (only they can read it). `undefined` while loading. */
