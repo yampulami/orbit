@@ -50,6 +50,14 @@ Deno.serve(async (req) => {
       email = u.data.user?.email ?? null;
     }
   }
+  // A verified personal email works like the school one: after graduation the school address may be gone, the account is not.
+  if (email) {
+    const bk = await admin.from("private_contacts").select("user_id").eq("backup_email", email).maybeSingle();
+    if (bk.data) {
+      const u = await admin.auth.admin.getUserById(bk.data.user_id);
+      email = u.data.user?.email ?? email;
+    }
+  }
   if (!email) return reply({ error: NOT_RIGHT }, 401);
 
   // The password is checked by the normal sign in, exactly as if the app had done it with the email.

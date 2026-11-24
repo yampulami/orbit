@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /** A stand-in for Supabase's reset request: the test decides what it answers. */
 const reply = vi.hoisted(() => ({ error: null as null | { status?: number; code?: string; message: string } }));
-vi.mock("./supabase", () => ({ supabase: { auth: { resetPasswordForEmail: async () => ({ error: reply.error }) } } }));
+vi.mock("./supabase", () => ({ supabase: { auth: { resetPasswordForEmail: async () => ({ error: reply.error }) }, functions: { invoke: async () => ({ data: null, error: null }) } } }));
 
 import { sendResetCode, timedOutButSent } from "./passwordReset";
 

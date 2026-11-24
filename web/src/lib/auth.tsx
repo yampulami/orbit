@@ -94,7 +94,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const name = "signin:" + email.toLowerCase();
       const left = limitLeft(name, 6, 10 * MIN);
       if (left) return waitMessage(left);
-      const problem = looksLikeEmail(email) ? await emailSignIn(email, password) : await signInWithUsername(email, password);
+      let problem = looksLikeEmail(email) ? await emailSignIn(email, password) : await signInWithUsername(email, password);
+      // An address that is not the account's own may be its verified personal email: the server function checks that too.
+      if (problem && looksLikeEmail(email) && /invalid login/i.test(problem)) {
+        const second = await signInWithUsername(email, password);
+        if (!second) problem = null;
+      }
       if (problem) countAttempt(name, 10 * MIN); else clearAttempts(name);
       return problem;
     }

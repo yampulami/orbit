@@ -18,6 +18,7 @@ import { disableDeviceAlerts, enableDeviceAlerts, notifyDevice, useDeviceAlerts 
 import { setNudge, useNudges } from "../lib/nudges";
 import { notice } from "../lib/notice";
 import { AccountCard } from "../components/AccountCard";
+import PersonalEmail from "../components/PersonalEmail";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import BadgeIcon from "../components/BadgeIcon";
@@ -198,6 +199,7 @@ export default function Profile() {
       {tab === "settings" && (
         <div className="settings-grid">
       {email && !email.endsWith("@guest.orbit") && <AccountCard email={email} username={shownUsername} />}
+      {email && !email.endsWith("@guest.orbit") && supabase && <PersonalEmail schoolEmail={email} />}
 
       <section className="track">
         <div>

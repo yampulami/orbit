@@ -32,6 +32,8 @@ export async function sendResetCode(email: string): Promise<string | null> {
   const left = Math.max(limitLeft(who, 3, TEN), limitLeft("reset-send", 6, TEN));
   if (left) return waitMessage(left);
   countAttempt(who, TEN); countAttempt("reset-send", TEN);
+  // If this is an account's verified personal email, the server sends the code there (it says the same thing either way).
+  void supabase.functions.invoke("backup-email", { body: { action: "reset-start", email: email.trim() } }).catch(() => undefined);
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
   if (!error) return null;
   if (timedOutButSent(error)) return null;
@@ -47,7 +49,17 @@ export async function resetWithCode(email: string, code: string, password: strin
   const left = limitLeft(who, 5, TEN);
   if (left) return waitMessage(left);
   const verified = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "recovery" });
-  if (verified.error || !verified.data.session) { countAttempt(who, TEN); return "That code is not right, or it has expired. Ask for a new one."; }
+  if (verified.error || !verified.data.session) {
+    // The code may have gone to a personal email: the server checks it, sets the password and returns a session.
+    const viaPersonal = await supabase.functions.invoke("backup-email", { body: { action: "reset-finish", email: email.trim(), code: code.trim(), password } });
+    const t = viaPersonal.data as { access_token?: string; refresh_token?: string } | null;
+    if (!viaPersonal.error && t?.access_token && t.refresh_token) {
+      const set = await supabase.auth.setSession({ access_token: t.access_token, refresh_token: t.refresh_token });
+      if (!set.error) { clearAttempts(who); return null; }
+    }
+    countAttempt(who, TEN);
+    return "That code is not right, or it has expired. Ask for a new one.";
+  }
   clearAttempts(who);
   return savePassword(password);
 }
