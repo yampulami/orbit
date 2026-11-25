@@ -6360,3 +6360,33 @@ p,li{text-wrap:pretty}
 .segment button[aria-selected=true],.segment button[aria-checked=true],.segment button[aria-pressed=true],.segment label:has(input:checked){background:none;color:var(--ink);font-weight:600;text-decoration:none;border-bottom-color:var(--accent)}
 .rm-bar .segment button[aria-checked=true]{text-decoration:none;border-bottom-color:var(--accent)}
 .rm-add .segment,[data-theme=dark] .rm-add .segment{background:none}
+
+/* Alumni */
+.alumni{max-width:760px}
+.al-title{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:var(--t-hero);margin:0 0 6px}
+.al-intro{margin:0 0 16px;max-width:60ch}
+.al-tools{display:grid;gap:10px;margin:16px 0}
+.al-search{width:100%;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.al-chips{display:flex;flex-wrap:wrap;gap:8px}
+.al-list{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.al-card{display:flex;gap:14px;padding:16px 0;border-top:1px solid var(--line)}
+.al-main{min-width:0;display:grid;gap:4px;justify-items:start}
+.al-name,.al-job,.al-sub,.al-about,.al-open{margin:0}
+.al-job{font-size:var(--t-ui)}
+.al-about{max-width:60ch;color:var(--ink-soft)}
+.al-open{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.al-ask{display:grid;gap:8px;width:min(100%,520px);margin-top:6px}
+.al-ask label,.al-form label{display:grid;gap:6px;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-ask textarea,.al-form textarea,.al-form input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:var(--t-ui)}
+.al-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.al-h{font-size:var(--t-ui);margin:24px 0 4px}
+.al-form{display:grid;gap:14px;max-width:520px;margin-top:16px}
+.al-open-to{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}
+.al-open-to legend{font-size:var(--t-meta);color:var(--ink-soft);margin-bottom:6px}
+.al-warn{margin:16px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:8px;font-size:var(--t-meta)}
+
+/* Home: the card for students in their last year */
+.grad-card{display:flex;align-items:flex-start;gap:14px;padding:16px;margin:0 0 16px;border:1px solid var(--line);border-radius:12px}
+.grad-card h2{font-size:var(--t-ui);margin:0 0 4px}
+.grad-card p{margin:0 0 10px;max-width:60ch}
+.grad-card .link-btn{margin-left:auto;min-height:44px;min-width:44px;color:var(--ink-soft)}

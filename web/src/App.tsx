@@ -38,6 +38,7 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const Legal = lazy(() => import("./pages/Legal"));
 const EmailOff = lazy(() => import("./pages/EmailOff"));
+const Alumni = lazy(() => import("./pages/Alumni"));
 const Plans = lazy(() => import("./pages/Plans"));
 const Chats = lazy(() => import("./pages/Chats"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -186,6 +187,7 @@ export default function App() {
           <Route path="campus/clubs/:id" element={<Club />} />
           <Route path="checkin/:id" element={<CheckIn />} />
           <Route path="map" element={<Moved to="/app/campus?tab=map" />} />
+          <Route path="alumni" element={<Alumni />} />
           <Route path="profile" element={<Profile />} />
           <Route path="people/:id" element={<Person />} />
           <Route path="*" element={<NotFound />} />

@@ -1,3 +1,4 @@
+import GraduatingCard from "../components/GraduatingCard";
 import { isTyping } from "../lib/shortcuts";
 import PersonName from "../components/PersonName";
 import { spoken, useLiveNames } from "../lib/directory";
@@ -322,6 +323,7 @@ export default function Feed() {
         <h1 className="sr">Campus feed</h1>
         {!phone && <nav className="skip-row" aria-label="Skip within the feed"><a className="skip" href="#posts" onClick={(e) => { e.preventDefault(); document.getElementById("posts")?.focus(); }}>Skip to posts</a><a className="skip" href="#your-list" onClick={(e) => { e.preventDefault(); document.getElementById("your-list")?.focus(); }}>Skip to your list</a></nav>}
         <NowHeader />
+        <GraduatingCard userId={me} />
         {!phone && <form className={"composer" + (body || att.has ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
             <span className="sr">Write a post</span>

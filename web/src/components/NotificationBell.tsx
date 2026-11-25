@@ -15,7 +15,7 @@ import { classesSoon, clockLabel, useClasses } from "../lib/classes";
 
 type Row = { id: string; icon: typeof Bell; title: string; sub: string; go: () => void; unread?: boolean; request?: { id: string } };
 
-const KIND_ICON: Record<string, typeof Bell> = { like: Heart, comment: MessageCircle, reply: MessageCircle, message: MessageSquare, friend_request: UserPlus, friend_accept: UserCheck, group_add: Users, event: CalendarDays };
+const KIND_ICON: Record<string, typeof Bell> = { like: Heart, comment: MessageCircle, reply: MessageCircle, message: MessageSquare, friend_request: UserPlus, friend_accept: UserCheck, group_add: Users, event: CalendarDays, intro: GraduationCap };
 const ago = (iso: string) => {
   const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
   return m < 1 ? "just now" : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
