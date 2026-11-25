@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Check, Copy, GraduationCap, MessageSquare, Search, X } from "lucide-react";
 import Avatar from "../components/Avatar";
@@ -54,15 +54,19 @@ export default function Alumni() {
   // one sentence that says what is here, true for whoever is reading it
   const head = !ready || failed ? "Alumni"
     : list.length > 0 ? (companies.length > 1 ? `${plural(list.length, "graduate")} you can reach, at ${companies.length} places` : `${plural(list.length, "graduate")} you can reach`)
-    : listedMe ? "You are the first graduate listed" : verified ? "Be the first graduate listed here" : "No graduates are listed yet";
+    : "You’re the first graduate here";
+  // with nobody listed (and not you either), the empty picture below says it once
+  const quietHead = ready && !failed && list.length === 0 && !listedMe;
 
   return (
     <div className="page alumni">
       <h1 className="sr">Alumni</h1>
-      <header className="al-hero">
-        <h2>{head}</h2>
-        <p>Checked by your campus. Your email stays private.</p>
-      </header>
+      {!quietHead && (
+        <header className="al-hero">
+          <h2>{head}</h2>
+          {list.length > 0 && <p>Checked by your campus. Your email stays private.</p>}
+        </header>
+      )}
       <div className="segment al-tabs" role="tablist" aria-label="Alumni">
         {tabs.map(([id, label, n]) => <button key={id} id={`al-tab-${id}`} type="button" role="tab" aria-controls="al-panel" aria-selected={current === id} onClick={() => setTab(id)}>{label}{n ? <span className="rem-count">{n}</span> : null}</button>)}
       </div>
@@ -76,7 +80,8 @@ export default function Alumni() {
                 {failed
                   ? <><EmptyState icon={GraduationCap} title="Alumni did not load">Check your connection, then try again.</EmptyState><p className="al-center"><button type="button" className="btn sm primary" onClick={() => void reload()}>Try again</button></p></>
                   : current === "directory"
-                    ? <Directory list={list} reqs={reqs} ready={ready} byPerson={byPerson} companies={companies} clubName={(id) => orgs.find((o) => o.id === id)?.name} ask={ask} seeRequests={() => setTab("requests")} verified={verified} listedMe={listedMe} listMe={() => setTab("me")} />
+                    ? <Directory list={list} reqs={reqs} ready={ready} byPerson={byPerson} companies={companies} clubName={(id) => orgs.find((o) => o.id === id)?.name} ask={ask} seeRequests={() => setTab("requests")} verified={verified} listMe={() => setTab("me")}
+                      own={listedMe && mine ? <OwnCard mine={mine} me={me ?? ""} clubs={byPerson.get(me ?? "") ?? []} /> : null} />
                     : <Requests reqs={reqs} byPerson={byPerson} answer={answer} withdraw={withdraw} find={() => setTab("directory")} />}
               </div>
               <aside className="al-side" aria-label="You and alumni">
@@ -107,10 +112,10 @@ export default function Alumni() {
 type DirectoryProps = {
   list: Alum[]; reqs: Req[]; ready: boolean; byPerson: Map<string, ClubRef[]>; companies: { name: string; count: number }[];
   clubName: (id: string) => string | undefined; ask: (id: string, note: string) => Promise<string | null>; seeRequests: () => void;
-  verified: boolean; listedMe: boolean; listMe: () => void;
+  verified: boolean; listMe: () => void; own: ReactNode;
 };
 
-function Directory({ list, reqs, ready, byPerson, companies, clubName, ask, seeRequests, verified, listedMe, listMe }: DirectoryProps) {
+function Directory({ list, reqs, ready, byPerson, companies, clubName, ask, seeRequests, verified, listMe, own }: DirectoryProps) {
   const [q, setQ] = useState("");
   const [want, setWant] = useState<OpenTo | "">("");
   const [company, setCompany] = useState("");
@@ -146,14 +151,18 @@ function Directory({ list, reqs, ready, byPerson, companies, clubName, ask, seeR
       try { await navigator.clipboard.writeText(SITE); notice.show({ icon: "calendar", title: "Link copied", message: "Send it to a graduate you know. They sign in, say when they graduated, and get confirmed.", ms: 6000 }); }
       catch { notice.show({ icon: "alert", title: "Could not copy", message: `Send them ${SITE}`, ms: 8000 }); }
     };
+    const inviteButton = <button type="button" className="btn sm" onClick={() => void invite()}><Copy size={14} aria-hidden="true" /> Invite a graduate</button>;
+    // you are the only one listed: your own card is the page, as students see it
+    if (own) return (
+      <section className="al-first" aria-label="Your listing">
+        {own}
+        <div className="al-actions"><button type="button" className="btn sm primary" onClick={listMe}>Edit my listing</button>{inviteButton}</div>
+      </section>
+    );
     return (
       <>
-        <EmptyState icon={GraduationCap} title={listedMe ? "Your listing is live" : "No graduates listed yet"}>
-          {listedMe ? "Students can find you now. Other graduates will appear here as they are confirmed." : verified ? "List where you work and how you can help, and students can reach you." : "When a graduate is confirmed and lists themselves, you will find them here."}
-        </EmptyState>
-        <p className="al-center">{verified && !listedMe
-          ? <button type="button" className="btn sm primary" onClick={listMe}>List yourself</button>
-          : <button type="button" className="btn sm" onClick={() => void invite()}><Copy size={14} aria-hidden="true" /> Copy a link for a graduate you know</button>}</p>
+        <EmptyState icon={GraduationCap} title="No graduates listed yet">{verified ? "List yourself so students can reach you." : "Confirmed graduates show up here."}</EmptyState>
+        <p className="al-center">{verified ? <button type="button" className="btn sm primary" onClick={listMe}>List yourself</button> : inviteButton}</p>
       </>
     );
   }
@@ -223,6 +232,12 @@ function Directory({ list, reqs, ready, byPerson, companies, clubName, ask, seeR
         }} />}
     </section>
   );
+}
+
+/** Your listing drawn the way students see it. */
+function OwnCard({ mine, me, clubs }: { mine: AlumFields; me: string; clubs: ClubRef[] }) {
+  const name = useDisplayName() || "You";
+  return <AlumniCard preview a={{ ...mine, id: me, name }} clubs={clubs.map((c) => ({ ...c, mine: false }))} />;
 }
 
 /** Opens the conversation with the other person (accepting a request made it a normal chat). */

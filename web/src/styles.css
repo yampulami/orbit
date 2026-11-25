@@ -6545,3 +6545,8 @@ p,li{text-wrap:pretty}
 .al-how summary::-webkit-details-marker{display:none}
 .al-how summary::after{content:"";width:7px;height:7px;border-right:2px solid var(--ink-soft);border-bottom:2px solid var(--ink-soft);transform:rotate(45deg);transition:transform .2s var(--ease)}
 .al-how[open] summary::after{transform:rotate(225deg)}
+
+/* Alumni: the only graduate listed sees their own card, as students will */
+.al-first{display:grid;gap:14px;max-width:420px}
+/* with only your own card, the side column sits right beside it */
+@media (min-width:1041px){.al-layout:has(.al-first){grid-template-columns:minmax(0,420px) 304px}}
