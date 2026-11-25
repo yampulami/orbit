@@ -6559,3 +6559,14 @@ p,li{text-wrap:pretty}
 .al-cards>li{align-content:stretch}
 .page.alumni{margin-inline:auto}
 @media (min-width:1041px){.page.alumni:has(.al-first){width:min(764px,100%)}}
+
+/* a graduate's profile: where they are now, and the way to ask */
+.pv-alum{display:grid;gap:6px;justify-items:start;margin:0 0 24px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pv-alum h2{margin:0;font-size:1rem}
+.pv-alum p{margin:0;max-width:68ch}
+.pv-alum-where{font-family:var(--display);font-size:1.25rem;font-weight:600;letter-spacing:-.01em;line-height:1.2;overflow-wrap:anywhere}
+.pv-alum-role,.pv-alum-open{font-size:var(--t-meta);color:var(--ink-soft)}
+.pv-alum-about{white-space:pre-line;overflow-wrap:anywhere}
+.pv-alum .al-req-shared{margin:0}
+.pv-alum .al-actions{margin-top:8px}
+.pv-alum .btn{border-radius:8px}

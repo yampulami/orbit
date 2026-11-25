@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Check, Copy, GraduationCap, MessageSquare, Search, X } from "lucide-react";
 import Avatar from "../components/Avatar";
 import PersonLink from "../components/PersonLink";
 import EmptyState from "../components/EmptyState";
 import AlumBadge from "../components/AlumBadge";
 import AlumniCard from "../components/AlumniCard";
-import AlumniAsk from "../components/AlumniAsk";
+import AlumniAction, { MessageButton } from "../components/AlumniAction";
 import { GraduationPanel } from "../components/Graduation";
 import { useAuth } from "../lib/auth";
-import { dmActions } from "../lib/dms";
 import { useCampusOrgs } from "../lib/campusOrgs";
 import { clubChoices, clubsByPerson, type ClubRef } from "../lib/alumniClubs";
 import { companiesOf, matchesAlum, orderAlumni } from "../lib/alumniSearch";
@@ -25,8 +24,6 @@ const asTab = (v: string | null): Tab | null => (v === "directory" || v === "req
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const daysSince = (iso: string) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 86400000));
 const ago = (iso: string) => { const d = daysSince(iso); return d < 1 ? "today" : d === 1 ? "yesterday" : `${d} days ago`; };
-/** A no is respected for this long (the server holds to it too). */
-const WAIT_AFTER_NO = 90;
 /** School addresses are the ones that get deleted. */
 const SCHOOL_ADDRESS = /\.(edu|ac)(\.[a-z]{2,3})?$/i;
 const SITE = "https://www.orbitcampus.org";
@@ -119,7 +116,6 @@ function Directory({ list, reqs, ready, byPerson, companies, clubName, ask, seeR
   const [q, setQ] = useState("");
   const [want, setWant] = useState<OpenTo | "">("");
   const [company, setCompany] = useState("");
-  const [asking, setAsking] = useState<Alum | null>(null);
   // the club filter lives in the address, so a club page can link straight to its own graduates
   const [params, setParams] = useSearchParams();
   const club = params.get("club") ?? "";
@@ -135,15 +131,7 @@ function Directory({ list, reqs, ready, byPerson, companies, clubName, ask, seeR
   const places = companies.filter((c) => c.count > 1).slice(0, 8);
   const helps = OPEN_TO.filter((o) => list.some((a) => a.openTo.includes(o)));
 
-  /** Where things stand with this person, from your own side, and the one thing to do about it. */
-  const action = (a: Alum, warm: boolean) => {
-    const mineTo = reqs.filter((r) => !r.incoming && r.otherId === a.id);
-    if (mineTo.some((r) => r.status === "accepted")) return <MessageButton id={a.id} name={a.name} />;
-    if (mineTo.some((r) => r.status === "pending")) return <button type="button" className="btn sm" onClick={seeRequests}><Check size={14} aria-hidden="true" /> Requested · view</button>;
-    if (mineTo.some((r) => r.status === "declined" && daysSince(r.decidedAt ?? r.at) < WAIT_AFTER_NO)) return <p className="alc-later">You asked recently. You can ask again later.</p>;
-    return <button type="button" className={"btn sm alc-ask" + (warm ? " primary" : "")} onClick={() => setAsking(a)} aria-label={`Ask ${a.name} for an introduction`}>Ask for an introduction</button>;
-  };
-  const cards = (people: Alum[], warm: boolean) => <ul className="al-cards">{people.map((a) => <li key={a.id}><AlumniCard a={a} clubs={byPerson.get(a.id) ?? []} action={action(a, warm)} /></li>)}</ul>;
+  const cards = (people: Alum[], warm: boolean) => <ul className="al-cards">{people.map((a) => <li key={a.id}><AlumniCard a={a} clubs={byPerson.get(a.id) ?? []} action={<AlumniAction person={a} reqs={reqs} shared={(byPerson.get(a.id) ?? []).filter((x) => x.mine).map((x) => x.name)} ask={ask} seeRequests={seeRequests} warm={warm} />} /></li>)}</ul>;
 
   if (!ready) return <div className="al-cards" aria-busy="true" aria-label="Loading alumni"><div className="skeleton sk-card" /><div className="skeleton sk-card" /></div>;
   if (list.length === 0) {
@@ -224,12 +212,6 @@ function Directory({ list, reqs, ready, byPerson, companies, clubName, ask, seeR
           </>
         )}
 
-      {asking && <AlumniAsk person={asking} shared={(byPerson.get(asking.id) ?? []).filter((c) => c.mine).map((c) => c.name)} onClose={() => setAsking(null)}
-        onSend={async (note) => {
-          const p = await ask(asking.id, note);
-          if (!p) { notice.show({ icon: "calendar", title: `Sent to ${asking.name}`, message: "You will get a notification if they accept. You can take it back from Requests until then.", ms: 7000 }); setAsking(null); }
-          return p;
-        }} />}
     </section>
   );
 }
@@ -238,20 +220,6 @@ function Directory({ list, reqs, ready, byPerson, companies, clubName, ask, seeR
 function OwnCard({ mine, me, clubs }: { mine: AlumFields; me: string; clubs: ClubRef[] }) {
   const name = useDisplayName() || "You";
   return <AlumniCard preview a={{ ...mine, id: me, name }} clubs={clubs.map((c) => ({ ...c, mine: false }))} />;
-}
-
-/** Opens the conversation with the other person (accepting a request made it a normal chat). */
-function MessageButton({ id, name }: { id: string; name: string }) {
-  const nav = useNavigate();
-  const [busy, setBusy] = useState(false);
-  const open = async () => {
-    setBusy(true);
-    const thread = await dmActions.start(id);
-    setBusy(false);
-    if (thread) nav("/app/messages", { state: { thread } });
-    else notice.show({ icon: "wifi", title: "Could not open the chat", message: "Check your connection and try again." });
-  };
-  return <button type="button" className="btn sm primary" disabled={busy} onClick={() => void open()} aria-label={`Message ${name}`}><MessageSquare size={14} aria-hidden="true" /> {busy ? "Opening…" : "Message"}</button>;
 }
 
 const STATE: Record<Req["status"], string> = { pending: "Waiting for an answer", accepted: "Accepted", declined: "Not this time" };

@@ -1,4 +1,5 @@
 import AlumBadge from "../components/AlumBadge";
+import ProfileAlumni from "../components/ProfileAlumni";
 import { useEffect, useState } from "react";
 import { usePerson } from "../lib/directory";
 import Avatar from "../components/Avatar";
@@ -95,6 +96,7 @@ export default function Person() {
           </div>
         </div>
       </section>
+      <ProfileAlumni id={id} />
 
       {(profile.hobbies.length > 0 || profile.interests.length > 0) && (
         <div className="pv-groups">
