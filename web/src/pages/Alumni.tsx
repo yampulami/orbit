@@ -1,6 +1,8 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { dmActions } from "../lib/dms";
+import { useCampusOrgs } from "../lib/campusOrgs";
+import { clubChoices, clubsByPerson } from "../lib/alumniClubs";
 import { Check, GraduationCap, MessageSquare, X } from "lucide-react";
 import Avatar from "../components/Avatar";
 import PersonLink from "../components/PersonLink";
@@ -45,22 +47,41 @@ export default function Alumni() {
 function Directory({ list, ready, ask }: { list: Alum[]; ready: boolean; ask: (id: string, note: string) => Promise<string | null> }) {
   const [q, setQ] = useState("");
   const [want, setWant] = useState<OpenTo | "">("");
+  // the club filter lives in the address, so a club page can link straight to its own graduates
+  const [params, setParams] = useSearchParams();
+  const club = params.get("club") ?? "";
+  const setClub = (id: string) => setParams(id ? { club: id } : {}, { replace: true });
+  const { orgs } = useCampusOrgs();
+  const byPerson = useMemo(() => clubsByPerson(orgs), [orgs]);
+  const choices = useMemo(() => clubChoices(list.map((a) => a.id), byPerson), [list, byPerson]);
+  const picked = orgs.find((o) => o.id === club);
   const [open, setOpen] = useState<string | null>(null);
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
-    return list.filter((a) => (!want || a.openTo.includes(want)) && (!t || [a.name, a.company, a.jobTitle, a.industry, a.field, String(a.gradYear)].some((x) => x.toLowerCase().includes(t))));
-  }, [list, q, want]);
+    return list.filter((a) => (!want || a.openTo.includes(want)) && (!club || (byPerson.get(a.id) ?? []).some((c) => c.id === club))
+      && (!t || [a.name, a.company, a.jobTitle, a.industry, a.field, String(a.gradYear), ...(byPerson.get(a.id) ?? []).map((c) => c.name)].some((x) => x.toLowerCase().includes(t))));
+  }, [list, q, want, club, byPerson]);
 
   return (
     <section aria-label="Directory">
       <div className="al-tools">
-        <input className="al-search" type="search" aria-label="Search by name, company, field or year" placeholder="Search a company, field or name" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className="al-search" type="search" aria-label="Search by name, company, field, club or year" placeholder="Search a company, field, club or name" value={q} onChange={(e) => setQ(e.target.value)} />
+        {(choices.length > 0 || club) && (
+          <label className="al-club">Club or community
+            <select value={club} onChange={(e) => setClub(e.target.value)}>
+              <option value="">Any club</option>
+              {club && !choices.some((c) => c.id === club) && <option value={club}>{picked?.name ?? "That club"} (none listed)</option>}
+              {choices.some((c) => c.mine) && <optgroup label="Your clubs">{choices.filter((c) => c.mine).map((c) => <option key={c.id} value={c.id}>{c.name} ({c.count})</option>)}</optgroup>}
+              {choices.some((c) => !c.mine) && <optgroup label={choices.some((c) => c.mine) ? "Other clubs" : "Clubs"}>{choices.filter((c) => !c.mine).map((c) => <option key={c.id} value={c.id}>{c.name} ({c.count})</option>)}</optgroup>}
+            </select>
+          </label>
+        )}
         <div className="al-chips" role="group" aria-label="Open to">
           {OPEN_TO.map((o) => <button key={o} type="button" className="chip-btn" aria-pressed={want === o} onClick={() => setWant(want === o ? "" : o)}>{OPEN_LABEL[o]}</button>)}
         </div>
       </div>
       {!ready ? <div className="skeleton sk-card" aria-busy="true" aria-label="Loading alumni" />
-        : shown.length === 0 ? <EmptyState icon={GraduationCap} title={list.length === 0 ? "No graduates listed yet" : "No one matches that"}>{list.length === 0 ? "When graduates list themselves, you can find them here." : "Try a different company or clear the filter."}</EmptyState>
+        : shown.length === 0 ? <EmptyState icon={GraduationCap} title={list.length === 0 ? "No graduates listed yet" : club && !q && !want ? `No graduates from ${picked?.name ?? "that club"} yet` : "No one matches that"}>{list.length === 0 ? "When graduates list themselves, you can find them here." : club ? "Choose Any club to see everyone." : "Try a different company or clear the filter."}</EmptyState>
         : <ul className="al-list">{shown.map((a) => (
           <li key={a.id} className="al-card">
             <PersonLink id={a.id} className="cf-avlink" decorative><Avatar name={a.name} id={a.id} size={44} /></PersonLink>
@@ -69,6 +90,7 @@ function Directory({ list, ready, ask }: { list: Alum[]; ready: boolean; ask: (i
               <p className="al-job">{[a.jobTitle, a.company].filter(Boolean).join(" at ") || a.field || "Graduate"}{a.industry ? <span className="muted"> · {a.industry}</span> : null}</p>
               {a.field && (a.jobTitle || a.company) && <p className="muted al-sub">Studied {a.field}</p>}
               {a.about && <p className="al-about">{a.about}</p>}
+              {(byPerson.get(a.id) ?? []).length > 0 && <p className="al-clubs">{(byPerson.get(a.id) ?? []).slice(0, 3).map((c) => <Link key={c.id} to={`/app/campus/clubs/${c.id}`} data-mine={c.mine || undefined}>{c.name}{c.mine ? " · your club" : ""}</Link>)}</p>}
               {a.openTo.length > 0 && <p className="al-open">{a.openTo.map((o) => <span key={o} className="ebadge student">{OPEN_LABEL[o]}</span>)}</p>}
               {open === a.id
                 ? <AskForm name={a.name} onCancel={() => setOpen(null)} onSend={async (note) => { const p = await ask(a.id, note); if (!p) { setOpen(null); notice.show({ icon: "wifi", title: "Request sent", message: `${a.name} will see your note and can answer when they are ready.`, ms: 5000 }); } return p; }} />

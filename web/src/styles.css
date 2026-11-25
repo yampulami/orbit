@@ -6409,3 +6409,11 @@ p,li{text-wrap:pretty}
 .grad-date select{min-height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
 .grad-date .error{flex-basis:100%;margin:0}
 .grad-card .grad-x{margin-left:auto}
+
+/* Alumni directory: the club filter, and the clubs each graduate is in */
+.al-club{display:grid;gap:4px;max-width:360px;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-club select{min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.al-clubs{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font-size:var(--t-meta)}
+.al-clubs a{color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px}
+.al-clubs a[data-mine]{color:var(--ink);font-weight:600;text-decoration-color:var(--accent)}
+.cp-alumni{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px}

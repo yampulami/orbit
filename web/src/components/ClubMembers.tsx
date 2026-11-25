@@ -1,9 +1,10 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import Dropdown from "./Dropdown";
-import { useNavigate } from "react-router-dom";
-import { MoreHorizontal, Search, UserPlus, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { MoreHorizontal, Search, UserPlus, X, GraduationCap } from "lucide-react";
 import PersonLink from "./PersonLink";
 import AlumBadge from "./AlumBadge";
+import { useAlumniYears } from "../lib/graduation";
 import PersonName from "./PersonName";
 import Avatar from "./Avatar";
 import RolesPanel from "./RolesPanel";
@@ -23,6 +24,8 @@ export default function ClubMembers({ org, here, canRoles, canMembers, reviewer,
   const nav = useNavigate();
   const { session } = useAuth();
   const [tab, setTab] = useState<Tab>("people");
+  const alumni = useAlumniYears();
+  const grads = new Set([...org.members, ...org.clubMembers].map((m) => m.id).filter((id) => alumni.has(id))).size;
   const [q, setQ] = useState("");
   const [open, setOpen] = useState("");
   const [asking, setAsking] = useState<{ id: string; what: "remove" | "president" } | null>(null);
@@ -115,6 +118,7 @@ export default function ClubMembers({ org, here, canRoles, canMembers, reviewer,
         <div className="cm-scroll"><RolesPanel org={org} reviewer={reviewer} embedded /></div>
       ) : (
         <>
+          {grads > 0 && <Link className="cp-alumni" to={`/app/alumni?club=${org.id}`}><GraduationCap size={15} aria-hidden="true" /> Alumni from this {org.kind === "circle" ? "circle" : "club"}</Link>}
           {canMembers && org.requests.length > 0 && <JoinRequests org={org} />}
           <label className="cm-search"><Search size={14} aria-hidden="true" /><input value={q} placeholder="Search people or roles" maxLength={40} aria-label="Search people" onChange={(e) => setQ(e.target.value)} /></label>
           {canAdd && !adding && <button type="button" className="btn sm cp-addbtn" onClick={() => setAdding(true)}><UserPlus size={15} aria-hidden="true" /> Add people</button>}

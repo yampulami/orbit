@@ -64,10 +64,16 @@ async function loadAlumni(force = false) {
 }
 supabase?.auth.onAuthStateChange((e) => { if (e === "SIGNED_IN" || e === "SIGNED_OUT") { loadedFor = "no"; alumni = new Map(); subs.forEach((f) => f()); } });
 
-/** The class year if this person is a verified graduate, otherwise undefined. */
-export function useAlumYear(id: string | undefined): number | undefined {
+/** Every verified graduate on this campus: id to class year. */
+export function useAlumniYears(): Map<string, number> {
   const map = useSyncExternalStore((cb) => { subs.add(cb); return () => { subs.delete(cb); }; }, () => alumni);
   useEffect(() => { void loadAlumni(); }, [map]);
+  return map;
+}
+
+/** The class year if this person is a verified graduate, otherwise undefined. */
+export function useAlumYear(id: string | undefined): number | undefined {
+  const map = useAlumniYears();
   return id ? map.get(id) : undefined;
 }
 
