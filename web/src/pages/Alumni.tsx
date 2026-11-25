@@ -1,5 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { Check, GraduationCap, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { dmActions } from "../lib/dms";
+import { Check, GraduationCap, MessageSquare, X } from "lucide-react";
 import Avatar from "../components/Avatar";
 import PersonLink from "../components/PersonLink";
 import EmptyState from "../components/EmptyState";
@@ -102,6 +104,20 @@ function AskForm({ name, onSend, onCancel }: { name: string; onSend: (note: stri
   );
 }
 
+/** Opens the conversation with the other person (accepting a request made it a normal chat). */
+function MessageButton({ id, name }: { id: string; name: string }) {
+  const nav = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const open = async () => {
+    setBusy(true);
+    const thread = await dmActions.start(id);
+    setBusy(false);
+    if (thread) nav("/app/messages", { state: { thread } });
+    else notice.show({ icon: "wifi", title: "Could not open the chat", message: "Check your connection and try again." });
+  };
+  return <button type="button" className="btn sm primary" disabled={busy} onClick={() => void open()} aria-label={`Message ${name}`}><MessageSquare size={14} aria-hidden="true" /> {busy ? "Opening…" : "Message"}</button>;
+}
+
 function Requests({ reqs, answer }: { reqs: ReturnType<typeof useAlumni>["reqs"]; answer: (id: string, accept: boolean) => Promise<string | null> }) {
   const incoming = reqs.filter((r) => r.incoming);
   const sent = reqs.filter((r) => !r.incoming);
@@ -119,7 +135,7 @@ function Requests({ reqs, answer }: { reqs: ReturnType<typeof useAlumni>["reqs"]
               <p className="al-about">{r.note}</p>
               {r.status === "pending"
                 ? <div className="al-actions"><button type="button" className="btn sm primary" onClick={() => void respond(r.id, true)}><Check size={14} aria-hidden="true" /> Accept</button><button type="button" className="btn sm" onClick={() => void respond(r.id, false)}><X size={14} aria-hidden="true" /> Decline</button></div>
-                : <p className="muted">{r.status === "accepted" ? "You accepted. They can message you now." : "You declined."}</p>}
+                : r.status === "accepted" ? <><p className="muted">You accepted.</p><MessageButton id={r.otherId} name={r.other} /></> : <p className="muted">You declined.</p>}
             </div>
           </li>
         ))}</ul>}
@@ -131,7 +147,8 @@ function Requests({ reqs, answer }: { reqs: ReturnType<typeof useAlumni>["reqs"]
             <div className="al-main">
               <p className="al-name"><PersonLink id={r.otherId} className="who-link"><strong>{r.other}</strong></PersonLink><span className="muted"> {ago(r.at)}</span></p>
               <p className="al-about">{r.note}</p>
-              <p className="muted">{r.status === "pending" ? "Waiting for an answer." : r.status === "accepted" ? "Accepted. You can message them from their profile." : "Not this time."}</p>
+              <p className="muted">{r.status === "pending" ? "Waiting for an answer." : r.status === "accepted" ? "Accepted." : "Not this time."}</p>
+              {r.status === "accepted" && <MessageButton id={r.otherId} name={r.other} />}
             </div>
           </li>
         ))}</ul>}
