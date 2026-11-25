@@ -84,36 +84,39 @@ export function GraduationPanel({ userId, headingLevel = 2, compact = false }: {
   const title = !g ? "When do you graduate?" : g.status === "verified" ? `You are an alum, class of ${g.year}` : g.status === "claimed" ? "Waiting for a coordinator" : g.status === "declined" ? "We could not confirm it yet" : isDue(g) ? "Have you graduated?" : `Graduating ${gradLabel(g)}`;
 
   // nothing to do yet (no date, or the month has not come): one line, opened on request
-  const quiet = compact && !opened && mode === "view" && (!g || (g.status === "expected" && !isDue(g)));
+  const needsYou = !!g && (g.status === "declined" || (g.status === "expected" && isDue(g)));
+  const quiet = compact && !opened && mode === "view" && !needsYou;
+  const short = !g ? "Graduating, or graduated?" : g.status === "verified" ? `Alum, class of ${g.year}` : g.status === "claimed" ? "Waiting for a coordinator" : `Graduating ${gradLabel(g)}`;
   if (quiet) return (
     <section className="grad-line" aria-label="Graduation">
       <GraduationCap size={16} aria-hidden="true" />
-      <span>{g ? `You graduate ${gradLabel(g)}` : "Graduating, or graduated?"}</span>
+      <span>{short}</span>
       <button type="button" className="link-btn" onClick={() => setOpened(true)}>{g ? "Details" : "Add your date"}</button>
-      {personal === null && <p><Link to="/app/profile?tab=settings">Add a personal email</Link> so you keep your account after school.</p>}
+      {personal === null && <p><Link to="/app/profile?tab=settings">Add a personal email</Link> to keep your account.</p>}
     </section>
   );
 
   return (
     <section className="grad-panel" aria-label="Graduation">
       <H>{title}</H>
-      <ol className="grad-steps">
+      {compact && !needsYou && mode === "view" && <button type="button" className="link-btn grad-hide" onClick={() => setOpened(false)}>Hide</button>}
+      {g?.status !== "verified" && <ol className="grad-steps">
         {STEPS.map((s, i) => <li key={s} data-state={i < at || g?.status === "verified" ? "done" : i === at ? "now" : "next"} aria-current={i === at && g?.status !== "verified" ? "step" : undefined}><span aria-hidden="true">{i < at || g?.status === "verified" ? <Check size={12} /> : i + 1}</span>{s}</li>)}
-      </ol>
+      </ol>}
 
       {(!g || mode === "date") && <>
-        {!g && <p className="muted">Pick the month you graduate, or the month you graduated. We will check in then.</p>}
+        {!g && <p className="muted">We will check in that month.</p>}
         <DateForm start={g} api={api} onDone={() => setMode("view")} onCancel={g ? () => setMode("view") : undefined} />
       </>}
 
       {g && mode === "claim" && <ClaimForm api={api} onCancel={() => setMode("view")} />}
 
       {g && mode === "view" && <>
-        {g.status === "expected" && !isDue(g) && <p className="muted">When {gradLabel(g)} arrives we will ask you to confirm, here and by email. You keep using Orbit the same way before and after.</p>}
-        {g.status === "expected" && isDue(g) && <p className="muted">Confirm it to get the Alumni badge. You keep everything you have on Orbit.</p>}
-        {g.status === "claimed" && <p className="muted">You said you graduated in {gradLabel(g)}. A coordinator checks your major and name against school records, so the badge means something. This usually takes a few days, and Orbit works as usual while you wait.</p>}
-        {g.status === "declined" && <p className="muted">{g.note ? `The coordinator said: ${g.note}` : "A coordinator could not confirm it."} Check your date and send it again.</p>}
-        {g.status === "verified" && <p className="muted">You graduated in {gradLabel(g)}. Your badge shows beside your name, and you can list yourself so students can reach you.</p>}
+        {g.status === "expected" && !isDue(g) && <p className="muted">We will ask you to confirm that month.</p>}
+        {g.status === "expected" && isDue(g) && <p className="muted">Confirm it to get the Alumni badge.</p>}
+        {g.status === "claimed" && <p className="muted">Usually a few days.</p>}
+        {g.status === "declined" && <p className="muted">{g.note || "Check your details and send it again."}</p>}
+        {g.status === "verified" && <p className="muted">Your badge shows beside your name.</p>}
         <div className="al-actions">
           {g.status === "claimed" && <button type="button" className="btn sm" onClick={async () => { const p = await api.withdraw(); if (p) notice.show({ icon: "alert", title: "That did not work", message: p }); }}>Take it back</button>}
           {g.status !== "claimed" && g.status !== "verified" && isDue(g) && <button type="button" className="btn sm primary" onClick={() => setMode("claim")}>{g.status === "declined" ? "Send it again" : "Yes, I graduated"}</button>}
@@ -121,7 +124,7 @@ export function GraduationPanel({ userId, headingLevel = 2, compact = false }: {
         </div>
       </>}
 
-      {personal === null && <p className="al-warn" role="note">Your school email will be deleted after you leave. <Link to="/app/profile?tab=settings">Add a personal email</Link> so you can still sign in and hear from people.</p>}
+      {personal === null && <p className="al-warn" role="note"><Link to="/app/profile?tab=settings">Add a personal email</Link> before your school one is deleted.</p>}
     </section>
   );
 }

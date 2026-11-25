@@ -61,7 +61,7 @@ export default function Alumni() {
       <h1 className="sr">Alumni</h1>
       <header className="al-hero">
         <h2>{head}</h2>
-        <p>People from your campus, each checked by a campus coordinator. Ask for an introduction: they choose whether to answer, and nobody sees your email.</p>
+        <p>Checked by your campus. Your email stays private.</p>
       </header>
       <div className="segment al-tabs" role="tablist" aria-label="Alumni">
         {tabs.map(([id, label, n]) => <button key={id} id={`al-tab-${id}`} type="button" role="tab" aria-controls="al-panel" aria-selected={current === id} onClick={() => setTab(id)}>{label}{n ? <span className="rem-count">{n}</span> : null}</button>)}
@@ -84,19 +84,18 @@ export default function Alumni() {
                 {verified && !listedMe && (
                   <section className="al-note">
                     <h2>Students can’t find you yet</h2>
-                    <p>List where you work and how you are happy to help. You can hide it whenever you like.</p>
                     <button type="button" className="btn sm primary" onClick={() => setTab("me")}>List yourself</button>
                   </section>
                 )}
-                <section className="al-note">
-                  <h2>How an introduction works</h2>
+                <details className="al-note al-how">
+                  <summary>How introductions work</summary>
                   <ol>
-                    <li>Find someone from your club, at a place or in a field.</li>
-                    <li>Send a short note saying who you are and what you are asking.</li>
-                    <li>If they accept, a chat opens between the two of you.</li>
+                    <li>Send a short note.</li>
+                    <li>They decide whether to accept.</li>
+                    <li>If they do, a chat opens.</li>
                   </ol>
-                  <p>Up to 5 requests a day, so every one gets read. A coordinator checks each graduate’s major and name before they get the badge.</p>
-                </section>
+                  <p>Up to 5 requests a day.</p>
+                </details>
               </aside>
             </div>
           )}
@@ -204,7 +203,6 @@ function Directory({ list, reqs, ready, byPerson, companies, clubName, ask, seeR
             {near.length > 0 && (
               <section className="al-near" aria-labelledby="al-near-h">
                 <h2 id="al-near-h">From your clubs</h2>
-                <p>You have something in common, which is the easiest way to start.</p>
                 {cards(near, true)}
               </section>
             )}

@@ -6534,3 +6534,14 @@ p,li{text-wrap:pretty}
 .gq-facts dd{margin:0;overflow-wrap:anywhere}
 .gq-done{margin-top:12px}
 .gq-done summary{min-height:32px;cursor:pointer;font-size:var(--t-meta);font-weight:600}
+
+/* Alumni, fewer words: how-it-works is folded away, and the opened graduation panel can be closed */
+.al-how summary{display:flex;align-items:center;min-height:32px;cursor:pointer;font-size:var(--t-meta);font-weight:600}
+.al-how ol{margin-top:8px}
+.grad-hide{justify-self:end;margin-top:-34px;min-height:32px;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-near h2{margin-bottom:12px}
+.grad-panel p{font-size:var(--t-meta)}
+.al-how summary{list-style:none;justify-content:space-between}
+.al-how summary::-webkit-details-marker{display:none}
+.al-how summary::after{content:"";width:7px;height:7px;border-right:2px solid var(--ink-soft);border-bottom:2px solid var(--ink-soft);transform:rotate(45deg);transition:transform .2s var(--ease)}
+.al-how[open] summary::after{transform:rotate(225deg)}
