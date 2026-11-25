@@ -24,9 +24,14 @@ function show(t: Theme) {
   const doc = document as Document & { startViewTransition?: (cb: () => void) => VT };
   now = t;
   if (doc.startViewTransition && !document.hidden) {
+    // While the colours cross-fade the browser drops "hover", which would fold the side bar under the pointer. Hold it open until the fade ends.
+    const side = document.querySelector<HTMLElement>(".side:hover");
+    if (side) side.dataset.pin = "";
+    const release = () => { if (side) setTimeout(() => { delete side.dataset.pin; }, 120); };
     const vt = doc.startViewTransition(apply);
     // A skipped or interrupted transition is fine: the theme still applies. Keep it from logging as an error.
-    vt.ready?.catch(() => {}); vt.finished?.catch(() => {}); vt.updateCallbackDone?.catch(() => {});
+    vt.ready?.catch(() => {}); vt.updateCallbackDone?.catch(() => {});
+    if (vt.finished) vt.finished.then(release, release); else setTimeout(release, 800);
   } else {
     root.classList.add("theme-fade");
     apply();

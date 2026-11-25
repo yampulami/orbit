@@ -4485,7 +4485,7 @@ textarea,input{caret-color:var(--accent)}
   .shell.shell.side-expanded{--rail:236px}
   .shell.shell .side{--sw:76px;--lab:0;width:var(--sw);padding:14px 10px;align-items:stretch;gap:6px;border-radius:24px;overflow:visible;z-index:40;transition:width .15s ease,box-shadow .15s ease}
   .shell.shell.side-expanded .side{--sw:236px;--lab:1}
-  .shell.shell.side-hover .side:hover,.shell.shell.side-hover .side:has(:focus-visible),.shell.shell.side-hover .side:has(.side-menu){--sw:236px;--lab:1;box-shadow:0 24px 60px -18px rgba(0,0,0,.65)}
+  .shell.shell.side-hover .side:hover,.shell.shell.side-hover .side[data-pin],.shell.shell.side-hover .side:has(:focus-visible),.shell.shell.side-hover .side:has(.side-menu){--sw:236px;--lab:1;box-shadow:0 24px 60px -18px rgba(0,0,0,.65)}
   .shell.shell .side-top{width:100%;padding:0;flex-direction:row;justify-content:flex-start}
   .shell.shell .side .logo{margin:0;padding-left:7px;gap:12px;overflow:hidden}
   .shell.shell .side .logo .navtext{opacity:var(--lab);max-width:none;font-size:1.25rem}
@@ -4580,7 +4580,7 @@ textarea,input{caret-color:var(--accent)}
   .shell.shell.side-expanded{--rail:220px}
   .shell.shell .side{--sw:64px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:none;padding:10px 8px;gap:2px;transition:width .12s ease,box-shadow .12s ease}
   .shell.shell.side-expanded .side{--sw:220px}
-  .shell.shell.side-hover .side:hover,.shell.shell.side-hover .side:has(:focus-visible),.shell.shell.side-hover .side:has(.side-menu){--sw:220px;box-shadow:0 14px 36px -18px rgba(0,0,0,.55)}
+  .shell.shell.side-hover .side:hover,.shell.shell.side-hover .side[data-pin],.shell.shell.side-hover .side:has(:focus-visible),.shell.shell.side-hover .side:has(.side-menu){--sw:220px;box-shadow:0 14px 36px -18px rgba(0,0,0,.55)}
   .shell.shell .side .navlink,.shell.shell .side .navlink.extra,.shell.shell .side .compose-btn.solo{height:36px;padding:0 0 0 13px;gap:12px;border-radius:8px;background:transparent;color:var(--ink-soft);box-shadow:none}
   .shell.shell .side .navlink:hover,.shell.shell .side .compose-btn.solo:hover{background:var(--panel);color:var(--ink);transform:none}
   .shell.shell .side .navlink.active{background:var(--panel);color:var(--ink)}
