@@ -6361,29 +6361,6 @@ p,li{text-wrap:pretty}
 .rm-bar .segment button[aria-checked=true]{text-decoration:none;border-bottom-color:var(--accent)}
 .rm-add .segment,[data-theme=dark] .rm-add .segment{background:none}
 
-/* Alumni */
-.alumni{max-width:760px}
-.al-title{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:var(--t-hero);margin:0 0 6px}
-.al-intro{margin:0 0 16px;max-width:60ch}
-.al-tools{display:grid;gap:10px;margin:16px 0}
-.al-search{width:100%;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
-.al-chips{display:flex;flex-wrap:wrap;gap:8px}
-.al-list{list-style:none;margin:0;padding:0;display:grid;gap:0}
-.al-card{display:flex;gap:14px;padding:16px 0;border-top:1px solid var(--line)}
-.al-main{min-width:0;display:grid;gap:4px;justify-items:start}
-.al-name,.al-job,.al-sub,.al-about,.al-open{margin:0}
-.al-job{font-size:var(--t-ui)}
-.al-about{max-width:60ch;color:var(--ink-soft)}
-.al-open{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-.al-ask{display:grid;gap:8px;width:min(100%,520px);margin-top:6px}
-.al-ask label,.al-form label{display:grid;gap:6px;font-size:var(--t-meta);color:var(--ink-soft)}
-.al-ask textarea,.al-form textarea,.al-form input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:var(--t-ui)}
-.al-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
-.al-h{font-size:var(--t-ui);margin:24px 0 4px}
-.al-form{display:grid;gap:14px;max-width:520px;margin-top:16px}
-.al-open-to{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}
-.al-open-to legend{font-size:var(--t-meta);color:var(--ink-soft);margin-bottom:6px}
-.al-warn{margin:16px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:8px;font-size:var(--t-meta)}
 
 /* Home: the card for students in their last year */
 .grad-card{display:flex;align-items:flex-start;gap:14px;padding:16px;margin:0 0 16px;border:1px solid var(--line);border-radius:12px}
@@ -6410,10 +6387,121 @@ p,li{text-wrap:pretty}
 .grad-date .error{flex-basis:100%;margin:0}
 .grad-card .grad-x{margin-left:auto}
 
-/* Alumni directory: the club filter, and the clubs each graduate is in */
-.al-club{display:grid;gap:4px;max-width:360px;font-size:var(--t-meta);color:var(--ink-soft)}
-.al-club select{min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
-.al-clubs{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;font-size:var(--t-meta)}
-.al-clubs a{color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px}
-.al-clubs a[data-mine]{color:var(--ink);font-weight:600;text-decoration-color:var(--accent)}
+
+/* ==== Alumni ==== the directory leads; your own path sits beside it */
+.page.alumni{width:min(1120px,100%)}
+.al-hero{margin:0 0 18px}
+.al-hero h2{margin:0 0 6px;font-family:var(--display);font-size:var(--t-hero);font-weight:600;letter-spacing:-.015em;line-height:1.15;text-wrap:balance}
+.al-hero p{margin:0;max-width:62ch;color:var(--ink-soft)}
+.al-tabs{margin-bottom:20px}
+.al-layout{display:grid;grid-template-columns:minmax(0,1fr) 304px;gap:40px;align-items:start}
+@media (max-width:1040px){.al-layout{grid-template-columns:minmax(0,1fr)}}
+.al-col{min-width:0}
+.al-side{display:grid;gap:24px;position:sticky;top:16px}
+@media (max-width:1040px){.al-side{position:static}}
+
+/* find */
+.al-bar{display:flex;flex-wrap:wrap;gap:10px}
+.al-find{position:relative;flex:1 1 300px;display:block}
+.al-find svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-soft);pointer-events:none}
+.al-find input{width:100%;min-height:48px;padding:0 14px 0 42px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:var(--t-ui)}
+.al-pick select{min-height:48px;max-width:240px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:var(--t-meta)}
+.al-find input::placeholder{color:var(--ink-soft);opacity:1}
+.al-places,.al-help{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.al-places>span,.al-help>span{min-width:104px;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-places button,.al-help button{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ink);font:inherit;font-size:var(--t-meta);font-weight:500;cursor:pointer;transition:border-color .2s var(--ease),background .2s var(--ease)}
+.al-places button:hover,.al-help button:hover{border-color:var(--ink-soft)}
+.al-places button b{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink-soft)}
+.al-places button[aria-pressed=true],.al-help button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.al-places button[aria-pressed=true] b{color:var(--on-ink)}
+.al-count-line{display:flex;align-items:center;gap:12px;min-height:32px;margin:18px 0 8px;font-size:var(--t-meta);color:var(--ink-soft)}
+
+/* graduates */
+.al-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px;margin:0;padding:0;list-style:none}
+.al-cards>li{display:grid}
+.alc{display:flex;flex-direction:column;gap:12px;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--surface);transition:border-color .2s var(--ease)}
+.al-cards .alc:hover,.al-cards .alc:focus-within{border-color:var(--ink-soft)}
+.alc-who{display:flex;align-items:center;gap:12px}
+.alc-who p{margin:0}
+.alc-name{display:flex;flex-wrap:wrap;align-items:center;gap:2px}
+.alc-class{font-size:var(--t-meta);color:var(--ink-soft)}
+.alc-work h3{margin:0;font-family:var(--display);font-size:1.25rem;font-weight:600;letter-spacing:-.01em;line-height:1.2;overflow-wrap:anywhere}
+.alc-work p{margin:2px 0 0;font-size:var(--t-meta);color:var(--ink-soft)}
+.alc-about{margin:0;font-size:var(--t-meta);line-height:1.5;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.alc-clubs{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:var(--t-meta);color:var(--ink-soft)}
+.alc-clubs svg{flex:none;margin-top:3px}
+.alc-clubs a,.alc-clubs b{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.alc[data-shared] .alc-clubs{color:var(--ink)}
+.alc[data-shared] .alc-clubs svg{color:var(--accent)}
+.alc[data-shared] .alc-clubs a{text-decoration-color:var(--accent);text-decoration-thickness:2px}
+.alc-foot{display:grid;gap:12px;margin-top:auto;padding-top:12px;border-top:1px solid var(--line)}
+.alc-open{display:flex;flex-wrap:wrap;gap:4px 0;margin:0;font-size:var(--t-meta);font-weight:600}
+.alc-open>span:not(.sr)+span::before{content:"·";margin:0 8px;color:var(--ink-soft);font-weight:400}
+.alc-foot .btn{justify-self:stretch;border-radius:8px}
+.alc-foot .alc-ask{border-color:var(--line)}
+.alc-foot .alc-ask:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+[data-theme=dark] .alc-foot .alc-ask:hover{color:#1a1210}
+
+/* beside the directory: your path, and how it works. Flat sections parted by hairlines */
+.al-side .grad-panel{margin:0}
+.al-side .grad-steps{flex-direction:column;gap:8px}
+.al-side .al-warn{padding:10px 0 0;border:0;border-top:1px solid var(--line);border-radius:0}
+.al-side .grad-date label{flex:1 1 96px}
+.al-note{padding-top:20px;border-top:1px solid var(--line)}
+.al-note h3,.al-preview-h{margin:0 0 8px;font-size:1rem}
+.al-note p{margin:0 0 10px;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-note ol{display:grid;gap:8px;margin:0 0 10px;padding-left:20px;font-size:var(--t-meta)}
+.al-note li::marker{color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.al-warn{margin:0;font-size:var(--t-meta)}
+.al-warn a{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px}
+
+/* requests */
+.al-h{margin:0 0 6px;font-size:1rem}
+.al-reqs{margin:0 0 28px;padding:0;list-style:none}
+.al-req{display:flex;gap:14px;padding:16px 0;border-top:1px solid var(--line)}
+.al-req>div{min-width:0;flex:1;display:grid;gap:8px}
+.al-req-top{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:0}
+.al-req-top>span:last-child{margin-left:auto;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-req blockquote{margin:0;padding:10px 14px;max-width:62ch;border-radius:2px 12px 12px 12px;background:var(--panel);font-size:var(--t-meta);line-height:1.55;overflow-wrap:anywhere}
+.al-req-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.al-state{display:inline-flex;align-items:center;gap:7px;font-size:var(--t-meta);font-weight:600}
+.al-state::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ink-soft)}
+.al-state[data-s=accepted]::before{background:#3ab76b}
+.al-state[data-s=pending]::before{background:var(--accent)}
+.al-center{text-align:center}
+.al-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.al-ask{display:grid;gap:8px;width:min(100%,520px);margin-top:6px}
+.al-ask label{display:grid;gap:6px;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-ask textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:var(--t-ui)}
+
+/* asking: a focused sheet */
+.sheet.al-sheet{width:min(520px,100%);border-radius:12px;justify-items:stretch;gap:14px}
+.al-sheet-who{display:flex;align-items:center;gap:12px;padding-right:36px}
+.al-sheet-who h2{margin:0;font-size:1.2rem;line-height:1.25;text-wrap:balance}
+.al-sheet-who p{margin:2px 0 0;font-size:var(--t-meta)}
+.al-starters{display:flex;flex-wrap:wrap;gap:8px}
+.al-sheet-open{margin:-6px 0 0;font-size:var(--t-meta)}
+.al-sheet-field{display:grid;gap:6px;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-sheet-field textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:var(--t-ui);line-height:1.5;resize:vertical}
+.al-count{justify-self:end;font-variant-numeric:tabular-nums}
+.al-private{display:flex;gap:8px;margin:0;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-private svg{flex:none;margin-top:3px}
+
+/* your listing, with the card beside it */
+.al-form{display:grid;gap:24px}
+.al-form fieldset{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:0;padding:0;border:0}
+.al-form legend{margin-bottom:12px;padding:0;font-weight:600}
+.al-form label{display:grid;gap:6px;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-form input,.al-form textarea{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:var(--t-ui)}
+.al-form .al-help,.al-form .al-wide{grid-column:1/-1;margin:0}
+.al-hidden{opacity:.5}
+.al-preview-note{margin:10px 0 0;font-size:var(--t-meta)}
+
+/* from a club's People panel */
 .cp-alumni{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px}
+
+/* room under the columns so the floating assistant never sits on the last lines */
+.page.alumni{padding-bottom:96px}
+
+.al-starters button{min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ink);font:inherit;font-size:var(--t-meta);font-weight:500;cursor:pointer}
+.al-starters button:hover{border-color:var(--ink-soft)}
