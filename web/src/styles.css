@@ -6550,3 +6550,12 @@ p,li{text-wrap:pretty}
 .al-first{display:grid;gap:14px;max-width:420px}
 /* with only your own card, the side column sits right beside it */
 @media (min-width:1041px){.al-layout:has(.al-first){grid-template-columns:minmax(0,420px) 304px}}
+
+/* a graduate's line can be read in full; the page sits in the middle of wide screens */
+.alc-aboutbox{display:grid;gap:2px;justify-items:start}
+.alc-about{white-space:pre-line;overflow-wrap:anywhere}
+.alc-about[data-open]{display:block;-webkit-line-clamp:unset;overflow:visible}
+.alc-more{min-height:32px;padding:0;border:0;background:none;color:var(--ink);font:inherit;font-size:var(--t-meta);font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px}
+.al-cards>li{align-content:stretch}
+.page.alumni{margin-inline:auto}
+@media (min-width:1041px){.page.alumni:has(.al-first){width:min(764px,100%)}}

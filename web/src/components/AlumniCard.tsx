@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Users } from "lucide-react";
 import Avatar from "./Avatar";
@@ -6,6 +6,30 @@ import PersonLink from "./PersonLink";
 import AlumBadge from "./AlumBadge";
 import { OPEN_LABEL, type Alum } from "../lib/alumni";
 import type { ClubRef } from "../lib/alumniClubs";
+
+/** The graduate's own line: three lines on the card, and "Read more" only when there is more to read. */
+function About({ text }: { text: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const [long, setLong] = useState(false);
+  // measured while folded; the card's width changes with the window, so it is measured again then
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || open) return;
+    const check = () => setLong(el.scrollHeight > el.clientHeight + 1);
+    check();
+    const watch = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(check);
+    watch?.observe(el);
+    return () => watch?.disconnect();
+  }, [text, open]);
+  return (
+    <div className="alc-aboutbox">
+      <p ref={ref} id={id} className="alc-about" data-open={open || undefined}>{text}</p>
+      {(long || open) && <button type="button" className="alc-more" aria-expanded={open} aria-controls={id} onClick={() => setOpen((v) => !v)}>{open ? "Show less" : "Read more"}</button>}
+    </div>
+  );
+}
 
 /** One graduate. Read top to bottom the way a student scans: who, where they work, what connects you, what they will help with, then the one action.
  *  `preview` draws it for your own listing, where nothing is clickable. */
@@ -30,7 +54,7 @@ export default function AlumniCard({ a, clubs = [], action, preview = false }: {
         {(role || a.industry) && <p>{[role, a.industry].filter(Boolean).join(" · ")}</p>}
       </div>
 
-      {a.about && <p className="alc-about">{a.about}</p>}
+      {a.about && <About text={a.about} />}
 
       {clubs.length > 0 && (
         <p className="alc-clubs">
