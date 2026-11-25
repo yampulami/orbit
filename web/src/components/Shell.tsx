@@ -1,3 +1,4 @@
+import { useWaitingIntros } from "../lib/alumniWaiting";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
 import { useDisplayName } from "../lib/displayName";
@@ -74,6 +75,7 @@ export default function Shell() {
   const unread = unreadDms(dmThreads) + requestCount(dmThreads); // a waiting message request shows on the Chats icon too
   // The logo orb perks up for a few seconds when something new lands in the bell.
   const bellCount = useNotifs().filter((n) => n.unread).length;
+  const intros = useWaitingIntros(session?.user.id, bellCount); // graduates see on the menu that someone asked them
   const prevBell = useRef(bellCount);
   // After setup, the logo's ball is not there until Omega has rolled up into its place (see ArrivalScreen); then it pops in.
   const arr = useArrival();
@@ -178,6 +180,7 @@ export default function Shell() {
                     <i.icon size={22} strokeWidth={1.75} />
                     <span className="navtext">{i.label}</span>
                     {i.to === "/app/chats" && unread > 0 && <span className="nav-dot" role="img" aria-label={`${unread} unread ${unread === 1 ? "message" : "messages"}`} />}
+                    {i.to === "/app/alumni" && intros > 0 && <span className="nav-dot" role="img" aria-label={`${intros} introduction ${intros === 1 ? "request" : "requests"} waiting`} />}
                     {i.to === "/app/plans" && waiting > 0 && <span className="nav-dot" role="img" aria-label={waiting === 1 ? "1 hangout needs your answer" : `${waiting} hangouts need your answer`} />}
                   </>
                 )}

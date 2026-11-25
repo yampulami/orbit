@@ -22,6 +22,7 @@ export default function ReviewPanel() {
 
   return (
     <div className="review" role="region" aria-label="Review">
+      <GradQueue />
       <ApplicationsBoard />
       {role === "coordinator" && <StaffPanel />}
 
@@ -69,8 +70,6 @@ export default function ReviewPanel() {
           </ul>
         </section>
       )}
-
-      <GradQueue />
 
       <section className="htools-block" aria-label="All clubs and offices">
         <h3><ShieldCheck size={15} aria-hidden="true" /> Clubs and offices</h3>

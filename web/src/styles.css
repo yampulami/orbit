@@ -6505,3 +6505,32 @@ p,li{text-wrap:pretty}
 
 .al-starters button{min-height:36px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:none;color:var(--ink);font:inherit;font-size:var(--t-meta);font-weight:500;cursor:pointer}
 .al-starters button:hover{border-color:var(--ink-soft)}
+
+/* Alumni, after the critique: people from your clubs lead, and the graduation panel is one line until it needs you */
+.al-near{margin:0 0 28px}
+.al-near h2,.al-rest-h{margin:0 0 4px;font-size:1.125rem}
+.al-near>p{margin:0 0 12px;font-size:var(--t-meta);color:var(--ink-soft)}
+.al-rest-h{margin-bottom:12px}
+.al-count-line:empty{min-height:0;margin:0 0 20px}
+.alc-name h3{margin:0;font-size:1rem;font-weight:700}
+.alc-work p.alc-where{margin:0;font-family:var(--display);font-size:1.25rem;font-weight:600;letter-spacing:-.01em;line-height:1.2;color:var(--ink);overflow-wrap:anywhere}
+.alc-later{margin:0;min-height:38px;font-size:var(--t-meta);color:var(--ink-soft)}
+.alc-foot .btn.primary{border-color:var(--accent);background:var(--accent);color:#fff}
+[data-theme=dark] .alc-foot .btn.primary{color:#1a1210}
+.al-note h2,.al-preview-h{margin:0 0 8px;font-size:1rem}
+.al-req-shared{margin:-4px 0 0;justify-self:start;font-size:var(--t-meta);font-weight:600;text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px}
+.al-block{display:grid;gap:8px;justify-items:start;margin:0 0 24px;padding:16px;border:1px solid var(--accent);border-radius:12px}
+.al-block h2{margin:0;font-size:1rem}
+.al-block p{margin:0;max-width:62ch;font-size:var(--t-meta)}
+.al-count{justify-self:end;margin:-8px 0 0;font-size:var(--t-meta);color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.grad-line{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:var(--t-meta)}
+.grad-line .link-btn{margin-left:auto;min-height:32px;color:var(--ink)}
+.grad-line p{flex-basis:100%;margin:0;color:var(--ink-soft)}
+.grad-line p a{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px}
+.al-ask input{width:100%;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:var(--t-ui)}
+.gq-facts{display:grid;gap:2px;margin:6px 0 0;font-size:var(--t-meta)}
+.gq-facts div{display:grid;grid-template-columns:128px minmax(0,1fr);gap:8px}
+.gq-facts dt{color:var(--ink-soft)}
+.gq-facts dd{margin:0;overflow-wrap:anywhere}
+.gq-done{margin-top:12px}
+.gq-done summary{min-height:32px;cursor:pointer;font-size:var(--t-meta);font-weight:600}

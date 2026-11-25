@@ -42,8 +42,8 @@ function item(r: Row, who: Map<string, string>): Item {
   if (r.kind === "message") path = "/app/chats";
   else if (r.kind === "group_add") path = "/app/chats?tab=groups";
   else if (r.kind === "friend_request" || r.kind === "friend_accept") path = r.actor_id ? `/app/people/${r.actor_id}` : "/app/chats";
-  else if (r.kind === "intro") path = "/app/alumni";
-  else if (r.kind === "alumni") path = body.startsWith("says they graduated") ? "/app/campus" : "/app/alumni";
+  else if (r.kind === "intro") path = "/app/alumni?tab=requests";
+  else if (r.kind === "alumni") path = body.startsWith("says they graduated") ? "/app/campus?view=review" : "/app/alumni";
   else if (r.kind === "event" || r.kind === "hangout" || r.kind === "place") path = "/app/campus";
   else if (r.post_id) path = `/app/feed?post=${r.post_id}`;
   else if (r.kind === "like" || r.kind === "comment" || r.kind === "reply") path = "/app/feed";

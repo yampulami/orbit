@@ -7,7 +7,7 @@ import { notice } from "../lib/notice";
 
 type Api = ReturnType<typeof useGraduation>;
 const NOW = new Date();
-const YEARS = Array.from({ length: 16 }, (_, i) => NOW.getFullYear() - 8 + i);
+const YEARS = Array.from({ length: NOW.getFullYear() + 7 - 1990 + 1 }, (_, i) => NOW.getFullYear() + 7 - i);
 
 /** Pick the month and year you graduate, or graduated. */
 function DateForm({ start, api, onDone, onCancel }: { start: Graduation | null; api: Api; onDone?: () => void; onCancel?: () => void }) {
@@ -34,24 +34,34 @@ function DateForm({ start, api, onDone, onCancel }: { start: Graduation | null; 
   );
 }
 
-/** "Yes, I graduated": an optional line that helps the coordinator check it. */
+/** "Yes, I graduated": the major and the name on the degree are what a coordinator can check against school records. */
 function ClaimForm({ api, onCancel }: { api: Api; onCancel: () => void }) {
-  const [proof, setProof] = useState("");
+  const [proof, setProof] = useState(api.grad?.proof ?? "");
+  const [major, setMajor] = useState(api.grad?.major ?? "");
+  const [degreeName, setDegreeName] = useState(api.grad?.gradName ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function send(e: FormEvent) {
     e.preventDefault();
+    if (major.trim().length < 2 || degreeName.trim().length < 2) { setError("Add your major and the name on your degree, so it can be checked."); return; }
     setBusy(true); setError("");
-    const p = await api.claim(proof);
+    const p = await api.claim(proof, major, degreeName);
     setBusy(false);
     if (p) { setError(p); return; }
-    notice.show({ icon: "wifi", title: "Congratulations", message: "A coordinator will confirm it. You will get a notification.", ms: 6000 });
+    notice.show({ icon: "calendar", title: "Congratulations", message: "A coordinator will check it against school records. You will get a notification.", ms: 6000 });
   }
   return (
     <form className="al-ask" onSubmit={send}>
-      <label>Anything that helps us confirm it? (optional)
-        <textarea autoFocus rows={2} maxLength={300} value={proof} onChange={(e) => setProof(e.target.value)} placeholder="Your degree and major, or the name you graduated under" />
+      <label>Your major
+        <input autoFocus required maxLength={80} value={major} onChange={(e) => setMajor(e.target.value)} placeholder="Computer Science" />
       </label>
+      <label>Name on your degree
+        <input required maxLength={100} autoComplete="name" value={degreeName} onChange={(e) => setDegreeName(e.target.value)} placeholder="As the school has it" />
+      </label>
+      <label>Anything else that helps? (optional)
+        <textarea rows={2} maxLength={300} value={proof} onChange={(e) => setProof(e.target.value)} />
+      </label>
+      <p className="muted">Only you and your campus coordinators see these.</p>
       {error && <p className="error" role="alert">{error}</p>}
       <div className="al-actions"><button className="btn sm primary" disabled={busy}>{busy ? "Sending…" : "Send for confirmation"}</button><button type="button" className="btn sm" onClick={onCancel}>Cancel</button></div>
     </form>
@@ -62,7 +72,8 @@ const STEPS = ["Graduation date", "You confirm", "Coordinator checks", "Alumni"]
 const stepOf = (g: Graduation | null) => (!g ? 0 : g.status === "verified" ? 3 : g.status === "claimed" ? 2 : 1);
 
 /** Where you are on the way to the Alumni badge, and the one thing to do next. Used on the Alumni page and in Profile settings. */
-export function GraduationPanel({ userId, headingLevel = 2 }: { userId: string; headingLevel?: 2 | 3 }) {
+export function GraduationPanel({ userId, headingLevel = 2, compact = false }: { userId: string; headingLevel?: 2 | 3; compact?: boolean }) {
+  const [opened, setOpened] = useState(false);
   const api = useGraduation(userId);
   const { email: personal } = useBackupEmail(userId);
   const [mode, setMode] = useState<"view" | "date" | "claim">("view");
@@ -71,6 +82,17 @@ export function GraduationPanel({ userId, headingLevel = 2 }: { userId: string; 
   const at = stepOf(g);
   const H = `h${headingLevel}` as "h2" | "h3";
   const title = !g ? "When do you graduate?" : g.status === "verified" ? `You are an alum, class of ${g.year}` : g.status === "claimed" ? "Waiting for a coordinator" : g.status === "declined" ? "We could not confirm it yet" : isDue(g) ? "Have you graduated?" : `Graduating ${gradLabel(g)}`;
+
+  // nothing to do yet (no date, or the month has not come): one line, opened on request
+  const quiet = compact && !opened && mode === "view" && (!g || (g.status === "expected" && !isDue(g)));
+  if (quiet) return (
+    <section className="grad-line" aria-label="Graduation">
+      <GraduationCap size={16} aria-hidden="true" />
+      <span>{g ? `You graduate ${gradLabel(g)}` : "Graduating, or graduated?"}</span>
+      <button type="button" className="link-btn" onClick={() => setOpened(true)}>{g ? "Details" : "Add your date"}</button>
+      {personal === null && <p><Link to="/app/profile?tab=settings">Add a personal email</Link> so you keep your account after school.</p>}
+    </section>
+  );
 
   return (
     <section className="grad-panel" aria-label="Graduation">
@@ -89,10 +111,11 @@ export function GraduationPanel({ userId, headingLevel = 2 }: { userId: string; 
       {g && mode === "view" && <>
         {g.status === "expected" && !isDue(g) && <p className="muted">When {gradLabel(g)} arrives we will ask you to confirm, here and by email. You keep using Orbit the same way before and after.</p>}
         {g.status === "expected" && isDue(g) && <p className="muted">Confirm it to get the Alumni badge. You keep everything you have on Orbit.</p>}
-        {g.status === "claimed" && <p className="muted">You said you graduated in {gradLabel(g)}. A coordinator checks it, so the badge means something. Orbit works as usual while you wait.</p>}
+        {g.status === "claimed" && <p className="muted">You said you graduated in {gradLabel(g)}. A coordinator checks your major and name against school records, so the badge means something. This usually takes a few days, and Orbit works as usual while you wait.</p>}
         {g.status === "declined" && <p className="muted">{g.note ? `The coordinator said: ${g.note}` : "A coordinator could not confirm it."} Check your date and send it again.</p>}
         {g.status === "verified" && <p className="muted">You graduated in {gradLabel(g)}. Your badge shows beside your name, and you can list yourself so students can reach you.</p>}
         <div className="al-actions">
+          {g.status === "claimed" && <button type="button" className="btn sm" onClick={async () => { const p = await api.withdraw(); if (p) notice.show({ icon: "alert", title: "That did not work", message: p }); }}>Take it back</button>}
           {g.status !== "claimed" && g.status !== "verified" && isDue(g) && <button type="button" className="btn sm primary" onClick={() => setMode("claim")}>{g.status === "declined" ? "Send it again" : "Yes, I graduated"}</button>}
           {(g.status === "expected" || g.status === "declined") && <button type="button" className="btn sm" onClick={() => setMode("date")}>{isDue(g) ? "Not yet, change the date" : "Change the date"}</button>}
         </div>

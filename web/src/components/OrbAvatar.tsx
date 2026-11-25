@@ -32,6 +32,7 @@ export default function OrbAvatar({ size = 32, mood = "idle", onPoke, label = "O
         role={decorative ? undefined : "img"}
         aria-label={decorative ? undefined : label}
         aria-hidden={decorative ? true : undefined}
+        tabIndex={decorative ? -1 : undefined} // the press animation would otherwise put a hidden element in the Tab order
         onClick={onPoke}
         whileTap={{ scaleX: 1.15, scaleY: 1.3 }}
         transition={{ type: "tween", duration: 0.8, ease: [0.34, 1.56, 0.64, 1] }}

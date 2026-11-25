@@ -20,13 +20,13 @@ export default function AlumniCard({ a, clubs = [], action, preview = false }: {
       <header className="alc-who">
         {preview ? face : <PersonLink id={a.id} className="cf-avlink" decorative>{face}</PersonLink>}
         <div>
-          <p className="alc-name">{preview ? <strong>{a.name}</strong> : <PersonLink id={a.id} className="who-link"><strong>{a.name}</strong></PersonLink>}{preview ? null : <AlumBadge id={a.id} />}</p>
+          <div className="alc-name"><h3>{preview ? a.name : <PersonLink id={a.id} className="who-link">{a.name}</PersonLink>}</h3>{preview ? null : <AlumBadge id={a.id} />}</div>
           {(preview || (a.field && a.company)) && <p className="alc-class">{[preview ? `Class of ${a.gradYear}` : "", a.field && a.company ? `Studied ${a.field}` : ""].filter(Boolean).join(" · ")}</p>}
         </div>
       </header>
 
       <div className="alc-work">
-        <h3>{where}</h3>
+        <p className="alc-where">{where}</p>
         {(role || a.industry) && <p>{[role, a.industry].filter(Boolean).join(" · ")}</p>}
       </div>
 

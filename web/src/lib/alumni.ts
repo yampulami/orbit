@@ -7,7 +7,10 @@ export const OPEN_LABEL: Record<OpenTo, string> = { referrals: "Referrals", ment
 
 export type AlumFields = { gradYear: number; field: string; company: string; jobTitle: string; industry: string; about: string; openTo: OpenTo[]; listed: boolean };
 export type Alum = AlumFields & { id: string; name: string };
-export type Req = { id: string; otherId: string; other: string; note: string; status: "pending" | "accepted" | "declined"; at: string; incoming: boolean };
+export type Req = { id: string; otherId: string; other: string; note: string; status: "pending" | "accepted" | "declined"; at: string; decidedAt?: string; incoming: boolean };
+
+/** Said to the rest of the app (the menu badge) when requests change. */
+export const ALUMNI_CHANGED = "orbit-alumni";
 
 type Row = { user_id: string; grad_year: number; field: string; company: string; job_title: string; industry: string; about: string; open_to: string[]; listed: boolean };
 const fromRow = (r: Row): AlumFields => ({ gradYear: r.grad_year, field: r.field, company: r.company, jobTitle: r.job_title, industry: r.industry, about: r.about, openTo: (r.open_to ?? []).filter((x): x is OpenTo => (OPEN_TO as string[]).includes(x)), listed: r.listed });
@@ -27,16 +30,20 @@ export function useAlumni(me: string | undefined) {
   const [mine, setMine] = useState<AlumFields | null>(null);
   const [reqs, setReqs] = useState<Req[]>([]);
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   const reload = useCallback(async () => {
     if (!supabase || !me) { setList(DEMO); setReady(true); return; }
     const [dir, own, rq] = await Promise.all([
       supabase.from("alumni_profiles").select("user_id,grad_year,field,company,job_title,industry,about,open_to,listed").neq("user_id", me).order("grad_year", { ascending: false }).limit(300),
       supabase.from("alumni_profiles").select("user_id,grad_year,field,company,job_title,industry,about,open_to,listed").eq("user_id", me).maybeSingle(),
-      supabase.from("alumni_requests").select("id,from_user,to_user,note,status,created_at").order("created_at", { ascending: false }).limit(100),
+      supabase.from("alumni_requests").select("id,from_user,to_user,note,status,created_at,decided_at").neq("status", "withdrawn").order("created_at", { ascending: false }).limit(100),
     ]);
+    // a failed read must not look like a campus with no graduates
+    if (dir.error || rq.error) { setFailed(true); setReady(true); return; }
+    setFailed(false);
     const rows = (dir.data ?? []) as Row[];
-    const reqRows = (rq.data ?? []) as { id: string; from_user: string; to_user: string; note: string; status: Req["status"]; created_at: string }[];
+    const reqRows = (rq.data ?? []) as { id: string; from_user: string; to_user: string; note: string; status: Req["status"]; created_at: string; decided_at: string | null }[];
     const ids = [...new Set([...rows.map((r) => r.user_id), ...reqRows.flatMap((r) => [r.from_user, r.to_user])])].filter((x) => x !== me);
     const names = new Map<string, string>();
     if (ids.length) {
@@ -48,7 +55,7 @@ export function useAlumni(me: string | undefined) {
     setReqs(reqRows.map((r) => {
       const incoming = r.to_user === me;
       const otherId = incoming ? r.from_user : r.to_user;
-      return { id: r.id, otherId, other: names.get(otherId) ?? "A student", note: r.note, status: r.status, at: r.created_at, incoming };
+      return { id: r.id, otherId, other: names.get(otherId) ?? "A student", note: r.note, status: r.status, at: r.created_at, decidedAt: r.decided_at ?? undefined, incoming };
     }));
     setReady(true);
   }, [me]);
@@ -66,7 +73,7 @@ export function useAlumni(me: string | undefined) {
       user_id: me, campus_key: campus, grad_year: year, field: clean(f.field, 80), company: clean(f.company, 80), job_title: clean(f.jobTitle, 80),
       industry: clean(f.industry, 60), about: clean(f.about, 300), open_to: f.openTo, listed: f.listed, updated_at: new Date().toISOString(),
     });
-    if (error) return "That did not save. Try again.";
+    if (error) return error.code === "22023" ? error.message : /row-level security/i.test(error.message) ? "Add a personal email in Profile first, so students can still reach you after school." : "That did not save. Try again.";
     await reload();
     return null;
   }
@@ -93,8 +100,18 @@ export function useAlumni(me: string | undefined) {
     const { error } = await supabase.rpc("answer_alumni_intro", { req: id, accept });
     if (error) return error.message || "That did not work. Try again.";
     await reload();
+    window.dispatchEvent(new CustomEvent(ALUMNI_CHANGED));
     return null;
   }
 
-  return { list, mine, reqs, ready, saveMine, removeMine, ask, answer, reload };
+  /** Take back a request of yours that has not been answered. */
+  async function withdraw(id: string): Promise<string | null> {
+    if (!supabase || !me) return null;
+    const { error } = await supabase.rpc("withdraw_alumni_intro", { req: id });
+    if (error) return error.message || "That did not work. Try again.";
+    await reload();
+    return null;
+  }
+
+  return { list, mine, reqs, ready, failed, saveMine, removeMine, ask, answer, withdraw, reload };
 }

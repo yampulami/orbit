@@ -1,3 +1,5 @@
+import { useGradClaims } from "../lib/graduation";
+import { useAuth } from "../lib/auth";
 import { Suspense, lazy, useEffect, useState } from "react";
 import ClubGlyph from "../components/ClubGlyph";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -51,7 +53,11 @@ export default function Campus() {
   const [creating, setCreating] = useState<"club" | "circle" | null>(null);
   const [verifying, setVerifying] = useState(false);
   const waitingOrgs = orgs.filter((o) => o.status === "pending");
-  const reviewCount = reviewer ? pending.length + reported.length + waitingOrgs.length : 0;
+  const myId = useAuth().session?.user.id;
+  const { claims } = useGradClaims(reviewer, myId);
+  const reviewCount = reviewer ? pending.length + reported.length + waitingOrgs.length + claims.length : 0;
+  // a notification or email can open Review directly
+  useEffect(() => { if (params.get("view") === "review") setView("review"); }, [params]);
   const current: View = view === "review" && !reviewer ? "discover" : view;
   const go = (v: View) => { setCreating(null); setView(v); };
   // One sentence about what is on.
