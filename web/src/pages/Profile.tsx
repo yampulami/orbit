@@ -19,6 +19,8 @@ import { setNudge, useNudges } from "../lib/nudges";
 import { notice } from "../lib/notice";
 import { AccountCard } from "../components/AccountCard";
 import PersonalEmail from "../components/PersonalEmail";
+import { GraduationPanel } from "../components/Graduation";
+import AlumBadge from "../components/AlumBadge";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import BadgeIcon from "../components/BadgeIcon";
@@ -132,7 +134,7 @@ export default function Profile() {
       <header className="pf-head">
         <Avatar name={name} id={uid} size={88} className="pf-av" />
         <div className="pf-info">
-          <h2>{name}</h2>
+          <h2>{name}<AlumBadge id={uid} /></h2>
           {shownUsername
             ? <p className="pf-handle" aria-label={`Username ${shownUsername}`}>@{shownUsername}</p>
             : email && !email.endsWith("@guest.orbit") && <p className="muted pf-sub">{email}</p>}
@@ -200,6 +202,7 @@ export default function Profile() {
         <div className="settings-grid">
       {email && !email.endsWith("@guest.orbit") && <AccountCard email={email} username={shownUsername} />}
       {email && !email.endsWith("@guest.orbit") && supabase && <PersonalEmail schoolEmail={email} />}
+      {uid && email && !email.endsWith("@guest.orbit") && supabase && <GraduationPanel userId={uid} />}
 
       <section className="track">
         <div>

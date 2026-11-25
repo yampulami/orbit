@@ -1,4 +1,5 @@
-import GraduatingCard from "../components/GraduatingCard";
+import AlumBadge from "../components/AlumBadge";
+import { GraduationPrompt } from "../components/Graduation";
 import { isTyping } from "../lib/shortcuts";
 import PersonName from "../components/PersonName";
 import { spoken, useLiveNames } from "../lib/directory";
@@ -323,7 +324,7 @@ export default function Feed() {
         <h1 className="sr">Campus feed</h1>
         {!phone && <nav className="skip-row" aria-label="Skip within the feed"><a className="skip" href="#posts" onClick={(e) => { e.preventDefault(); document.getElementById("posts")?.focus(); }}>Skip to posts</a><a className="skip" href="#your-list" onClick={(e) => { e.preventDefault(); document.getElementById("your-list")?.focus(); }}>Skip to your list</a></nav>}
         <NowHeader />
-        <GraduatingCard userId={me} />
+        <GraduationPrompt userId={me} />
         {!phone && <form className={"composer" + (body || att.has ? " has-text" : "")} onSubmit={publish}>
           <label className="field">
             <span className="sr">Write a post</span>
@@ -399,6 +400,7 @@ export default function Feed() {
                   {repostedBy.length > 0 && <p className="rp-reposted"><Repeat2 size={14} aria-hidden="true" />{repostLine(repostedBy)}</p>}
                   <div className="rp-head">
                     <PersonLink id={p.author_id} className="rp-name"><strong><PersonName id={p.author_id} fallback={p.author_name} /></strong></PersonLink>
+                    <AlumBadge id={p.author_id} />
                     {isVerified(p.author_id) && <span className="rp-tag">Campus staff</span>}
                     <span className="rp-time">{ago(p.created_at)}</span>
                     {p.community !== "Everyone" && <span className="rp-aud" data-aud={p.community}>{p.community === "Marketplace" ? "For sale" : `For ${audience(p.community)}`}</span>}

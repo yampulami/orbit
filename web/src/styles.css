@@ -6390,3 +6390,22 @@ p,li{text-wrap:pretty}
 .grad-card h2{font-size:var(--t-ui);margin:0 0 4px}
 .grad-card p{margin:0 0 10px;max-width:60ch}
 .grad-card .link-btn{margin-left:auto;min-height:44px;min-width:44px;color:var(--ink-soft)}
+
+/* Graduation: the badge, the status panel with its steps, the date picker and the Home question */
+.alum-badge{display:inline-flex;align-items:center;gap:4px;margin-left:6px;padding:1px 7px;border:1px solid var(--accent);border-radius:999px;font-size:.75rem;font-weight:600;line-height:1.5;color:var(--ink);white-space:nowrap;vertical-align:middle}
+.alum-badge svg{color:var(--accent)}
+.grad-panel{margin:0 0 20px;padding:16px;border:1px solid var(--line);border-radius:12px;display:grid;gap:10px;justify-items:start}
+.grad-panel h2,.grad-panel h3{margin:0;font-size:1rem}
+.grad-panel p{margin:0;max-width:62ch}
+.grad-panel .al-warn{margin:0}
+.grad-steps{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0;padding:0;list-style:none;font-size:var(--t-meta);color:var(--ink-soft)}
+.grad-steps li{display:inline-flex;align-items:center;gap:7px}
+.grad-steps li>span{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);font-size:.75rem}
+.grad-steps li[data-state=now]{color:var(--ink);font-weight:600}
+.grad-steps li[data-state=now]>span{border-color:var(--accent);color:var(--accent)}
+.grad-steps li[data-state=done]>span{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.grad-date{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px}
+.grad-date label{display:grid;gap:4px;font-size:var(--t-meta);color:var(--ink-soft)}
+.grad-date select{min-height:40px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.grad-date .error{flex-basis:100%;margin:0}
+.grad-card .grad-x{margin-left:auto}

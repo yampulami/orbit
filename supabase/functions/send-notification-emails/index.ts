@@ -1,4 +1,4 @@
-// Emails a student what they have not seen (unread notifications) and a reminder for events they are going to.
+// Emails a student what they have not seen (unread notifications), a reminder for events they are going to, and a note in their graduation month.
 // Run it every 10 minutes (see EMAIL-SETUP.md). Safe to run twice: each notification is marked `emailed_at`, each reminder is remembered in `email_event_reminders`.
 //
 // Secrets: RESEND_API_KEY, EMAIL_CRON_SECRET, and optionally EMAIL_FROM (default "Orbit <notifications@orbitcampus.org>") and APP_URL (default https://www.orbitcampus.org).
@@ -43,6 +43,7 @@ function item(r: Row, who: Map<string, string>): Item {
   else if (r.kind === "group_add") path = "/app/chats?tab=groups";
   else if (r.kind === "friend_request" || r.kind === "friend_accept") path = r.actor_id ? `/app/people/${r.actor_id}` : "/app/chats";
   else if (r.kind === "intro") path = "/app/alumni";
+  else if (r.kind === "alumni") path = body.startsWith("says they graduated") ? "/app/campus" : "/app/alumni";
   else if (r.kind === "event" || r.kind === "hangout" || r.kind === "place") path = "/app/campus";
   else if (r.post_id) path = `/app/feed?post=${r.post_id}`;
   else if (r.kind === "like" || r.kind === "comment" || r.kind === "reply") path = "/app/feed";
@@ -90,19 +91,62 @@ async function sendEmail(to: string, user: string, subject: string, intro: strin
   return res.ok;
 }
 
-const emailOf = async (user: string) => (await db.auth.admin.getUserById(user)).data.user?.email;
+/** The account's own address, and the verified personal one if there is one. */
+async function addressesOf(user: string) {
+  const [u, p] = await Promise.all([db.auth.admin.getUserById(user), db.from("private_contacts").select("backup_email").eq("user_id", user).maybeSingle()]);
+  return { account: u.data.user?.email as string | undefined, personal: (p.data?.backup_email ?? undefined) as string | undefined };
+}
+
+/** Where to write. A graduate's school address may already be deleted, so once they say they graduated their personal address is used. */
+async function emailOf(user: string) {
+  const [a, g] = await Promise.all([addressesOf(user), db.from("graduations").select("status").eq("user_id", user).maybeSingle()]);
+  const graduated = g.data?.status === "claimed" || g.data?.status === "verified";
+  return graduated && a.personal ? a.personal : a.account;
+}
+
+/** Once, in the month a student said they graduate: congratulations, confirm it, and keep a way in. Sent to both addresses if there are two. */
+async function graduationEmails(now: number): Promise<number> {
+  const d = new Date(now);
+  const rows = await db.from("graduations").select("user_id").eq("status", "expected").is("month_emailed_at", null)
+    .eq("grad_year", d.getUTCFullYear()).eq("grad_month", d.getUTCMonth() + 1).limit(MAX_PEOPLE);
+  if (rows.error) throw new Error(rows.error.message);
+  let count = 0;
+  for (const r of rows.data ?? []) {
+    if (budget <= 0) break;
+    const user = r.user_id as string;
+    const prefs = await db.from("student_profiles").select("nudges").eq("user_id", user).maybeSingle();
+    const mark = () => db.from("graduations").update({ month_emailed_at: new Date().toISOString() }).eq("user_id", user);
+    if ((prefs.data?.nudges as Prefs | null)?.email === false) { await mark(); continue; }
+    const a = await addressesOf(user);
+    const lines: Item[] = [
+      { text: "Confirm you graduated to get the Alumni badge. You keep everything on Orbit.", url: `${APP}/app/alumni` },
+      a.personal
+        ? { text: `Your personal email ${a.personal} will keep you signed in after your school email is gone.`, url: `${APP}/app/profile?tab=settings` }
+        : { text: "Add a personal email now, before your school deletes your school email.", url: `${APP}/app/profile?tab=settings` },
+    ];
+    let sent = false;
+    for (const to of [...new Set([a.account, a.personal].filter((x): x is string => !!x))]) {
+      if (budget <= 0) break;
+      if (await sendEmail(to, user, "Congratulations, it is your graduation month", "This is the month you said you graduate. Two things to do:", lines, 0)) { sent = true; budget--; }
+    }
+    if (sent) { await mark(); count++; }
+  }
+  return count;
+}
 
 /** How many emails went out since midnight UTC: each email stamps its rows with one shared time, so count distinct (student, time) pairs. */
 async function sentToday(now: number): Promise<number> {
   const day = new Date(now); day.setUTCHours(0, 0, 0, 0);
   const since = day.toISOString();
+  const grads = await db.from("graduations").select("user_id", { count: "exact", head: true }).gte("month_emailed_at", since);
+  if (grads.error) throw new Error(grads.error.message);
   const [a, b] = await Promise.all([
     db.from("notifications").select("recipient_id,emailed_at").gte("emailed_at", since).limit(5000),
     db.from("email_event_reminders").select("user_id,sent_at").gte("sent_at", since).limit(5000),
   ]);
   if (a.error) throw new Error(a.error.message);
   if (b.error) throw new Error(b.error.message);
-  return new Set([...(a.data ?? []).map((r) => `n${r.recipient_id}${r.emailed_at}`), ...(b.data ?? []).map((r) => `e${r.user_id}${r.sent_at}`)]).size;
+  return new Set([...(a.data ?? []).map((r) => `n${r.recipient_id}${r.emailed_at}`), ...(b.data ?? []).map((r) => `e${r.user_id}${r.sent_at}`)]).size + 2 * (grads.count ?? 0); // a graduation note may go to two addresses
 }
 
 /** What has sat unread in the bell: one email per student, only for the kinds they want, no more often than their chosen rhythm. */
@@ -226,9 +270,10 @@ Deno.serve(async (req) => {
     const now = Date.now();
     budget = DAILY_CAP - (await sentToday(now));
     if (budget <= 0) return Response.json({ emailed: 0, reminders: 0, note: "daily cap reached" });
+    const graduations = await graduationEmails(now);
     const emailed = await unreadEmails(now);
     const reminders = await eventReminders(now);
-    return Response.json({ emailed, reminders });
+    return Response.json({ emailed, reminders, graduations });
   } catch (e) {
     return new Response((e as Error).message, { status: 500 });
   }

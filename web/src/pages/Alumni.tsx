@@ -1,16 +1,16 @@
 import { useMemo, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 import { Check, GraduationCap, X } from "lucide-react";
 import Avatar from "../components/Avatar";
 import PersonLink from "../components/PersonLink";
 import EmptyState from "../components/EmptyState";
 import { useAuth } from "../lib/auth";
 import { OPEN_LABEL, OPEN_TO, useAlumni, type Alum, type AlumFields, type OpenTo } from "../lib/alumni";
-import { useBackupEmail } from "../lib/backupEmail";
+import { GraduationPanel } from "../components/Graduation";
+import AlumBadge from "../components/AlumBadge";
+import { useGraduation } from "../lib/graduation";
 import { notice } from "../lib/notice";
 
 type Tab = "directory" | "requests" | "me";
-const THIS_YEAR = new Date().getFullYear();
 
 /** Alumni: graduates who chose to stay reachable. Students look for people at a company or in a field and ask for an introduction; the graduate decides.
  *  Nobody's email is shown. The conversation goes through Orbit. */
@@ -18,21 +18,24 @@ export default function Alumni() {
   const { session } = useAuth();
   const me = session?.user.id;
   const { list, mine, reqs, ready, saveMine, removeMine, ask, answer } = useAlumni(me);
-  const { email: personal } = useBackupEmail(me);
+  const { grad } = useGraduation(me);
+  const verified = grad?.status === "verified";
   const [tab, setTab] = useState<Tab>("directory");
   const waiting = reqs.filter((r) => r.incoming && r.status === "pending").length;
-  const tabs: [Tab, string][] = [["directory", "Directory"], ["requests", waiting ? `Requests ${waiting}` : "Requests"], ["me", mine ? "My listing" : "List yourself"]];
+  // only a verified graduate has a listing, and only they get asked; everyone else sees what they sent
+  const tabs: [Tab, string][] = [["directory", "Directory"], ["requests", waiting ? `Requests ${waiting}` : "Requests"], ...(verified ? [["me", mine ? "My listing" : "List yourself"] as [Tab, string]] : [])];
 
   return (
     <div className="page alumni">
-      <h1 className="al-title"><GraduationCap size={26} aria-hidden="true" /> Alumni</h1>
-      <p className="muted al-intro">Graduates who stayed reachable. Find someone at a company or in a field, and ask for an introduction. They decide whether to answer, and your email stays private.</p>
+      <h1 className="sr">Alumni</h1>
+      <p className="muted al-intro">Graduates who stayed reachable, each confirmed by a coordinator. Find someone at a company or in a field and ask for an introduction. They decide whether to answer, and your email stays private.</p>
+      {me && <GraduationPanel userId={me} />}
       <div className="segment" role="tablist" aria-label="Alumni">
         {tabs.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>)}
       </div>
       {tab === "directory" && <Directory list={list} ready={ready} ask={ask} />}
       {tab === "requests" && <Requests reqs={reqs} answer={answer} />}
-      {tab === "me" && <MyListing mine={mine} save={saveMine} remove={removeMine} hasPersonal={!!personal} />}
+      {tab === "me" && verified && <MyListing mine={mine} year={grad.year} save={saveMine} remove={removeMine} />}
     </div>
   );
 }
@@ -60,7 +63,7 @@ function Directory({ list, ready, ask }: { list: Alum[]; ready: boolean; ask: (i
           <li key={a.id} className="al-card">
             <PersonLink id={a.id} className="cf-avlink" decorative><Avatar name={a.name} id={a.id} size={44} /></PersonLink>
             <div className="al-main">
-              <p className="al-name"><PersonLink id={a.id} className="who-link"><strong>{a.name}</strong></PersonLink><span className="muted"> Class of {a.gradYear}</span></p>
+              <p className="al-name"><PersonLink id={a.id} className="who-link"><strong>{a.name}</strong></PersonLink><AlumBadge id={a.id} /></p>
               <p className="al-job">{[a.jobTitle, a.company].filter(Boolean).join(" at ") || a.field || "Graduate"}{a.industry ? <span className="muted"> · {a.industry}</span> : null}</p>
               {a.field && (a.jobTitle || a.company) && <p className="muted al-sub">Studied {a.field}</p>}
               {a.about && <p className="al-about">{a.about}</p>}
@@ -136,8 +139,8 @@ function Requests({ reqs, answer }: { reqs: ReturnType<typeof useAlumni>["reqs"]
   );
 }
 
-function MyListing({ mine, save, remove, hasPersonal }: { mine: AlumFields | null; save: (f: AlumFields) => Promise<string | null>; remove: () => Promise<string | null>; hasPersonal: boolean }) {
-  const [f, setF] = useState<AlumFields>(mine ?? { gradYear: THIS_YEAR, field: "", company: "", jobTitle: "", industry: "", about: "", openTo: [], listed: true });
+function MyListing({ mine, year, save, remove }: { mine: AlumFields | null; year: number; save: (f: AlumFields) => Promise<string | null>; remove: () => Promise<string | null> }) {
+  const [f, setF] = useState<AlumFields>(mine ?? { gradYear: year, field: "", company: "", jobTitle: "", industry: "", about: "", openTo: [], listed: true });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const set = <K extends keyof AlumFields>(k: K, v: AlumFields[K]) => setF((x) => ({ ...x, [k]: v }));
@@ -152,13 +155,8 @@ function MyListing({ mine, save, remove, hasPersonal }: { mine: AlumFields | nul
   }
   return (
     <section aria-label="My alumni listing">
-      {!hasPersonal && (
-        <p className="al-warn" role="note">Graduating? Your school email will stop working. <Link to="/app/profile?tab=settings">Add a personal email</Link> so you can still sign in and get these requests.</p>
-      )}
       <form className="al-form" onSubmit={submit}>
-        <label>Year you graduate or graduated
-          <input type="number" required min={1990} max={2100} inputMode="numeric" value={f.gradYear || ""} onChange={(e) => set("gradYear", Number(e.target.value))} />
-        </label>
+        <p className="muted">Class of {year}, confirmed by a coordinator.</p>
         <label>What you studied <span className="muted">(optional)</span>
           <input maxLength={80} value={f.field} onChange={(e) => set("field", e.target.value)} placeholder="Computer Science" />
         </label>

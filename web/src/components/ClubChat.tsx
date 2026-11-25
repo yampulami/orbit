@@ -10,6 +10,7 @@ import EmptyState from "./EmptyState";
 import RichText from "./RichText";
 import Avatar from "./Avatar";
 import PersonLink from "./PersonLink";
+import AlumBadge from "./AlumBadge";
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 const dayOf = (iso: string) => {
@@ -128,7 +129,7 @@ export default function ClubChat({ org, reviewer, chat, pods = [], focusId = "",
                     <div className={"cc-msg" + (joined ? " joined" : "") + (m.mine ? " mine" : "")}>
                       {!joined && <PersonLink id={m.authorId} className="cf-avlink" decorative><Avatar name={m.author} id={m.authorId} size={32} /></PersonLink>}
                       <div className="cc-body">
-                        {!joined && <p className="cc-meta"><PersonLink id={m.authorId} className="who-link"><strong>{m.author}</strong></PersonLink>{title && <span className="cf-title-chip">{title}</span>}<span className="muted">{clock(m.at)}</span></p>}
+                        {!joined && <p className="cc-meta"><PersonLink id={m.authorId} className="who-link"><strong>{m.author}</strong></PersonLink><AlumBadge id={m.authorId} />{title && <span className="cf-title-chip">{title}</span>}<span className="muted">{clock(m.at)}</span></p>}
                         <p className="cc-text"><RichText text={m.body} /></p>
                       </div>
                       {(m.mine || canModerate) && <button type="button" className="link-btn cc-del" aria-label="Delete message" onClick={() => removeMessage(m.id)}><X size={13} aria-hidden="true" /></button>}

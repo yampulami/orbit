@@ -10,6 +10,7 @@ import RollingNumber from "./RollingNumber";
 import RichText from "./RichText";
 import Avatar from "./Avatar";
 import PersonLink from "./PersonLink";
+import AlumBadge from "./AlumBadge";
 
 const ago = (iso: string) => {
   const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -104,7 +105,7 @@ function PostCard({ p, title, inClub, canPin, canModerate, actions, me }: { p: P
     <li className={"cf-post " + p.kind + (p.pinned ? " pinned" : "")}>
       <header>
         <PersonLink id={p.authorId} className="cf-avlink" decorative><Avatar name={p.author} id={p.authorId} size={36} /></PersonLink>
-        <div className="cf-who"><PersonLink id={p.authorId} className="who-link"><strong>{p.author}</strong></PersonLink>{title && <span className="cf-title-chip">{title}</span>}<span className="muted">{ago(p.at)}</span></div>
+        <div className="cf-who"><PersonLink id={p.authorId} className="who-link"><strong>{p.author}</strong></PersonLink><AlumBadge id={p.authorId} />{title && <span className="cf-title-chip">{title}</span>}<span className="muted">{ago(p.at)}</span></div>
         <div className="cf-tags">
           {p.pinned && <span className="ebadge wait"><Pin size={11} aria-hidden="true" /> Pinned</span>}
           {p.kind === "announcement" && <span className="ebadge official"><Megaphone size={11} aria-hidden="true" /> Announcement</span>}

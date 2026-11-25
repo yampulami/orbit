@@ -1,3 +1,4 @@
+import AlumBadge from "../components/AlumBadge";
 import { useEffect, useState } from "react";
 import { usePerson } from "../lib/directory";
 import Avatar from "../components/Avatar";
@@ -68,7 +69,7 @@ export default function Person() {
       <section className="pv-head" aria-label="About">
         <Avatar name={profile.name} id={id} size={96} className="pv-av" />
         <div className="pv-main">
-          <div className="pv-name"><h2>{profile.name}</h2><SafetyMenu userId={id} name={profile.name} context="profile" onBlocked={() => nav("/app/feed")} /></div>
+          <div className="pv-name"><h2>{profile.name}<AlumBadge id={id} /></h2><SafetyMenu userId={id} name={profile.name} context="profile" onBlocked={() => nav("/app/feed")} /></div>
           {(profile.username || profile.tenure) && <p className="pv-meta">{[profile.username && `@${profile.username}`, profile.tenure && (TENURE[profile.tenure] ?? profile.tenure)].filter(Boolean).join(" · ")}</p>}
           {profile.bio && <p className="pv-bio"><RichText text={profile.bio} /></p>}
           {!profile.bio && profile.hobbies.length === 0 && relation === "self" && <p className="pv-meta">You have not added a bio yet. <Link to="/app/profile">Add one in your profile</Link>.</p>}

@@ -3,6 +3,7 @@ import Dropdown from "./Dropdown";
 import { useNavigate } from "react-router-dom";
 import { MoreHorizontal, Search, UserPlus, X } from "lucide-react";
 import PersonLink from "./PersonLink";
+import AlumBadge from "./AlumBadge";
 import PersonName from "./PersonName";
 import Avatar from "./Avatar";
 import RolesPanel from "./RolesPanel";
@@ -52,7 +53,7 @@ export default function ClubMembers({ org, here, canRoles, canMembers, reviewer,
       <li key={p.id} className="cp-item">
         <div className="cp-row">
           <span className="cm-avw"><PersonLink id={p.id} className="cf-avlink" decorative><Avatar name={p.name} id={p.id} size={32} /></PersonLink>{on && <i className="cm-on" aria-hidden="true" />}</span>
-          <span className="cp-who"><span className="cm-name"><PersonLink id={p.id} className="who-link"><PersonName id={p.id} fallback={p.name} /></PersonLink>{p.self && <span className="cp-you"> (you)</span>}</span>
+          <span className="cp-who"><span className="cm-name"><PersonLink id={p.id} className="who-link"><PersonName id={p.id} fallback={p.name} /></PersonLink><AlumBadge id={p.id} />{p.self && <span className="cp-you"> (you)</span>}</span>
             <span className="cp-sub">{rankLabel(p.rank, p.roleName)}{on ? " · online" : ""}</span></span>
           {any && <button type="button" className="cp-more" aria-label={`Actions for ${p.name}`} aria-expanded={expanded} onClick={() => { setOpen(expanded ? "" : p.id); setAsking(null); setError(""); }}><MoreHorizontal size={18} aria-hidden="true" /></button>}
         </div>

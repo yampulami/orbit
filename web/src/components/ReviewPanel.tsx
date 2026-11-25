@@ -5,6 +5,7 @@ import { eventActions, useCampusEvents } from "../lib/campusEvents";
 import { orgActions, useCampusOrgs } from "../lib/campusOrgs";
 import { notice } from "../lib/notice";
 import { undo } from "../lib/undo";
+import GradQueue from "./GradQueue";
 import RichText from "./RichText";
 import { eventWhen } from "./EventCard";
 import ApplicationsBoard from "./ApplicationsBoard";
@@ -68,6 +69,8 @@ export default function ReviewPanel() {
           </ul>
         </section>
       )}
+
+      <GradQueue />
 
       <section className="htools-block" aria-label="All clubs and offices">
         <h3><ShieldCheck size={15} aria-hidden="true" /> Clubs and offices</h3>

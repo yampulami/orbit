@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import RichText from "./RichText";
 import RealAvatar from "./Avatar";
 import PersonLink from "./PersonLink";
+import AlumBadge from "./AlumBadge";
 
 export type CommentRow = { id: string; authorId?: string; author: string; body: string; at: string; mine: boolean };
 
@@ -62,7 +63,7 @@ export default function ClubComments({ id, comments, canWrite, canModerate, me, 
             <li key={c.id} className="ct-item">
               {c.authorId ? <PersonLink id={c.authorId} className="cf-avlink" decorative><RealAvatar name={c.author} id={c.authorId} size={40} className="ct-av" /></PersonLink> : <Avatar name={c.author} />}
               <div className="ct-main">
-                <p className="ct-meta">{c.authorId ? <PersonLink id={c.authorId} className="who-link"><strong>{c.author}</strong></PersonLink> : <strong>{c.author}</strong>}<span aria-hidden="true">•</span><time>{ago(c.at)}</time></p>
+                <p className="ct-meta">{c.authorId ? <PersonLink id={c.authorId} className="who-link"><strong>{c.author}</strong></PersonLink> : <strong>{c.author}</strong>}<AlumBadge id={c.authorId} /><span aria-hidden="true">•</span><time>{ago(c.at)}</time></p>
                 <p className="ct-body"><RichText text={c.body} /></p>
               </div>
               {(c.mine || canModerate) && <button type="button" className="ct-del" aria-label="Delete comment" onClick={() => onRemove(c.id)}><X size={14} aria-hidden="true" /></button>}
